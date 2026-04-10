@@ -507,7 +507,7 @@ export default function App() {
 
       {/* Scanner */}
       {showScanner && (
-        <div style={s.overlay} onClick={() => setShowScanner(false)}>
+        <div style={{ ...s.overlay, alignItems: "flex-start" }} onClick={() => setShowScanner(false)}>
           <div style={{ width: "100%", maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
             <BarcodeScanner onDetected={handleJanDetected} onClose={() => setShowScanner(false)} />
           </div>
