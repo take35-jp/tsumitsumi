@@ -122,7 +122,13 @@ function BarcodeScanner({ onDetected, onClose }) {
           name: "Live",
           type: "LiveStream",
           target: scannerRef.current,
-          constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+          constraints: {
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            focusMode: "continuous",
+            advanced: [{ focusMode: "continuous" }],
+          },
         },
         decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
         locate: true,
@@ -148,6 +154,19 @@ function BarcodeScanner({ onDetected, onClose }) {
           onDetected(code);
         }
       });
+
+      // オートフォーカスを定期的に再トリガー
+      const refocusInterval = setInterval(() => {
+        const video = scannerRef.current?.querySelector("video");
+        if (!video?.srcObject) return;
+        const track = video.srcObject.getVideoTracks()[0];
+        if (!track) return;
+        try {
+          track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
+        } catch (_) {}
+      }, 1500);
+
+      return () => clearInterval(refocusInterval);
     };
 
     init().catch(() => {
