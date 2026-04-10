@@ -100,63 +100,108 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const scannerRef = useRef();
+  const videoRef = useRef();
+  const canvasRef = useRef();
+  const animRef = useRef();
   const detectedRef = useRef(false);
   const [status, setStatus] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    const loadQuagga = () => new Promise((resolve, reject) => {
-      if (window.Quagga) { resolve(); return; }
-      const s = document.createElement("script");
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
+    let stream = null;
+    let detector = null;
 
-    const init = async () => {
+    const startScan = async () => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      // ① BarcodeDetector API（Android Chrome・iOS Safari対応）
+      if ("BarcodeDetector" in window) {
+        detector = new window.BarcodeDetector({
+          formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
+        });
+        const tick = async () => {
+          if (detectedRef.current) return;
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            try {
+              const barcodes = await detector.detect(video);
+              if (barcodes.length > 0) {
+                detectedRef.current = true;
+                onDetected(barcodes[0].rawValue);
+                return;
+              }
+            } catch (_) {}
+          }
+          animRef.current = requestAnimationFrame(tick);
+        };
+        animRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      // ② Quagga fallback
+      const loadQuagga = () => new Promise((resolve, reject) => {
+        if (window.Quagga) { resolve(); return; }
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+
       await loadQuagga();
-      window.Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: scannerRef.current,
-          constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-        },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-        locate: true,
-        frequency: 10,
-      }, (err) => {
-        if (err) {
-          setStatus("error");
-          setErrorMsg(err?.name === "NotAllowedError"
-            ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
-            : "カメラを起動できませんでした。\n手動でJANコードを入力してください。");
-          return;
-        }
-        window.Quagga.start();
-        setStatus("scanning");
-      });
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      window.Quagga.onDetected((result) => {
+      const qtick = () => {
         if (detectedRef.current) return;
-        const code = result?.codeResult?.code;
-        if (code) {
-          detectedRef.current = true;
-          window.Quagga.stop();
-          onDetected(code);
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+          window.Quagga.decodeSingle({
+            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+            locate: true,
+            src: canvas.toDataURL(),
+          }, (result) => {
+            if (result?.codeResult?.code && !detectedRef.current) {
+              detectedRef.current = true;
+              onDetected(result.codeResult.code);
+              return;
+            }
+          });
         }
-      });
+        animRef.current = requestAnimationFrame(qtick);
+      };
+      animRef.current = requestAnimationFrame(qtick);
     };
 
-    init().catch(() => {
+    const init = async () => {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        }
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setStatus("scanning");
+        await startScan();
+      }
+    };
+
+    init().catch((e) => {
       setStatus("error");
-      setErrorMsg("カメラを起動できませんでした。\n手動でJANコードを入力してください。");
+      setErrorMsg(e?.name === "NotAllowedError"
+        ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
+        : "カメラを起動できませんでした。\n手動でJANコードを入力してください。");
     });
 
     return () => {
-      if (window.Quagga) { try { window.Quagga.stop(); } catch (_) {} }
+      cancelAnimationFrame(animRef.current);
+      stream?.getTracks().forEach((t) => t.stop());
     };
   }, []);
 
@@ -170,7 +215,8 @@ function BarcodeScanner({ onDetected, onClose }) {
         ? <div style={sc.errorBox}>{errorMsg}</div>
         : (
           <div style={sc.videoWrap}>
-            <div ref={scannerRef} style={{ width: "100%", height: "100%" }} />
+            <video ref={videoRef} style={sc.video} playsInline muted />
+            <canvas ref={canvasRef} style={{ display: "none" }} />
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>{status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}</div>
           </div>
