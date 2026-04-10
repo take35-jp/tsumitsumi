@@ -96,56 +96,52 @@ function BarcodeScanner({ onDetected, onClose }) {
   const [error, setError] = useState("");
   const inputRef = useRef();
 
-  const loadZXing = () => new Promise((resolve, reject) => {
-    if (window.ZXing) { resolve(); return; }
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/zxing-wasm@1.1.3/dist/full/zxing_full.min.js";
-    s.onload = () => {
-      // zxing-wasm初期化
-      if (window.ZXing?.readBarcodesFromImageData) { resolve(); return; }
-      // fallback: zxing-js
-      const s2 = document.createElement("script");
-      s2.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
-      s2.onload = resolve; s2.onerror = reject;
-      document.head.appendChild(s2);
-    };
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-
   const readBarcode = async (file) => {
     setScanning(true);
     setError("");
     try {
-      await loadZXing();
-      const bitmap = await createImageBitmap(file);
+      // ZXing-jsを動的ロード
+      if (!window.ZXing) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      // 画像をcanvasに描画
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      await new Promise((resolve) => { img.onload = resolve; img.src = url; });
+
       const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
+      canvas.width = img.width;
+      canvas.height = img.height;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(bitmap, 0, 0);
+      ctx.drawImage(img, 0, 0);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      // ZXing JSで読み取り
       const ZXing = window.ZXing;
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-        ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.CODE_128,
       ]);
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
       const reader = new ZXing.MultiFormatReader();
       reader.setHints(hints);
       const lum = new ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
-      const bmp2 = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-      const result = reader.decode(bmp2);
-      if (result) {
-        setScanning(false);
-        onDetected(result.getText());
-        return;
-      }
+      const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+      const result = reader.decode(bmp);
+      setScanning(false);
+      onDetected(result.getText());
+      return;
     } catch (_) {}
     setScanning(false);
-    setError("バーコードを読み取れませんでした。\nバーコード部分が明確に写るよう撮り直してください。");
+    setError("バーコードを読み取れませんでした。\nバーコード全体が明るく鮮明に写るよう撮り直してください。");
   };
 
   const handleFile = (e) => {
@@ -162,7 +158,7 @@ function BarcodeScanner({ onDetected, onClose }) {
     setImgSrc(null);
     setError("");
     setScanning(false);
-    inputRef.current?.click();
+    setTimeout(() => inputRef.current?.click(), 100);
   };
 
   return (
@@ -179,23 +175,22 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
-          <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
-          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 10 }}>
-            バーコードが枠内に収まるように撮影してください
+          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.6 }}>
+            バーコード全体が枠に収まるよう<br />明るい場所で撮影してください
           </div>
         </div>
       ) : (
         <div>
-          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 220 }} alt="" />
+          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200 }} alt="" />
           {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
           {error && (
             <div style={sc.errorBox}>
-              {error}
+              <div style={{ whiteSpace: "pre-wrap" }}>{error}</div>
               <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
             </div>
           )}
           {!scanning && !error && (
-            <div style={sc.retakeRow}>
+            <div style={{ marginTop: 10 }}>
               <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
             </div>
           )}
@@ -333,7 +328,8 @@ export default function App() {
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [myXId, setMyXId] = useState("");
-  const [sortBy, setSortBy] = useState("none");
+  const [filterSeries, setFilterSeries] = useState("");
+  const [filterRating, setFilterRating] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [longPressId, setLongPressId] = useState(null);
   const longPressTimer = useRef(null);
@@ -427,9 +423,8 @@ export default function App() {
       (k.scale || "").toLowerCase().includes(q)
     );
   }
-  if (sortBy === "series") filtered = [...filtered].sort((a, b) => (a.series || "").localeCompare(b.series || ""));
-  else if (sortBy === "rating_desc") filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  else if (sortBy === "rating_asc") filtered = [...filtered].sort((a, b) => (a.rating || 0) - (b.rating || 0));
+  if (filterSeries) filtered = filtered.filter(k => (k.series || "") === filterSeries);
+  if (filterRating) filtered = filtered.filter(k => (k.rating || 0) === Number(filterRating));
 
   return (
     <div style={s.root}>
@@ -482,15 +477,23 @@ export default function App() {
           ))}
         </div>
 
-        {/* ソート */}
-        <div style={{ padding: "8px 16px 10px", display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ fontSize: 12, color: "#9ca3af", flexShrink: 0 }}>並び順：</span>
-          <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, background: "#fafafa", outline: "none", color: "#111" }}
-            value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="none">登録順</option>
-            <option value="series">シリーズ順</option>
-            <option value="rating_desc">★評価が高い順</option>
-            <option value="rating_asc">★評価が低い順</option>
+        {/* フィルタ */}
+        <div style={{ padding: "8px 16px 10px", display: "flex", gap: 8 }}>
+          <select style={{ flex: 1, padding: "6px 10px", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 10, fontSize: 12, background: filterSeries ? "#eff6ff" : "#fafafa", outline: "none", color: "#111" }}
+            value={filterSeries} onChange={(e) => setFilterSeries(e.target.value)}>
+            <option value="">シリーズ：すべて</option>
+            {[...new Set(kits.map(k => k.series).filter(Boolean))].sort().map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <select style={{ flex: 1, padding: "6px 10px", border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, borderRadius: 10, fontSize: 12, background: filterRating ? "#fffbeb" : "#fafafa", outline: "none", color: "#111" }}
+            value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
+            <option value="">★：すべて</option>
+            <option value="5">★★★★★</option>
+            <option value="4">★★★★☆</option>
+            <option value="3">★★★☆☆</option>
+            <option value="2">★★☆☆☆</option>
+            <option value="1">★☆☆☆☆</option>
           </select>
         </div>
       </div>
@@ -508,7 +511,7 @@ export default function App() {
         )}
         {filtered.map((kit) => (
           <div key={kit.id}
-            style={{ ...s.card, opacity: dragId === kit.id ? 0.5 : 1, border: longPressId === kit.id ? "2px solid #4f8ef7" : "none", transform: longPressId === kit.id ? "scale(1.02)" : "scale(1)", transition: "transform 0.15s" }}
+            style={{ ...s.card, opacity: dragId === kit.id ? 0.4 : 1, boxShadow: longPressId === kit.id ? "0 8px 24px rgba(0,0,0,0.18)" : "0 1px 4px rgba(0,0,0,0.06)", transform: longPressId === kit.id ? "translateY(-3px)" : "none", transition: "box-shadow 0.2s, transform 0.2s" }}
             draggable={!!dragId}
             onDragStart={() => dragId && handleDragStart(kit.id)}
             onDragOver={(e) => dragId && handleDragOver(e, kit.id)}
@@ -519,6 +522,7 @@ export default function App() {
             onMouseUp={handleLongPressEnd}
             onMouseLeave={handleLongPressEnd}
             onClick={() => !dragId && setDetail(kit)}>
+            <div style={{ color: "#d1d5db", fontSize: 16, flexShrink: 0, cursor: "grab", paddingRight: 4 }}>⠿</div>
             {kit.photoUrl
               ? <img src={kit.photoUrl} style={s.thumb} alt="" />
               : <div style={s.thumbPh}>📦</div>
@@ -539,8 +543,8 @@ export default function App() {
               onClick={(e) => { e.stopPropagation(); toggleComplete(kit.id); }}>✓</button>
           </div>
         ))}
-        {sortBy === "none" && filtered.length > 1 && (
-          <div style={{ textAlign: "center", fontSize: 11, color: "#bbb", padding: "4px 0 8px" }}>長押しで並び替えできます</div>
+        {filtered.length > 1 && (
+          <div style={{ textAlign: "center", fontSize: 11, color: "#bbb", padding: "4px 0 8px" }}>⠿ 長押しでドラッグ並び替え</div>
         )}
       </div>
 
