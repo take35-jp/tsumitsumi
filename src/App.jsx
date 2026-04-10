@@ -100,63 +100,63 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const scannerDivId = "tsumitsumi-scanner";
+  const scannerRef = useRef();
   const detectedRef = useRef(false);
-  const scannerRef = useRef(null);
   const [status, setStatus] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    const loadLib = () => new Promise((resolve, reject) => {
-      if (window.Html5Qrcode) { resolve(); return; }
+    const loadQuagga = () => new Promise((resolve, reject) => {
+      if (window.Quagga) { resolve(); return; }
       const s = document.createElement("script");
-      s.src = "https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js";
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
       s.onload = resolve;
       s.onerror = reject;
       document.head.appendChild(s);
     });
 
     const init = async () => {
-      await loadLib();
-      const scanner = new window.Html5Qrcode(scannerDivId);
-      scannerRef.current = scanner;
+      await loadQuagga();
+      window.Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: scannerRef.current,
+          constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        },
+        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+        locate: true,
+        frequency: 10,
+      }, (err) => {
+        if (err) {
+          setStatus("error");
+          setErrorMsg(err?.name === "NotAllowedError"
+            ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
+            : "カメラを起動できませんでした。\n手動でJANコードを入力してください。");
+          return;
+        }
+        window.Quagga.start();
+        setStatus("scanning");
+      });
 
-      await scanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 15,
-          qrbox: { width: 280, height: 120 },
-          aspectRatio: 1.5,
-          formatsToSupport: [
-            window.Html5QrcodeSupportedFormats?.EAN_13,
-            window.Html5QrcodeSupportedFormats?.EAN_8,
-            window.Html5QrcodeSupportedFormats?.CODE_128,
-          ].filter(Boolean),
-        },
-        (code) => {
-          if (detectedRef.current) return;
+      window.Quagga.onDetected((result) => {
+        if (detectedRef.current) return;
+        const code = result?.codeResult?.code;
+        if (code) {
           detectedRef.current = true;
-          scanner.stop().catch(() => {});
+          window.Quagga.stop();
           onDetected(code);
-        },
-        () => {}
-      );
-      setStatus("scanning");
+        }
+      });
     };
 
-    init().catch((e) => {
+    init().catch(() => {
       setStatus("error");
-      setErrorMsg(
-        String(e).includes("Permission")
-          ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
-          : "カメラを起動できませんでした。\n手動でJANコードを入力してください。"
-      );
+      setErrorMsg("カメラを起動できませんでした。\n手動でJANコードを入力してください。");
     });
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
-      }
+      if (window.Quagga) { try { window.Quagga.stop(); } catch (_) {} }
     };
   }, []);
 
@@ -170,15 +170,9 @@ function BarcodeScanner({ onDetected, onClose }) {
         ? <div style={sc.errorBox}>{errorMsg}</div>
         : (
           <div style={sc.videoWrap}>
-            <div id={scannerDivId} style={{ width: "100%", height: "100%" }} />
-            {status === "loading" && (
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.85)", fontSize: 13 }}>
-                カメラを起動中...
-              </div>
-            )}
-            {status === "scanning" && (
-              <div style={sc.hint}>バーコードを枠内に合わせてください</div>
-            )}
+            <div ref={scannerRef} style={{ width: "100%", height: "100%" }} />
+            <div style={sc.dimOverlay}><div style={sc.frame} /></div>
+            <div style={sc.hint}>{status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}</div>
           </div>
         )}
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
