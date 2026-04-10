@@ -9,38 +9,20 @@ export default async function handler(req, res) {
 
   // ① 楽天市場API
   try {
-    const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?applicationId=${RAKUTEN_APP_ID}&keyword=${jan}&hits=1&formatVersion=2`;
+    const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?applicationId=${RAKUTEN_APP_ID}&keyword=${encodeURIComponent(jan)}&hits=1&formatVersion=2&sort=standard`;
     const r = await fetch(url);
-    if (r.ok) {
-      const data = await r.json();
-      const item = data?.Items?.[0];
-      if (item?.itemName) {
-        return res.json({
-          name: item.itemName,
-          photoUrl: item.mediumImageUrls?.[0] || item.smallImageUrls?.[0] || "",
-          price: item.itemPrice ? String(item.itemPrice) : "",
-        });
-      }
+    const data = await r.json();
+    const item = data?.Items?.[0];
+    if (item?.itemName) {
+      return res.json({
+        name: item.itemName,
+        photoUrl: item.mediumImageUrls?.[0]?.imageUrl || item.smallImageUrls?.[0]?.imageUrl || "",
+        price: item.itemPrice ? String(item.itemPrice) : "",
+      });
     }
-  } catch (_) {}
-
-  // ② 楽天ブックスAPI
-  try {
-    const url = `https://app.rakuten.co.jp/services/api/BooksTotal/Search/20170404?applicationId=${RAKUTEN_APP_ID}&jan=${jan}&hits=1&formatVersion=2`;
-    const r = await fetch(url);
-    if (r.ok) {
-      const data = await r.json();
-      const item = data?.Items?.[0];
-      const name = item?.title || item?.itemName || "";
-      if (name) {
-        return res.json({
-          name,
-          photoUrl: item.largeImageUrl || item.mediumImageUrl || "",
-          price: item.itemPrice ? String(item.itemPrice) : "",
-        });
-      }
-    }
-  } catch (_) {}
-
-  return res.status(404).json({ error: "not found" });
+    // デバッグ用にレスポンスも返す
+    return res.status(404).json({ error: "not found", debug: data });
+  } catch (e) {
+    return res.status(500).json({ error: String(e) });
+  }
 }
