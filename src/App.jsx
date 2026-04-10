@@ -145,8 +145,7 @@ function BarcodeScanner({ onDetected, onClose }) {
       }
     } catch (_) {}
     setScanning(false);
-    setError("バーコードを読み取れませんでした。
-バーコード部分が明確に写るよう撮り直してください。");
+    setError("バーコードを読み取れませんでした。\nバーコード部分が明確に写るよう撮り直してください。");
   };
 
   const handleFile = (e) => {
