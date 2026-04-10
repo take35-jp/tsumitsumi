@@ -98,21 +98,7 @@ function BarcodeScanner({ onDetected, onClose }) {
   const [progress, setProgress] = useState("");
   const inputRef = useRef();
 
-  const extractJAN = (text) => {
-    const digits = text.replace(/[^0-9]/g, "");
-    for (let i = 0; i <= digits.length - 13; i++) {
-      const c = digits.slice(i, i + 13);
-      let sum = 0;
-      for (let j = 0; j < 12; j++) sum += parseInt(c[j]) * (j % 2 === 0 ? 1 : 3);
-      if ((10 - (sum % 10)) % 10 === parseInt(c[12])) return c;
-    }
-    const m = digits.match(/\d{13}/); if (m) return m[0];
-    const m8 = digits.match(/\d{8}/); if (m8) return m8[0];
-    return null;
-  };
-
   const tryGemini = async (file) => {
-    // サーバーレス関数経由でGemini APIを呼ぶ
     const b64 = await new Promise((resolve) => {
       const r = new FileReader();
       r.onload = () => resolve(r.result.split(",")[1]);
@@ -128,55 +114,22 @@ function BarcodeScanner({ onDetected, onClose }) {
     return data?.jan || null;
   };
 
-  const tryZXing = async (file) => {
-    if (!window.ZXing) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
-        s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    const img = new Image();
-    await new Promise((resolve) => { img.onload = resolve; img.src = URL.createObjectURL(file); });
-    for (const scale of [1, 1.5, 0.75, 2]) {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const ZXing = window.ZXing;
-        const hints = new Map();
-        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128]);
-        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-        const reader = new ZXing.MultiFormatReader();
-        reader.setHints(hints);
-        const lum = new ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
-        const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-        const result = reader.decode(bmp);
-        if (result) return result.getText();
-      } catch (_) {}
-    }
-    return null;
-  };
-
   const readBarcode = async (file) => {
     setScanning(true);
     setError("");
+    setProgress("AIでバーコードを読み取り中...");
     try {
-      setProgress("バーコードを解析中...");
-      const code = await tryZXing(file);
-      if (code) { setScanning(false); setProgress(""); onDetected(code); return; }
-
-      setProgress("AIで読み取り中...");
       const jan = await tryGemini(file);
-      if (jan) { setScanning(false); setProgress(""); onDetected(jan); return; }
+      if (jan) {
+        setScanning(false);
+        setProgress("");
+        onDetected(jan);
+        return;
+      }
     } catch (e) {}
     setScanning(false);
     setProgress("");
-    setError("読み取れませんでした。\nバーコードの数字部分をアップで撮影するか\n手動でJANコードを入力してください。");
+    setError("読み取れませんでした。\nバーコード部分だけをアップで・明るい場所で撮影してください。");
   };
 
   const handleFile = (e) => {
@@ -187,10 +140,6 @@ function BarcodeScanner({ onDetected, onClose }) {
     setError("");
     readBarcode(file);
     e.target.value = "";
-  };
-
-  const handleRetry = () => {
-    if (imgFile) readBarcode(imgFile);
   };
 
   const handleRetake = () => {
@@ -205,7 +154,6 @@ function BarcodeScanner({ onDetected, onClose }) {
         <span style={sc.title}>📷 バーコードをスキャン</span>
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
-
       {!imgSrc ? (
         <div>
           <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
@@ -214,29 +162,22 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
           <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-            💡 バーコードだけをアップで・明るい場所で撮影してください
+            💡 バーコードをアップで・明るい場所で撮影してください
           </div>
         </div>
       ) : (
         <div>
           <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200 }} alt="" />
-          {scanning && (
-            <div style={sc.scanningBox}>⏳ {progress}<br /><span style={{ fontSize: 11 }}>少々お待ちください</span></div>
-          )}
+          {scanning && <div style={sc.scanningBox}>⏳ {progress}<br /><span style={{ fontSize: 11 }}>少々お待ちください</span></div>}
           {error && (
             <div style={sc.errorBox}>
               <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
               <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
             </div>
           )}
-          {!scanning && !error && (
-            <div style={{ marginTop: 10 }}>
-              <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
-            </div>
-          )}
+          {!scanning && !error && <div style={{ marginTop: 10 }}><button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button></div>}
         </div>
       )}
-
       <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
@@ -372,10 +313,7 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [dragId, setDragId] = useState(null);
-  const [longPressId, setLongPressId] = useState(null);
-  const longPressTimer = useRef(null);
-  const touchDragRef = useRef({ active: false, id: null, startY: 0 });
+  const [reorderMode, setReorderMode] = useState(false);
   const fileRef = useRef();
   const completedFileRef = useRef();
 
@@ -424,69 +362,17 @@ export default function App() {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  // 長押し並び替え
-  const handleDragStart = (id) => setDragId(id);
-  const handleDragOver = (e, id) => {
-    e.preventDefault();
-    if (dragId === id) return;
+  const moveKit = (id, dir) => {
     setKits((ks) => {
-      const from = ks.findIndex(k => k.id === dragId);
-      const to = ks.findIndex(k => k.id === id);
-      if (from < 0 || to < 0) return ks;
+      const idx = ks.findIndex(k => k.id === id);
+      if (idx < 0) return ks;
+      if (dir === -1 && idx === 0) return ks;
+      if (dir === 1 && idx === ks.length - 1) return ks;
       const next = [...ks];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
+      const [moved] = next.splice(idx, 1);
+      next.splice(idx + dir, 0, moved);
       return next;
     });
-  };
-
-  // タッチ対応の長押し＋ドラッグ
-  const handleTouchStart = (e, id) => {
-    const touch = e.touches[0];
-    touchDragRef.current = { active: false, id, startY: touch.clientY };
-    longPressTimer.current = setTimeout(() => {
-      touchDragRef.current.active = true;
-      setLongPressId(id);
-      setDragId(id);
-    }, 500);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!touchDragRef.current.active) {
-      clearTimeout(longPressTimer.current);
-      return;
-    }
-    e.preventDefault();
-    const touch = e.touches[0];
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (!el) return;
-    const card = el.closest("[data-kit-id]");
-    if (!card) return;
-    const targetId = Number(card.dataset.kitId);
-    if (targetId && targetId !== touchDragRef.current.id) {
-      setKits((ks) => {
-        const from = ks.findIndex(k => k.id === touchDragRef.current.id);
-        const to = ks.findIndex(k => k.id === targetId);
-        if (from < 0 || to < 0) return ks;
-        const next = [...ks];
-        const [moved] = next.splice(from, 1);
-        next.splice(to, 0, moved);
-        return next;
-      });
-    }
-  };
-
-  const handleTouchEnd = () => {
-    clearTimeout(longPressTimer.current);
-    touchDragRef.current.active = false;
-    setLongPressId(null);
-    setDragId(null);
-  };
-
-  const handleLongPressEnd = () => {
-    clearTimeout(longPressTimer.current);
-    setLongPressId(null);
-    setDragId(null);
   };
 
 
@@ -592,22 +478,34 @@ export default function App() {
               : "該当するキットがありません"}
           </div>
         )}
-        {filtered.map((kit) => (
+        {/* 並び替えトグルボタン */}
+        {filtered.length > 1 && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+            <button
+              style={{ fontSize: 12, padding: "4px 12px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
+              onClick={() => setReorderMode(v => !v)}>
+              {reorderMode ? "✓ 並び替え完了" : "↕ 並び替え"}
+            </button>
+          </div>
+        )}
+        {filtered.map((kit, index) => (
           <div key={kit.id}
-            data-kit-id={kit.id}
-            style={{ ...s.card, userSelect: "none", WebkitUserSelect: "none", opacity: dragId === kit.id ? 0.4 : 1, boxShadow: longPressId === kit.id ? "0 8px 24px rgba(79,142,247,0.3)" : "0 1px 4px rgba(0,0,0,0.06)", border: longPressId === kit.id ? "2px solid #4f8ef7" : "2px solid transparent", transform: longPressId === kit.id ? "scale(1.03)" : "scale(1)", transition: "box-shadow 0.2s, transform 0.2s, border 0.2s" }}
-            draggable={!!dragId}
-            onDragStart={() => dragId && handleDragStart(kit.id)}
-            onDragOver={(e) => dragId && handleDragOver(e, kit.id)}
-            onDragEnd={handleLongPressEnd}
-            onTouchStart={(e) => handleTouchStart(e, kit.id)}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={() => { longPressTimer.current = setTimeout(() => { setLongPressId(kit.id); setDragId(kit.id); }, 500); }}
-            onMouseUp={handleLongPressEnd}
-            onMouseLeave={handleLongPressEnd}
-            onClick={() => !dragId && setDetail(kit)}>
-            <div style={{ color: longPressId === kit.id ? "#4f8ef7" : "#d1d5db", fontSize: 18, flexShrink: 0, cursor: "grab", paddingRight: 6, userSelect: "none", WebkitUserSelect: "none" }}>⠿</div>
+            style={{ ...s.card }}
+            onClick={() => !reorderMode && setDetail(kit)}>
+            {reorderMode ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+                <button
+                  style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  onClick={(e) => { e.stopPropagation(); moveKit(kit.id, -1); }}
+                  disabled={index === 0}>▲</button>
+                <button
+                  style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === filtered.length - 1 ? "#f3f4f6" : "#fff", color: index === filtered.length - 1 ? "#ccc" : "#374151", fontSize: 14, cursor: index === filtered.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }}
+                  disabled={index === filtered.length - 1}>▼</button>
+              </div>
+            ) : (
+              <div style={{ color: "#d1d5db", fontSize: 18, flexShrink: 0, paddingRight: 6 }}>⠿</div>
+            )}
             {kit.photoUrl
               ? <img src={kit.photoUrl} style={s.thumb} alt="" />
               : <div style={s.thumbPh}>📦</div>
@@ -628,9 +526,7 @@ export default function App() {
               onClick={(e) => { e.stopPropagation(); toggleComplete(kit.id); }}>✓</button>
           </div>
         ))}
-        {filtered.length > 1 && (
-          <div style={{ textAlign: "center", fontSize: 11, color: "#bbb", padding: "4px 0 8px" }}>⠿ 長押しでドラッグ並び替え</div>
-        )}
+
       </div>
 
       {/* 右下FAB */}
