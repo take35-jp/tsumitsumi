@@ -1,15 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 
 const SERIES_OPTIONS = [
-  // ガンダム系
-  "機動戦士ガンダム", "SEED", "00", "ユニコーン", "鉄血のオルフェンズ", "水星の魔女",
-  // バンダイ系（ガンダム以外）
-  "SD", "Figure-rise", "メガミデバイス", "フレームアームズ",
-  // スケールモデル
-  "タミヤ", "ハセガワ", "フジミ", "アオシマ",
-  // キャラクター・その他
-  "ミニ四駆", "グッドスマイルカンパニー", "ボークス",
-  "ガレージキット", "その他",
+  // バンダイ - ガンプラ
+  "ガンプラ（HG）", "ガンプラ（MG）", "ガンプラ（RG）", "ガンプラ（PG）", "ガンプラ（SD）", "ガンプラ（EG）",
+  // バンダイ - その他
+  "ポケプラ",
+  "Figure-rise Standard", "Figure-rise Bust", "Figure-rise Mechanics",
+  "30 Minutes Sisters", "30 Minutes Missions",
+  // コトブキヤ
+  "フレームアームズ", "フレームアームズ・ガール", "ヘキサギア",
+  "メガミデバイス", "アーマーガールズプロジェクト",
+  // グッドスマイルカンパニー
+  "MODEROID", "PLAMATE",
+  // ボークス
+  "FSS（ファイブスター物語）", "ドルフィードリーム",
+  // タミヤ
+  "タミヤ（戦車）", "タミヤ（飛行機）", "タミヤ（艦船）", "タミヤ（車）", "タミヤ（バイク）", "タミヤ（フィギュア）", "タミヤ（SF・キャラ）",
+  "ミニ四駆",
+  // ハセガワ
+  "ハセガワ（飛行機）", "ハセガワ（艦船）", "ハセガワ（車）", "ハセガワ（キャラ）",
+  // フジミ
+  "フジミ（艦船）", "フジミ（車）", "フジミ（飛行機）",
+  // アオシマ
+  "アオシマ（艦船）", "アオシマ（車）", "アオシマ（バイク）",
+  // その他メーカー
+  "ピットロード", "ファインモールド", "ドラゴン", "トランペッター",
+  // ガレージキット・その他
+  "ガレージキット", "レジンキット", "その他",
 ];
 const SCALE_OPTIONS = ["1/144", "1/100", "1/60", "MG", "HG", "RG", "PG", "その他"];
 
@@ -30,12 +47,24 @@ const emptyForm = {
 };
 
 function guessSeriesFromName(name) {
-  if (/SEED|シード/i.test(name)) return "SEED";
-  if (/ユニコーン|unicorn/i.test(name)) return "ユニコーン";
-  if (/鉄血|テッケツ/i.test(name)) return "鉄血のオルフェンズ";
-  if (/水星|Witch/i.test(name)) return "水星の魔女";
-  if (/\b00\b|ダブルオー/i.test(name)) return "00";
-  if (/ガンダム|Gundam/i.test(name)) return "機動戦士ガンダム";
+  // ガンダム以外のシリーズ
+  if (/MODEROID/i.test(name)) return "MODEROID";
+  if (/フレームアームズ・ガール|FA:G/i.test(name)) return "フレームアームズ・ガール";
+  if (/フレームアームズ|Frame Arms/i.test(name)) return "フレームアームズ";
+  if (/ヘキサギア|Hexa Gear/i.test(name)) return "ヘキサギア";
+  if (/メガミデバイス/i.test(name)) return "メガミデバイス";
+  if (/30MS|30 Minutes Sisters/i.test(name)) return "30 Minutes Sisters";
+  if (/30MM|30 Minutes Missions/i.test(name)) return "30 Minutes Missions";
+  if (/Figure-rise/i.test(name)) return "Figure-rise Standard";
+  if (/ポケモン|ポケプラ|Pokemon/i.test(name)) return "ポケプラ";
+  if (/ミニ四駆/i.test(name)) return "ミニ四駆";
+  // ガンプラ系はグレードで分類
+  if (/\bPG\b/i.test(name)) return "ガンプラ（PG）";
+  if (/\bMG\b/i.test(name)) return "ガンプラ（MG）";
+  if (/\bRG\b/i.test(name)) return "ガンプラ（RG）";
+  if (/\bEG\b/i.test(name)) return "ガンプラ（EG）";
+  if (/\bSD\b/i.test(name)) return "ガンプラ（SD）";
+  if (/\bHG\b|ガンダム|Gundam/i.test(name)) return "ガンプラ（HG）";
   return "";
 }
 function guessScaleFromName(name) {
@@ -201,14 +230,13 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
 
   const buildTweet = () => {
     const id = myXId.trim().replace(/^@/, "");
-    const idLine = id ? `譲渡希望の方はDM→ @${id}\n\n` : "ほしい方はDMください🙏\n\n";
+    const idLine = id ? `DM→ @${id}\n\n` : "";
     const lines = targetKits.slice(0, 10).map((k) => {
       const scale = k.scale ? ` [${k.scale}]` : "";
-      const price = k.price ? ` ¥${Number(k.price).toLocaleString()}` : "";
-      return `📦 ${k.name}${scale}${price}`;
+      return `📦 ${k.name}${scale}`;
     });
     const more = targetKits.length > 10 ? `\n他${targetKits.length - 10}点...` : "";
-    return `積みプラ放出します！\n\n${lines.join("\n")}${more}\n\n${idLine}#積みプラ #プラモデル #ツミツミ #気になるツミはありますか`;
+    return `積みプラ紹介します！\n\n${lines.join("\n")}${more}\n\n${idLine}#積みプラ #プラモデル #ツミツミ #気になるツミはありますか`;
   };
 
   const handleTweet = () => {
@@ -499,10 +527,17 @@ export default function App() {
             <input style={s.input} placeholder="例: νガンダム" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
 
             <label style={s.label}>シリーズ</label>
-            <select style={s.input} value={form.series} onChange={(e) => setForm((f) => ({ ...f, series: e.target.value }))}>
+            <select style={s.input}
+              value={SERIES_OPTIONS.includes(form.series) ? form.series : form.series ? "__custom__" : ""}
+              onChange={(e) => setForm((f) => ({ ...f, series: e.target.value === "__custom__" ? "" : e.target.value }))}>
               <option value="">選択してください</option>
               {SERIES_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+              <option value="__custom__">✏️ 自由入力...</option>
             </select>
+            {!SERIES_OPTIONS.includes(form.series) && (
+              <input style={{ ...s.input, marginTop: 6 }} placeholder="シリーズ名を自由に入力" value={form.series}
+                onChange={(e) => setForm((f) => ({ ...f, series: e.target.value }))} />
+            )}
 
             <label style={s.label}>スケール</label>
             <select style={s.input} value={form.scale} onChange={(e) => setForm((f) => ({ ...f, scale: e.target.value }))}>
