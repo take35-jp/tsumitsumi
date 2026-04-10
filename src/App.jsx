@@ -91,81 +91,80 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const scannerRef = useRef();
-  const detectedRef = useRef(false);
-  const [status, setStatus] = useState("loading");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [tapFlash, setTapFlash] = useState(false);
+  const [imgSrc, setImgSrc] = useState(null);
+  const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef();
 
-  const handleTap = (e) => {
-    const video = scannerRef.current?.querySelector("video");
-    if (!video?.srcObject) return;
-    const track = video.srcObject.getVideoTracks()[0];
-    if (!track) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
+  const loadZXing = () => new Promise((resolve, reject) => {
+    if (window.ZXing) { resolve(); return; }
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/zxing-wasm@1.1.3/dist/full/zxing_full.min.js";
+    s.onload = () => {
+      // zxing-wasm初期化
+      if (window.ZXing?.readBarcodesFromImageData) { resolve(); return; }
+      // fallback: zxing-js
+      const s2 = document.createElement("script");
+      s2.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
+      s2.onload = resolve; s2.onerror = reject;
+      document.head.appendChild(s2);
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+
+  const readBarcode = async (file) => {
+    setScanning(true);
+    setError("");
     try {
-      track.applyConstraints({ advanced: [{ focusMode: "manual", pointOfInterest: { x, y } }] })
-        .then(() => setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {}), 800))
-        .catch(() => {});
+      await loadZXing();
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // ZXing JSで読み取り
+      const ZXing = window.ZXing;
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128,
+      ]);
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+      const reader = new ZXing.MultiFormatReader();
+      reader.setHints(hints);
+      const lum = new ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
+      const bmp2 = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+      const result = reader.decode(bmp2);
+      if (result) {
+        setScanning(false);
+        onDetected(result.getText());
+        return;
+      }
     } catch (_) {}
-    setTapFlash(true);
-    setTimeout(() => setTapFlash(false), 300);
+    setScanning(false);
+    setError("バーコードを読み取れませんでした。
+バーコード部分が明確に写るよう撮り直してください。");
   };
 
-  useEffect(() => {
-    const loadQuagga = () => new Promise((resolve, reject) => {
-      if (window.Quagga) { resolve(); return; }
-      const s = document.createElement("script");
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setImgSrc(url);
+    setError("");
+    readBarcode(file);
+    e.target.value = "";
+  };
 
-    const init = async () => {
-      await loadQuagga();
-      window.Quagga.init({
-        inputStream: {
-          name: "Live", type: "LiveStream", target: scannerRef.current,
-          constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 }, focusMode: "continuous", advanced: [{ focusMode: "continuous" }] },
-        },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"], multiple: false },
-        locate: true, frequency: 5,
-        locator: { patchSize: "medium", halfSample: true },
-      }, (err) => {
-        if (err) {
-          setStatus("error");
-          setErrorMsg(err?.name === "NotAllowedError" ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。" : "カメラを起動できませんでした。\n手動でJANコードを入力してください。");
-          return;
-        }
-        window.Quagga.start();
-        setStatus("scanning");
-      });
-
-      window.Quagga.onDetected((result) => {
-        if (detectedRef.current) return;
-        const code = result?.codeResult?.code;
-        const confidence = result?.codeResult?.startInfo?.error || 0;
-        if (code && confidence < 0.2) {
-          detectedRef.current = true;
-          window.Quagga.stop();
-          onDetected(code);
-        }
-      });
-
-      const refocusInterval = setInterval(() => {
-        const video = scannerRef.current?.querySelector("video");
-        if (!video?.srcObject) return;
-        const track = video.srcObject.getVideoTracks()[0];
-        try { track?.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {}); } catch (_) {}
-      }, 2000);
-      return () => clearInterval(refocusInterval);
-    };
-
-    init().catch(() => { setStatus("error"); setErrorMsg("カメラを起動できませんでした。\n手動でJANコードを入力してください。"); });
-    return () => { if (window.Quagga) { try { window.Quagga.stop(); } catch (_) {} } };
-  }, []);
+  const handleRetake = () => {
+    setImgSrc(null);
+    setError("");
+    setScanning(false);
+    inputRef.current?.click();
+  };
 
   return (
     <div style={sc.wrap}>
@@ -173,15 +172,39 @@ function BarcodeScanner({ onDetected, onClose }) {
         <span style={sc.title}>📷 バーコードをスキャン</span>
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
-      {status === "error"
-        ? <div style={sc.errorBox}>{errorMsg}</div>
-        : (
-          <div style={{ ...sc.videoWrap, outline: tapFlash ? "3px solid rgba(255,255,255,0.8)" : "none" }} onClick={handleTap}>
-            <div ref={scannerRef} style={{ width: "100%", height: "100%" }} />
-            <div style={sc.dimOverlay}><div style={sc.frame} /></div>
-            <div style={sc.hint}>{status === "loading" ? "カメラを起動中..." : "📍 タップでフォーカス調整"}</div>
+
+      {!imgSrc ? (
+        <div>
+          <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>📷</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
-        )}
+          <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
+          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 10 }}>
+            バーコードが枠内に収まるように撮影してください
+          </div>
+        </div>
+      ) : (
+        <div>
+          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 220 }} alt="" />
+          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
+          {error && (
+            <div style={sc.errorBox}>
+              {error}
+              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
+            </div>
+          )}
+          {!scanning && !error && (
+            <div style={sc.retakeRow}>
+              <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
+
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
     </div>
@@ -206,11 +229,12 @@ const sc = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
-  videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
-  dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-  frame: { width: "70%", aspectRatio: "2.2/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" },
-  hint: { position: "absolute", bottom: 14, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.85)", fontSize: 12 },
-  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, whiteSpace: "pre-wrap", marginBottom: 16 },
+  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "40px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
+  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginTop: 10 },
+  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, whiteSpace: "pre-wrap", marginTop: 10 },
+  retakeBtn: { display: "block", marginTop: 10, width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  retakeRow: { marginTop: 10 },
+  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
 };
@@ -310,7 +334,9 @@ export default function App() {
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [myXId, setMyXId] = useState("");
-  const [sortBy, setSortBy] = useState("custom");
+  const [sortBy, setSortBy] = useState("none");
+  const [longPressId, setLongPressId] = useState(null);
+  const longPressTimer = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [dragId, setDragId] = useState(null);
   const fileRef = useRef();
@@ -361,7 +387,7 @@ export default function App() {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  // ドラッグ並び替え
+  // 長押し並び替え
   const handleDragStart = (id) => setDragId(id);
   const handleDragOver = (e, id) => {
     e.preventDefault();
@@ -375,6 +401,14 @@ export default function App() {
       next.splice(to, 0, moved);
       return next;
     });
+  };
+  const handleLongPressStart = (id) => {
+    longPressTimer.current = setTimeout(() => { setLongPressId(id); setDragId(id); }, 500);
+  };
+  const handleLongPressEnd = () => {
+    clearTimeout(longPressTimer.current);
+    setLongPressId(null);
+    setDragId(null);
   };
 
   const totalKits = kits.length;
@@ -394,8 +428,8 @@ export default function App() {
     );
   }
   if (sortBy === "series") filtered = [...filtered].sort((a, b) => (a.series || "").localeCompare(b.series || ""));
-  else if (sortBy === "rating") filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  else if (sortBy === "name") filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+  else if (sortBy === "rating_desc") filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  else if (sortBy === "rating_asc") filtered = [...filtered].sort((a, b) => (a.rating || 0) - (b.rating || 0));
 
   return (
     <div style={s.root}>
@@ -439,12 +473,15 @@ export default function App() {
         </div>
 
         {/* ソート */}
-        <div style={{ padding: "8px 16px 10px", display: "flex", gap: 6, overflowX: "auto" }}>
-          {[["custom","自由"], ["series","シリーズ"], ["rating","★評価"], ["name","名前"]].map(([key, label]) => (
-            <button key={key}
-              style={{ padding: "5px 12px", border: `1.5px solid ${sortBy === key ? "#111" : "#e5e7eb"}`, borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", background: sortBy === key ? "#111" : "#fff", color: sortBy === key ? "#fff" : "#6b7280", whiteSpace: "nowrap" }}
-              onClick={() => setSortBy(key)}>{label}</button>
-          ))}
+        <div style={{ padding: "8px 16px 10px", display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "#9ca3af", flexShrink: 0 }}>並び順：</span>
+          <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, background: "#fafafa", outline: "none", color: "#111" }}
+            value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="none">登録順</option>
+            <option value="series">シリーズ順</option>
+            <option value="rating_desc">★評価が高い順</option>
+            <option value="rating_asc">★評価が低い順</option>
+          </select>
         </div>
       </div>
 
@@ -460,12 +497,18 @@ export default function App() {
           </div>
         )}
         {filtered.map((kit) => (
-          <div key={kit.id} style={{ ...s.card, opacity: dragId === kit.id ? 0.5 : 1 }}
-            draggable={sortBy === "custom"}
-            onDragStart={() => handleDragStart(kit.id)}
-            onDragOver={(e) => sortBy === "custom" && handleDragOver(e, kit.id)}
-            onDragEnd={() => setDragId(null)}
-            onClick={() => setDetail(kit)}>
+          <div key={kit.id}
+            style={{ ...s.card, opacity: dragId === kit.id ? 0.5 : 1, border: longPressId === kit.id ? "2px solid #4f8ef7" : "none", transform: longPressId === kit.id ? "scale(1.02)" : "scale(1)", transition: "transform 0.15s" }}
+            draggable={!!dragId}
+            onDragStart={() => dragId && handleDragStart(kit.id)}
+            onDragOver={(e) => dragId && handleDragOver(e, kit.id)}
+            onDragEnd={handleLongPressEnd}
+            onTouchStart={() => handleLongPressStart(kit.id)}
+            onTouchEnd={handleLongPressEnd}
+            onMouseDown={() => handleLongPressStart(kit.id)}
+            onMouseUp={handleLongPressEnd}
+            onMouseLeave={handleLongPressEnd}
+            onClick={() => !dragId && setDetail(kit)}>
             {kit.photoUrl
               ? <img src={kit.photoUrl} style={s.thumb} alt="" />
               : <div style={s.thumbPh}>📦</div>
@@ -486,8 +529,8 @@ export default function App() {
               onClick={(e) => { e.stopPropagation(); toggleComplete(kit.id); }}>✓</button>
           </div>
         ))}
-        {sortBy === "custom" && filtered.length > 1 && (
-          <div style={{ textAlign: "center", fontSize: 11, color: "#bbb", padding: "4px 0 8px" }}>ドラッグで並び替えできます</div>
+        {sortBy === "none" && filtered.length > 1 && (
+          <div style={{ textAlign: "center", fontSize: 11, color: "#bbb", padding: "4px 0 8px" }}>長押しで並び替えできます</div>
         )}
       </div>
 
