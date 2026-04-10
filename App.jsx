@@ -313,6 +313,7 @@ export default function App() {
   const [showScanner, setShowScanner] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [scanMsg, setScanMsg] = useState("");
   const [myXId, setMyXId] = useState("");
   const fileRef = useRef();
 
@@ -356,7 +357,6 @@ export default function App() {
     setScanLoading(true);
     const data = await fetchProductByJAN(jan);
     setScanLoading(false);
-    // 確認画面なしで直接フォームに反映
     if (data?.name) {
       setForm({ ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl });
     } else {
@@ -503,6 +503,7 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowForm(false)}>
           <div style={s.formModal} onClick={(e) => e.stopPropagation()}>
             <div style={s.formTitle}>{editId ? "キットを編集" : "キットを追加"}</div>
+            {scanMsg && <div style={{ background: "#fee2e2", color: "#b91c1c", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 4 }}>{scanMsg}</div>}
 
             <label style={s.label}>キット名 *</label>
             <input style={s.input} placeholder="例: νガンダム" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
