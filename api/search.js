@@ -1,6 +1,7 @@
 const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
 
 function cleanName(name) {
+  // ① スケール・グレードキーワードが出てきた位置から取り出す
   const startKeywords = [
     /\bPG\b/, /\bMG\b/, /\bRG\b/, /\bHG\b/, /\bEG\b/, /\bSD\b/,
     /1\/144/, /1\/100/, /1\/60/, /1\/72/, /1\/35/, /1\/24/, /1\/12/,
@@ -13,23 +14,36 @@ function cleanName(name) {
       break;
     }
   }
+
+  // ② 不要なワードを除去（位置に関係なく）
+  const removePatterns = [
+    /プラスチックモデルキット\s*/g,
+    /プラモデル\s*/g,
+    /返品種別[A-Z]\s*/g,
+    /\([0-9]{6,}\)/g,
+    /【[^】]*】/g,
+    /\s+バンダイ$/,
+    /\s+BANDAI$/i,
+  ];
+  for (const p of removePatterns) {
+    name = name.replace(p, "");
+  }
+
+  // ③ 末尾の不要ワードで打ち切る
   const stopKeywords = [
-    /\s+プラモデル/, /\s+バンダイ/, /\s+BANDAI/i,
-    /\s+タミヤ/, /\s+TAMIYA/i, /\s+ハセガワ/, /\s+アオシマ/, /\s+フジミ/,
     /\s+機動戦士/, /\s+機動新世紀/, /\s+新機動/, /\s+閃光のハサウェイ/,
     /\s+鉄血/, /\s+水星/, /\s+SEED/, /\s+ユニコーン/,
-    /\([0-9]{6,}\)/,
   ];
   for (const kw of stopKeywords) {
     const match = name.match(kw);
     if (match) name = name.slice(0, name.indexOf(match[0]));
   }
+
   return name.replace(/\s+/g, " ").trim();
 }
 
 async function yahooSearch(params) {
-  const base = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch";
-  const url = `${base}?appid=${YAHOO_CLIENT_ID}&results=1&output=json&${params}`;
+  const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=1&output=json&${params}`;
   const r = await fetch(url);
   const data = await r.json();
   return data?.hits?.[0] || null;
