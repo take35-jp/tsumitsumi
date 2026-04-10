@@ -100,108 +100,63 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const videoRef = useRef();
-  const canvasRef = useRef();
-  const animRef = useRef();
+  const scannerDivId = "tsumitsumi-scanner";
   const detectedRef = useRef(false);
+  const scannerRef = useRef(null);
   const [status, setStatus] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    let stream = null;
-    let detector = null;
-
-    const startScan = async () => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      // ① BarcodeDetector API（Android Chrome・iOS Safari対応）
-      if ("BarcodeDetector" in window) {
-        detector = new window.BarcodeDetector({
-          formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
-        });
-        const tick = async () => {
-          if (detectedRef.current) return;
-          if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            try {
-              const barcodes = await detector.detect(video);
-              if (barcodes.length > 0) {
-                detectedRef.current = true;
-                onDetected(barcodes[0].rawValue);
-                return;
-              }
-            } catch (_) {}
-          }
-          animRef.current = requestAnimationFrame(tick);
-        };
-        animRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      // ② Quagga fallback
-      const loadQuagga = () => new Promise((resolve, reject) => {
-        if (window.Quagga) { resolve(); return; }
-        const s = document.createElement("script");
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-
-      await loadQuagga();
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-      const qtick = () => {
-        if (detectedRef.current) return;
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0);
-          window.Quagga.decodeSingle({
-            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-            locate: true,
-            src: canvas.toDataURL(),
-          }, (result) => {
-            if (result?.codeResult?.code && !detectedRef.current) {
-              detectedRef.current = true;
-              onDetected(result.codeResult.code);
-              return;
-            }
-          });
-        }
-        animRef.current = requestAnimationFrame(qtick);
-      };
-      animRef.current = requestAnimationFrame(qtick);
-    };
+    const loadLib = () => new Promise((resolve, reject) => {
+      if (window.Html5Qrcode) { resolve(); return; }
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js";
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
 
     const init = async () => {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        }
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setStatus("scanning");
-        await startScan();
-      }
+      await loadLib();
+      const scanner = new window.Html5Qrcode(scannerDivId);
+      scannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 15,
+          qrbox: { width: 280, height: 120 },
+          aspectRatio: 1.5,
+          formatsToSupport: [
+            window.Html5QrcodeSupportedFormats?.EAN_13,
+            window.Html5QrcodeSupportedFormats?.EAN_8,
+            window.Html5QrcodeSupportedFormats?.CODE_128,
+          ].filter(Boolean),
+        },
+        (code) => {
+          if (detectedRef.current) return;
+          detectedRef.current = true;
+          scanner.stop().catch(() => {});
+          onDetected(code);
+        },
+        () => {}
+      );
+      setStatus("scanning");
     };
 
     init().catch((e) => {
       setStatus("error");
-      setErrorMsg(e?.name === "NotAllowedError"
-        ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
-        : "カメラを起動できませんでした。\n手動でJANコードを入力してください。");
+      setErrorMsg(
+        String(e).includes("Permission")
+          ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
+          : "カメラを起動できませんでした。\n手動でJANコードを入力してください。"
+      );
     });
 
     return () => {
-      cancelAnimationFrame(animRef.current);
-      stream?.getTracks().forEach((t) => t.stop());
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
+      }
     };
   }, []);
 
@@ -215,10 +170,15 @@ function BarcodeScanner({ onDetected, onClose }) {
         ? <div style={sc.errorBox}>{errorMsg}</div>
         : (
           <div style={sc.videoWrap}>
-            <video ref={videoRef} style={sc.video} playsInline muted />
-            <canvas ref={canvasRef} style={{ display: "none" }} />
-            <div style={sc.dimOverlay}><div style={sc.frame} /></div>
-            <div style={sc.hint}>{status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}</div>
+            <div id={scannerDivId} style={{ width: "100%", height: "100%" }} />
+            {status === "loading" && (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.85)", fontSize: 13 }}>
+                カメラを起動中...
+              </div>
+            )}
+            {status === "scanning" && (
+              <div style={sc.hint}>バーコードを枠内に合わせてください</div>
+            )}
           </div>
         )}
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
