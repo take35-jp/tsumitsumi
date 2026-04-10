@@ -1,5 +1,3 @@
-const GEMINI_API_KEY = "AIzaSyBTXc0JVHMu1Dy3C9TYlnlINcRXTqHCDXg";
-
 function extractJAN(text) {
   const digits = text.replace(/[^0-9]/g, "");
   for (let i = 0; i <= digits.length - 13; i++) {
@@ -15,9 +13,13 @@ function extractJAN(text) {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
 
+  if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) return res.status(500).json({ error: "API key not configured" });
 
   const { image, mimeType } = req.body;
   if (!image) return res.status(400).json({ error: "image required" });
@@ -43,11 +45,8 @@ export default async function handler(req, res) {
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const jan = extractJAN(text);
 
-    if (jan) {
-      return res.json({ jan });
-    } else {
-      return res.status(404).json({ error: "not found", raw: text });
-    }
+    if (jan) return res.json({ jan });
+    return res.status(404).json({ error: "not found", raw: text });
   } catch (e) {
     return res.status(500).json({ error: String(e) });
   }
