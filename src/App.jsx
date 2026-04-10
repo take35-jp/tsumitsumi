@@ -326,7 +326,17 @@ const xs = {
 
 // ---- Main App ----
 export default function App() {
-  const [kits, setKits] = useState([]);
+  const [kits, setKits] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tsumitsumi_kits");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  // kitsが変わるたびにローカルストレージに保存
+  useEffect(() => {
+    try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch {}
+  }, [kits]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
