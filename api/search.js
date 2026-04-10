@@ -43,10 +43,15 @@ function cleanName(name) {
 }
 
 async function yahooSearch(params) {
-  const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=1&output=json&${params}`;
+  // results=5件取得して中古っぽいものを除外し最初の1件を返す
+  const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=5&output=json&${params}`;
   const r = await fetch(url);
   const data = await r.json();
-  return data?.hits?.[0] || null;
+  const hits = data?.hits || [];
+  // 中古・即納・訳あり等を除外
+  const skipWords = /中古|即納|訳あり|ジャンク|未開封品|used/i;
+  const clean = hits.find(h => !skipWords.test(h.name || ""));
+  return clean || hits[0] || null;
 }
 
 export default async function handler(req, res) {
