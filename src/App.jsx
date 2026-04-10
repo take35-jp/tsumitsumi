@@ -94,99 +94,112 @@ function BarcodeScanner({ onDetected, onClose }) {
   const [imgSrc, setImgSrc] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState("");
   const inputRef = useRef();
 
   const extractJAN = (text) => {
-    // テキストからJANコード（8〜13桁の数字）を抽出
-    const cleaned = text.replace(/[^0-9]/g, " ");
-    const matches = cleaned.match(/\d{13}|\d{8}/g);
-    if (matches && matches.length > 0) return matches[0];
-    // スペースを除去してチェック
-    const nums = text.replace(/\s/g, "").match(/\d{13}|\d{8}/g);
-    if (nums && nums.length > 0) return nums[0];
+    // スペース・ハイフン・改行を除去して数字だけ抽出
+    const digits = text.replace(/[^0-9]/g, "");
+    // 13桁のEAN-13を探す
+    for (let i = 0; i <= digits.length - 13; i++) {
+      const candidate = digits.slice(i, i + 13);
+      if (/^[0-9]{13}$/.test(candidate)) {
+        // チェックディジット検証
+        let sum = 0;
+        for (let j = 0; j < 12; j++) {
+          sum += parseInt(candidate[j]) * (j % 2 === 0 ? 1 : 3);
+        }
+        const check = (10 - (sum % 10)) % 10;
+        if (check === parseInt(candidate[12])) return candidate;
+      }
+    }
+    // チェックディジットなしで13桁を返す
+    const m = digits.match(/\d{13}/);
+    if (m) return m[0];
+    // 8桁
+    const m8 = digits.match(/\d{8}/);
+    if (m8) return m8[0];
     return null;
+  };
+
+  const tryZXing = async (file) => {
+    if (!window.ZXing) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    const img = new Image();
+    const objUrl = URL.createObjectURL(file);
+    await new Promise((resolve) => { img.onload = resolve; img.src = objUrl; });
+
+    for (const scale of [1, 1.5, 0.75, 2]) {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const ZXing = window.ZXing;
+        const hints = new Map();
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128]);
+        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+        const reader = new ZXing.MultiFormatReader();
+        reader.setHints(hints);
+        const lum = new ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
+        const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+        const result = reader.decode(bmp);
+        if (result) return result.getText();
+      } catch (_) {}
+    }
+    return null;
+  };
+
+  const tryTesseract = async (file) => {
+    if (!window.Tesseract) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    setProgress("文字認識中...");
+    const worker = await window.Tesseract.createWorker("eng", 1, {
+      logger: () => {},
+    });
+    await worker.setParameters({
+      tessedit_char_whitelist: "0123456789",
+      tessedit_pageseg_mode: "6",
+    });
+    const { data: { text } } = await worker.recognize(file);
+    await worker.terminate();
+    return extractJAN(text);
   };
 
   const readBarcode = async (file) => {
     setScanning(true);
     setError("");
+    setProgress("バーコードを解析中...");
     try {
-      // ① まずZXing-jsで試みる
-      if (!window.ZXing) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement("script");
-          s.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
-          s.onload = resolve; s.onerror = reject;
-          document.head.appendChild(s);
-        });
-      }
-
-      const img = new Image();
-      const objUrl = URL.createObjectURL(file);
-      await new Promise((resolve) => { img.onload = resolve; img.src = objUrl; });
-
-      // 複数の解像度で試みる
-      for (const scale of [1, 0.5, 2]) {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-          const ZXing = window.ZXing;
-          const hints = new Map();
-          hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-            ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128,
-          ]);
-          hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-          const reader = new ZXing.MultiFormatReader();
-          reader.setHints(hints);
-          const lum = new ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
-          const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-          const result = reader.decode(bmp);
-          if (result) {
-            setScanning(false);
-            onDetected(result.getText());
-            return;
-          }
-        } catch (_) {}
-      }
-
-      // ② Tesseract OCRでJAN数字を読み取る
-      if (!window.Tesseract) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement("script");
-          s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-          s.onload = resolve; s.onerror = reject;
-          document.head.appendChild(s);
-        });
-      }
-
-      const worker = await window.Tesseract.createWorker("eng");
-      await worker.setParameters({ tessedit_char_whitelist: "0123456789 -" });
-      const { data: { text } } = await worker.recognize(file);
-      await worker.terminate();
-
-      const jan = extractJAN(text);
-      if (jan) {
-        setScanning(false);
-        onDetected(jan);
-        return;
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      const code = await tryZXing(file);
+      if (code) { setScanning(false); setProgress(""); onDetected(code); return; }
+      setProgress("数字を認識中...");
+      const jan = await tryTesseract(file);
+      if (jan) { setScanning(false); setProgress(""); onDetected(jan); return; }
+    } catch (e) {}
     setScanning(false);
-    setError("バーコードを読み取れませんでした。\nバーコード部分をアップで撮影するか\n手動でJANコードを入力してください。");
+    setProgress("");
+    setError("読み取れませんでした。\nバーコードの数字部分だけをアップで撮影するか\n手動でJANコードを入力してください。");
   };
 
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setImgSrc(url);
+    setImgSrc(URL.createObjectURL(file));
     setError("");
     readBarcode(file);
     e.target.value = "";
@@ -196,6 +209,7 @@ function BarcodeScanner({ onDetected, onClose }) {
     setImgSrc(null);
     setError("");
     setScanning(false);
+    setProgress("");
     setTimeout(() => inputRef.current?.click(), 100);
   };
 
@@ -213,14 +227,19 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
-          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.6 }}>
-            バーコードをアップで・明るい場所で撮影してください
+          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
+            💡 バーコードの数字部分が<br />大きく・鮮明に写るよう撮影してください
           </div>
         </div>
       ) : (
         <div>
           <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200 }} alt="" />
-          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...（数秒かかります）</div>}
+          {scanning && (
+            <div style={sc.scanningBox}>
+              <div style={{ marginBottom: 6 }}>⏳ {progress}</div>
+              <div style={{ fontSize: 11, color: "#166534" }}>少々お待ちください</div>
+            </div>
+          )}
           {error && (
             <div style={sc.errorBox}>
               <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
@@ -371,6 +390,8 @@ export default function App() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [dragId, setDragId] = useState(null);
+  const [longPressId, setLongPressId] = useState(null);
+  const longPressTimer = useRef(null);
   const fileRef = useRef();
   const completedFileRef = useRef();
 
@@ -433,6 +454,17 @@ export default function App() {
       next.splice(to, 0, moved);
       return next;
     });
+  };
+  const handleLongPressStart = (id) => {
+    longPressTimer.current = setTimeout(() => {
+      setLongPressId(id);
+      setDragId(id);
+    }, 500);
+  };
+  const handleLongPressEnd = () => {
+    clearTimeout(longPressTimer.current);
+    setLongPressId(null);
+    setDragId(null);
   };
 
 
@@ -540,16 +572,19 @@ export default function App() {
         )}
         {filtered.map((kit) => (
           <div key={kit.id}
-            style={{ ...s.card, opacity: dragId === kit.id ? 0.4 : 1, boxShadow: dragId === kit.id ? "0 8px 24px rgba(0,0,0,0.18)" : "0 1px 4px rgba(0,0,0,0.06)", transform: dragId === kit.id ? "translateY(-3px)" : "none", transition: "box-shadow 0.2s, transform 0.2s" }}
+            style={{ ...s.card, userSelect: "none", WebkitUserSelect: "none", opacity: dragId === kit.id ? 0.4 : 1, boxShadow: longPressId === kit.id ? "0 8px 24px rgba(0,0,0,0.18)" : "0 1px 4px rgba(0,0,0,0.06)", transform: longPressId === kit.id ? "translateY(-4px)" : "none", transition: "box-shadow 0.2s, transform 0.2s" }}
+            draggable={!!dragId}
+            onDragStart={() => dragId && handleDragStart(kit.id)}
             onDragOver={(e) => { e.preventDefault(); dragId && handleDragOver(e, kit.id); }}
-            onDrop={() => setDragId(null)}
+            onDragEnd={handleLongPressEnd}
+            onTouchStart={(e) => { e.stopPropagation(); handleLongPressStart(kit.id); }}
+            onTouchEnd={handleLongPressEnd}
+            onTouchMove={(e) => { if (!dragId) return; e.preventDefault(); }}
+            onMouseDown={() => handleLongPressStart(kit.id)}
+            onMouseUp={handleLongPressEnd}
+            onMouseLeave={handleLongPressEnd}
             onClick={() => !dragId && setDetail(kit)}>
-            <div
-              draggable
-              onDragStart={(e) => { e.stopPropagation(); handleDragStart(kit.id); }}
-              onDragEnd={() => setDragId(null)}
-              style={{ color: "#c4c4c4", fontSize: 18, flexShrink: 0, cursor: "grab", paddingRight: 6, userSelect: "none", touchAction: "none" }}
-              onClick={(e) => e.stopPropagation()}>⠿</div>
+            <div style={{ color: "#c4c4c4", fontSize: 18, flexShrink: 0, cursor: "grab", paddingRight: 6, userSelect: "none", WebkitUserSelect: "none" }}>⠿</div>
             {kit.photoUrl
               ? <img src={kit.photoUrl} style={s.thumb} alt="" />
               : <div style={s.thumbPh}>📦</div>
