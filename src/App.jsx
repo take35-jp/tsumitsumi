@@ -55,31 +55,60 @@ function guessScaleFromName(name) {
   return "";
 }
 
+const RAKUTEN_APP_ID = "42e3f5e9-0e32-4e0d-b5e3-2df6b593b6ff";
+
 async function fetchProductByJAN(jan) {
   const apis = [
+    // ① 楽天市場API
+    async () => {
+      const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?applicationId=${RAKUTEN_APP_ID}&keyword=${jan}&hits=1&formatVersion=2`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const item = data?.Items?.[0];
+      if (!item) return null;
+      const name = item.itemName || "";
+      return {
+        name,
+        photoUrl: item.mediumImageUrls?.[0] || item.smallImageUrls?.[0] || "",
+        price: item.itemPrice ? String(item.itemPrice) : "",
+        series: guessSeriesFromName(name),
+        scale: guessScaleFromName(name),
+      };
+    },
+    // ② 楽天ブックスAPI
+    async () => {
+      const url = `https://app.rakuten.co.jp/services/api/BooksTotal/Search/20170404?applicationId=${RAKUTEN_APP_ID}&jan=${jan}&hits=1&formatVersion=2`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const item = data?.Items?.[0];
+      if (!item) return null;
+      const name = item.title || item.itemName || "";
+      if (!name) return null;
+      return {
+        name,
+        photoUrl: item.largeImageUrl || item.mediumImageUrl || "",
+        price: item.itemPrice ? String(item.itemPrice) : "",
+        series: guessSeriesFromName(name),
+        scale: guessScaleFromName(name),
+      };
+    },
+    // ③ UPCItemDB（海外フォールバック）
     async () => {
       const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${jan}`);
       if (!res.ok) return null;
       const data = await res.json();
       const item = data?.items?.[0];
       if (!item) return null;
+      const name = item.title || "";
       return {
-        name: item.title || "",
+        name,
         photoUrl: item.images?.[0] || "",
         price: item.offers?.[0]?.price ? String(Math.round(item.offers[0].price)) : "",
-        series: guessSeriesFromName(item.title || ""),
-        scale: guessScaleFromName(item.title || ""),
+        series: guessSeriesFromName(name),
+        scale: guessScaleFromName(name),
       };
-    },
-    async () => {
-      const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${jan}.json`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.status !== 1) return null;
-      const p = data.product;
-      const name = p.product_name_ja || p.product_name || "";
-      if (!name) return null;
-      return { name, photoUrl: p.image_front_url || "", price: "", series: guessSeriesFromName(name), scale: guessScaleFromName(name) };
     },
   ];
   for (const api of apis) {
