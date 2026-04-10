@@ -99,15 +99,28 @@ function BarcodeScanner({ onDetected, onClose }) {
   const inputRef = useRef();
 
   const tryGemini = async (file) => {
-    const b64 = await new Promise((resolve) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result.split(",")[1]);
-      r.readAsDataURL(file);
+    // 画像をCanvasで圧縮（Vercelの4.5MB制限対策）
+    const compressed = await new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const MAX = 1024;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+      };
+      img.src = url;
     });
     const res = await fetch("/api/scan-barcode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: b64, mimeType: file.type || "image/jpeg" }),
+      body: JSON.stringify({ image: compressed, mimeType: "image/jpeg" }),
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -504,7 +517,7 @@ export default function App() {
                   disabled={index === filtered.length - 1}>▼</button>
               </div>
             ) : (
-              <div style={{ color: "#d1d5db", fontSize: 18, flexShrink: 0, paddingRight: 6 }}>⠿</div>
+
             )}
             {kit.photoUrl
               ? <img src={kit.photoUrl} style={s.thumb} alt="" />
