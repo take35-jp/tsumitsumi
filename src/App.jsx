@@ -96,11 +96,22 @@ function BarcodeScanner({ onDetected, onClose }) {
   const [error, setError] = useState("");
   const inputRef = useRef();
 
+  const extractJAN = (text) => {
+    // テキストからJANコード（8〜13桁の数字）を抽出
+    const cleaned = text.replace(/[^0-9]/g, " ");
+    const matches = cleaned.match(/\d{13}|\d{8}/g);
+    if (matches && matches.length > 0) return matches[0];
+    // スペースを除去してチェック
+    const nums = text.replace(/\s/g, "").match(/\d{13}|\d{8}/g);
+    if (nums && nums.length > 0) return nums[0];
+    return null;
+  };
+
   const readBarcode = async (file) => {
     setScanning(true);
     setError("");
     try {
-      // ZXing-jsを動的ロード
+      // ① まずZXing-jsで試みる
       if (!window.ZXing) {
         await new Promise((resolve, reject) => {
           const s = document.createElement("script");
@@ -110,38 +121,65 @@ function BarcodeScanner({ onDetected, onClose }) {
         });
       }
 
-      // 画像をcanvasに描画
       const img = new Image();
-      const url = URL.createObjectURL(file);
-      await new Promise((resolve) => { img.onload = resolve; img.src = url; });
+      const objUrl = URL.createObjectURL(file);
+      await new Promise((resolve) => { img.onload = resolve; img.src = objUrl; });
 
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // 複数の解像度で試みる
+      for (const scale of [1, 0.5, 2]) {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      const ZXing = window.ZXing;
-      const hints = new Map();
-      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-        ZXing.BarcodeFormat.EAN_13,
-        ZXing.BarcodeFormat.EAN_8,
-        ZXing.BarcodeFormat.CODE_128,
-      ]);
-      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+          const ZXing = window.ZXing;
+          const hints = new Map();
+          hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+            ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128,
+          ]);
+          hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+          const reader = new ZXing.MultiFormatReader();
+          reader.setHints(hints);
+          const lum = new ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
+          const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+          const result = reader.decode(bmp);
+          if (result) {
+            setScanning(false);
+            onDetected(result.getText());
+            return;
+          }
+        } catch (_) {}
+      }
 
-      const reader = new ZXing.MultiFormatReader();
-      reader.setHints(hints);
-      const lum = new ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
-      const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-      const result = reader.decode(bmp);
-      setScanning(false);
-      onDetected(result.getText());
-      return;
-    } catch (_) {}
+      // ② Tesseract OCRでJAN数字を読み取る
+      if (!window.Tesseract) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      const worker = await window.Tesseract.createWorker("eng");
+      await worker.setParameters({ tessedit_char_whitelist: "0123456789 -" });
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
+
+      const jan = extractJAN(text);
+      if (jan) {
+        setScanning(false);
+        onDetected(jan);
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+    }
     setScanning(false);
-    setError("バーコードを読み取れませんでした。\nバーコード全体が明るく鮮明に写るよう撮り直してください。");
+    setError("バーコードを読み取れませんでした。\nバーコード部分をアップで撮影するか\n手動でJANコードを入力してください。");
   };
 
   const handleFile = (e) => {
@@ -176,16 +214,16 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
           <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.6 }}>
-            バーコード全体が枠に収まるよう<br />明るい場所で撮影してください
+            バーコードをアップで・明るい場所で撮影してください
           </div>
         </div>
       ) : (
         <div>
           <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200 }} alt="" />
-          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
+          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...（数秒かかります）</div>}
           {error && (
             <div style={sc.errorBox}>
-              <div style={{ whiteSpace: "pre-wrap" }}>{error}</div>
+              <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
               <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
             </div>
           )}
@@ -198,7 +236,6 @@ function BarcodeScanner({ onDetected, onClose }) {
       )}
 
       <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
-
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
     </div>
@@ -331,8 +368,7 @@ export default function App() {
   const [filterSeries, setFilterSeries] = useState("");
   const [filterRating, setFilterRating] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [longPressId, setLongPressId] = useState(null);
-  const longPressTimer = useRef(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [dragId, setDragId] = useState(null);
   const fileRef = useRef();
@@ -398,14 +434,7 @@ export default function App() {
       return next;
     });
   };
-  const handleLongPressStart = (id) => {
-    longPressTimer.current = setTimeout(() => { setLongPressId(id); setDragId(id); }, 500);
-  };
-  const handleLongPressEnd = () => {
-    clearTimeout(longPressTimer.current);
-    setLongPressId(null);
-    setDragId(null);
-  };
+
 
   const totalKits = kits.length;
   const rank = getRank(totalKits);
@@ -511,18 +540,16 @@ export default function App() {
         )}
         {filtered.map((kit) => (
           <div key={kit.id}
-            style={{ ...s.card, opacity: dragId === kit.id ? 0.4 : 1, boxShadow: longPressId === kit.id ? "0 8px 24px rgba(0,0,0,0.18)" : "0 1px 4px rgba(0,0,0,0.06)", transform: longPressId === kit.id ? "translateY(-3px)" : "none", transition: "box-shadow 0.2s, transform 0.2s" }}
-            draggable={!!dragId}
-            onDragStart={() => dragId && handleDragStart(kit.id)}
-            onDragOver={(e) => dragId && handleDragOver(e, kit.id)}
-            onDragEnd={handleLongPressEnd}
-            onTouchStart={() => handleLongPressStart(kit.id)}
-            onTouchEnd={handleLongPressEnd}
-            onMouseDown={() => handleLongPressStart(kit.id)}
-            onMouseUp={handleLongPressEnd}
-            onMouseLeave={handleLongPressEnd}
+            style={{ ...s.card, opacity: dragId === kit.id ? 0.4 : 1, boxShadow: dragId === kit.id ? "0 8px 24px rgba(0,0,0,0.18)" : "0 1px 4px rgba(0,0,0,0.06)", transform: dragId === kit.id ? "translateY(-3px)" : "none", transition: "box-shadow 0.2s, transform 0.2s" }}
+            onDragOver={(e) => { e.preventDefault(); dragId && handleDragOver(e, kit.id); }}
+            onDrop={() => setDragId(null)}
             onClick={() => !dragId && setDetail(kit)}>
-            <div style={{ color: "#d1d5db", fontSize: 16, flexShrink: 0, cursor: "grab", paddingRight: 4 }}>⠿</div>
+            <div
+              draggable
+              onDragStart={(e) => { e.stopPropagation(); handleDragStart(kit.id); }}
+              onDragEnd={() => setDragId(null)}
+              style={{ color: "#c4c4c4", fontSize: 18, flexShrink: 0, cursor: "grab", paddingRight: 6, userSelect: "none", touchAction: "none" }}
+              onClick={(e) => e.stopPropagation()}>⠿</div>
             {kit.photoUrl
               ? <img src={kit.photoUrl} style={s.thumb} alt="" />
               : <div style={s.thumbPh}>📦</div>
