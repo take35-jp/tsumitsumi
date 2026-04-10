@@ -1,34 +1,63 @@
-const RAKUTEN_APP_ID = "42e3f5e9-0e32-4e0d-b5e3-2df6b593b6ff";
-
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
 
   const { jan } = req.query;
   if (!jan) return res.status(400).json({ error: "jan required" });
 
-  // ① 楽天市場API - JANコードをキーワードで検索
+  // ① Open Food Facts（APIキー不要）
   try {
-    const url = new URL("https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601");
-    url.searchParams.set("applicationId", RAKUTEN_APP_ID);
-    url.searchParams.set("keyword", jan);
-    url.searchParams.set("hits", "1");
-    url.searchParams.set("formatVersion", "2");
+    const url = `https://world.openfoodfacts.org/api/v2/product/${jan}.json`;
+    const r = await fetch(url, { headers: { "User-Agent": "TsumiTsumi/1.0" } });
+    const data = await r.json();
+    if (data.status === 1) {
+      const p = data.product;
+      const name = p.product_name_ja || p.product_name || p.abbreviated_product_name || "";
+      if (name) {
+        return res.json({
+          name,
+          photoUrl: p.image_front_url || p.image_url || "",
+          price: "",
+        });
+      }
+    }
+  } catch (e) {}
 
-    const r = await fetch(url.toString());
-    const text = await r.text();
-    let data;
-    try { data = JSON.parse(text); } catch { return res.status(500).json({ error: "parse error", raw: text.slice(0, 200) }); }
-
-    const item = data?.Items?.[0];
-    if (item?.itemName) {
+  // ② UPC Item DB（APIキー不要・無料枠あり）
+  try {
+    const url = `https://api.upcitemdb.com/prod/trial/lookup?upc=${jan}`;
+    const r = await fetch(url, { headers: { "User-Agent": "TsumiTsumi/1.0" } });
+    const data = await r.json();
+    const item = data?.items?.[0];
+    if (item?.title) {
       return res.json({
-        name: item.itemName,
-        photoUrl: item.mediumImageUrls?.[0]?.imageUrl || item.smallImageUrls?.[0]?.imageUrl || "",
-        price: item.itemPrice ? String(item.itemPrice) : "",
+        name: item.title,
+        photoUrl: item.images?.[0] || "",
+        price: item.offers?.[0]?.price ? String(Math.round(item.offers[0].price)) : "",
       });
     }
-    return res.status(404).json({ error: "not found", debug: data });
-  } catch (e) {
-    return res.status(500).json({ error: String(e) });
-  }
+  } catch (e) {}
+
+  // ③ Barcode Lookup（APIキー不要）
+  try {
+    const url = `https://www.barcodelookup.com/${jan}`;
+    const r = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+        "Accept": "text/html"
+      }
+    });
+    const html = await r.text();
+    const nameMatch = html.match(/<h4[^>]*>([^<]{3,80})<\/h4>/);
+    const imgMatch = html.match(/product-image[^>]*src="([^"]+)"/);
+    if (nameMatch?.[1]) {
+      return res.json({
+        name: nameMatch[1].trim(),
+        photoUrl: imgMatch?.[1] || "",
+        price: "",
+      });
+    }
+  } catch (e) {}
+
+  return res.status(404).json({ error: "not found" });
 }
