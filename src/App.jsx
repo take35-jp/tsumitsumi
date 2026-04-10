@@ -516,9 +516,7 @@ export default function App() {
                   onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }}
                   disabled={index === filtered.length - 1}>▼</button>
               </div>
-            ) : (
-
-            )}
+            ) : null}
             {kit.photoUrl
               ? <img src={kit.photoUrl} style={s.thumb} alt="" />
               : <div style={s.thumbPh}>📦</div>
