@@ -104,6 +104,32 @@ function BarcodeScanner({ onDetected, onClose }) {
   const detectedRef = useRef(false);
   const [status, setStatus] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
+  const [tapFlash, setTapFlash] = useState(false);
+
+  const applyFocus = (track, x, y) => {
+    try {
+      track.applyConstraints({
+        advanced: [{ focusMode: "manual", pointOfInterest: { x, y } }]
+      }).then(() => {
+        setTimeout(() => {
+          track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
+        }, 800);
+      }).catch(() => {});
+    } catch (_) {}
+  };
+
+  const handleTap = (e) => {
+    const video = scannerRef.current?.querySelector("video");
+    if (!video?.srcObject) return;
+    const track = video.srcObject.getVideoTracks()[0];
+    if (!track) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    applyFocus(track, x, y);
+    setTapFlash(true);
+    setTimeout(() => setTapFlash(false), 300);
+  };
 
   useEffect(() => {
     const loadQuagga = () => new Promise((resolve, reject) => {
@@ -130,9 +156,19 @@ function BarcodeScanner({ onDetected, onClose }) {
             advanced: [{ focusMode: "continuous" }],
           },
         },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+        decoder: {
+          readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
+          // ③ 確信度の閾値を上げる
+          multiple: false,
+        },
         locate: true,
-        frequency: 10,
+        // ② スキャン頻度を下げてじっくり処理
+        frequency: 5,
+        // ④ 画像補正（明るさ・コントラスト）
+        locator: {
+          patchSize: "medium",
+          halfSample: true,
+        },
       }, (err) => {
         if (err) {
           setStatus("error");
@@ -145,17 +181,20 @@ function BarcodeScanner({ onDetected, onClose }) {
         setStatus("scanning");
       });
 
+      // ③ 確信度が高いときだけ採用
       window.Quagga.onDetected((result) => {
         if (detectedRef.current) return;
         const code = result?.codeResult?.code;
-        if (code) {
+        const confidence = result?.codeResult?.startInfo?.error || 0;
+        // エラー率が低い（精度が高い）ときだけ採用
+        if (code && confidence < 0.2) {
           detectedRef.current = true;
           window.Quagga.stop();
           onDetected(code);
         }
       });
 
-      // オートフォーカスを定期的に再トリガー
+      // ① 定期的にオートフォーカスを再トリガー
       const refocusInterval = setInterval(() => {
         const video = scannerRef.current?.querySelector("video");
         if (!video?.srcObject) return;
@@ -164,7 +203,7 @@ function BarcodeScanner({ onDetected, onClose }) {
         try {
           track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
         } catch (_) {}
-      }, 1500);
+      }, 2000);
 
       return () => clearInterval(refocusInterval);
     };
@@ -188,10 +227,12 @@ function BarcodeScanner({ onDetected, onClose }) {
       {status === "error"
         ? <div style={sc.errorBox}>{errorMsg}</div>
         : (
-          <div style={sc.videoWrap}>
+          <div style={{ ...sc.videoWrap, outline: tapFlash ? "3px solid rgba(255,255,255,0.8)" : "none" }} onClick={handleTap}>
             <div ref={scannerRef} style={{ width: "100%", height: "100%" }} />
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
-            <div style={sc.hint}>{status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}</div>
+            <div style={sc.hint}>
+              {status === "loading" ? "カメラを起動中..." : "📍 タップでフォーカス調整"}
+            </div>
           </div>
         )}
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
