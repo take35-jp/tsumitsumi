@@ -520,16 +520,8 @@ export default function App() {
               {SCALE_OPTIONS.map((o) => <option key={o}>{o}</option>)}
             </select>
 
-            <div style={s.row}>
-              <div style={{ flex: 1 }}>
-                <label style={s.label}>購入日</label>
-                <input style={s.input} type="date" value={form.purchaseDate} onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={s.label}>価格（円）</label>
-                <input style={s.input} type="number" placeholder="3800" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} />
-              </div>
-            </div>
+            <label style={s.label}>購入日</label>
+            <input style={s.input} type="date" value={form.purchaseDate} onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))} />
 
             <label style={s.label}>優先度</label>
             <div style={s.priRow}>
