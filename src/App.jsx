@@ -401,7 +401,7 @@ export default function App() {
   // 「ほしい！」ボタン — 相手のX IDを聞いてリプライ文を生成
   const handleWant = (kit) => {
     const ownerMention = kit.ownerXId ? `@${kit.ownerXId} ` : "";
-    const text = `${ownerMention}「${kit.name}」ほしいです！DMお願いします🙏 #積みプラ #プラモデル #ツミツミ`;
+    const text = `${ownerMention}「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします🙏 #積みプラ #プラモデル #ツミツミ`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -495,7 +495,7 @@ export default function App() {
               {/* ほしい！ボタン */}
               {!detail.completed && (
                 <button style={s.wantBtn} onClick={() => handleWant(detail)}>
-                  🙋 ほしい！とポストする
+                  🙋 これを作ってくれる人に譲りたい！とポストする
                 </button>
               )}
               <div style={s.modalBtns}>
