@@ -335,6 +335,7 @@ export default function App() {
   const [showShare, setShowShare] = useState(false);
   const [myXId, setMyXId] = useState("");
   const [sortBy, setSortBy] = useState("none");
+  const [showSearch, setShowSearch] = useState(false);
   const [longPressId, setLongPressId] = useState(null);
   const longPressTimer = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -439,7 +440,10 @@ export default function App() {
           <div style={s.headerTitle}>TSUMI TSUMI</div>
           <div style={s.headerSub}>PLASTIC MODEL TRACKER</div>
         </div>
-        <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏 シェア</button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button style={s.searchIconBtn} onClick={() => setShowSearch(v => !v)}>🔍</button>
+          <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏 シェア</button>
+        </div>
       </div>
 
       {/* Rank bar */}
@@ -447,6 +451,19 @@ export default function App() {
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
       </div>
+
+      {/* 検索ボックス（展開式） */}
+      {showSearch && (
+        <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "10px 16px" }}>
+          <input
+            autoFocus
+            style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
+            placeholder="キット名・シリーズで検索..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      )}
 
       {/* Stats */}
       <div style={s.stats}>
@@ -464,12 +481,6 @@ export default function App() {
           {[["all","すべて"],["pending","積みプラ"],["done","完成済み"]].map(([val, label]) => (
             <button key={val} style={{ ...s.tab, ...(filter === val ? s.tabActive : {}) }} onClick={() => setFilter(val)}>{label}</button>
           ))}
-        </div>
-
-        {/* 検索 */}
-        <div style={{ padding: "8px 16px 0" }}>
-          <input style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
-            placeholder="🔍 キット名・シリーズで検索" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
 
         {/* ソート */}
@@ -679,6 +690,7 @@ const s = {
   headerTitle: { fontSize: 20, fontWeight: 700, color: "#111", letterSpacing: 2 },
   headerSub: { fontSize: 10, color: "#aaa", letterSpacing: 3, marginTop: 2 },
   shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 16, cursor: "pointer" },
   stats: { display: "flex", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   statBox: { flex: 1, padding: "14px 0", textAlign: "center", cursor: "pointer" },
   statNum: { fontSize: 24, fontWeight: 700 },
