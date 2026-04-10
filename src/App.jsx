@@ -12,13 +12,7 @@ const SERIES_OPTIONS = [
   "ガレージキット", "その他",
 ];
 const SCALE_OPTIONS = ["1/144", "1/100", "1/60", "MG", "HG", "RG", "PG", "その他"];
-const PRIORITY_OPTIONS = ["高", "中", "低"];
 
-const PRIORITY_COLOR = {
-  高: { bg: "#fee2e2", text: "#b91c1c", dot: "#ef4444" },
-  中: { bg: "#fef9c3", text: "#92400e", dot: "#f59e0b" },
-  低: { bg: "#f0fdf4", text: "#166534", dot: "#22c55e" },
-};
 
 function formatDate(str) {
   if (!str) return "—";
@@ -32,7 +26,7 @@ function formatPrice(n) {
 
 const emptyForm = {
   name: "", series: "", scale: "", purchaseDate: "", price: "",
-  priority: "中", photo: null, photoUrl: "", completed: false, memo: "", jan: "",
+  count: 1, rating: 0, photo: null, photoUrl: "", completed: false, memo: "", jan: "",
 };
 
 function guessSeriesFromName(name) {
@@ -435,12 +429,8 @@ export default function App() {
                 {kit.scale && <span style={s.badge}>{kit.scale}</span>}
               </div>
               <div style={s.cardBottom}>
-                {kit.priority && (
-                  <span style={{ ...s.priTag, background: PRIORITY_COLOR[kit.priority].bg, color: PRIORITY_COLOR[kit.priority].text }}>
-                    <span style={{ ...s.dot, background: PRIORITY_COLOR[kit.priority].dot }} />優先度 {kit.priority}
-                  </span>
-                )}
-                {kit.price && <span style={s.price}>{formatPrice(kit.price)}</span>}
+                {kit.rating > 0 && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
+                {kit.count > 1 && <span style={s.countBadge}>{kit.count}個</span>}
               </div>
             </div>
             <button
@@ -460,7 +450,7 @@ export default function App() {
               <div style={s.modalTitle}>{detail.name}</div>
               {detail.completed && <div style={s.doneBadge}>✓ 完成済み</div>}
               <table style={s.table}><tbody>
-                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", formatDate(detail.purchaseDate)], ["価格", formatPrice(detail.price)], ["優先度", detail.priority], ["JAN", detail.jan], ["メモ", detail.memo]]
+                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", formatDate(detail.purchaseDate)], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
                   .filter(([, v]) => v && v !== "—")
                   .map(([k, v]) => <tr key={k}><td style={s.td1}>{k}</td><td style={s.td2}>{v}</td></tr>)}
               </tbody></table>
@@ -523,13 +513,24 @@ export default function App() {
             <label style={s.label}>購入日</label>
             <input style={s.input} type="date" value={form.purchaseDate} onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))} />
 
-            <label style={s.label}>優先度</label>
-            <div style={s.priRow}>
-              {PRIORITY_OPTIONS.map((p) => (
-                <button key={p}
-                  style={{ ...s.priBtn, background: form.priority === p ? PRIORITY_COLOR[p].bg : "#f3f4f6", color: form.priority === p ? PRIORITY_COLOR[p].text : "#6b7280", border: `1.5px solid ${form.priority === p ? PRIORITY_COLOR[p].dot : "transparent"}` }}
-                  onClick={() => setForm((f) => ({ ...f, priority: p }))}>{p}</button>
+            <label style={s.label}>評価</label>
+            <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
+              {[1,2,3,4,5].map((star) => (
+                <button key={star}
+                  style={{ fontSize: 28, background: "none", border: "none", cursor: "pointer", color: star <= form.rating ? "#f59e0b" : "#d1d5db", padding: "0 2px" }}
+                  onClick={() => setForm((f) => ({ ...f, rating: f.rating === star ? 0 : star }))}>
+                  ★
+                </button>
               ))}
+            </div>
+
+            <label style={s.label}>個数</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                onClick={() => setForm((f) => ({ ...f, count: Math.max(1, (f.count || 1) - 1) }))}>−</button>
+              <span style={{ fontSize: 18, fontWeight: 700, minWidth: 32, textAlign: "center" }}>{form.count || 1}</span>
+              <button style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                onClick={() => setForm((f) => ({ ...f, count: (f.count || 1) + 1 }))}>＋</button>
             </div>
 
             <label style={s.label}>写真</label>
@@ -584,6 +585,8 @@ const s = {
   priTag: { display: "flex", alignItems: "center", gap: 4, borderRadius: 20, padding: "2px 8px", fontSize: 11, fontWeight: 600 },
   dot: { width: 6, height: 6, borderRadius: "50%", display: "inline-block" },
   price: { fontSize: 12, color: "#6b7280" },
+  stars: { fontSize: 13, color: "#f59e0b", letterSpacing: 1 },
+  countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "2px 8px", fontWeight: 600 },
   checkBtn: { width: 32, height: 32, borderRadius: "50%", border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" },
   modal: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto" },
