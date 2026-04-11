@@ -103,10 +103,8 @@ function BarcodeScanner({ onDetected, onClose }) {
     if (!track) return;
     setTapFlash(true);
     setTimeout(() => setTapFlash(false), 400);
-    // iOSでは一度focusMode: "manual"にしてからcontinuousに戻すとフォーカスがリセットされる
     try {
-      track.applyConstraints({ advanced: [{ focusMode: "continuous" }] })
-        .catch(() => {});
+      track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
     } catch (_) {}
   };
 
@@ -127,10 +125,8 @@ function BarcodeScanner({ onDetected, onClose }) {
           name: "Live", type: "LiveStream", target: scannerRef.current,
           constraints: {
             facingMode: "environment",
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            focusMode: "continuous",
-            advanced: [{ focusMode: "continuous" }],
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           },
         },
         decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
@@ -139,8 +135,17 @@ function BarcodeScanner({ onDetected, onClose }) {
       }, (err) => {
         if (err) { setError("カメラを起動できませんでした。手動で入力してください。"); return; }
         window.Quagga.start();
+        // 起動後にズーム1.5倍を設定（少し離れた距離でバーコードを大きく捉える）
         const video = scannerRef.current?.querySelector("video");
-        if (video?.srcObject) streamRef.current = video.srcObject;
+        if (video?.srcObject) {
+          streamRef.current = video.srcObject;
+          const track = video.srcObject.getVideoTracks()[0];
+          setTimeout(() => {
+            try {
+              track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {});
+            } catch (_) {}
+          }, 500);
+        }
       });
 
       window.Quagga.onDetected((result) => {
@@ -211,7 +216,7 @@ function BarcodeScanner({ onDetected, onClose }) {
           <div style={{ ...sc.videoWrap, outline: tapFlash ? "3px solid rgba(255,255,255,0.8)" : "none" }} onClick={handleTap}>
             <div ref={scannerRef} style={{ width: "100%", height: "100%" }} />
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
-            <div style={sc.hint}>バーコードを枠内に合わせてください</div>
+            <div style={sc.hint}>バーコードから10〜20cm離して合わせてください</div>
             <div style={sc.tapHint}>📍 タップでフォーカス調整</div>
           </div>
         )}
