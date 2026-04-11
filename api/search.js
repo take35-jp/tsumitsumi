@@ -57,8 +57,32 @@ async function yahooSearch(params) {
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  const { jan } = req.query;
-  if (!jan) return res.status(400).json({ error: "jan required" });
+  const { jan, q } = req.query;
+
+  // キーワード検索モード
+  if (q) {
+    try {
+      const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=5&output=json&keyword=${encodeURIComponent(q + " プラモデル")}&sort=score`;
+      const r = await fetch(url);
+      const data = await r.json();
+      const hits = data?.hits || [];
+      const skipWords = /中古|即納|訳あり|ジャンク|used/i;
+      const results = hits
+        .filter(h => !skipWords.test(h.name || ""))
+        .slice(0, 5)
+        .map(h => ({
+          name: cleanName(h.name || ""),
+          photoUrl: h.image?.medium || h.image?.small || "",
+          price: h.price || "",
+        }))
+        .filter(h => h.name);
+      return res.json(results);
+    } catch (e) {
+      return res.status(500).json({ error: String(e) });
+    }
+  }
+
+  if (!jan) return res.status(400).json({ error: "jan or q required" });
 
   // ① Yahoo jan_codeで検索
   try {
