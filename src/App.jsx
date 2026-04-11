@@ -328,8 +328,7 @@ function BarcodeScanner({ onDetected, onClose }) {
       } catch (e) {
         if (!cancelled) {
           setDebugInfo(`エラー: ${String(e).slice(0,50)}`);
-          setError("カメラを起動できませんでした。
-手動でJANコードを入力してください。");
+          setError("カメラを起動できませんでした。手動でJANコードを入力してください。");
         }
       }
     };
