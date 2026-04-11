@@ -900,9 +900,9 @@ const s = {
   retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
-};port { useState, useRef, useEffect } from "react";
+};
 
-const SERIES_OPTIONS = [
+
   "ガンプラ",
   "ポケプラ",
   "Figure-rise Standard", "Figure-rise Bust", "Figure-rise Mechanics",
