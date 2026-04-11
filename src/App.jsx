@@ -123,30 +123,31 @@ function BarcodeScanner({ onDetected, onClose }) {
 
       setDebugMsg(`AI解析中... (${Math.round(compressed.length/1024)}KB)`);
 
-      const res = await fetch("/api/scan-barcode", {
+      // フロントから直接Gemini APIを呼ぶ（Vercelのレート制限を回避）
+      const GEMINI_KEY = "AIzaSyDMACZQgWNwJGNa3rtiXMnjDTPj8eUE4Gg";
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: compressed, mimeType: "image/jpeg" }),
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: "この画像のバーコード下の数字を読んでください。13桁の数字のみ答えてください。例: 4573102642257" },
+              { inline_data: { mime_type: "image/jpeg", data: compressed } }
+            ]
+          }]
+        })
       });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch(_) { 
-        setDebugMsg(`パースエラー: ${text.slice(0, 60)}`);
-        setScanning(false);
-        setError("読み取りに失敗しました。もう一度撮影してください。");
-        return;
-      }
+      const data = await res.json();
       setDebugMsg(`レスポンス: ${JSON.stringify(data).slice(0, 80)}`);
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const jan = extractJAN(rawText);
 
-      if (data?.jan) {
+      if (jan) {
         setScanning(false);
-        onDetected(data.jan);
-      } else if (data?.error === "rate limited") {
-        setScanning(false);
-        setError("しばらく時間をおいて再試行してください（レート制限）");
+        onDetected(jan);
       } else {
         setScanning(false);
-        setError("バーコードを読み取れませんでした。\nバーコード部分をアップで撮り直してください。");
+        setError(`読み取れませんでした。\n撮り直してください。`);
       }
     } catch (e) {
       setScanning(false);
