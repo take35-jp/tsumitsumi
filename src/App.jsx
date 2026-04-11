@@ -399,7 +399,7 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.09 | {debugInfo}
+              v1.10 | スキャン中...
             </div>
           </div>
         )}
