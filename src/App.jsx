@@ -151,10 +151,10 @@ function BarcodeScanner({ onDetected, onClose }) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
           setStatus("scanning");
-          // 3秒ごとにGeminiへ送信
-          timerRef.current = setInterval(captureAndSend, 3000);
+          // 10秒ごとにGeminiへ送信（レート制限対策）
+          timerRef.current = setInterval(captureAndSend, 10000);
           // 起動直後にも1回送る
-          setTimeout(captureAndSend, 1500);
+          setTimeout(captureAndSend, 2000);
         }
       } catch (e) {
         setStatus("error");
