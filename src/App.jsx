@@ -86,8 +86,6 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const inputRef = useRef();
-
   return (
     <div style={sc.wrap}>
       <div style={sc.header}>
@@ -100,12 +98,14 @@ function BarcodeScanner({ onDetected, onClose }) {
         <div style={sc.stepNum}>Step 1</div>
         <div style={sc.stepTitle}>カメラでバーコードの数字をコピー</div>
         <div style={sc.stepDesc}>
-          カメラアプリでバーコードを映すと、下に数字が表示されます。<br/>
-          その数字をタップ→「コピー」してください。
+          カメラでバーコードを映すと数字が認識されます。数字をタップ→「コピー」してください。
         </div>
-        <div style={{ textAlign: "center", fontSize: 32, margin: "12px 0" }}>
-          📷 → <span style={{ fontFamily: "monospace", fontSize: 16, background: "#f3f4f6", padding: "4px 8px", borderRadius: 6 }}>4573102 64225 7</span> → コピー
+        <div style={{ background: "#fff", borderRadius: 8, padding: "8px 10px", marginBottom: 10, fontSize: 12, color: "#374151", fontFamily: "monospace", textAlign: "center" }}>
+          例）4573102 64225 7 → タップ → コピー
         </div>
+        <a href="camera://" style={{ display: "block", textAlign: "center", background: "#111", color: "#fff", padding: "12px 0", borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+          📷 カメラを起動する
+        </a>
       </div>
 
       {/* Step 2: 貼り付け */}
@@ -210,7 +210,7 @@ function KitNameInput({ value, onChange, onSelect }) {
   };
 
   return (
-    <div style={{ position: "relative" }}>
+    <div>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <input style={{ ...suggS.input, flex: 1 }}
           placeholder="例: νガンダム、ザク"
@@ -219,9 +219,9 @@ function KitNameInput({ value, onChange, onSelect }) {
           onFocus={() => setShowSugg(true)}
           onBlur={() => setTimeout(() => setShowSugg(false), 200)}
         />
-        {loading && <span style={{ fontSize: 12, color: "#9ca3af" }}>検索中...</span>}
+        {loading && <span style={{ fontSize: 12, color: "#9ca3af", flexShrink: 0 }}>検索中...</span>}
       </div>
-      {showSugg && suggestions.length > 0 && (
+      {suggestions.length > 0 && (
         <div style={suggS.list}>
           {suggestions.map((item, i) => (
             <div key={i} style={suggS.item} onMouseDown={() => handleSelect(item)}>
@@ -240,7 +240,7 @@ function KitNameInput({ value, onChange, onSelect }) {
 
 const suggS = {
   input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
-  list: { position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.12)", zIndex: 200, maxHeight: 240, overflowY: "auto", marginTop: 4 },
+  list: { background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4, overflow: "hidden" },
   item: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0" },
   thumb: { width: 40, height: 40, objectFit: "cover", borderRadius: 6, flexShrink: 0 },
   name: { fontSize: 13, color: "#111", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
