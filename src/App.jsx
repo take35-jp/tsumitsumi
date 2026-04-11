@@ -95,8 +95,9 @@ function BarcodeScanner({ onDetected, onClose }) {
   const streamRef = useRef();
   const timerRef = useRef();
   const detectedRef = useRef(false);
-  const [status, setStatus] = useState("loading"); // loading | scanning | error
+  const [status, setStatus] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
+  const [debugMsg, setDebugMsg] = useState("待機中...");
 
   const captureAndSend = async () => {
     if (detectedRef.current) return;
@@ -106,7 +107,7 @@ function BarcodeScanner({ onDetected, onClose }) {
     const canvas = document.createElement("canvas");
     const MAX = 800;
     let w = video.videoWidth, h = video.videoHeight;
-    if (w === 0 || h === 0) return;
+    if (w === 0 || h === 0) { setDebugMsg("映像サイズ0"); return; }
     if (w > MAX || h > MAX) {
       if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
       else { w = Math.round(w * MAX / h); h = MAX; }
@@ -114,8 +115,9 @@ function BarcodeScanner({ onDetected, onClose }) {
     canvas.width = w; canvas.height = h;
     canvas.getContext("2d").drawImage(video, 0, 0, w, h);
     const image = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
-    if (!image) return;
+    if (!image) { setDebugMsg("画像取得失敗"); return; }
 
+    setDebugMsg(`送信中... (${w}x${h})`);
     try {
       const res = await fetch("/api/scan-barcode", {
         method: "POST",
@@ -123,13 +125,16 @@ function BarcodeScanner({ onDetected, onClose }) {
         body: JSON.stringify({ image, mimeType: "image/jpeg" }),
       });
       const data = await res.json();
+      setDebugMsg(`APIレスポンス: ${JSON.stringify(data).slice(0, 60)}`);
       if (data?.jan && !detectedRef.current) {
         detectedRef.current = true;
         clearInterval(timerRef.current);
         streamRef.current?.getTracks().forEach(t => t.stop());
         onDetected(data.jan);
       }
-    } catch (_) {}
+    } catch (e) {
+      setDebugMsg(`エラー: ${String(e).slice(0, 60)}`);
+    }
   };
 
   useEffect(() => {
@@ -178,11 +183,11 @@ function BarcodeScanner({ onDetected, onClose }) {
             {status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}
           </div>
           {status === "scanning" && <div style={sc.aiLabel}>🤖 AI解析中...</div>}
-          {status === "scanning" && (
-            <div style={sc.aiLabel}>AI解析中...</div>
-          )}
         </div>
       )}
+      <div style={{ background: "#f3f4f6", borderRadius: 8, padding: "8px 12px", fontSize: 11, color: "#374151", margin: "8px 0", wordBreak: "break-all" }}>
+        🔍 {debugMsg}
+      </div>
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
     </div>
