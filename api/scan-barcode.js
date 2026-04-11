@@ -13,13 +13,12 @@ function extractJAN(text) {
   return null;
 }
 
-function httpsPost(url, body) {
+function httpsPost(hostname, path, body) {
   return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
     const data = JSON.stringify(body);
     const req = https.request({
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
+      hostname,
+      path,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,12 +28,12 @@ function httpsPost(url, body) {
       let raw = "";
       res.on("data", chunk => raw += chunk);
       res.on("end", () => {
-        try { resolve(JSON.parse(raw)); }
-        catch(e) { reject(new Error("JSON parse failed: " + raw.slice(0, 100))); }
+        try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
+        catch(e) { resolve({ status: res.statusCode, body: raw.slice(0, 200) }); }
       });
     });
     req.on("error", reject);
-    req.setTimeout(8000, () => { req.destroy(new Error("timeout")); });
+    req.setTimeout(9000, () => { req.destroy(new Error("timeout")); });
     req.write(data);
     req.end();
   });
@@ -52,25 +51,36 @@ export default async function handler(req, res) {
   const { image, mimeType } = req.body;
   if (!image) return res.status(400).json({ error: "image required" });
 
+  const imageSize = Math.round(image.length / 1024);
+
   try {
-    const data = await httpsPost(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    const result = await httpsPost(
+      "generativelanguage.googleapis.com",
+      `/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         contents: [{
           parts: [
-            { text: "この画像のバーコード下の数字を読んでください。13桁の数字のみ答えてください。例: 4573102642257" },
-            { inline_data: { mime_type: mimeType || "image/jpeg", data: image } }
+            { text: "この画像にあるバーコードの下に書かれている数字を読んでください。数字のみを答えてください。" },
+            { inline_data: { mime_type: "image/jpeg", data: image } }
           ]
         }]
       }
     );
 
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const text = result.body?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const jan = extractJAN(text);
 
-    if (jan) return res.json({ jan, raw: text });
-    return res.status(404).json({ error: "not found", raw: text });
+    if (jan) return res.json({ jan, raw: text, imageSize });
+    
+    // デバッグ: Geminiの生レスポンスを返す
+    return res.status(404).json({ 
+      error: "not found", 
+      raw: text, 
+      imageSize,
+      httpStatus: result.status,
+      geminiResponse: JSON.stringify(result.body).slice(0, 300)
+    });
   } catch (e) {
-    return res.status(500).json({ error: String(e) });
+    return res.status(500).json({ error: String(e), imageSize });
   }
 }
