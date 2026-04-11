@@ -4,12 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ツミツミ</title>
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ツミツミ" />
     <meta name="theme-color" content="#1a1a1a" />
+    <!-- ZBar WASM 事前読み込み -->
+    <script type="module">
+      try {
+        const mod = await import('https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/index.js');
+        window.zbarWasm = mod;
+        window.__zbarReady = true;
+        window.dispatchEvent(new Event('zbar-ready'));
+      } catch(e) {
+        window.__zbarError = String(e);
+        window.__zbarReady = false;
+        window.dispatchEvent(new Event('zbar-error'));
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
