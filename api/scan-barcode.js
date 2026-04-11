@@ -1,5 +1,5 @@
 //new3
-export const config = { runtime: "nodejs20.x" };
+export const config = { runtime: "nodejs" };
 
 function extractJAN(text) {
   const digits = text.replace(/[^0-9]/g, "");
