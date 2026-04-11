@@ -86,6 +86,7 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
+  const cameraRef = useRef();
   return (
     <div style={sc.wrap}>
       <div style={sc.header}>
@@ -93,26 +94,27 @@ function BarcodeScanner({ onDetected, onClose }) {
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
 
-      {/* Step 1: カメラで数字をコピー */}
+      {/* Step 1 */}
       <div style={sc.stepBox}>
         <div style={sc.stepNum}>Step 1</div>
         <div style={sc.stepTitle}>カメラでバーコードの数字をコピー</div>
-        <div style={sc.stepDesc}>
-          カメラでバーコードを映すと数字が認識されます。数字をタップ→「コピー」してください。
+        <div style={sc.stepDesc}>カメラでバーコードを映すと数字が表示されます。数字をタップ→「コピー」してください。</div>
+        <div style={{ background: "#fff", borderRadius: 8, padding: "8px", marginBottom: 10, fontSize: 12, color: "#374151", textAlign: "center" }}>
+          例）<span style={{ fontFamily: "monospace" }}>4573102642257</span> → タップ → コピー
         </div>
-        <div style={{ background: "#fff", borderRadius: 8, padding: "8px 10px", marginBottom: 10, fontSize: 12, color: "#374151", fontFamily: "monospace", textAlign: "center" }}>
-          例）4573102 64225 7 → タップ → コピー
-        </div>
-        <a href="camera://" style={{ display: "block", textAlign: "center", background: "#111", color: "#fff", padding: "12px 0", borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+        <button
+          style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+          onClick={() => cameraRef.current?.click()}>
           📷 カメラを起動する
-        </a>
+        </button>
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={() => {}} />
       </div>
 
-      {/* Step 2: 貼り付け */}
+      {/* Step 2 */}
       <div style={sc.stepBox}>
         <div style={sc.stepNum}>Step 2</div>
-        <div style={sc.stepTitle}>下の欄に貼り付けると自動検索</div>
-        <ManualInput onDetected={onDetected} showGuide={false} />
+        <div style={sc.stepTitle}>コピーした数字を貼り付け → 自動検索</div>
+        <ManualInput onDetected={onDetected} />
       </div>
     </div>
   );
@@ -174,7 +176,6 @@ const sc = {
 function KitNameInput({ value, onChange, onSelect }) {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showSugg, setShowSugg] = useState(false);
   const timerRef = useRef(null);
 
   const search = async (q) => {
@@ -184,11 +185,7 @@ function KitNameInput({ value, onChange, onSelect }) {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setSuggestions(data.slice(0, 5));
-        } else if (data.name) {
-          setSuggestions([data]);
-        }
+        setSuggestions(Array.isArray(data) ? data.slice(0, 5) : data.name ? [data] : []);
       }
     } catch (_) {}
     setLoading(false);
@@ -198,33 +195,29 @@ function KitNameInput({ value, onChange, onSelect }) {
     const v = e.target.value;
     onChange(v);
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => search(v), 500);
-    setShowSugg(true);
+    timerRef.current = setTimeout(() => search(v), 600);
   };
 
   const handleSelect = (item) => {
     onChange(item.name);
     onSelect(item);
     setSuggestions([]);
-    setShowSugg(false);
   };
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <input style={{ ...suggS.input, flex: 1 }}
+      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <input style={{ ...suggS.input }}
           placeholder="例: νガンダム、ザク"
           value={value}
           onChange={handleChange}
-          onFocus={() => setShowSugg(true)}
-          onBlur={() => setTimeout(() => setShowSugg(false), 200)}
         />
-        {loading && <span style={{ fontSize: 12, color: "#9ca3af", flexShrink: 0 }}>検索中...</span>}
+        {loading && <span style={{ position: "absolute", right: 10, fontSize: 11, color: "#9ca3af" }}>検索中...</span>}
       </div>
       {suggestions.length > 0 && (
         <div style={suggS.list}>
           {suggestions.map((item, i) => (
-            <div key={i} style={suggS.item} onMouseDown={() => handleSelect(item)}>
+            <div key={i} style={suggS.item} onClick={() => handleSelect(item)}>
               {item.photoUrl && <img src={item.photoUrl} style={suggS.thumb} alt="" />}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={suggS.name}>{item.name}</div>
@@ -232,6 +225,8 @@ function KitNameInput({ value, onChange, onSelect }) {
               </div>
             </div>
           ))}
+          <div style={{ padding: "8px 12px", fontSize: 11, color: "#9ca3af", textAlign: "center", cursor: "pointer" }}
+            onClick={() => setSuggestions([])}>閉じる</div>
         </div>
       )}
     </div>
