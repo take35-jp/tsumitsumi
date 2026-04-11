@@ -39,6 +39,8 @@ function httpsPost(hostname, path, body) {
   });
 }
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -53,34 +55,34 @@ export default async function handler(req, res) {
 
   const imageSize = Math.round(image.length / 1024);
 
-  try {
-    const result = await httpsPost(
-      "generativelanguage.googleapis.com",
-      `/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        contents: [{
-          parts: [
-            { text: "この画像にあるバーコードの下に書かれている数字を読んでください。数字のみを答えてください。" },
-            { inline_data: { mime_type: "image/jpeg", data: image } }
-          ]
-        }]
+  // 429の場合は15秒待ってリトライ
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = await httpsPost(
+        "generativelanguage.googleapis.com",
+        `/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          contents: [{
+            parts: [
+              { text: "この画像にあるバーコードの下に書かれている数字を読んでください。数字のみを答えてください。" },
+              { inline_data: { mime_type: "image/jpeg", data: image } }
+            ]
+          }]
+        }
+      );
+
+      if (result.status === 429) {
+        if (attempt === 0) { await sleep(15000); continue; }
+        return res.status(429).json({ error: "rate limited", imageSize });
       }
-    );
 
-    const text = result.body?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const jan = extractJAN(text);
+      const text = result.body?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const jan = extractJAN(text);
 
-    if (jan) return res.json({ jan, raw: text, imageSize });
-    
-    // デバッグ: Geminiの生レスポンスを返す
-    return res.status(404).json({ 
-      error: "not found", 
-      raw: text, 
-      imageSize,
-      httpStatus: result.status,
-      geminiResponse: JSON.stringify(result.body).slice(0, 300)
-    });
-  } catch (e) {
-    return res.status(500).json({ error: String(e), imageSize });
+      if (jan) return res.json({ jan, raw: text, imageSize });
+      return res.status(404).json({ error: "not found", raw: text, imageSize, httpStatus: result.status });
+    } catch (e) {
+      return res.status(500).json({ error: String(e), imageSize });
+    }
   }
 }
