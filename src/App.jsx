@@ -103,17 +103,18 @@ function BarcodeScanner({ onDetected, onClose }) {
     const video = videoRef.current;
     if (!video || video.readyState < 2) return;
 
-    // Canvasに描画して圧縮
     const canvas = document.createElement("canvas");
     const MAX = 800;
     let w = video.videoWidth, h = video.videoHeight;
+    if (w === 0 || h === 0) return;
     if (w > MAX || h > MAX) {
       if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
       else { w = Math.round(w * MAX / h); h = MAX; }
     }
     canvas.width = w; canvas.height = h;
     canvas.getContext("2d").drawImage(video, 0, 0, w, h);
-    const image = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+    const image = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
+    if (!image) return;
 
     try {
       const res = await fetch("/api/scan-barcode", {
@@ -121,7 +122,6 @@ function BarcodeScanner({ onDetected, onClose }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image, mimeType: "image/jpeg" }),
       });
-      if (!res.ok) return;
       const data = await res.json();
       if (data?.jan && !detectedRef.current) {
         detectedRef.current = true;
@@ -177,7 +177,7 @@ function BarcodeScanner({ onDetected, onClose }) {
           <div style={sc.hint}>
             {status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}
           </div>
-          {status === "scanning" && <div style={{ ...sc.hint, bottom: 14, fontSize: 11, color: "#4ade80" }}>自動で読み取ります</div>}
+          {status === "scanning" && <div style={sc.aiLabel}>🤖 AI解析中...</div>}
           {status === "scanning" && (
             <div style={sc.aiLabel}>AI解析中...</div>
           )}
@@ -211,8 +211,8 @@ const sc = {
   video: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
   dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
   frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" },
-  hint: { position: "absolute", bottom: 36, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.7 },
-  aiLabel: { position: "absolute", bottom: 10, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600 },
+  hint: { position: "absolute", bottom: 28, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12, lineHeight: 1.7 },
+  aiLabel: { position: "absolute", bottom: 8, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600, background: "rgba(0,0,0,0.4)", padding: "3px 0" },
   errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, whiteSpace: "pre-wrap", marginBottom: 16 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
