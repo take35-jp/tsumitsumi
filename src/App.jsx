@@ -158,25 +158,13 @@ function BarcodeScanner({ onDetected, onClose }) {
           }
         });
 
-        let lastCode = null;
-        let sameCount = 0;
         window.Quagga.onDetected((result) => {
           if (detectedRef.current) return;
           const code = result?.codeResult?.code;
           if (!code) return;
-          setDebugInfo(`検出: ${code}`);
-          // 同じコードを2回連続で検出したら採用
-          if (code === lastCode) {
-            sameCount++;
-            if (sameCount >= 2) {
-              detectedRef.current = true;
-              window.Quagga.stop();
-              onDetected(code);
-            }
-          } else {
-            lastCode = code;
-            sameCount = 1;
-          }
+          detectedRef.current = true;
+          window.Quagga.stop();
+          onDetected(code);
         });
       } catch (e) {
         setDebugInfo(`エラー: ${String(e).slice(0, 50)}`);
@@ -245,7 +233,7 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={sc.tapHint}>📍 タップで再フォーカス</div>
-            <div style={{ position: "absolute", bottom: 4, left: 8, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>v1.04 | {debugInfo}</div>
+            <div style={{ position: "absolute", bottom: 4, left: 8, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>v1.05 | {debugInfo}</div>
           </div>
         )}
         <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
