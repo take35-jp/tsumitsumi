@@ -1,4 +1,4 @@
-//new3
+//new4
 export const config = { runtime: "nodejs" };
 
 function extractJAN(text) {
