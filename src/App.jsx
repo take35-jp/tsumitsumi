@@ -97,16 +97,16 @@ function BarcodeScanner({ onDetected, onClose }) {
   const streamRef = useRef(null);
 
   const handleTap = () => {
-    // iOSではpointOfInterestが使えないため、カメラを一瞬止めて再起動してフォーカスをリセット
-    if (!window.Quagga) return;
+    const video = scannerRef.current?.querySelector("video");
+    if (!video?.srcObject) return;
+    const track = video.srcObject.getVideoTracks()[0];
+    if (!track) return;
     setTapFlash(true);
     setTimeout(() => setTapFlash(false), 400);
+    // iOSでは一度focusMode: "manual"にしてからcontinuousに戻すとフォーカスがリセットされる
     try {
-      window.Quagga.stop();
-      setTimeout(() => {
-        if (detectedRef.current) return;
-        window.Quagga.start();
-      }, 300);
+      track.applyConstraints({ advanced: [{ focusMode: "continuous" }] })
+        .catch(() => {});
     } catch (_) {}
   };
 
