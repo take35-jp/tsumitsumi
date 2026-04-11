@@ -41,9 +41,12 @@ function formatDate(str) {
   return `${y}/${m}/${d}`;
 }
 
+const CONDITION_OPTIONS = ["未開封", "素組状態", "欠品有り", "制作途中"];
+
 const emptyForm = {
   name: "", series: "", scale: "", purchaseDate: "", price: "",
   count: 1, rating: 0, photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "",
+  condition: "", conditionNote: "",
 };
 
 function guessSeriesFromName(name) {
@@ -634,6 +637,16 @@ const hs = {
   tip: { fontSize: 12, color: "#4f8ef7", background: "#eff6ff", borderRadius: 8, padding: "6px 10px", marginTop: 8 },
 };
 
+function getCondStyle(condition) {
+  switch(condition) {
+    case "未開封":     return { background: "#eff6ff", color: "#1d4ed8" };
+    case "素組状態":   return { background: "#f0fdf4", color: "#15803d" };
+    case "欠品有り":   return { background: "#fff7ed", color: "#c2410c" };
+    case "制作途中":   return { background: "#fdf4ff", color: "#7e22ce" };
+    default:           return { background: "#f3f4f6", color: "#374151" };
+  }
+}
+
 // ---- X Share Modal ----
 function XShareModal({ kits, myXId, setMyXId, onClose }) {
   const pending = kits.filter((k) => !k.completed);
@@ -742,6 +755,7 @@ export default function App() {
   const [filterRating, setFilterRating] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [filterCondition, setFilterCondition] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
   const fileRef = useRef();
@@ -823,6 +837,7 @@ export default function App() {
   }
   if (filterSeries) filtered = filtered.filter(k => (k.series || "") === filterSeries);
   if (filterRating) filtered = filtered.filter(k => (k.rating || 0) === Number(filterRating));
+  if (filterCondition) filtered = filtered.filter(k => (k.condition || "") === filterCondition);
 
   return (
     <div style={s.root}>
@@ -884,6 +899,11 @@ export default function App() {
             <option value="2">★★☆☆☆</option>
             <option value="1">★☆☆☆☆</option>
           </select>
+          <select style={{ flex: 1, padding: "6px 10px", border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, borderRadius: 10, fontSize: 12, background: filterCondition ? "#f5f3ff" : "#fafafa", outline: "none", color: "#111" }}
+            value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
+            <option value="">状態：すべて</option>
+            {CONDITION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
         </div>
       </div>
 
@@ -926,6 +946,7 @@ export default function App() {
               <div style={s.cardBottom}>
                 {kit.rating > 0 && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
                 {kit.count > 1 && <span style={s.countBadge}>{kit.count}個</span>}
+                {kit.condition && <span style={{ ...s.condBadge, ...getCondStyle(kit.condition) }}>{kit.condition}</span>}
               </div>
             </div>
             <button style={{ ...s.checkBtn, background: kit.completed ? "#22c55e" : "#e5e7eb", color: kit.completed ? "#fff" : "#9ca3af" }}
@@ -955,7 +976,7 @@ export default function App() {
               <div style={s.modalTitle}>{detail.name}</div>
               {detail.completed && <div style={s.doneBadge}>✓ 完成済み</div>}
               <table style={s.table}><tbody>
-                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
+                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
                   .filter(([, v]) => v && v !== "—")
                   .map(([k, v]) => <tr key={k}><td style={s.td1}>{k}</td><td style={s.td2}>{v}</td></tr>)}
               </tbody></table>
@@ -1072,6 +1093,22 @@ export default function App() {
             </div>
             <input ref={completedFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleCompletedPhoto} />
 
+            <label style={s.label}>状態</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              {CONDITION_OPTIONS.map((opt) => (
+                <button key={opt}
+                  style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: form.condition === opt ? "#111" : "#f3f4f6",
+                    color: form.condition === opt ? "#fff" : "#374151",
+                    borderColor: form.condition === opt ? "#111" : "#e5e7eb" }}
+                  onClick={() => setForm((f) => ({ ...f, condition: f.condition === opt ? "" : opt }))}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <input style={{ ...s.input, marginBottom: 4 }} placeholder="状態のメモ（欠品内容など自由に）" value={form.conditionNote}
+              onChange={(e) => setForm((f) => ({ ...f, conditionNote: e.target.value }))} />
+
             <label style={s.label}>メモ</label>
             <textarea style={{ ...s.input, minHeight: 60, resize: "vertical" }} placeholder="自由にメモを残そう" value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
 
@@ -1113,6 +1150,7 @@ const s = {
   cardBottom: { display: "flex", gap: 8, marginTop: 6, alignItems: "center" },
   stars: { fontSize: 13, color: "#f59e0b", letterSpacing: 1 },
   countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "2px 8px", fontWeight: 600 },
+  condBadge: { fontSize: 10, borderRadius: 20, padding: "2px 8px", fontWeight: 600 },
   checkBtn: { width: 32, height: 32, borderRadius: "50%", border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
   fab: { width: 56, height: 56, borderRadius: "50%", color: "#fff", border: "none", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" },
