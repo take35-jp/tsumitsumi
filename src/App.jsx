@@ -105,7 +105,8 @@ function BarcodeScanner({ onDetected, onClose }) {
     if (!video || video.readyState < 2) return;
 
     const canvas = document.createElement("canvas");
-    const MAX = 800;
+    // 512pxに圧縮してVercelの制限内に収める
+    const MAX = 512;
     let w = video.videoWidth, h = video.videoHeight;
     if (w === 0 || h === 0) { setDebugMsg("映像サイズ0"); return; }
     if (w > MAX || h > MAX) {
@@ -114,18 +115,20 @@ function BarcodeScanner({ onDetected, onClose }) {
     }
     canvas.width = w; canvas.height = h;
     canvas.getContext("2d").drawImage(video, 0, 0, w, h);
-    const image = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
+    const image = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
     if (!image) { setDebugMsg("画像取得失敗"); return; }
 
-    setDebugMsg(`送信中... (${w}x${h})`);
+    setDebugMsg(`送信中... (${w}x${h}, ${Math.round(image.length/1024)}KB)`);
     try {
       const res = await fetch("/api/scan-barcode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image, mimeType: "image/jpeg" }),
       });
-      const data = await res.json();
-      setDebugMsg(`APIレスポンス: ${JSON.stringify(data).slice(0, 60)}`);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(_) { setDebugMsg(`パースエラー: ${text.slice(0,80)}`); return; }
+      setDebugMsg(`APIレスポンス: ${JSON.stringify(data).slice(0, 80)}`);
       if (data?.jan && !detectedRef.current) {
         detectedRef.current = true;
         clearInterval(timerRef.current);
@@ -133,7 +136,7 @@ function BarcodeScanner({ onDetected, onClose }) {
         onDetected(data.jan);
       }
     } catch (e) {
-      setDebugMsg(`エラー: ${String(e).slice(0, 60)}`);
+      setDebugMsg(`エラー: ${String(e).slice(0, 80)}`);
     }
   };
 
