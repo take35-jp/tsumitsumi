@@ -13,6 +13,10 @@ function cleanName(name) {
   const removePatterns = [
     /プラスチックモデルキット\s*/g, /プラモデル\s*/g, /返品種別[A-Z]\s*/g,
     /\([0-9]{6,}\)/g, /【[^】]*】/g, /\s+バンダイ$/, /\s+BANDAI$/i,
+    // 再販・新商品系
+    /[\(（【]?再生産[\)）】]?\s*/g, /[\(（【]?再販売[\)）】]?\s*/g, /[\(（【]?再販[\)）】]?\s*/g,
+    /[\(（【]?新商品[\)）】]?\s*/g, /[\(（【]?新発売[\)）】]?\s*/g, /[\(（【]?新製品[\)）】]?\s*/g,
+    /[\(（【]?予約品[\)）】]?\s*/g,
   ];
   for (const p of removePatterns) name = name.replace(p, "");
   const stopKeywords = [
