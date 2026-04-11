@@ -97,6 +97,7 @@ function BarcodeScanner({ onDetected, onClose }) {
   const streamRef = useRef(null);
 
   const videoRef = useRef();
+  const [debugInfo, setDebugInfo] = useState("初期化中...");
 
   const handleTap = () => {
     setTapFlash(true);
@@ -109,6 +110,7 @@ function BarcodeScanner({ onDetected, onClose }) {
     let lastScan = 0;
     const SCAN_INTERVAL = 150;
     const hasBarcodeDetector = "BarcodeDetector" in window;
+    setDebugInfo(`BarcodeDetector: ${hasBarcodeDetector ? "✅" : "❌"}`);
 
     // Canvas前処理：グレースケール＋閾値処理
     const preprocessCanvas = (video) => {
@@ -134,14 +136,15 @@ function BarcodeScanner({ onDetected, onClose }) {
           video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
         });
         streamRef.current = stream;
+        setDebugInfo(prev => prev + " | カメラ✅");
 
-        // DOMのvideo要素に直接繋ぐ
         const video = videoRef.current;
-        if (!video) return;
+        if (!video) { setDebugInfo(prev => prev + " | videoRef❌"); return; }
         video.srcObject = stream;
         video.playsInline = true;
         video.muted = true;
         await video.play();
+        setDebugInfo(prev => prev + " | 再生✅");
 
         // ズーム1.5倍
         const track = stream.getVideoTracks()[0];
@@ -151,12 +154,15 @@ function BarcodeScanner({ onDetected, onClose }) {
           const detector = new window.BarcodeDetector({
             formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
           });
+          let scanCount = 0;
           const loop = async (now) => {
             if (detectedRef.current) return;
             animFrameId = requestAnimationFrame(loop);
             if (now - lastScan < SCAN_INTERVAL) return;
             lastScan = now;
             if (video.readyState < 2) return;
+            scanCount++;
+            if (scanCount % 5 === 0) setDebugInfo(`BD検索中... ${scanCount}回`);
             try {
               let results = await detector.detect(video);
               if (results.length === 0) {
@@ -169,11 +175,13 @@ function BarcodeScanner({ onDetected, onClose }) {
                 stream.getTracks().forEach(t => t.stop());
                 onDetected(results[0].rawValue);
               }
-            } catch (_) {}
+            } catch (e) {
+              setDebugInfo(`BD エラー: ${String(e).slice(0, 40)}`);
+            }
           };
           requestAnimationFrame(loop);
         } else {
-          // Quaggaフォールバック
+          setDebugInfo(prev => prev + " | Quagga使用");
           const loadQuagga = () => new Promise((resolve, reject) => {
             if (window.Quagga) { resolve(); return; }
             const s = document.createElement("script");
@@ -204,6 +212,7 @@ function BarcodeScanner({ onDetected, onClose }) {
           });
         }
       } catch (e) {
+        setDebugInfo(`init エラー: ${String(e).slice(0, 60)}`);
         setError("カメラを起動できませんでした。手動で入力してください。");
       }
     };
@@ -272,6 +281,7 @@ function BarcodeScanner({ onDetected, onClose }) {
             </div>
             <div style={sc.hint}>バーコードから15〜20cm離して枠に合わせてください</div>
             <div style={sc.tapHint}>📍 タップで再フォーカス</div>
+            <div style={{ position: "absolute", bottom: 4, left: 8, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>v1.01 | {debugInfo}</div>
           </div>
         )}
         <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
