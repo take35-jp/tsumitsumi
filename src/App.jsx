@@ -829,18 +829,32 @@ export default function App() {
             </div>
 
             <label style={s.label}>箱の写真</label>
-            <div style={s.photoArea} onClick={() => fileRef.current.click()}>
-              {form.photoUrl
-                ? <img src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} alt="" />
-                : <span style={{ color: "#9ca3af", fontSize: 14 }}>📷 タップして写真を選択</span>}
+            <div style={{ position: "relative" }}>
+              <div style={s.photoArea} onClick={() => fileRef.current.click()}>
+                {form.photoUrl
+                  ? <img src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} alt="" />
+                  : <span style={{ color: "#9ca3af", fontSize: 14 }}>📷 タップして写真を選択</span>}
+              </div>
+              {form.photoUrl && (
+                <button
+                  style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  onClick={(e) => { e.stopPropagation(); setForm((f) => ({ ...f, photoUrl: "", photo: null })); }}>✕</button>
+              )}
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
 
             <label style={s.label}>完成品の写真</label>
-            <div style={{ ...s.photoArea, borderColor: form.completedPhotoUrl ? "#22c55e" : "#d1d5db" }} onClick={() => completedFileRef.current.click()}>
-              {form.completedPhotoUrl
-                ? <img src={form.completedPhotoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} alt="" />
-                : <span style={{ color: "#9ca3af", fontSize: 14 }}>🏆 完成したら写真を登録</span>}
+            <div style={{ position: "relative" }}>
+              <div style={{ ...s.photoArea, borderColor: form.completedPhotoUrl ? "#22c55e" : "#d1d5db" }} onClick={() => completedFileRef.current.click()}>
+                {form.completedPhotoUrl
+                  ? <img src={form.completedPhotoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} alt="" />
+                  : <span style={{ color: "#9ca3af", fontSize: 14 }}>🏆 完成したら写真を登録</span>}
+              </div>
+              {form.completedPhotoUrl && (
+                <button
+                  style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  onClick={(e) => { e.stopPropagation(); setForm((f) => ({ ...f, completedPhotoUrl: "" })); }}>✕</button>
+              )}
             </div>
             <input ref={completedFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleCompletedPhoto} />
 
