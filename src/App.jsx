@@ -97,19 +97,17 @@ function BarcodeScanner({ onDetected, onClose }) {
   const streamRef = useRef(null);
 
   const handleTap = () => {
-    const video = scannerRef.current?.querySelector("video");
-    if (!video?.srcObject) return;
-    const track = video.srcObject.getVideoTracks()[0];
-    if (!track) return;
     setTapFlash(true);
-    setTimeout(() => setTapFlash(false), 400);
-    try {
-      track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
-    } catch (_) {}
+    setTimeout(() => setTapFlash(false), 300);
   };
 
   useEffect(() => {
     if (!isIPhone) return;
+    let animFrameId = null;
+    let lastScan = 0;
+    const SCAN_INTERVAL = 150; // 1秒に約6〜7回
+    const hasBarcodeDetector = "BarcodeDetector" in window;
+
     const loadQuagga = () => new Promise((resolve, reject) => {
       if (window.Quagga) { resolve(); return; }
       const s = document.createElement("script");
@@ -118,50 +116,114 @@ function BarcodeScanner({ onDetected, onClose }) {
       document.head.appendChild(s);
     });
 
+    // Canvas前処理：グレースケール＋閾値処理
+    const preprocessCanvas = (video) => {
+      const W = 640, H = 360;
+      const canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, W, H);
+      const imgData = ctx.getImageData(0, 0, W, H);
+      const data = imgData.data;
+      // グレースケール＋閾値（128で白黒）
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
+        const bw = gray > 128 ? 255 : 0;
+        data[i] = data[i+1] = data[i+2] = bw;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      return canvas;
+    };
+
+    // BarcodeDetector方式でスキャン
+    const scanWithBarcodeDetector = async (video) => {
+      const detector = new window.BarcodeDetector({
+        formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
+      });
+      const loop = async (now) => {
+        if (detectedRef.current) return;
+        animFrameId = requestAnimationFrame(loop);
+        if (now - lastScan < SCAN_INTERVAL) return;
+        lastScan = now;
+        if (video.readyState < 2) return;
+        try {
+          // オリジナル映像で試す
+          let results = await detector.detect(video);
+          if (results.length === 0) {
+            // 前処理済みCanvasでも試す
+            const processed = preprocessCanvas(video);
+            results = await detector.detect(processed);
+          }
+          if (results.length > 0 && !detectedRef.current) {
+            detectedRef.current = true;
+            cancelAnimationFrame(animFrameId);
+            streamRef.current?.getTracks().forEach(t => t.stop());
+            onDetected(results[0].rawValue);
+          }
+        } catch (_) {}
+      };
+      requestAnimationFrame(loop);
+    };
+
     const init = async () => {
-      await loadQuagga();
-      window.Quagga.init({
-        inputStream: {
-          name: "Live", type: "LiveStream", target: scannerRef.current,
-          constraints: {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
             facingMode: "environment",
             width: { ideal: 1280 },
             height: { ideal: 720 },
-          },
-        },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
-        locate: true, frequency: 5,
-        locator: { patchSize: "medium", halfSample: false },
-      }, (err) => {
-        if (err) { setError("カメラを起動できませんでした。手動で入力してください。"); return; }
-        window.Quagga.start();
-        // 起動後にズーム1.5倍を設定（少し離れた距離でバーコードを大きく捉える）
-        const video = scannerRef.current?.querySelector("video");
-        if (video?.srcObject) {
-          streamRef.current = video.srcObject;
-          const track = video.srcObject.getVideoTracks()[0];
-          setTimeout(() => {
-            try {
-              track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {});
-            } catch (_) {}
-          }, 500);
-        }
-      });
+          }
+        });
+        streamRef.current = stream;
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        video.playsInline = true;
+        video.muted = true;
+        await video.play();
 
-      window.Quagga.onDetected((result) => {
-        if (detectedRef.current) return;
-        const code = result?.codeResult?.code;
-        const confidence = result?.codeResult?.startInfo?.error || 0;
-        if (code && confidence < 0.3) {
-          detectedRef.current = true;
-          window.Quagga.stop();
-          onDetected(code);
+        // ズーム1.5倍設定
+        const track = stream.getVideoTracks()[0];
+        try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
+
+        if (hasBarcodeDetector) {
+          // BarcodeDetector方式（iOS 17+）
+          await scanWithBarcodeDetector(video);
+        } else {
+          // Quaggaフォールバック
+          if (scannerRef.current) scannerRef.current.appendChild(video);
+          await loadQuagga();
+          window.Quagga.init({
+            inputStream: { name: "Live", type: "LiveStream", target: scannerRef.current,
+              constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+            locate: true, frequency: 6,
+            locator: { patchSize: "medium", halfSample: false },
+          }, (err) => {
+            if (err) { setError("カメラを起動できませんでした。手動で入力してください。"); return; }
+            window.Quagga.start();
+          });
+          window.Quagga.onDetected((result) => {
+            if (detectedRef.current) return;
+            const code = result?.codeResult?.code;
+            const confidence = result?.codeResult?.startInfo?.error || 0;
+            if (code && confidence < 0.3) {
+              detectedRef.current = true;
+              window.Quagga.stop();
+              onDetected(code);
+            }
+          });
         }
-      });
+      } catch (e) {
+        setError("カメラを起動できませんでした。手動で入力してください。");
+      }
     };
 
-    init().catch(() => setError("カメラを起動できませんでした。"));
-    return () => { if (window.Quagga) { try { window.Quagga.stop(); } catch (_) {} } };
+    init();
+    return () => {
+      cancelAnimationFrame(animFrameId);
+      streamRef.current?.getTracks().forEach(t => t.stop());
+      if (window.Quagga) { try { window.Quagga.stop(); } catch (_) {} }
+    };
   }, []);
 
   const readBarcode = async (file) => {
@@ -214,10 +276,23 @@ function BarcodeScanner({ onDetected, onClose }) {
           <div style={sc.errorBox}>{error}</div>
         ) : (
           <div style={{ ...sc.videoWrap, outline: tapFlash ? "3px solid rgba(255,255,255,0.8)" : "none" }} onClick={handleTap}>
-            <div ref={scannerRef} style={{ width: "100%", height: "100%" }} />
-            <div style={sc.dimOverlay}><div style={sc.frame} /></div>
-            <div style={sc.hint}>バーコードから10〜20cm離して合わせてください</div>
-            <div style={sc.tapHint}>📍 タップでフォーカス調整</div>
+            <div ref={scannerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
+              <video
+                ref={(el) => {
+                  if (el && streamRef.current) {
+                    el.srcObject = streamRef.current;
+                    el.play().catch(() => {});
+                  }
+                }}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                playsInline muted autoPlay />
+            </div>
+            <div style={sc.dimOverlay}>
+              {/* 枠を小さく（20%幅）して自然に離れさせる */}
+              <div style={sc.frame} />
+            </div>
+            <div style={sc.hint}>バーコードから15〜20cm離して枠に合わせてください</div>
+            <div style={sc.tapHint}>📍 タップで再フォーカス</div>
           </div>
         )}
         <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
@@ -308,7 +383,7 @@ const sc = {
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
   videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
   dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-  frame: { width: "70%", aspectRatio: "2.2/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" },
+  frame: { width: "55%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)" },
   hint: { position: "absolute", bottom: 28, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12 },
   tapHint: { position: "absolute", bottom: 10, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600 },
   shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
