@@ -44,12 +44,11 @@ export default async function handler(req, res) {
   // キーワード検索モード（部分一致）
   if (q) {
     try {
-      const keyword = encodeURIComponent(q + " プラモデル");
-      const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=8&output=json&keyword=${keyword}`;
+      const query = encodeURIComponent(q + " プラモデル");
+      const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=8&output=json&query=${query}`;
       const r = await fetch(url);
       const data = await r.json();
       const hits = data?.hits || [];
-      if (hits.length === 0) return res.json({ debug: "no hits", totalCount: data?.totalResultsAvailable, url });
       const skipWords = /中古|即納|訳あり|ジャンク|used/i;
       const results = hits
         .filter(h => !skipWords.test(h.name || ""))
