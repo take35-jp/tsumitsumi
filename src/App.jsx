@@ -1107,7 +1107,7 @@ const s = {
   thumb: { width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0 },
   thumbPh: { width: 56, height: 56, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
-  cardName: { fontSize: 15, fontWeight: 700, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  cardName: { fontSize: 13, fontWeight: 700, color: "#111", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 },
   cardMeta: { fontSize: 12, color: "#6b7280", marginTop: 3, display: "flex", gap: 6, alignItems: "center" },
   badge: { background: "#f3f4f6", borderRadius: 4, padding: "1px 6px", fontSize: 11, color: "#374151" },
   cardBottom: { display: "flex", gap: 8, marginTop: 6, alignItems: "center" },
