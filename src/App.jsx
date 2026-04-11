@@ -89,50 +89,42 @@ function BarcodeScanner({ onDetected, onClose }) {
   const [imgSrc, setImgSrc] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
-  const [supported, setSupported] = useState(true);
+  const [supported, setSupported] = useState(null); // null=未確認
   const inputRef = useRef();
 
   useEffect(() => {
-    if (!("BarcodeDetector" in window)) setSupported(false);
+    setSupported("BarcodeDetector" in window);
   }, []);
 
   const readBarcode = async (file) => {
     setScanning(true);
     setError("");
     try {
-      if ("BarcodeDetector" in window) {
-        // ① OS内蔵BarcodeDetector（Chrome/Safari対応）
-        const detector = new window.BarcodeDetector({
-          formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
-        });
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        await new Promise(r => { img.onload = r; img.src = url; });
+      const detector = new window.BarcodeDetector({
+        formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
+      });
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      await new Promise(r => { img.onload = r; img.src = url; });
 
-        // 複数の解像度で試す
-        for (const scale of [1, 0.5, 2]) {
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.round(img.width * scale);
-          canvas.height = Math.round(img.height * scale);
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const bitmap = await createImageBitmap(canvas);
-          const results = await detector.detect(bitmap);
-          if (results.length > 0) {
-            setScanning(false);
-            onDetected(results[0].rawValue);
-            return;
-          }
+      for (const scale of [1, 0.5, 2, 1.5]) {
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        const bitmap = await createImageBitmap(canvas);
+        const results = await detector.detect(bitmap);
+        if (results.length > 0) {
+          setScanning(false);
+          onDetected(results[0].rawValue);
+          return;
         }
-        setScanning(false);
-        setError("バーコードを読み取れませんでした。\nバーコード部分だけをアップで撮影してください。");
-      } else {
-        setScanning(false);
-        setError("このブラウザはバーコード読み取りに対応していません。\n手動でJANコードを入力してください。");
       }
+      setScanning(false);
+      setError("読み取れませんでした。\nバーコード部分だけをアップで明るい場所で撮影してください。");
     } catch (e) {
       setScanning(false);
-      setError(`読み取りエラー: ${String(e).slice(0, 60)}`);
+      setError("読み取りエラー。手動でJANコードを入力してください。");
     }
   };
 
@@ -159,42 +151,118 @@ function BarcodeScanner({ onDetected, onClose }) {
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
 
-      {!supported && (
-        <div style={{ background: "#fff3cd", color: "#856404", borderRadius: 10, padding: "10px 14px", fontSize: 12, marginBottom: 12 }}>
-          ⚠ このブラウザはバーコード読み取り非対応です。手動入力をご利用ください。
+      {/* iPhoneでSDAが無効の場合の案内 */}
+      {supported === false && (
+        <div style={{ background: "#fff3cd", color: "#856404", borderRadius: 10, padding: "12px 14px", fontSize: 12, marginBottom: 12, lineHeight: 1.8 }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>⚠ iPhoneの場合：設定が必要です</div>
+          <div>「設定」→「Safari」→「詳細」→「実験的な機能」</div>
+          <div>→「Shape Detection API」を<strong>オン</strong>にしてください</div>
+          <div style={{ marginTop: 6, color: "#6b7280" }}>設定後、ページを再読み込みしてお試しください</div>
         </div>
       )}
 
-      {!imgSrc ? (
-        <div>
-          <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
-            <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
-          </div>
-          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-            💡 バーコード部分だけをアップで・明るい場所で撮影してください
-          </div>
-        </div>
+      {supported === false ? (
+        // SDA無効時はQuaggaライブスキャンにフォールバック
+        <IPhoneScanner onDetected={onDetected} />
       ) : (
-        <div>
-          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
-          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
-          {error && (
-            <div style={sc.errorBox}>
-              <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
-              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
+        // SDA有効時は写真撮影→BarcodeDetector
+        <>
+          {!imgSrc ? (
+            <div>
+              <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
+                <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
+                <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
+              </div>
+              <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
+                💡 バーコード部分だけをアップで・明るい場所で撮影してください
+              </div>
+            </div>
+          ) : (
+            <div>
+              <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
+              {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
+              {error && (
+                <div style={sc.errorBox}>
+                  <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
+                  <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
+                </div>
+              )}
+              {!scanning && !error && (
+                <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
+              )}
             </div>
           )}
-          {!scanning && !error && (
-            <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
-          )}
-        </div>
+          <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
+        </>
       )}
 
-      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
+    </div>
+  );
+}
+
+// iPhone用フォールバック：Quaggaライブスキャン
+function IPhoneScanner({ onDetected }) {
+  const scannerRef = useRef();
+  const detectedRef = useRef(false);
+  const [status, setStatus] = useState("loading");
+
+  useEffect(() => {
+    const loadQuagga = () => new Promise((resolve, reject) => {
+      if (window.Quagga) { resolve(); return; }
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+
+    const init = async () => {
+      await loadQuagga();
+      window.Quagga.init({
+        inputStream: {
+          name: "Live", type: "LiveStream", target: scannerRef.current,
+          constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        },
+        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] },
+        locate: true, frequency: 5,
+        locator: { patchSize: "medium", halfSample: true },
+      }, (err) => {
+        if (err) { setStatus("error"); return; }
+        window.Quagga.start();
+        setStatus("scanning");
+      });
+      window.Quagga.onDetected((result) => {
+        if (detectedRef.current) return;
+        const code = result?.codeResult?.code;
+        const confidence = result?.codeResult?.startInfo?.error || 0;
+        if (code && confidence < 0.25) {
+          detectedRef.current = true;
+          window.Quagga.stop();
+          onDetected(code);
+        }
+      });
+    };
+    init().catch(() => setStatus("error"));
+    return () => { if (window.Quagga) { try { window.Quagga.stop(); } catch(_) {} } };
+  }, []);
+
+  if (status === "error") return (
+    <div style={{ background: "#fee2e2", color: "#b91c1c", borderRadius: 10, padding: "12px 14px", fontSize: 12 }}>
+      カメラを起動できませんでした。手動で入力してください。
+    </div>
+  );
+
+  return (
+    <div style={{ position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 }}>
+      <div ref={scannerRef} style={{ width: "100%", height: "100%" }} />
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "70%", aspectRatio: "2.2/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" }} />
+      </div>
+      <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.85)", fontSize: 12 }}>
+        {status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}
+      </div>
     </div>
   );
 }
@@ -242,6 +310,10 @@ const sc = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
+  videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
+  dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
+  frame: { width: "70%", aspectRatio: "2.2/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" },
+  hint: { position: "absolute", bottom: 14, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.85)", fontSize: 12 },
   shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
   scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
   errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
