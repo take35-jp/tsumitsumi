@@ -903,6 +903,7 @@ const s = {
 };
 
 
+const SERIES_OPTIONS = [
   "ガンプラ",
   "ポケプラ",
   "Figure-rise Standard", "Figure-rise Bust", "Figure-rise Mechanics",
