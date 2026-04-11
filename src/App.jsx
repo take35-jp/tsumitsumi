@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
 const SERIES_OPTIONS = [
-  "ガンプラ（HG）", "ガンプラ（MG）", "ガンプラ（RG）", "ガンプラ（PG）", "ガンプラ（SD）", "ガンプラ（EG）",
+  "ガンプラ",
   "ポケプラ",
   "Figure-rise Standard", "Figure-rise Bust", "Figure-rise Mechanics",
   "30 Minutes Sisters", "30 Minutes Missions",
@@ -57,12 +57,7 @@ function guessSeriesFromName(name) {
   if (/Figure-rise/i.test(name)) return "Figure-rise Standard";
   if (/ポケモン|ポケプラ|Pokemon/i.test(name)) return "ポケプラ";
   if (/ミニ四駆/i.test(name)) return "ミニ四駆";
-  if (/\bPG\b/i.test(name)) return "ガンプラ（PG）";
-  if (/\bMG\b/i.test(name)) return "ガンプラ（MG）";
-  if (/\bRG\b/i.test(name)) return "ガンプラ（RG）";
-  if (/\bEG\b/i.test(name)) return "ガンプラ（EG）";
-  if (/\bSD\b/i.test(name)) return "ガンプラ（SD）";
-  if (/\bHG\b|ガンダム|Gundam/i.test(name)) return "ガンプラ（HG）";
+  if (/\bPG\b|\bMG\b|\bRG\b|\bHG\b|\bEG\b|\bSD\b|ガンダム|Gundam/i.test(name)) return "ガンプラ";
   return "";
 }
 function guessScaleFromName(name) {
@@ -91,127 +86,34 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const [imgSrc, setImgSrc] = useState(null);
-  const [scanning, setScanning] = useState(false);
-  const [debugMsg, setDebugMsg] = useState("");
-  const [error, setError] = useState("");
   const inputRef = useRef();
-
-  const sendToGemini = async (file) => {
-    setScanning(true);
-    setError("");
-    setDebugMsg("送信中...");
-    try {
-      // 画像を圧縮（512px、品質70%）
-      const compressed = await new Promise((resolve) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-          const MAX = 512;
-          let w = img.width, h = img.height;
-          if (w > MAX || h > MAX) {
-            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-            else { w = Math.round(w * MAX / h); h = MAX; }
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = w; canvas.height = h;
-          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL("image/jpeg", 0.7).split(",")[1]);
-        };
-        img.src = url;
-      });
-
-      setDebugMsg(`AI解析中... (${Math.round(compressed.length/1024)}KB)`);
-
-      const res = await fetch("/api/scan-barcode", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: compressed, mimeType: "image/jpeg" }),
-      });
-      const data = await res.json();
-      setDebugMsg(`レスポンス: ${JSON.stringify(data).slice(0, 100)}`);
-      const rawText = data?.jan ? "" : (data?.raw || data?.fullResponse || "");
-      const jan = data?.jan;
-
-      if (jan) {
-        setScanning(false);
-        onDetected(jan);
-      } else {
-        setScanning(false);
-        setError(`読み取れませんでした。\n撮り直してください。`);
-      }
-    } catch (e) {
-      setScanning(false);
-      setDebugMsg(`エラー: ${String(e).slice(0, 60)}`);
-      setError("通信エラーが発生しました。");
-    }
-  };
-
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImgSrc(URL.createObjectURL(file));
-    setError("");
-    setDebugMsg("");
-    sendToGemini(file);
-    e.target.value = "";
-  };
-
-  const handleRetake = () => {
-    setImgSrc(null);
-    setError("");
-    setDebugMsg("");
-    setScanning(false);
-    setTimeout(() => inputRef.current?.click(), 100);
-  };
 
   return (
     <div style={sc.wrap}>
       <div style={sc.header}>
-        <span style={sc.title}>📷 バーコードをスキャン</span>
+        <span style={sc.title}>📷 JANコードを登録</span>
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
 
-      {!imgSrc ? (
-        <div>
-          <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
-            <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
-          </div>
-          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-            💡 バーコードを映すと数字が表示されます<br/>数字をタップしてコピーしてください
-          </div>
+      {/* Step 1: カメラで数字をコピー */}
+      <div style={sc.stepBox}>
+        <div style={sc.stepNum}>Step 1</div>
+        <div style={sc.stepTitle}>カメラでバーコードの数字をコピー</div>
+        <div style={sc.stepDesc}>
+          カメラアプリでバーコードを映すと、下に数字が表示されます。<br/>
+          その数字をタップ→「コピー」してください。
         </div>
-      ) : (
-        <div>
-          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 220, marginBottom: 10 }} alt="" />
-          {scanning && (
-            <div style={sc.scanningBox}>
-              ⏳ {debugMsg || "AI解析中..."}<br />
-              <span style={{ fontSize: 11 }}>少々お待ちください</span>
-            </div>
-          )}
-          {!scanning && debugMsg && (
-            <div style={{ background: "#f3f4f6", borderRadius: 8, padding: "6px 10px", fontSize: 11, color: "#374151", marginBottom: 8, wordBreak: "break-all" }}>
-              🔍 {debugMsg}
-            </div>
-          )}
-          {error && (
-            <div style={sc.errorBox}>
-              <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
-              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
-            </div>
-          )}
-          {!scanning && !error && (
-            <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
-          )}
+        <div style={{ textAlign: "center", fontSize: 32, margin: "12px 0" }}>
+          📷 → <span style={{ fontFamily: "monospace", fontSize: 16, background: "#f3f4f6", padding: "4px 8px", borderRadius: 6 }}>4573102 64225 7</span> → コピー
         </div>
-      )}
+      </div>
 
-      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
-      <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
-      <ManualInput onDetected={onDetected} />
+      {/* Step 2: 貼り付け */}
+      <div style={sc.stepBox}>
+        <div style={sc.stepNum}>Step 2</div>
+        <div style={sc.stepTitle}>下の欄に貼り付けると自動検索</div>
+        <ManualInput onDetected={onDetected} showGuide={false} />
+      </div>
     </div>
   );
 }
@@ -259,11 +161,11 @@ const sc = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
-  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
-  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
+  stepBox: { background: "#f8f9fa", borderRadius: 14, padding: "14px 16px", marginBottom: 14 },
+  stepNum: { fontSize: 11, fontWeight: 700, color: "#4f8ef7", marginBottom: 4 },
+  stepTitle: { fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 },
+  stepDesc: { fontSize: 12, color: "#6b7280", lineHeight: 1.7, marginBottom: 8 },
   errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
-  retakeBtn: { display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
 };
