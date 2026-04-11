@@ -1,7 +1,6 @@
 const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
 
 function cleanName(name) {
-  // ① スケール・グレードキーワードが出てきた位置から取り出す
   const startKeywords = [
     /\bPG\b/, /\bMG\b/, /\bRG\b/, /\bHG\b/, /\bEG\b/, /\bSD\b/,
     /1\/144/, /1\/100/, /1\/60/, /1\/72/, /1\/35/, /1\/24/, /1\/12/,
@@ -9,27 +8,13 @@ function cleanName(name) {
   ];
   for (const kw of startKeywords) {
     const match = name.match(kw);
-    if (match) {
-      name = name.slice(name.indexOf(match[0]));
-      break;
-    }
+    if (match) { name = name.slice(name.indexOf(match[0])); break; }
   }
-
-  // ② 不要なワードを除去（位置に関係なく）
   const removePatterns = [
-    /プラスチックモデルキット\s*/g,
-    /プラモデル\s*/g,
-    /返品種別[A-Z]\s*/g,
-    /\([0-9]{6,}\)/g,
-    /【[^】]*】/g,
-    /\s+バンダイ$/,
-    /\s+BANDAI$/i,
+    /プラスチックモデルキット\s*/g, /プラモデル\s*/g, /返品種別[A-Z]\s*/g,
+    /\([0-9]{6,}\)/g, /【[^】]*】/g, /\s+バンダイ$/, /\s+BANDAI$/i,
   ];
-  for (const p of removePatterns) {
-    name = name.replace(p, "");
-  }
-
-  // ③ 末尾の不要ワードで打ち切る
+  for (const p of removePatterns) name = name.replace(p, "");
   const stopKeywords = [
     /\s+機動戦士/, /\s+機動新世紀/, /\s+新機動/, /\s+閃光のハサウェイ/,
     /\s+鉄血/, /\s+水星/, /\s+SEED/, /\s+ユニコーン/,
@@ -38,18 +23,15 @@ function cleanName(name) {
     const match = name.match(kw);
     if (match) name = name.slice(0, name.indexOf(match[0]));
   }
-
   return name.replace(/\s+/g, " ").trim();
 }
 
 async function yahooSearch(params) {
-  // results=5件取得して中古っぽいものを除外し最初の1件を返す
   const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=5&output=json&${params}`;
   const r = await fetch(url);
   const data = await r.json();
   const hits = data?.hits || [];
-  // 中古・即納・訳あり等を除外
-  const skipWords = /中古|即納|訳あり|ジャンク|未開封品|used/i;
+  const skipWords = /中古|即納|訳あり|ジャンク|used/i;
   const clean = hits.find(h => !skipWords.test(h.name || ""));
   return clean || hits[0] || null;
 }
@@ -59,13 +41,15 @@ export default async function handler(req, res) {
 
   const { jan, q } = req.query;
 
-  // キーワード検索モード
+  // キーワード検索モード（部分一致）
   if (q) {
     try {
-      const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=5&output=json&keyword=${encodeURIComponent(q + " プラモデル")}&sort=score`;
+      const keyword = encodeURIComponent(q + " プラモデル");
+      const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=8&output=json&keyword=${keyword}`;
       const r = await fetch(url);
       const data = await r.json();
       const hits = data?.hits || [];
+      if (hits.length === 0) return res.json({ debug: "no hits", totalCount: data?.totalResultsAvailable, url });
       const skipWords = /中古|即納|訳あり|ジャンク|used/i;
       const results = hits
         .filter(h => !skipWords.test(h.name || ""))
@@ -75,7 +59,7 @@ export default async function handler(req, res) {
           photoUrl: h.image?.medium || h.image?.small || "",
           price: h.price || "",
         }))
-        .filter(h => h.name);
+        .filter(h => h.name.length > 0);
       return res.json(results);
     } catch (e) {
       return res.status(500).json({ error: String(e) });
@@ -84,23 +68,16 @@ export default async function handler(req, res) {
 
   if (!jan) return res.status(400).json({ error: "jan or q required" });
 
-  // ① Yahoo jan_codeで検索
   try {
     const item = await yahooSearch(`jan_code=${jan}`);
-    if (item?.name) {
-      return res.json({ name: cleanName(item.name), photoUrl: item.image?.medium || item.image?.small || "", price: "" });
-    }
+    if (item?.name) return res.json({ name: cleanName(item.name), photoUrl: item.image?.medium || item.image?.small || "", price: "" });
   } catch (e) {}
 
-  // ② Yahoo keywordでJANコードを検索
   try {
     const item = await yahooSearch(`keyword=${jan}`);
-    if (item?.name) {
-      return res.json({ name: cleanName(item.name), photoUrl: item.image?.medium || item.image?.small || "", price: "" });
-    }
+    if (item?.name) return res.json({ name: cleanName(item.name), photoUrl: item.image?.medium || item.image?.small || "", price: "" });
   } catch (e) {}
 
-  // ③ Open Food Facts
   try {
     const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${jan}.json`, { headers: { "User-Agent": "TsumiTsumi/1.0" } });
     const data = await r.json();
@@ -111,7 +88,6 @@ export default async function handler(req, res) {
     }
   } catch (e) {}
 
-  // ④ UPCItemDB
   try {
     const r = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${jan}`, { headers: { "User-Agent": "TsumiTsumi/1.0" } });
     const data = await r.json();
