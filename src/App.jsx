@@ -161,41 +161,34 @@ function BarcodeScanner({ onDetected, onClose }) {
         </div>
       )}
 
-      {supported === false ? (
-        // SDA無効時はQuaggaライブスキャンにフォールバック
-        <IPhoneScanner onDetected={onDetected} />
+      {/* 写真撮影→BarcodeDetector（iPhone/Android共通） */}
+      {!imgSrc ? (
+        <div>
+          <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
+            <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
+          </div>
+          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
+            💡 バーコード部分だけをアップで・明るい場所で撮影してください
+          </div>
+        </div>
       ) : (
-        // SDA有効時は写真撮影→BarcodeDetector
-        <>
-          {!imgSrc ? (
-            <div>
-              <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
-                <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
-                <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
-              </div>
-              <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-                💡 バーコード部分だけをアップで・明るい場所で撮影してください
-              </div>
-            </div>
-          ) : (
-            <div>
-              <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
-              {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
-              {error && (
-                <div style={sc.errorBox}>
-                  <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
-                  <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
-                </div>
-              )}
-              {!scanning && !error && (
-                <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
-              )}
+        <div>
+          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
+          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
+          {error && (
+            <div style={sc.errorBox}>
+              <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
+              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
             </div>
           )}
-          <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
-        </>
+          {!scanning && !error && (
+            <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
+          )}
+        </div>
       )}
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
 
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
@@ -393,6 +386,74 @@ const suggS = {
   price: { fontSize: 11, color: "#9ca3af", marginTop: 2 },
 };
 
+// ---- Help Modal ----
+function HelpModal({ onClose }) {
+  return (
+    <div style={hs.wrap}>
+      <div style={hs.header}>
+        <span style={hs.title}>❓ ヘルプ・使い方</span>
+        <button style={hs.closeBtn} onClick={onClose}>✕</button>
+      </div>
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>📱 基本的な使い方</div>
+        <div style={hs.item}><span style={hs.num}>1</span>右下の📷ボタンでバーコードをスキャン登録</div>
+        <div style={hs.item}><span style={hs.num}>2</span>右下の＋ボタンでキット名を直接入力して登録</div>
+        <div style={hs.item}><span style={hs.num}>3</span>キットをタップして詳細・編集・削除</div>
+        <div style={hs.item}><span style={hs.num}>4</span>✓ボタンで完成済みに変更</div>
+      </div>
+
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>📷 バーコードスキャン（iPhone）</div>
+        <div style={hs.desc}>精度を上げるには設定が必要です：</div>
+        <div style={hs.item}><span style={hs.num}>1</span>「設定」→「Safari」→「詳細」→「機能フラグ」</div>
+        <div style={hs.item}><span style={hs.num}>2</span>「Shape Detection API」をオン</div>
+        <div style={hs.item}><span style={hs.num}>3</span>ページを再読み込み</div>
+        <div style={hs.tip}>💡 設定後はバーコード部分だけをアップで・明るい場所で撮影してください</div>
+      </div>
+
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>📷 バーコードスキャン（Android）</div>
+        <div style={hs.item}><span style={hs.num}>1</span>📷ボタンをタップしてカメラを起動</div>
+        <div style={hs.item}><span style={hs.num}>2</span>バーコード部分だけをアップで撮影</div>
+        <div style={hs.item}><span style={hs.num}>3</span>自動でJANコードを読み取って登録画面へ</div>
+        <div style={hs.tip}>💡 明るい場所でバーコードに近づいて撮影すると精度が上がります</div>
+      </div>
+
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>🔍 キット名で検索して登録</div>
+        <div style={hs.desc}>手動登録時にキット名を2文字以上入力すると候補が表示されます。候補をタップすると画像・名前が自動入力されます。</div>
+      </div>
+
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>⚠ データについての注意</div>
+        <div style={hs.item}><span style={hs.warn}>!</span>データはブラウザ内に保存されます</div>
+        <div style={hs.item}><span style={hs.warn}>!</span>Safariの「履歴とデータを消去」でデータが消えます</div>
+        <div style={hs.item}><span style={hs.warn}>!</span>SafariとChromeなど別ブラウザ間でデータは共有されません</div>
+        <div style={hs.item}><span style={hs.warn}>!</span>機種変更・初期化の際はデータが引き継がれません</div>
+      </div>
+
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>↕ 並び替え</div>
+        <div style={hs.desc}>リスト右上の「↕ 並び替え」ボタンをタップすると▲▼ボタンが表示され、1つずつ順番を変えられます。</div>
+      </div>
+    </div>
+  );
+}
+
+const hs = {
+  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  title: { fontSize: 17, fontWeight: 700, color: "#111" },
+  closeBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" },
+  section: { marginBottom: 20, borderBottom: "1px solid #f0f0f0", paddingBottom: 16 },
+  sectionTitle: { fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 10 },
+  desc: { fontSize: 13, color: "#6b7280", lineHeight: 1.7, marginBottom: 8 },
+  item: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "#374151", marginBottom: 6, lineHeight: 1.6 },
+  num: { minWidth: 20, height: 20, background: "#111", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
+  warn: { minWidth: 20, height: 20, background: "#f59e0b", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
+  tip: { fontSize: 12, color: "#4f8ef7", background: "#eff6ff", borderRadius: 8, padding: "6px 10px", marginTop: 8 },
+};
+
 // ---- X Share Modal ----
 function XShareModal({ kits, myXId, setMyXId, onClose }) {
   const pending = kits.filter((k) => !k.completed);
@@ -502,6 +563,7 @@ export default function App() {
   const [filterSeries, setFilterSeries] = useState("");
   const [filterRating, setFilterRating] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
@@ -596,6 +658,7 @@ export default function App() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button style={s.searchIconBtn} onClick={() => setShowSearch(v => !v)}>🔍</button>
+          <button style={s.searchIconBtn} onClick={() => setShowHelp(true)}>❓</button>
           <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏 シェア</button>
         </div>
       </div>
@@ -765,6 +828,15 @@ export default function App() {
         <div style={{ ...s.overlay, alignItems: "flex-start" }} onClick={() => setShowScanner(false)}>
           <div style={{ width: "100%", maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
             <BarcodeScanner onDetected={handleJanDetected} onClose={() => setShowScanner(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Help */}
+      {showHelp && (
+        <div style={s.overlay} onClick={() => setShowHelp(false)}>
+          <div style={{ width: "100%", maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+            <HelpModal onClose={() => setShowHelp(false)} />
           </div>
         </div>
       )}
