@@ -87,16 +87,17 @@ async function fetchProductByJAN(jan) {
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
   const isIPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const [imgSrc, setImgSrc] = useState(null);
-  const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
+  const [debugInfo, setDebugInfo] = useState("起動中...");
   const [tapFlash, setTapFlash] = useState(false);
-  const inputRef = useRef();
-  const scannerRef = useRef();
+  const videoRef = useRef();       // div container
+  const videoElRef = useRef();     // actual video element
   const detectedRef = useRef(false);
   const streamRef = useRef(null);
-  const videoRef = useRef();
-  const [debugInfo, setDebugInfo] = useState("初期化中...");
+  const animRef = useRef(null);
+  const inputRef = useRef();
+  const [imgSrc, setImgSrc] = useState(null);
+  const [scanning, setScanning] = useState(false);
 
   const handleTap = () => {
     setTapFlash(true);
@@ -105,162 +106,245 @@ function BarcodeScanner({ onDetected, onClose }) {
 
   useEffect(() => {
     if (!isIPhone) return;
-    let animFrameId = null;
-    let lastScan = 0;
-    const SCAN_INTERVAL = 150;
 
-    // ZBar WASMの読み込み
-    const loadZBarWasm = () => new Promise((resolve, reject) => {
-      if (window.zbarWasm) { resolve(window.zbarWasm); return; }
-      // ES moduleをdynamic importで読み込む
-      import("https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/index.js")
-        .then(mod => { window.zbarWasm = mod; resolve(mod); })
-        .catch(reject);
-    });
+    let cancelled = false;
+    let quaggaStarted = false;
 
-    // Quaggaの読み込み（フォールバック用）
-    const loadQuagga = () => new Promise((resolve, reject) => {
-      if (window.Quagga) { resolve(); return; }
-      const s = document.createElement("script");
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
-
-    // ZBar WASMでスキャン（メインエンジン）
-    const startZBarScan = async (zbar, video) => {
-      setDebugInfo("ZBar WASM スキャン中...");
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-
-      const loop = async (now) => {
-        if (detectedRef.current) return;
-        animFrameId = requestAnimationFrame(loop);
-        if (now - lastScan < SCAN_INTERVAL) return;
-        lastScan = now;
-        if (video.readyState < 2 || video.videoWidth === 0) return;
-
-        try {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const symbols = await zbar.scanImageData(imageData);
-
-          if (symbols.length > 0) {
-            const code = symbols[0].decode();
-            if (code && !detectedRef.current) {
-              setDebugInfo(`✅ ZBar: ${code}`);
-              detectedRef.current = true;
-              cancelAnimationFrame(animFrameId);
-              streamRef.current?.getTracks().forEach(t => t.stop());
-              onDetected(code);
-            }
-          }
-        } catch (e) {
-          // WASMエラーは無視して継続
-        }
-      };
-      requestAnimationFrame(loop);
-    };
-
-    // Quaggaでスキャン（フォールバック）
-    const startQuaggaScan = async () => {
-      setDebugInfo("Quagga フォールバック中...");
-      await loadQuagga();
-
-      window.Quagga.init({
-        inputStream: {
-          name: "Live", type: "LiveStream", target: videoRef.current,
-          constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-        },
-        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"], multiple: false },
-        locate: true, frequency: 10,
-        locator: { patchSize: "large", halfSample: false },
-      }, (err) => {
-        if (err) {
-          setDebugInfo(`Quagga失敗: ${String(err).slice(0, 30)}`);
-          setError("カメラを起動できませんでした。手動で入力してください。");
-          return;
-        }
-        window.Quagga.start();
-        setDebugInfo("Quagga スキャン中...");
-      });
-
-      let lastCode = null, sameCount = 0;
-      window.Quagga.onDetected((result) => {
-        if (detectedRef.current) return;
-        const code = result?.codeResult?.code;
-        if (!code) return;
-        if (code === lastCode) {
-          sameCount++;
-          setDebugInfo(`🔍 Quagga: ${code} (${sameCount}/2回)`);
-          if (sameCount >= 2) {
-            detectedRef.current = true;
-            window.Quagga.stop();
-            onDetected(code);
-          }
-        } else {
-          lastCode = code; sameCount = 1;
-          setDebugInfo(`🔍 Quagga: ${code} (1/2回)`);
-        }
-      });
-    };
-
-    const init = async () => {
+    // ==================
+    // カメラストリーム取得
+    // ==================
+    const getStream = async () => {
       try {
-        // カメラストリームを取得
         const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { exact: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          }
+        });
+        return stream;
+      } catch (_) {
+        // exact失敗時はfallback
+        return await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
         });
-        streamRef.current = stream;
-
-        // ZBar WASMを試みる
-        setDebugInfo("ZBar WASM 読み込み中...");
-        try {
-          const zbar = await Promise.race([
-            loadZBarWasm(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000))
-          ]);
-          setDebugInfo("ZBar WASM 読み込み✅");
-
-          // videoRefにstreamを繋ぐ
-          const video = videoRef.current?.querySelector("video") || (() => {
-            const v = document.createElement("video");
-            v.style.width = "100%"; v.style.height = "100%"; v.style.objectFit = "cover";
-            v.playsInline = true; v.muted = true;
-            videoRef.current?.appendChild(v);
-            return v;
-          })();
-          video.srcObject = stream;
-          await video.play();
-
-          // ズーム1.5倍
-          const track = stream.getVideoTracks()[0];
-          try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
-
-          await startZBarScan(zbar, video);
-
-        } catch (wasmErr) {
-          // ZBar WASM失敗 → Quaggaにフォールバック
-          setDebugInfo(`ZBar失敗→Quagga起動: ${String(wasmErr).slice(0, 30)}`);
-          stream.getTracks().forEach(t => t.stop());
-          await startQuaggaScan();
-        }
-      } catch (e) {
-        setDebugInfo(`カメラエラー: ${String(e).slice(0, 50)}`);
-        setError("カメラを起動できませんでした。手動で入力してください。");
       }
     };
 
-    init();
+    // ==================
+    // video要素のセットアップ
+    // ==================
+    const setupVideo = (stream) => new Promise((resolve) => {
+      // 既存のvideoを再利用 or 新規作成
+      let video = videoElRef.current;
+      if (!video) {
+        video = document.createElement("video");
+        videoElRef.current = video;
+      }
+      video.style.cssText = "width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;display:block;";
+      video.playsInline = true;
+      video.muted = true;
+      video.autoplay = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+
+      if (videoRef.current && !videoRef.current.contains(video)) {
+        videoRef.current.appendChild(video);
+      }
+
+      video.srcObject = stream;
+      video.onloadedmetadata = () => {
+        video.play()
+          .then(() => resolve(video))
+          .catch(() => resolve(video));
+      };
+      video.onerror = () => resolve(video);
+      // 最大2秒待つ
+      setTimeout(() => resolve(video), 2000);
+    });
+
+    // ==================
+    // ZBar WASMスキャン
+    // ==================
+    const runZBar = async (video) => {
+      const zbar = window.zbarWasm;
+      if (!zbar || !zbar.scanImageData) {
+        throw new Error("ZBar not available");
+      }
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      let frameCount = 0;
+      let lastTs = 0;
+
+      return new Promise((resolve, reject) => {
+        const tick = async (ts) => {
+          if (cancelled || detectedRef.current) return;
+          animRef.current = requestAnimationFrame(tick);
+
+          if (ts - lastTs < 150) return;
+          lastTs = ts;
+          frameCount++;
+
+          const vw = video.videoWidth;
+          const vh = video.videoHeight;
+
+          if (frameCount % 5 === 0) {
+            setDebugInfo(`ZBar: ${vw}x${vh} (${frameCount}f)`);
+          }
+
+          if (vw === 0 || vh === 0) return;
+
+          try {
+            canvas.width = vw;
+            canvas.height = vh;
+            ctx.drawImage(video, 0, 0, vw, vh);
+            const imageData = ctx.getImageData(0, 0, vw, vh);
+            const symbols = await zbar.scanImageData(imageData);
+
+            if (symbols && symbols.length > 0 && !detectedRef.current) {
+              const raw = symbols[0].decode();
+              if (raw && raw.length >= 8) {
+                setDebugInfo(`✅ ZBar検出: ${raw}`);
+                resolve(raw);
+              }
+            }
+          } catch (e) {
+            // WASM エラー - 継続
+          }
+        };
+        animRef.current = requestAnimationFrame(tick);
+      });
+    };
+
+    // ==================
+    // Quaggaスキャン（フォールバック）
+    // ==================
+    const runQuagga = () => new Promise((resolve, reject) => {
+      const loadScript = () => new Promise((res, rej) => {
+        if (window.Quagga) { res(); return; }
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
+        s.onload = res;
+        s.onerror = rej;
+        document.head.appendChild(s);
+      });
+
+      loadScript().then(() => {
+        window.Quagga.init({
+          inputStream: {
+            name: "Live", type: "LiveStream",
+            target: videoRef.current,
+            constraints: {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          },
+          decoder: {
+            readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
+            multiple: false,
+          },
+          locate: true,
+          frequency: 10,
+          locator: { patchSize: "large", halfSample: false },
+        }, (err) => {
+          if (err) { reject(err); return; }
+          quaggaStarted = true;
+          window.Quagga.start();
+          setDebugInfo("Quagga スキャン中...");
+
+          // ズーム設定
+          const vid = videoRef.current?.querySelector("video");
+          if (vid?.srcObject) {
+            streamRef.current = vid.srcObject;
+            const track = vid.srcObject.getVideoTracks()[0];
+            setTimeout(() => {
+              try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
+            }, 500);
+          }
+        });
+
+        let lastCode = null, sameCount = 0;
+        window.Quagga.onDetected((result) => {
+          if (cancelled || detectedRef.current) return;
+          const code = result?.codeResult?.code;
+          if (!code) return;
+          if (code === lastCode) {
+            sameCount++;
+            setDebugInfo(`Quagga: ${code} (${sameCount}/2)`);
+            if (sameCount >= 2) resolve(code);
+          } else {
+            lastCode = code; sameCount = 1;
+            setDebugInfo(`Quagga: ${code} (1/2)`);
+          }
+        });
+      }).catch(reject);
+    });
+
+    // ==================
+    // メイン処理
+    // ==================
+    const main = async () => {
+      try {
+        setDebugInfo("カメラ起動中...");
+        const stream = await getStream();
+        if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+
+        // ZBar WASMを試みる
+        const zbarReady = window.__zbarReady && window.zbarWasm;
+        if (zbarReady) {
+          setDebugInfo("ZBar WASM 準備完了");
+          try {
+            const video = await setupVideo(stream);
+            // ズーム1.5倍
+            const track = stream.getVideoTracks()[0];
+            try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
+
+            const code = await runZBar(video);
+            if (!cancelled && !detectedRef.current) {
+              detectedRef.current = true;
+              stream.getTracks().forEach(t => t.stop());
+              onDetected(code);
+            }
+            return;
+          } catch (e) {
+            setDebugInfo(`ZBar失敗(${String(e).slice(0,20)})→Quagga`);
+            stream.getTracks().forEach(t => t.stop());
+          }
+        } else {
+          setDebugInfo(`ZBar未対応→Quagga (${window.__zbarError || "loading"})`);
+        }
+
+        // Quaggaフォールバック
+        const code = await runQuagga();
+        if (!cancelled && !detectedRef.current) {
+          detectedRef.current = true;
+          if (quaggaStarted) { try { window.Quagga.stop(); } catch (_) {} }
+          onDetected(code);
+        }
+
+      } catch (e) {
+        if (!cancelled) {
+          setDebugInfo(`エラー: ${String(e).slice(0,50)}`);
+          setError("カメラを起動できませんでした。
+手動でJANコードを入力してください。");
+        }
+      }
+    };
+
+    main();
+
     return () => {
-      cancelAnimationFrame(animFrameId);
+      cancelled = true;
+      cancelAnimationFrame(animRef.current);
       streamRef.current?.getTracks().forEach(t => t.stop());
-      if (window.Quagga) { try { window.Quagga.stop(); } catch (_) {} }
+      if (quaggaStarted && window.Quagga) { try { window.Quagga.stop(); } catch (_) {} }
     };
   }, []);
 
+  // Android: 写真撮影→BarcodeDetector
   const readBarcode = async (file) => {
     setScanning(true);
     setError("");
@@ -300,6 +384,7 @@ function BarcodeScanner({ onDetected, onClose }) {
     setTimeout(() => inputRef.current?.click(), 100);
   };
 
+  // iPhone: ライブスキャン画面
   if (isIPhone) {
     return (
       <div style={sc.wrap}>
@@ -311,11 +396,11 @@ function BarcodeScanner({ onDetected, onClose }) {
           <div style={sc.errorBox}>{error}</div>
         ) : (
           <div style={{ ...sc.videoWrap, outline: tapFlash ? "3px solid rgba(255,255,255,0.8)" : "none" }} onClick={handleTap}>
-            <div ref={videoRef} style={{ width: "100%", height: "100%" }} />
+            <div ref={videoRef} style={{ width: "100%", height: "100%", position: "relative", background: "#000" }} />
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
-            <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.4)", padding: "4px 8px" }}>
-              v1.07 | {debugInfo}
+            <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
+              v1.09 | {debugInfo}
             </div>
           </div>
         )}
@@ -325,6 +410,7 @@ function BarcodeScanner({ onDetected, onClose }) {
     );
   }
 
+  // Android: 写真撮影→BarcodeDetector
   return (
     <div style={sc.wrap}>
       <div style={sc.header}>
