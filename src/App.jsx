@@ -96,6 +96,8 @@ function BarcodeScanner({ onDetected, onClose }) {
   const detectedRef = useRef(false);
   const streamRef = useRef(null);
 
+  const videoRef = useRef();
+
   const handleTap = () => {
     setTapFlash(true);
     setTimeout(() => setTapFlash(false), 300);
@@ -105,16 +107,8 @@ function BarcodeScanner({ onDetected, onClose }) {
     if (!isIPhone) return;
     let animFrameId = null;
     let lastScan = 0;
-    const SCAN_INTERVAL = 150; // 1秒に約6〜7回
+    const SCAN_INTERVAL = 150;
     const hasBarcodeDetector = "BarcodeDetector" in window;
-
-    const loadQuagga = () => new Promise((resolve, reject) => {
-      if (window.Quagga) { resolve(); return; }
-      const s = document.createElement("script");
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
 
     // Canvas前処理：グレースケール＋閾値処理
     const preprocessCanvas = (video) => {
@@ -125,7 +119,6 @@ function BarcodeScanner({ onDetected, onClose }) {
       ctx.drawImage(video, 0, 0, W, H);
       const imgData = ctx.getImageData(0, 0, W, H);
       const data = imgData.data;
-      // グレースケール＋閾値（128で白黒）
       for (let i = 0; i < data.length; i += 4) {
         const gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
         const bw = gray > 128 ? 255 : 0;
@@ -135,62 +128,59 @@ function BarcodeScanner({ onDetected, onClose }) {
       return canvas;
     };
 
-    // BarcodeDetector方式でスキャン
-    const scanWithBarcodeDetector = async (video) => {
-      const detector = new window.BarcodeDetector({
-        formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
-      });
-      const loop = async (now) => {
-        if (detectedRef.current) return;
-        animFrameId = requestAnimationFrame(loop);
-        if (now - lastScan < SCAN_INTERVAL) return;
-        lastScan = now;
-        if (video.readyState < 2) return;
-        try {
-          // オリジナル映像で試す
-          let results = await detector.detect(video);
-          if (results.length === 0) {
-            // 前処理済みCanvasでも試す
-            const processed = preprocessCanvas(video);
-            results = await detector.detect(processed);
-          }
-          if (results.length > 0 && !detectedRef.current) {
-            detectedRef.current = true;
-            cancelAnimationFrame(animFrameId);
-            streamRef.current?.getTracks().forEach(t => t.stop());
-            onDetected(results[0].rawValue);
-          }
-        } catch (_) {}
-      };
-      requestAnimationFrame(loop);
-    };
-
     const init = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          }
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
         });
         streamRef.current = stream;
-        const video = document.createElement("video");
+
+        // DOMのvideo要素に直接繋ぐ
+        const video = videoRef.current;
+        if (!video) return;
         video.srcObject = stream;
         video.playsInline = true;
         video.muted = true;
         await video.play();
 
-        // ズーム1.5倍設定
+        // ズーム1.5倍
         const track = stream.getVideoTracks()[0];
         try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
 
         if (hasBarcodeDetector) {
-          // BarcodeDetector方式（iOS 17+）
-          await scanWithBarcodeDetector(video);
+          const detector = new window.BarcodeDetector({
+            formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
+          });
+          const loop = async (now) => {
+            if (detectedRef.current) return;
+            animFrameId = requestAnimationFrame(loop);
+            if (now - lastScan < SCAN_INTERVAL) return;
+            lastScan = now;
+            if (video.readyState < 2) return;
+            try {
+              let results = await detector.detect(video);
+              if (results.length === 0) {
+                const processed = preprocessCanvas(video);
+                results = await detector.detect(processed);
+              }
+              if (results.length > 0 && !detectedRef.current) {
+                detectedRef.current = true;
+                cancelAnimationFrame(animFrameId);
+                stream.getTracks().forEach(t => t.stop());
+                onDetected(results[0].rawValue);
+              }
+            } catch (_) {}
+          };
+          requestAnimationFrame(loop);
         } else {
           // Quaggaフォールバック
-          if (scannerRef.current) scannerRef.current.appendChild(video);
+          const loadQuagga = () => new Promise((resolve, reject) => {
+            if (window.Quagga) { resolve(); return; }
+            const s = document.createElement("script");
+            s.src = "https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js";
+            s.onload = resolve; s.onerror = reject;
+            document.head.appendChild(s);
+          });
           await loadQuagga();
           window.Quagga.init({
             inputStream: { name: "Live", type: "LiveStream", target: scannerRef.current,
@@ -276,19 +266,8 @@ function BarcodeScanner({ onDetected, onClose }) {
           <div style={sc.errorBox}>{error}</div>
         ) : (
           <div style={{ ...sc.videoWrap, outline: tapFlash ? "3px solid rgba(255,255,255,0.8)" : "none" }} onClick={handleTap}>
-            <div ref={scannerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
-              <video
-                ref={(el) => {
-                  if (el && streamRef.current) {
-                    el.srcObject = streamRef.current;
-                    el.play().catch(() => {});
-                  }
-                }}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                playsInline muted autoPlay />
-            </div>
+            <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} playsInline muted />
             <div style={sc.dimOverlay}>
-              {/* 枠を小さく（20%幅）して自然に離れさせる */}
               <div style={sc.frame} />
             </div>
             <div style={sc.hint}>バーコードから15〜20cm離して枠に合わせてください</div>
