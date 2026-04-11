@@ -1,5 +1,5 @@
-//new2
-import https from "https";
+//new3
+export const config = { runtime: "nodejs20.x" };
 
 function extractJAN(text) {
   const digits = text.replace(/[^0-9]/g, "");
@@ -13,34 +13,6 @@ function extractJAN(text) {
   const m8 = digits.match(/\d{8}/); if (m8) return m8[0];
   return null;
 }
-
-function httpsPost(hostname, path, body) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const req = https.request({
-      hostname,
-      path,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Length": Buffer.byteLength(data),
-      },
-    }, (res) => {
-      let raw = "";
-      res.on("data", chunk => raw += chunk);
-      res.on("end", () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
-        catch(e) { resolve({ status: res.statusCode, body: raw.slice(0, 200) }); }
-      });
-    });
-    req.on("error", reject);
-    req.setTimeout(9000, () => { req.destroy(new Error("timeout")); });
-    req.write(data);
-    req.end();
-  });
-}
-
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -56,34 +28,36 @@ export default async function handler(req, res) {
 
   const imageSize = Math.round(image.length / 1024);
 
-  // 429の場合は15秒待ってリトライ
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const result = await httpsPost(
-        "generativelanguage.googleapis.com",
-        `/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           contents: [{
             parts: [
-              { text: "この画像にあるバーコードの下に書かれている数字を読んでください。数字のみを答えてください。" },
+              { text: "この画像のバーコード下の数字を読んでください。13桁の数字のみ答えてください。" },
               { inline_data: { mime_type: "image/jpeg", data: image } }
             ]
           }]
-        }
-      );
-
-      if (result.status === 429) {
-        if (attempt === 0) { await sleep(15000); continue; }
-        return res.status(429).json({ error: "rate limited", imageSize });
+        })
       }
+    );
 
-      const text = result.body?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const jan = extractJAN(text);
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jan = extractJAN(text);
 
-      if (jan) return res.json({ jan, raw: text, imageSize });
-      return res.status(404).json({ error: "not found", raw: text, imageSize, httpStatus: result.status });
-    } catch (e) {
-      return res.status(500).json({ error: String(e), imageSize });
-    }
+    if (jan) return res.json({ jan, raw: text, imageSize });
+    return res.status(404).json({ 
+      error: "not found", 
+      raw: text, 
+      imageSize,
+      httpStatus: response.status,
+      fullResponse: JSON.stringify(data).slice(0, 500)
+    });
+  } catch (e) {
+    return res.status(500).json({ error: String(e), imageSize });
   }
 }
