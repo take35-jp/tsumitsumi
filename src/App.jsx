@@ -91,84 +91,87 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const videoRef = useRef();
-  const streamRef = useRef();
-  const timerRef = useRef();
-  const detectedRef = useRef(false);
-  const [status, setStatus] = useState("loading");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [debugMsg, setDebugMsg] = useState("待機中...");
+  const [imgSrc, setImgSrc] = useState(null);
+  const [scanning, setScanning] = useState(false);
+  const [debugMsg, setDebugMsg] = useState("");
+  const [error, setError] = useState("");
+  const inputRef = useRef();
 
-  const captureAndSend = async () => {
-    if (detectedRef.current) return;
-    const video = videoRef.current;
-    if (!video || video.readyState < 2) return;
-
-    const canvas = document.createElement("canvas");
-    // 512pxに圧縮してVercelの制限内に収める
-    const MAX = 512;
-    let w = video.videoWidth, h = video.videoHeight;
-    if (w === 0 || h === 0) { setDebugMsg("映像サイズ0"); return; }
-    if (w > MAX || h > MAX) {
-      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-      else { w = Math.round(w * MAX / h); h = MAX; }
-    }
-    canvas.width = w; canvas.height = h;
-    canvas.getContext("2d").drawImage(video, 0, 0, w, h);
-    const image = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
-    if (!image) { setDebugMsg("画像取得失敗"); return; }
-
-    setDebugMsg(`送信中... (${w}x${h}, ${Math.round(image.length/1024)}KB)`);
+  const sendToGemini = async (file) => {
+    setScanning(true);
+    setError("");
+    setDebugMsg("送信中...");
     try {
+      // 画像を圧縮（512px、品質70%）
+      const compressed = await new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const MAX = 512;
+          let w = img.width, h = img.height;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+            else { w = Math.round(w * MAX / h); h = MAX; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.7).split(",")[1]);
+        };
+        img.src = url;
+      });
+
+      setDebugMsg(`AI解析中... (${Math.round(compressed.length/1024)}KB)`);
+
       const res = await fetch("/api/scan-barcode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image, mimeType: "image/jpeg" }),
+        body: JSON.stringify({ image: compressed, mimeType: "image/jpeg" }),
       });
       const text = await res.text();
       let data;
-      try { data = JSON.parse(text); } catch(_) { setDebugMsg(`パースエラー: ${text.slice(0,80)}`); return; }
-      setDebugMsg(`APIレスポンス: ${JSON.stringify(data).slice(0, 80)}`);
-      if (data?.jan && !detectedRef.current) {
-        detectedRef.current = true;
-        clearInterval(timerRef.current);
-        streamRef.current?.getTracks().forEach(t => t.stop());
+      try { data = JSON.parse(text); } catch(_) { 
+        setDebugMsg(`パースエラー: ${text.slice(0, 60)}`);
+        setScanning(false);
+        setError("読み取りに失敗しました。もう一度撮影してください。");
+        return;
+      }
+      setDebugMsg(`レスポンス: ${JSON.stringify(data).slice(0, 80)}`);
+
+      if (data?.jan) {
+        setScanning(false);
         onDetected(data.jan);
+      } else if (data?.error === "rate limited") {
+        setScanning(false);
+        setError("しばらく時間をおいて再試行してください（レート制限）");
+      } else {
+        setScanning(false);
+        setError("バーコードを読み取れませんでした。\nバーコード部分をアップで撮り直してください。");
       }
     } catch (e) {
-      setDebugMsg(`エラー: ${String(e).slice(0, 80)}`);
+      setScanning(false);
+      setDebugMsg(`エラー: ${String(e).slice(0, 60)}`);
+      setError("通信エラーが発生しました。");
     }
   };
 
-  useEffect(() => {
-    const start = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
-        });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-          setStatus("scanning");
-          // 10秒ごとにGeminiへ送信（レート制限対策）
-          timerRef.current = setInterval(captureAndSend, 10000);
-          // 起動直後にも1回送る
-          setTimeout(captureAndSend, 2000);
-        }
-      } catch (e) {
-        setStatus("error");
-        setErrorMsg(e?.name === "NotAllowedError"
-          ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
-          : "カメラを起動できませんでした。\n手動でJANコードを入力してください。");
-      }
-    };
-    start();
-    return () => {
-      clearInterval(timerRef.current);
-      streamRef.current?.getTracks().forEach(t => t.stop());
-    };
-  }, []);
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImgSrc(URL.createObjectURL(file));
+    setError("");
+    setDebugMsg("");
+    sendToGemini(file);
+    e.target.value = "";
+  };
+
+  const handleRetake = () => {
+    setImgSrc(null);
+    setError("");
+    setDebugMsg("");
+    setScanning(false);
+    setTimeout(() => inputRef.current?.click(), 100);
+  };
 
   return (
     <div style={sc.wrap}>
@@ -176,21 +179,45 @@ function BarcodeScanner({ onDetected, onClose }) {
         <span style={sc.title}>📷 バーコードをスキャン</span>
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
-      {status === "error" ? (
-        <div style={sc.errorBox}>{errorMsg}</div>
-      ) : (
-        <div style={sc.videoWrap}>
-          <video ref={videoRef} style={sc.video} playsInline muted />
-          <div style={sc.dimOverlay}><div style={sc.frame} /></div>
-          <div style={sc.hint}>
-            {status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}
+
+      {!imgSrc ? (
+        <div>
+          <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
+            <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
-          {status === "scanning" && <div style={sc.aiLabel}>🤖 AI解析中...</div>}
+          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
+            💡 バーコード部分だけを大きく・明るく撮影してください
+          </div>
+        </div>
+      ) : (
+        <div>
+          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 220, marginBottom: 10 }} alt="" />
+          {scanning && (
+            <div style={sc.scanningBox}>
+              ⏳ {debugMsg || "AI解析中..."}<br />
+              <span style={{ fontSize: 11 }}>少々お待ちください</span>
+            </div>
+          )}
+          {!scanning && debugMsg && !error && (
+            <div style={{ background: "#f3f4f6", borderRadius: 8, padding: "6px 10px", fontSize: 11, color: "#374151", marginBottom: 8, wordBreak: "break-all" }}>
+              🔍 {debugMsg}
+            </div>
+          )}
+          {error && (
+            <div style={sc.errorBox}>
+              <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
+              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
+            </div>
+          )}
+          {!scanning && !error && (
+            <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
+          )}
         </div>
       )}
-      <div style={{ background: "#f3f4f6", borderRadius: 8, padding: "8px 12px", fontSize: 11, color: "#374151", margin: "8px 0", wordBreak: "break-all" }}>
-        🔍 {debugMsg}
-      </div>
+
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
     </div>
@@ -215,13 +242,11 @@ const sc = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
-  videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "16/9", marginBottom: 4 },
-  video: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
-  dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-  frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" },
-  hint: { position: "absolute", bottom: 28, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12, lineHeight: 1.7 },
-  aiLabel: { position: "absolute", bottom: 8, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600, background: "rgba(0,0,0,0.4)", padding: "3px 0" },
-  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, whiteSpace: "pre-wrap", marginBottom: 16 },
+  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
+  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
+  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
+  retakeBtn: { display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
 };
