@@ -1,4 +1,4 @@
-//newimport https from "https";
+//new import https from "https";
 
 function extractJAN(text) {
   const digits = text.replace(/[^0-9]/g, "");
