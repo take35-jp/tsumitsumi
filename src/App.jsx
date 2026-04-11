@@ -86,36 +86,166 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const cameraRef = useRef();
+  const [imgSrc, setImgSrc] = useState(null);
+  const [scanning, setScanning] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const inputRef = useRef();
+
+  const loadZXingWasm = () => new Promise((resolve, reject) => {
+    if (window.ZXingWasm) { resolve(window.ZXingWasm); return; }
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/zxing-wasm@1.3.2/dist/full/zxing_full.min.js";
+    s.onload = () => {
+      window.ZXingWasm = window.ZXing || window.zxingWasm;
+      resolve(window.ZXingWasm);
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+
+  const tryBarcodeDetectorAPI = async (imgEl) => {
+    if (!("BarcodeDetector" in window)) return null;
+    try {
+      const detector = new window.BarcodeDetector({
+        formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"]
+      });
+      const results = await detector.detect(imgEl);
+      if (results.length > 0) return results[0].rawValue;
+    } catch (_) {}
+    return null;
+  };
+
+  const tryZXingWasm = async (imgEl) => {
+    try {
+      const zxing = await loadZXingWasm();
+      if (!zxing) return null;
+      const canvas = document.createElement("canvas");
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      canvas.getContext("2d").drawImage(imgEl, 0, 0);
+      const imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+      if (zxing.readBarcodesFromImageData) {
+        const results = await zxing.readBarcodesFromImageData(imageData, { formats: ["EAN-13","EAN-8","Code128"] });
+        if (results && results.length > 0) return results[0].text;
+      }
+    } catch (_) {}
+    return null;
+  };
+
+  const tryZXingJS = async (imgEl) => {
+    if (!window.ZXing) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const ZXing = window.ZXing;
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128]);
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+      const reader = new ZXing.MultiFormatReader();
+      reader.setHints(hints);
+      for (const scale of [1, 0.75, 1.5, 0.5, 2]) {
+        try {
+          const c2 = document.createElement("canvas");
+          c2.width = Math.round(canvas.width * scale);
+          c2.height = Math.round(canvas.height * scale);
+          c2.getContext("2d").drawImage(canvas, 0, 0, c2.width, c2.height);
+          const id = c2.getContext("2d").getImageData(0, 0, c2.width, c2.height);
+          const lum = new ZXing.RGBLuminanceSource(id.data, c2.width, c2.height);
+          const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+          const result = reader.decode(bmp);
+          if (result) return result.getText();
+        } catch (_) {}
+      }
+    } catch (_) {}
+    return null;
+  };
+
+  const readBarcode = async (file) => {
+    setScanning(true);
+    setError("");
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    await new Promise((resolve) => { img.onload = resolve; img.src = url; });
+
+    setStatus("BarcodeDetector APIで解析中...");
+    const r1 = await tryBarcodeDetectorAPI(img);
+    if (r1) { setScanning(false); onDetected(r1); return; }
+
+    setStatus("ZXing-WASMで解析中...");
+    const r2 = await tryZXingWasm(img);
+    if (r2) { setScanning(false); onDetected(r2); return; }
+
+    setStatus("ZXing-JSで解析中...");
+    const r3 = await tryZXingJS(img);
+    if (r3) { setScanning(false); onDetected(r3); return; }
+
+    setScanning(false);
+    setStatus("");
+    setError("読み取れませんでした。\nバーコードだけをアップで撮影してください。");
+  };
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImgSrc(URL.createObjectURL(file));
+    setError("");
+    setStatus("");
+    readBarcode(file);
+    e.target.value = "";
+  };
+
+  const handleRetake = () => {
+    setImgSrc(null); setError(""); setStatus(""); setScanning(false);
+    setTimeout(() => inputRef.current?.click(), 100);
+  };
+
   return (
     <div style={sc.wrap}>
       <div style={sc.header}>
-        <span style={sc.title}>📷 JANコードを登録</span>
+        <span style={sc.title}>📷 バーコードをスキャン</span>
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
 
-      {/* Step 1 */}
-      <div style={sc.stepBox}>
-        <div style={sc.stepNum}>Step 1</div>
-        <div style={sc.stepTitle}>カメラでバーコードの数字をコピー</div>
-        <div style={sc.stepDesc}>カメラでバーコードを映すと数字が表示されます。数字をタップ→「コピー」してください。</div>
-        <div style={{ background: "#fff", borderRadius: 8, padding: "8px", marginBottom: 10, fontSize: 12, color: "#374151", textAlign: "center" }}>
-          例）<span style={{ fontFamily: "monospace" }}>4573102642257</span> → タップ → コピー
+      {!imgSrc ? (
+        <div>
+          <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
+            <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
+          </div>
+          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
+            💡 バーコード部分だけを大きく・明るく撮影してください
+          </div>
         </div>
-        <button
-          style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-          onClick={() => cameraRef.current?.click()}>
-          📷 カメラを起動する
-        </button>
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={() => {}} />
-      </div>
+      ) : (
+        <div>
+          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
+          {scanning && <div style={sc.scanningBox}>⏳ {status}<br/><span style={{ fontSize: 11 }}>少々お待ちください</span></div>}
+          {error && (
+            <div style={sc.errorBox}>
+              <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
+              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
+            </div>
+          )}
+          {!scanning && !error && <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>}
+        </div>
+      )}
 
-      {/* Step 2 */}
-      <div style={sc.stepBox}>
-        <div style={sc.stepNum}>Step 2</div>
-        <div style={sc.stepTitle}>コピーした数字を貼り付け → 自動検索</div>
-        <ManualInput onDetected={onDetected} />
-      </div>
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
+      <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
+      <ManualInput onDetected={onDetected} />
     </div>
   );
 }
@@ -163,11 +293,11 @@ const sc = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
-  stepBox: { background: "#f8f9fa", borderRadius: 14, padding: "14px 16px", marginBottom: 14 },
-  stepNum: { fontSize: 11, fontWeight: 700, color: "#4f8ef7", marginBottom: 4 },
-  stepTitle: { fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 },
-  stepDesc: { fontSize: 12, color: "#6b7280", lineHeight: 1.7, marginBottom: 8 },
+  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
+  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
   errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
+  retakeBtn: { display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
 };
