@@ -1,4 +1,4 @@
-function extractJAN(text) {
+ function extractJAN(text) {
   const digits = text.replace(/[^0-9]/g, "");
   for (let i = 0; i <= digits.length - 13; i++) {
     const c = digits.slice(i, i + 13);
