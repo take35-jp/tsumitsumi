@@ -192,7 +192,7 @@ function BarcodeScanner({ onDetected, onClose }) {
               <span style={{ fontSize: 11 }}>少々お待ちください</span>
             </div>
           )}
-          {!scanning && debugMsg && !error && (
+          {!scanning && debugMsg && (
             <div style={{ background: "#f3f4f6", borderRadius: 8, padding: "6px 10px", fontSize: 11, color: "#374151", marginBottom: 8, wordBreak: "break-all" }}>
               🔍 {debugMsg}
             </div>
