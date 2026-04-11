@@ -96,21 +96,18 @@ function BarcodeScanner({ onDetected, onClose }) {
   const detectedRef = useRef(false);
   const streamRef = useRef(null);
 
-  const handleTap = (e) => {
-    const video = scannerRef.current?.querySelector("video");
-    if (!video?.srcObject) return;
-    const track = video.srcObject.getVideoTracks()[0];
-    if (!track) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    try {
-      track.applyConstraints({ advanced: [{ focusMode: "manual", pointOfInterest: { x, y } }] })
-        .then(() => setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {}), 1000))
-        .catch(() => {});
-    } catch (_) {}
+  const handleTap = () => {
+    // iOSではpointOfInterestが使えないため、カメラを一瞬止めて再起動してフォーカスをリセット
+    if (!window.Quagga) return;
     setTapFlash(true);
-    setTimeout(() => setTapFlash(false), 300);
+    setTimeout(() => setTapFlash(false), 400);
+    try {
+      window.Quagga.stop();
+      setTimeout(() => {
+        if (detectedRef.current) return;
+        window.Quagga.start();
+      }, 300);
+    } catch (_) {}
   };
 
   useEffect(() => {
