@@ -155,7 +155,7 @@ function BarcodeScanner({ onDetected, onClose }) {
       {supported === false && (
         <div style={{ background: "#fff3cd", color: "#856404", borderRadius: 10, padding: "12px 14px", fontSize: 12, marginBottom: 12, lineHeight: 1.8 }}>
           <div style={{ fontWeight: 700, marginBottom: 4 }}>⚠ iPhoneの場合：設定が必要です</div>
-          <div>「設定」→「Safari」→「詳細」→「実験的な機能」</div>
+          <div>「設定」→「Safari」→「詳細」→「機能フラグ」</div>
           <div>→「Shape Detection API」を<strong>オン</strong>にしてください</div>
           <div style={{ marginTop: 6, color: "#6b7280" }}>設定後、ページを再読み込みしてお試しください</div>
         </div>
