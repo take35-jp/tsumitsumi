@@ -88,112 +88,52 @@ async function fetchProductByJAN(jan) {
 function BarcodeScanner({ onDetected, onClose }) {
   const [imgSrc, setImgSrc] = useState(null);
   const [scanning, setScanning] = useState(false);
-  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [supported, setSupported] = useState(true);
   const inputRef = useRef();
 
-  const loadZXingWasm = () => new Promise((resolve, reject) => {
-    if (window.ZXingWasm) { resolve(window.ZXingWasm); return; }
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/zxing-wasm@1.3.2/dist/full/zxing_full.min.js";
-    s.onload = () => {
-      window.ZXingWasm = window.ZXing || window.zxingWasm;
-      resolve(window.ZXingWasm);
-    };
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-
-  const tryBarcodeDetectorAPI = async (imgEl) => {
-    if (!("BarcodeDetector" in window)) return null;
-    try {
-      const detector = new window.BarcodeDetector({
-        formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"]
-      });
-      const results = await detector.detect(imgEl);
-      if (results.length > 0) return results[0].rawValue;
-    } catch (_) {}
-    return null;
-  };
-
-  const tryZXingWasm = async (imgEl) => {
-    try {
-      const zxing = await loadZXingWasm();
-      if (!zxing) return null;
-      const canvas = document.createElement("canvas");
-      canvas.width = imgEl.naturalWidth;
-      canvas.height = imgEl.naturalHeight;
-      canvas.getContext("2d").drawImage(imgEl, 0, 0);
-      const imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
-      if (zxing.readBarcodesFromImageData) {
-        const results = await zxing.readBarcodesFromImageData(imageData, { formats: ["EAN-13","EAN-8","Code128"] });
-        if (results && results.length > 0) return results[0].text;
-      }
-    } catch (_) {}
-    return null;
-  };
-
-  const tryZXingJS = async (imgEl) => {
-    if (!window.ZXing) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.2/zxing.min.js";
-        s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = imgEl.naturalWidth;
-      canvas.height = imgEl.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(imgEl, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const ZXing = window.ZXing;
-      const hints = new Map();
-      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.CODE_128]);
-      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-      const reader = new ZXing.MultiFormatReader();
-      reader.setHints(hints);
-      for (const scale of [1, 0.75, 1.5, 0.5, 2]) {
-        try {
-          const c2 = document.createElement("canvas");
-          c2.width = Math.round(canvas.width * scale);
-          c2.height = Math.round(canvas.height * scale);
-          c2.getContext("2d").drawImage(canvas, 0, 0, c2.width, c2.height);
-          const id = c2.getContext("2d").getImageData(0, 0, c2.width, c2.height);
-          const lum = new ZXing.RGBLuminanceSource(id.data, c2.width, c2.height);
-          const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-          const result = reader.decode(bmp);
-          if (result) return result.getText();
-        } catch (_) {}
-      }
-    } catch (_) {}
-    return null;
-  };
+  useEffect(() => {
+    if (!("BarcodeDetector" in window)) setSupported(false);
+  }, []);
 
   const readBarcode = async (file) => {
     setScanning(true);
     setError("");
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    await new Promise((resolve) => { img.onload = resolve; img.src = url; });
+    try {
+      if ("BarcodeDetector" in window) {
+        // ① OS内蔵BarcodeDetector（Chrome/Safari対応）
+        const detector = new window.BarcodeDetector({
+          formats: ["ean_13", "ean_8", "code_128", "upc_a", "upc_e"],
+        });
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        await new Promise(r => { img.onload = r; img.src = url; });
 
-    setStatus("BarcodeDetector APIで解析中...");
-    const r1 = await tryBarcodeDetectorAPI(img);
-    if (r1) { setScanning(false); onDetected(r1); return; }
-
-    setStatus("ZXing-WASMで解析中...");
-    const r2 = await tryZXingWasm(img);
-    if (r2) { setScanning(false); onDetected(r2); return; }
-
-    setStatus("ZXing-JSで解析中...");
-    const r3 = await tryZXingJS(img);
-    if (r3) { setScanning(false); onDetected(r3); return; }
-
-    setScanning(false);
-    setStatus("");
-    setError("読み取れませんでした。\nバーコードだけをアップで撮影してください。");
+        // 複数の解像度で試す
+        for (const scale of [1, 0.5, 2]) {
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const bitmap = await createImageBitmap(canvas);
+          const results = await detector.detect(bitmap);
+          if (results.length > 0) {
+            setScanning(false);
+            onDetected(results[0].rawValue);
+            return;
+          }
+        }
+        setScanning(false);
+        setError("バーコードを読み取れませんでした。\nバーコード部分だけをアップで撮影してください。");
+      } else {
+        setScanning(false);
+        setError("このブラウザはバーコード読み取りに対応していません。\n手動でJANコードを入力してください。");
+      }
+    } catch (e) {
+      setScanning(false);
+      setError(`読み取りエラー: ${String(e).slice(0, 60)}`);
+    }
   };
 
   const handleFile = (e) => {
@@ -201,13 +141,14 @@ function BarcodeScanner({ onDetected, onClose }) {
     if (!file) return;
     setImgSrc(URL.createObjectURL(file));
     setError("");
-    setStatus("");
     readBarcode(file);
     e.target.value = "";
   };
 
   const handleRetake = () => {
-    setImgSrc(null); setError(""); setStatus(""); setScanning(false);
+    setImgSrc(null);
+    setError("");
+    setScanning(false);
     setTimeout(() => inputRef.current?.click(), 100);
   };
 
@@ -218,6 +159,12 @@ function BarcodeScanner({ onDetected, onClose }) {
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
 
+      {!supported && (
+        <div style={{ background: "#fff3cd", color: "#856404", borderRadius: 10, padding: "10px 14px", fontSize: 12, marginBottom: 12 }}>
+          ⚠ このブラウザはバーコード読み取り非対応です。手動入力をご利用ください。
+        </div>
+      )}
+
       {!imgSrc ? (
         <div>
           <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
@@ -226,20 +173,22 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
           <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-            💡 バーコード部分だけを大きく・明るく撮影してください
+            💡 バーコード部分だけをアップで・明るい場所で撮影してください
           </div>
         </div>
       ) : (
         <div>
           <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
-          {scanning && <div style={sc.scanningBox}>⏳ {status}<br/><span style={{ fontSize: 11 }}>少々お待ちください</span></div>}
+          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
           {error && (
             <div style={sc.errorBox}>
               <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
               <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
             </div>
           )}
-          {!scanning && !error && <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>}
+          {!scanning && !error && (
+            <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
+          )}
         </div>
       )}
 
