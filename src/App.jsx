@@ -180,7 +180,7 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
           <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-            💡 バーコード部分だけを大きく・明るく撮影してください
+            💡 バーコードを映すと数字が表示されます<br/>数字をタップしてコピーしてください
           </div>
         </div>
       ) : (
@@ -218,13 +218,38 @@ function BarcodeScanner({ onDetected, onClose }) {
 
 function ManualInput({ onDetected }) {
   const [val, setVal] = useState("");
+
+  const handleChange = (e) => {
+    const v = e.target.value.replace(/\D/g, "").slice(0, 13);
+    setVal(v);
+    if (v.length === 13) onDetected(v);
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text");
+    // スペース・ハイフンを除去して数字だけ抽出
+    const digits = pasted.replace(/[^0-9]/g, "").slice(0, 13);
+    setVal(digits);
+    if (digits.length >= 8) setTimeout(() => onDetected(digits), 100);
+  };
+
   return (
-    <div style={{ display: "flex", gap: 8, paddingBottom: 8 }}>
-      <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
-        placeholder="JANコード（13桁）" inputMode="numeric" value={val}
-        onChange={(e) => setVal(e.target.value.replace(/\D/g, "").slice(0, 13))} />
-      <button style={{ padding: "10px 16px", background: val.length >= 8 ? "#111" : "#d1d5db", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: val.length >= 8 ? "pointer" : "default" }}
-        onClick={() => val.length >= 8 && onDetected(val)}>検索</button>
+    <div>
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, lineHeight: 1.7, background: "#f8f9fa", borderRadius: 10, padding: "10px 12px" }}>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>📱 バーコード数字のコピー方法</div>
+        <div>① カメラでバーコード<strong>下の数字</strong>を映す</div>
+        <div>② 数字が認識されたらタップ→コピー</div>
+        <div>③ 下の入力欄に貼り付けると自動検索</div>
+      </div>
+      <div style={{ display: "flex", gap: 8, paddingBottom: 8 }}>
+        <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+          placeholder="JANコード（13桁）" inputMode="numeric" value={val}
+          onChange={handleChange}
+          onPaste={handlePaste} />
+        <button style={{ padding: "10px 16px", background: val.length >= 8 ? "#111" : "#d1d5db", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: val.length >= 8 ? "pointer" : "default" }}
+          onClick={() => val.length >= 8 && onDetected(val)}>検索</button>
+      </div>
     </div>
   );
 }
@@ -241,6 +266,83 @@ const sc = {
   retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
+};
+
+// ---- Kit Name Input with Suggestions ----
+function KitNameInput({ value, onChange, onSelect }) {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showSugg, setShowSugg] = useState(false);
+  const timerRef = useRef(null);
+
+  const search = async (q) => {
+    if (q.length < 2) { setSuggestions([]); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setSuggestions(data.slice(0, 5));
+        } else if (data.name) {
+          setSuggestions([data]);
+        }
+      }
+    } catch (_) {}
+    setLoading(false);
+  };
+
+  const handleChange = (e) => {
+    const v = e.target.value;
+    onChange(v);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => search(v), 500);
+    setShowSugg(true);
+  };
+
+  const handleSelect = (item) => {
+    onChange(item.name);
+    onSelect(item);
+    setSuggestions([]);
+    setShowSugg(false);
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <input style={{ ...suggS.input, flex: 1 }}
+          placeholder="例: νガンダム、ザク"
+          value={value}
+          onChange={handleChange}
+          onFocus={() => setShowSugg(true)}
+          onBlur={() => setTimeout(() => setShowSugg(false), 200)}
+        />
+        {loading && <span style={{ fontSize: 12, color: "#9ca3af" }}>検索中...</span>}
+      </div>
+      {showSugg && suggestions.length > 0 && (
+        <div style={suggS.list}>
+          {suggestions.map((item, i) => (
+            <div key={i} style={suggS.item} onMouseDown={() => handleSelect(item)}>
+              {item.photoUrl && <img src={item.photoUrl} style={suggS.thumb} alt="" />}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={suggS.name}>{item.name}</div>
+                {item.price && <div style={suggS.price}>¥{Number(item.price).toLocaleString()}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const suggS = {
+  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
+  list: { position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.12)", zIndex: 200, maxHeight: 240, overflowY: "auto", marginTop: 4 },
+  item: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0" },
+  thumb: { width: 40, height: 40, objectFit: "cover", borderRadius: 6, flexShrink: 0 },
+  name: { fontSize: 13, color: "#111", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  price: { fontSize: 11, color: "#9ca3af", marginTop: 2 },
 };
 
 // ---- X Share Modal ----
@@ -635,7 +737,8 @@ export default function App() {
             <div style={s.formTitle}>{editId ? "キットを編集" : "キットを追加"}</div>
 
             <label style={s.label}>キット名 *</label>
-            <input style={s.input} placeholder="例: νガンダム" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <KitNameInput value={form.name} onChange={(name) => setForm((f) => ({ ...f, name }))}
+              onSelect={(item) => setForm((f) => ({ ...f, name: item.name, photoUrl: item.photoUrl || f.photoUrl, series: item.series || f.series, scale: item.scale || f.scale }))} />
 
             <label style={s.label}>シリーズ</label>
             <select style={s.input}
