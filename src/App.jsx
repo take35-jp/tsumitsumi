@@ -112,13 +112,33 @@ function BarcodeScanner({ onDetected, onClose }) {
     const hasBarcodeDetector = "BarcodeDetector" in window;
     setDebugInfo(`BarcodeDetector: ${hasBarcodeDetector ? "✅" : "❌"}`);
 
+    // 枠内（中央80%×33%相当）をクロップしてCanvasに描画
+    const cropCanvas = (video) => {
+      const vw = video.videoWidth, vh = video.videoHeight;
+      // 枠の位置（中央80%幅、縦33%高さ相当）
+      const cw = Math.round(vw * 0.8);
+      const ch = Math.round(cw / 2.5);
+      const cx = Math.round((vw - cw) / 2);
+      const cy = Math.round((vh - ch) / 2);
+      const canvas = document.createElement("canvas");
+      canvas.width = cw; canvas.height = ch;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, cx, cy, cw, ch, 0, 0, cw, ch);
+      return canvas;
+    };
+
     // Canvas前処理：グレースケール＋閾値処理
     const preprocessCanvas = (video) => {
-      const W = 640, H = 360;
+      const W = 640, H = 256;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, W, H);
+      const vw = video.videoWidth, vh = video.videoHeight;
+      const cw = Math.round(vw * 0.8);
+      const ch = Math.round(cw / 2.5);
+      const cx = Math.round((vw - cw) / 2);
+      const cy = Math.round((vh - ch) / 2);
+      ctx.drawImage(video, cx, cy, cw, ch, 0, 0, W, H);
       const imgData = ctx.getImageData(0, 0, W, H);
       const data = imgData.data;
       for (let i = 0; i < data.length; i += 4) {
@@ -164,10 +184,17 @@ function BarcodeScanner({ onDetected, onClose }) {
             scanCount++;
             if (scanCount % 5 === 0) setDebugInfo(`BD検索中... ${scanCount}回`);
             try {
-              let results = await detector.detect(video);
+              // まず枠内クロップで試す
+              const cropped = cropCanvas(video);
+              let results = await detector.detect(cropped);
               if (results.length === 0) {
+                // 前処理済みでも試す
                 const processed = preprocessCanvas(video);
                 results = await detector.detect(processed);
+              }
+              if (results.length === 0) {
+                // 全画面でも試す
+                results = await detector.detect(video);
               }
               if (results.length > 0 && !detectedRef.current) {
                 detectedRef.current = true;
@@ -281,7 +308,7 @@ function BarcodeScanner({ onDetected, onClose }) {
             </div>
             <div style={sc.hint}>バーコードから15〜20cm離して枠に合わせてください</div>
             <div style={sc.tapHint}>📍 タップで再フォーカス</div>
-            <div style={{ position: "absolute", bottom: 4, left: 8, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>v1.01 | {debugInfo}</div>
+            <div style={{ position: "absolute", bottom: 4, left: 8, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>v1.02 | {debugInfo}</div>
           </div>
         )}
         <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
@@ -372,7 +399,7 @@ const sc = {
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
   videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
   dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-  frame: { width: "55%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)" },
+  frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)" },
   hint: { position: "absolute", bottom: 28, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12 },
   tapHint: { position: "absolute", bottom: 10, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600 },
   shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
