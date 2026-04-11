@@ -91,75 +91,76 @@ async function fetchProductByJAN(jan) {
 
 // ---- Barcode Scanner ----
 function BarcodeScanner({ onDetected, onClose }) {
-  const [imgSrc, setImgSrc] = useState(null);
-  const [imgFile, setImgFile] = useState(null);
-  const [scanning, setScanning] = useState(false);
-  const [error, setError] = useState("");
-  const [progress, setProgress] = useState("");
-  const inputRef = useRef();
+  const videoRef = useRef();
+  const streamRef = useRef();
+  const timerRef = useRef();
+  const detectedRef = useRef(false);
+  const [status, setStatus] = useState("loading"); // loading | scanning | error
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const tryGemini = async (file) => {
-    // 画像をCanvasで圧縮（Vercelの4.5MB制限対策）
-    const compressed = await new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const MAX = 1024;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
-      };
-      img.src = url;
-    });
-    const res = await fetch("/api/scan-barcode", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: compressed, mimeType: "image/jpeg" }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.jan || null;
-  };
+  const captureAndSend = async () => {
+    if (detectedRef.current) return;
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return;
 
-  const readBarcode = async (file) => {
-    setScanning(true);
-    setError("");
-    setProgress("AIでバーコードを読み取り中...");
+    // Canvasに描画して圧縮
+    const canvas = document.createElement("canvas");
+    const MAX = 800;
+    let w = video.videoWidth, h = video.videoHeight;
+    if (w > MAX || h > MAX) {
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+      else { w = Math.round(w * MAX / h); h = MAX; }
+    }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(video, 0, 0, w, h);
+    const image = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+
     try {
-      const jan = await tryGemini(file);
-      if (jan) {
-        setScanning(false);
-        setProgress("");
-        onDetected(jan);
-        return;
+      const res = await fetch("/api/scan-barcode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image, mimeType: "image/jpeg" }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.jan && !detectedRef.current) {
+        detectedRef.current = true;
+        clearInterval(timerRef.current);
+        streamRef.current?.getTracks().forEach(t => t.stop());
+        onDetected(data.jan);
       }
-    } catch (e) {}
-    setScanning(false);
-    setProgress("");
-    setError("読み取れませんでした。\nバーコード部分だけをアップで・明るい場所で撮影してください。");
+    } catch (_) {}
   };
 
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImgSrc(URL.createObjectURL(file));
-    setImgFile(file);
-    setError("");
-    readBarcode(file);
-    e.target.value = "";
-  };
-
-  const handleRetake = () => {
-    setImgSrc(null); setImgFile(null);
-    setError(""); setScanning(false); setProgress("");
-    setTimeout(() => inputRef.current?.click(), 100);
-  };
+  useEffect(() => {
+    const start = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          setStatus("scanning");
+          // 3秒ごとにGeminiへ送信
+          timerRef.current = setInterval(captureAndSend, 3000);
+          // 起動直後にも1回送る
+          setTimeout(captureAndSend, 1500);
+        }
+      } catch (e) {
+        setStatus("error");
+        setErrorMsg(e?.name === "NotAllowedError"
+          ? "カメラへのアクセスが拒否されました。\nブラウザの設定でカメラを許可してください。"
+          : "カメラを起動できませんでした。\n手動でJANコードを入力してください。");
+      }
+    };
+    start();
+    return () => {
+      clearInterval(timerRef.current);
+      streamRef.current?.getTracks().forEach(t => t.stop());
+    };
+  }, []);
 
   return (
     <div style={sc.wrap}>
@@ -167,31 +168,21 @@ function BarcodeScanner({ onDetected, onClose }) {
         <span style={sc.title}>📷 バーコードをスキャン</span>
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
-      {!imgSrc ? (
-        <div>
-          <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
-            <div style={{ fontSize: 40, marginBottom: 10 }}>📷</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
-          </div>
-          <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-            💡 バーコードをアップで・明るい場所で撮影してください
-          </div>
-        </div>
+      {status === "error" ? (
+        <div style={sc.errorBox}>{errorMsg}</div>
       ) : (
-        <div>
-          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200 }} alt="" />
-          {scanning && <div style={sc.scanningBox}>⏳ {progress}<br /><span style={{ fontSize: 11 }}>少々お待ちください</span></div>}
-          {error && (
-            <div style={sc.errorBox}>
-              <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
-              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
-            </div>
+        <div style={sc.videoWrap}>
+          <video ref={videoRef} style={sc.video} playsInline muted />
+          <div style={sc.dimOverlay}><div style={sc.frame} /></div>
+          <div style={sc.hint}>
+            {status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください
+自動で読み取ります"}
+          </div>
+          {status === "scanning" && (
+            <div style={sc.aiLabel}>AI解析中...</div>
           )}
-          {!scanning && !error && <div style={{ marginTop: 10 }}><button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button></div>}
         </div>
       )}
-      <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFile} />
       <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
       <ManualInput onDetected={onDetected} />
     </div>
@@ -216,12 +207,13 @@ const sc = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
-  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "40px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
-  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginTop: 10 },
-  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, whiteSpace: "pre-wrap", marginTop: 10 },
-  retakeBtn: { display: "block", marginTop: 10, width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  retakeRow: { marginTop: 10 },
-  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
+  video: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
+  frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" },
+  hint: { position: "absolute", bottom: 36, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.7 },
+  aiLabel: { position: "absolute", bottom: 10, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600 },
+  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, whiteSpace: "pre-wrap", marginBottom: 16 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
   dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
 };
@@ -311,6 +303,17 @@ export default function App() {
     try { const s = localStorage.getItem("tsumitsumi_kits"); return s ? JSON.parse(s) : []; } catch { return []; }
   });
   useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch {} }, [kits]);
+
+  // URLパラメータ ?jan=XXXXXXXXX でスキャン結果を受け取る
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const jan = params.get("jan");
+    if (jan && jan.length >= 8) {
+      // URLパラメータをクリア
+      window.history.replaceState({}, "", window.location.pathname);
+      handleJanDetected(jan);
+    }
+  }, []);
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
