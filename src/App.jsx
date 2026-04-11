@@ -175,9 +175,9 @@ function BarcodeScanner({ onDetected, onClose }) {
           <video ref={videoRef} style={sc.video} playsInline muted />
           <div style={sc.dimOverlay}><div style={sc.frame} /></div>
           <div style={sc.hint}>
-            {status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください
-自動で読み取ります"}
+            {status === "loading" ? "カメラを起動中..." : "バーコードを枠内に合わせてください"}
           </div>
+          {status === "scanning" && <div style={{ ...sc.hint, bottom: 14, fontSize: 11, color: "#4ade80" }}>自動で読み取ります</div>}
           {status === "scanning" && (
             <div style={sc.aiLabel}>AI解析中...</div>
           )}
