@@ -158,13 +158,25 @@ function BarcodeScanner({ onDetected, onClose }) {
           }
         });
 
+        let lastCode = null;
+        let sameCount = 0;
         window.Quagga.onDetected((result) => {
           if (detectedRef.current) return;
           const code = result?.codeResult?.code;
           if (!code) return;
-          detectedRef.current = true;
-          window.Quagga.stop();
-          onDetected(code);
+          if (code === lastCode) {
+            sameCount++;
+            setDebugInfo(`✅ ${code} (${sameCount}/2回)`);
+            if (sameCount >= 2) {
+              detectedRef.current = true;
+              window.Quagga.stop();
+              onDetected(code);
+            }
+          } else {
+            lastCode = code;
+            sameCount = 1;
+            setDebugInfo(`🔍 ${code} (1/2回)`);
+          }
         });
       } catch (e) {
         setDebugInfo(`エラー: ${String(e).slice(0, 50)}`);
@@ -232,8 +244,9 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div ref={videoRef} style={{ width: "100%", height: "100%" }} />
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
-            <div style={sc.tapHint}>📍 タップで再フォーカス</div>
-            <div style={{ position: "absolute", bottom: 4, left: 8, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>v1.05 | {debugInfo}</div>
+            <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.4)", padding: "4px 8px" }}>
+              v1.06 | {debugInfo}
+            </div>
           </div>
         )}
         <div style={sc.dividerRow}><span style={sc.dividerText}>または手動で入力</span></div>
