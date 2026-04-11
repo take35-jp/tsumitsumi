@@ -95,7 +95,6 @@ function BarcodeScanner({ onDetected, onClose }) {
   const scannerRef = useRef();
   const detectedRef = useRef(false);
   const streamRef = useRef(null);
-
   const videoRef = useRef();
   const [debugInfo, setDebugInfo] = useState("初期化中...");
 
@@ -106,7 +105,20 @@ function BarcodeScanner({ onDetected, onClose }) {
 
   useEffect(() => {
     if (!isIPhone) return;
+    let animFrameId = null;
+    let lastScan = 0;
+    const SCAN_INTERVAL = 150;
 
+    // ZBar WASMの読み込み
+    const loadZBarWasm = () => new Promise((resolve, reject) => {
+      if (window.zbarWasm) { resolve(window.zbarWasm); return; }
+      // ES moduleをdynamic importで読み込む
+      import("https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/index.js")
+        .then(mod => { window.zbarWasm = mod; resolve(mod); })
+        .catch(reject);
+    });
+
+    // Quaggaの読み込み（フォールバック用）
     const loadQuagga = () => new Promise((resolve, reject) => {
       if (window.Quagga) { resolve(); return; }
       const s = document.createElement("script");
@@ -115,77 +127,135 @@ function BarcodeScanner({ onDetected, onClose }) {
       document.head.appendChild(s);
     });
 
-    const init = async () => {
-      try {
-        await loadQuagga();
-        setDebugInfo("Quagga読み込み✅");
+    // ZBar WASMでスキャン（メインエンジン）
+    const startZBarScan = async (zbar, video) => {
+      setDebugInfo("ZBar WASM スキャン中...");
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-        window.Quagga.init({
-          inputStream: {
-            name: "Live",
-            type: "LiveStream",
-            target: videoRef.current,
-            constraints: {
-              facingMode: "environment",
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-            },
-          },
-          decoder: {
-            readers: ["ean_reader", "ean_8_reader", "code_128_reader"],
-            multiple: false,
-          },
-          locate: true,
-          frequency: 10,
-          locator: { patchSize: "large", halfSample: false },
-        }, (err) => {
-          if (err) {
-            setDebugInfo(`init失敗: ${String(err).slice(0, 40)}`);
-            setError("カメラを起動できませんでした。手動で入力してください。");
-            return;
-          }
-          window.Quagga.start();
-          setDebugInfo("スキャン中...");
+      const loop = async (now) => {
+        if (detectedRef.current) return;
+        animFrameId = requestAnimationFrame(loop);
+        if (now - lastScan < SCAN_INTERVAL) return;
+        lastScan = now;
+        if (video.readyState < 2 || video.videoWidth === 0) return;
 
-          // ズーム1.5倍
-          const video = videoRef.current?.querySelector("video");
-          if (video?.srcObject) {
-            streamRef.current = video.srcObject;
-            const track = video.srcObject.getVideoTracks()[0];
-            setTimeout(() => {
-              try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
-            }, 500);
-          }
-        });
+        try {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const symbols = await zbar.scanImageData(imageData);
 
-        let lastCode = null;
-        let sameCount = 0;
-        window.Quagga.onDetected((result) => {
-          if (detectedRef.current) return;
-          const code = result?.codeResult?.code;
-          if (!code) return;
-          if (code === lastCode) {
-            sameCount++;
-            setDebugInfo(`✅ ${code} (${sameCount}/2回)`);
-            if (sameCount >= 2) {
+          if (symbols.length > 0) {
+            const code = symbols[0].decode();
+            if (code && !detectedRef.current) {
+              setDebugInfo(`✅ ZBar: ${code}`);
               detectedRef.current = true;
-              window.Quagga.stop();
+              cancelAnimationFrame(animFrameId);
+              streamRef.current?.getTracks().forEach(t => t.stop());
               onDetected(code);
             }
-          } else {
-            lastCode = code;
-            sameCount = 1;
-            setDebugInfo(`🔍 ${code} (1/2回)`);
           }
+        } catch (e) {
+          // WASMエラーは無視して継続
+        }
+      };
+      requestAnimationFrame(loop);
+    };
+
+    // Quaggaでスキャン（フォールバック）
+    const startQuaggaScan = async () => {
+      setDebugInfo("Quagga フォールバック中...");
+      await loadQuagga();
+
+      window.Quagga.init({
+        inputStream: {
+          name: "Live", type: "LiveStream", target: videoRef.current,
+          constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        },
+        decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"], multiple: false },
+        locate: true, frequency: 10,
+        locator: { patchSize: "large", halfSample: false },
+      }, (err) => {
+        if (err) {
+          setDebugInfo(`Quagga失敗: ${String(err).slice(0, 30)}`);
+          setError("カメラを起動できませんでした。手動で入力してください。");
+          return;
+        }
+        window.Quagga.start();
+        setDebugInfo("Quagga スキャン中...");
+      });
+
+      let lastCode = null, sameCount = 0;
+      window.Quagga.onDetected((result) => {
+        if (detectedRef.current) return;
+        const code = result?.codeResult?.code;
+        if (!code) return;
+        if (code === lastCode) {
+          sameCount++;
+          setDebugInfo(`🔍 Quagga: ${code} (${sameCount}/2回)`);
+          if (sameCount >= 2) {
+            detectedRef.current = true;
+            window.Quagga.stop();
+            onDetected(code);
+          }
+        } else {
+          lastCode = code; sameCount = 1;
+          setDebugInfo(`🔍 Quagga: ${code} (1/2回)`);
+        }
+      });
+    };
+
+    const init = async () => {
+      try {
+        // カメラストリームを取得
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
         });
+        streamRef.current = stream;
+
+        // ZBar WASMを試みる
+        setDebugInfo("ZBar WASM 読み込み中...");
+        try {
+          const zbar = await Promise.race([
+            loadZBarWasm(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000))
+          ]);
+          setDebugInfo("ZBar WASM 読み込み✅");
+
+          // videoRefにstreamを繋ぐ
+          const video = videoRef.current?.querySelector("video") || (() => {
+            const v = document.createElement("video");
+            v.style.width = "100%"; v.style.height = "100%"; v.style.objectFit = "cover";
+            v.playsInline = true; v.muted = true;
+            videoRef.current?.appendChild(v);
+            return v;
+          })();
+          video.srcObject = stream;
+          await video.play();
+
+          // ズーム1.5倍
+          const track = stream.getVideoTracks()[0];
+          try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
+
+          await startZBarScan(zbar, video);
+
+        } catch (wasmErr) {
+          // ZBar WASM失敗 → Quaggaにフォールバック
+          setDebugInfo(`ZBar失敗→Quagga起動: ${String(wasmErr).slice(0, 30)}`);
+          stream.getTracks().forEach(t => t.stop());
+          await startQuaggaScan();
+        }
       } catch (e) {
-        setDebugInfo(`エラー: ${String(e).slice(0, 50)}`);
+        setDebugInfo(`カメラエラー: ${String(e).slice(0, 50)}`);
         setError("カメラを起動できませんでした。手動で入力してください。");
       }
     };
 
     init();
     return () => {
+      cancelAnimationFrame(animFrameId);
       streamRef.current?.getTracks().forEach(t => t.stop());
       if (window.Quagga) { try { window.Quagga.stop(); } catch (_) {} }
     };
@@ -245,7 +315,7 @@ function BarcodeScanner({ onDetected, onClose }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.4)", padding: "4px 8px" }}>
-              v1.06 | {debugInfo}
+              v1.07 | {debugInfo}
             </div>
           </div>
         )}
