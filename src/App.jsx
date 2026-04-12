@@ -936,7 +936,7 @@ export default function App() {
               <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
             </svg>
           </button>
-          <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏 シェア</button>
+          <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
       </div>
 
@@ -1225,7 +1225,7 @@ const s = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 20px 14px", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   headerTitle: { fontSize: 20, fontWeight: 700, color: "#111", letterSpacing: 2 },
   headerSub: { fontSize: 10, color: "#aaa", letterSpacing: 3, marginTop: 2 },
-  shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
   searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 16, cursor: "pointer" },
   stats: { display: "flex", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   statBox: { flex: 1, padding: "14px 0", textAlign: "center", cursor: "pointer" },
