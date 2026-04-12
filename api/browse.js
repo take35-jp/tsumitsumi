@@ -63,13 +63,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: data.Error.Message, debug: data });
     }
 
+    const seen = new Set();
     const items = (data?.hits || []).map(item => ({
       name: cleanName(item.name || ""),
       scale: guessScale(item.name || ""),
       photoUrl: item.image?.medium || item.image?.small || "",
       jan: item.janCode || "",
       price: item.price ? String(item.price) : "",
-    })).filter(item => item.name.length > 2);
+    }))
+    .filter(item => item.name.length > 2)
+    .filter(item => {
+      // JANがある場合はJANで、ない場合はキット名で重複除去
+      const key = item.jan || item.name;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
     return res.json({
       items,
