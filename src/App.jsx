@@ -586,8 +586,10 @@ function BrowseModal({ onBulkAdd, onClose }) {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [selected, setSelected] = useState(new Set());
+  const [selectedItems, setSelectedItems] = useState({}); // key: "name_jan", value: item
   const [searched, setSearched] = useState(false);
+
+  const getKey = (item) => `${item.name}_${item.jan}`;
 
   const search = async (g, p) => {
     setLoading(true);
@@ -601,19 +603,23 @@ function BrowseModal({ onBulkAdd, onClose }) {
     setLoading(false);
   };
 
-  const toggleSelect = (idx) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(idx) ? next.delete(idx) : next.add(idx);
+  const toggleSelect = (item) => {
+    const key = getKey(item);
+    setSelectedItems(prev => {
+      const next = { ...prev };
+      next[key] ? delete next[key] : next[key] = item;
       return next;
     });
   };
 
+  const isSelected = (item) => !!selectedItems[getKey(item)];
+  const selectedCount = Object.keys(selectedItems).length;
+
   const handleBulkAdd = () => {
-    const toAdd = [...selected].map(idx => ({
+    const toAdd = Object.values(selectedItems).map((item, idx) => ({
       ...{ name: "", series: "ガンプラ", scale: "", purchaseDate: "", price: "", count: 1, rating: 0,
            photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "", condition: "", conditionNote: "", tags: [] },
-      ...items[idx],
+      ...item,
       id: Date.now() + idx,
       priority: "中",
     }));
@@ -633,14 +639,20 @@ function BrowseModal({ onBulkAdd, onClose }) {
         {GRADES.map(g => (
           <button key={g} style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 700, cursor: "pointer",
             background: grade === g ? "#111" : "#f3f4f6", color: grade === g ? "#fff" : "#374151", borderColor: grade === g ? "#111" : "#e5e7eb" }}
-            onClick={() => { setGrade(g); setItems([]); setSelected(new Set()); setPage(1); setSearched(false); }}>
+            onClick={() => { setGrade(g); setItems([]); setPage(1); setSearched(false); }}>
             {g}
           </button>
         ))}
       </div>
 
+      <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
+          ⚠️ <strong>注意：</strong>この機能はガンプラのみ対応しています。また登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
+        </div>
+      </div>
+
       <button style={{ width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}
-        onClick={() => { setPage(1); setSelected(new Set()); search(grade, 1); }}>
+        onClick={() => { setPage(1); search(grade, 1); }}>
         🔍 {grade} の一覧を表示
       </button>
 
@@ -655,25 +667,25 @@ function BrowseModal({ onBulkAdd, onClose }) {
         <>
           <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
             約{total.toLocaleString()}件中 {(page-1)*30+1}〜{Math.min(page*30, total)}件表示
-            　{selected.size > 0 && <span style={{ color: "#22c55e", fontWeight: 700 }}>{selected.size}件選択中</span>}
+            　{selectedCount > 0 && <span style={{ color: "#22c55e", fontWeight: 700 }}>{selectedCount}件選択中（ページをまたいで保持）</span>}
           </div>
 
           {/* 全選択 */}
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <button style={{ fontSize: 12, padding: "4px 12px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151" }}
-              onClick={() => setSelected(new Set(items.map((_, i) => i)))}>すべて選択</button>
+              onClick={() => setSelectedItems(prev => { const next = {...prev}; items.forEach(item => next[getKey(item)] = item); return next; })}>このページを全選択</button>
             <button style={{ fontSize: 12, padding: "4px 12px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151" }}
-              onClick={() => setSelected(new Set())}>選択解除</button>
+              onClick={() => setSelectedItems({})}>全解除</button>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
             {items.map((item, idx) => (
               <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, cursor: "pointer",
-                background: selected.has(idx) ? "#f0fdf4" : "#fafafa", border: `1.5px solid ${selected.has(idx) ? "#22c55e" : "#e5e7eb"}` }}
-                onClick={() => toggleSelect(idx)}>
-                <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${selected.has(idx) ? "#22c55e" : "#d1d5db"}`,
-                  background: selected.has(idx) ? "#22c55e" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {selected.has(idx) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
+                background: isSelected(item) ? "#f0fdf4" : "#fafafa", border: `1.5px solid ${isSelected(item) ? "#22c55e" : "#e5e7eb"}` }}
+                onClick={() => toggleSelect(item)}>
+                <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${isSelected(item) ? "#22c55e" : "#d1d5db"}`,
+                  background: isSelected(item) ? "#22c55e" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {isSelected(item) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
                 </div>
                 {item.photoUrl && <img src={item.photoUrl} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} alt="" />}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -688,20 +700,20 @@ function BrowseModal({ onBulkAdd, onClose }) {
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
             {page > 1 && (
               <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page - 1; setPage(p); setSelected(new Set()); search(grade, p); }}>← 前へ</button>
+                onClick={() => { const p = page - 1; setPage(p); search(grade, p); }}>← 前へ</button>
             )}
             <span style={{ fontSize: 12, color: "#9ca3af", alignSelf: "center" }}>{page}ページ</span>
             {page * 30 < total && (
               <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page + 1; setPage(p); setSelected(new Set()); search(grade, p); }}>次へ →</button>
+                onClick={() => { const p = page + 1; setPage(p); search(grade, p); }}>次へ →</button>
             )}
           </div>
 
           {/* 一括登録ボタン */}
-          {selected.size > 0 && (
+          {selectedCount > 0 && (
             <button style={{ width: "100%", padding: "14px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
               onClick={handleBulkAdd}>
-              ✓ {selected.size}件をまとめて登録
+              ✓ {selectedCount}件をまとめて登録
             </button>
           )}
         </>
