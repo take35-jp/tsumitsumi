@@ -929,7 +929,13 @@ export default function App() {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button style={s.searchIconBtn} onClick={() => setShowSearch(v => !v)}>🔍</button>
           <button style={s.searchIconBtn} onClick={() => setShowHelp(true)}>❓</button>
-          <button style={s.searchIconBtn} onClick={() => setShowAppShare(true)}>🔗</button>
+          <button style={s.searchIconBtn} onClick={() => setShowAppShare(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 10L12 6L16 10" />
+              <line x1="12" y1="6" x2="12" y2="17" />
+              <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
+            </svg>
+          </button>
           <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏 シェア</button>
         </div>
       </div>
