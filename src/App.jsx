@@ -652,6 +652,12 @@ function BackupModal({ kits, onImport, onClose }) {
           <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={handleImport} />
         </div>
       </div>
+
+      <div style={{ background: "#fff8e1", borderRadius: 10, padding: "12px 14px", marginTop: 4 }}>
+        <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
+          ⚠️ <strong>注意：</strong>SafariとChromeなど、ブラウザの種類が異なるとデータは別々に保存されます。異なるブラウザへ移行する場合は、必ずエクスポートしてからインポートしてください。
+        </div>
+      </div>
     </div>
   );
 }
