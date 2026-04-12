@@ -1356,34 +1356,32 @@ export default function App() {
             <button key={val} style={{ ...s.tab, ...(filter === val ? s.tabActive : {}) }} onClick={() => setFilter(val)}>{label}</button>
           ))}
         </div>
-        <div style={{ padding: "8px 16px 4px", display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
+        <div style={{ padding: "8px 16px 4px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 5 }}>
+            <select style={{ padding: "3px 4px", border: "1.5px solid", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
               value={filterScale} onChange={(e) => setFilterScale(e.target.value)}>
               <option value="">スケール</option>
               {[...new Set(kits.map(k => k.scale).filter(Boolean))].sort().map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", border: "1.5px solid", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
               value={filterSeries} onChange={(e) => setFilterSeries(e.target.value)}>
               <option value="">シリーズ</option>
               {[...new Set(kits.map(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim()).filter(Boolean))].sort().map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, background: filterRating ? "#fffbeb" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", border: "1.5px solid", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, background: filterRating ? "#fffbeb" : "#fafafa" }}
               value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
               <option value="">評価</option>
-              <option value="5">★★★★★</option>
-              <option value="4">★★★★☆</option>
-              <option value="3">★★★☆☆</option>
-              <option value="2">★★☆☆☆</option>
-              <option value="1">★☆☆☆☆</option>
+              <option value="5">★5</option>
+              <option value="4">★4</option>
+              <option value="3">★3</option>
+              <option value="2">★2</option>
+              <option value="1">★1</option>
             </select>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, background: filterCondition ? "#f5f3ff" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", border: "1.5px solid", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, background: filterCondition ? "#f5f3ff" : "#fafafa" }}
               value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
               <option value="">状態</option>
               {CONDITION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
