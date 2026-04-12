@@ -1492,6 +1492,10 @@ export default function App() {
           </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>一括登録</span>
+          <button style={{ ...s.fab, background: "#111", fontSize: 18 }} onClick={() => setShowBrowse(true)}>☰</button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>手動登録</span>
           <button style={{ ...s.fab, background: "#111" }} onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>＋</button>
         </div>
