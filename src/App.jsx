@@ -9,15 +9,15 @@ const SERIES_OPTIONS = [
   "メガミデバイス", "アーマーガールズプロジェクト",
   "MODEROID", "PLAMATE",
   "FSS（ファイブスター物語）", "ドルフィードリーム",
-  "タミヤ（戦車）", "タミヤ（飛行機）", "タミヤ（艦船）", "タミヤ（車）", "タミヤ（バイク）", "タミヤ（フィギュア）", "タミヤ（SF・キャラ）",
+  "タミヤ",
   "ミニ四駆",
-  "ハセガワ（飛行機）", "ハセガワ（艦船）", "ハセガワ（車）", "ハセガワ（キャラ）",
-  "フジミ（艦船）", "フジミ（車）", "フジミ（飛行機）",
-  "アオシマ（艦船）", "アオシマ（車）", "アオシマ（バイク）",
+  "ハセガワ",
+  "フジミ",
+  "アオシマ",
   "ピットロード", "ファインモールド", "ドラゴン", "トランペッター",
   "ガレージキット", "レジンキット", "その他",
 ];
-const SCALE_OPTIONS = ["1/144", "1/100", "1/60", "MG", "HG", "RG", "PG", "その他"];
+const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "HG", "RG", "MG", "MGSD", "PG", "その他"];
 
 const RANKS = [
   { min: 500, label: "模型屋", color: "#7c3aed" },
@@ -1045,7 +1045,9 @@ export default function App() {
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>スキャン登録</span>
-          <button style={{ ...s.fab, background: "#4f8ef7" }} onClick={() => setShowScanner(true)}>📷</button>
+          <button style={{ ...s.fab, background: "#000", padding: 0, overflow: "hidden" }} onClick={() => setShowScanner(true)}>
+            <img src="/camera-icon.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="スキャン" />
+          </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>手動登録</span>
