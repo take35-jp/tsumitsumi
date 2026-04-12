@@ -46,7 +46,7 @@ const CONDITION_OPTIONS = ["未開封", "素組状態", "欠品有り", "制作�
 const emptyForm = {
   name: "", series: "", scale: "", purchaseDate: "", price: "",
   count: 1, rating: 0, photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "",
-  condition: "", conditionNote: "",
+  condition: "", conditionNote: "", tags: [],
 };
 
 function guessSeriesFromName(name) {
@@ -711,6 +711,45 @@ function LegalModal({ type, onClose }) {
   );
 }
 
+// ---- Tag Input ----
+function TagInput({ tags, onChange }) {
+  const [input, setInput] = useState("");
+
+  const addTag = (val) => {
+    const tag = val.trim();
+    if (!tag || tags.includes(tag)) { setInput(""); return; }
+    onChange([...tags, tag]);
+    setInput("");
+  };
+
+  const removeTag = (tag) => onChange(tags.filter(t => t !== tag));
+
+  return (
+    <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", background: "#fafafa" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: tags.length > 0 ? 8 : 0 }}>
+        {tags.map(tag => (
+          <span key={tag} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>
+            #{tag}
+            <button style={{ background: "none", border: "none", cursor: "pointer", color: "#166534", fontSize: 14, lineHeight: 1, padding: 0 }} onClick={() => removeTag(tag)}>×</button>
+          </span>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <input
+          style={{ flex: 1, border: "none", background: "none", outline: "none", fontSize: 13, color: "#111" }}
+          placeholder="タグを入力してEnter（例：次に作る）"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(input); } }}
+        />
+        <button
+          style={{ background: "#111", color: "#fff", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
+          onClick={() => addTag(input)}>追加</button>
+      </div>
+    </div>
+  );
+}
+
 function HelpModal({ onClose }) {
   return (
     <div style={hs.wrap}>
@@ -988,6 +1027,7 @@ export default function App() {
   const [showLegal, setShowLegal] = useState(null);
   const [showBackup, setShowBackup] = useState(false); // "privacy" | "terms" | null
   const [filterCondition, setFilterCondition] = useState("");
+  const [filterTags, setFilterTags] = useState([]); // 選択中のタグ
   const [showAppShare, setShowAppShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
@@ -1076,6 +1116,7 @@ export default function App() {
   if (filterSeries) filtered = filtered.filter(k => (k.series || "") === filterSeries);
   if (filterRating) filtered = filtered.filter(k => (k.rating || 0) === Number(filterRating));
   if (filterCondition) filtered = filtered.filter(k => (k.condition || "") === filterCondition);
+  if (filterTags.length > 0) filtered = filtered.filter(k => filterTags.every(tag => (k.tags || []).includes(tag)));
 
   return (
     <div style={s.root}>
@@ -1156,6 +1197,28 @@ export default function App() {
             {CONDITION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
         </div>
+        {(() => {
+          const allTags = [...new Set(kits.flatMap(k => k.tags || []))];
+          if (allTags.length === 0) return null;
+          return (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+              <span style={{ fontSize: 11, color: "#9ca3af", alignSelf: "center" }}>タグ：</span>
+              {allTags.map(tag => {
+                const active = filterTags.includes(tag);
+                return (
+                  <button key={tag}
+                    style={{ background: active ? "#166534" : "#f0fdf4", color: active ? "#fff" : "#166534", border: `1.5px solid ${active ? "#166534" : "#bbf7d0"}`, borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                    onClick={() => setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}>
+                    #{tag}
+                  </button>
+                );
+              })}
+              {filterTags.length > 0 && (
+                <button style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 11, cursor: "pointer" }} onClick={() => setFilterTags([])}>✕ クリア</button>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {scanLoading && <div style={s.loadingBar}>🔍 商品情報を検索中...</div>}
@@ -1264,7 +1327,7 @@ export default function App() {
               <div style={s.modalTitle}>{detail.name}</div>
               {detail.completed && <div style={s.doneBadge}>✓ 完成済み</div>}
               <table style={s.table}><tbody>
-                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
+                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["タグ", detail.tags?.length > 0 ? detail.tags.join("　") : null], ["JAN", detail.jan], ["メモ", detail.memo]]
                   .filter(([, v]) => v && v !== "—")
                   .map(([k, v]) => <tr key={k}><td style={s.td1}>{k}</td><td style={s.td2}>{v}</td></tr>)}
               </tbody></table>
@@ -1422,6 +1485,9 @@ export default function App() {
               onChange={(e) => setForm((f) => ({ ...f, conditionNote: e.target.value }))} />
 
             <label style={s.label}>メモ</label>
+            <label style={s.label}>タグ</label>
+            <TagInput tags={form.tags || []} onChange={(tags) => setForm((f) => ({ ...f, tags }))} />
+
             <textarea style={{ ...s.input, minHeight: 60, resize: "vertical" }} placeholder="自由にメモを残そう" value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
 
             <div style={s.formBtns}>
