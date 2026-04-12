@@ -615,11 +615,15 @@ function BrowseModal({ onBulkAdd, onClose }) {
 
   const getKey = (item) => `${item.name}_${item.jan}`;
 
-  const search = async (g, p) => {
+  const search = async (g, p, q) => {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(`/api/browse?grade=${g}&page=${p}`);
+      const query = q !== undefined ? q : browseQuery;
+      const url = query.trim()
+        ? `/api/browse?grade=${g}&page=${p}&q=${encodeURIComponent(query.trim())}`
+        : `/api/browse?grade=${g}&page=${p}`;
+      const res = await fetch(url);
       const data = await res.json();
       setItems(data.items || []);
       setTotal(data.total || 0);
@@ -702,13 +706,16 @@ function BrowseModal({ onBulkAdd, onClose }) {
               onClick={() => setSelectedItems({})}>全解除</button>
             <input
               style={{ flex: 1, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, fontSize: 12, outline: "none", background: "#fafafa", minWidth: 0 }}
-              placeholder="キット名で絞り込み..."
+              placeholder="キット名を検索..."
               value={browseQuery}
               onChange={(e) => setBrowseQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); search(grade, 1, browseQuery); } }}
             />
+            <button style={{ fontSize: 11, padding: "4px 10px", border: "1.5px solid #111", borderRadius: 20, background: "#111", color: "#fff", cursor: "pointer", flexShrink: 0 }}
+              onClick={() => { setPage(1); search(grade, 1, browseQuery); }}>検索</button>
           </div>
 
-          {(() => { const filteredItems = browseQuery.trim() ? items.filter(item => item.name.includes(browseQuery.trim())) : items; return (
+          {(() => { const filteredItems = items; return (
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
             {filteredItems.map((item, idx) => (
               <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, cursor: "pointer",
@@ -732,12 +739,12 @@ function BrowseModal({ onBulkAdd, onClose }) {
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
             {page > 1 && (
               <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page - 1; setPage(p); setBrowseQuery(''); search(grade, p); }}>← 前へ</button>
+                onClick={() => { const p = page - 1; setPage(p); search(grade, p); }}>← 前へ</button>
             )}
             <span style={{ fontSize: 12, color: "#9ca3af", alignSelf: "center" }}>{page}ページ</span>
             {page * 30 < total && (
               <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page + 1; setPage(p); setBrowseQuery(''); search(grade, p); }}>次へ →</button>
+                onClick={() => { const p = page + 1; setPage(p); search(grade, p); }}>次へ →</button>
             )}
           </div>
 
