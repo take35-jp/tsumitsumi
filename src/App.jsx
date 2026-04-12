@@ -49,6 +49,29 @@ const emptyForm = {
   condition: "", conditionNote: "", tags: [],
 };
 
+// 画像をBase64に圧縮変換（最大800px・JPEG品質0.7）
+function compressImageToBase64(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.7));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 function guessSeriesFromName(name) {
   if (/MODEROID/i.test(name)) return "MODEROID";
   if (/フレームアームズ・ガール|FA:G/i.test(name)) return "フレームアームズ・ガール";
@@ -1180,15 +1203,17 @@ export default function App() {
   const fileRef = useRef();
   const completedFileRef = useRef();
 
-  const handlePhoto = (e) => {
+  const handlePhoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setForm((f) => ({ ...f, photo: file, photoUrl: URL.createObjectURL(file) }));
+    const base64 = await compressImageToBase64(file);
+    if (base64) setForm((f) => ({ ...f, photo: null, photoUrl: base64 }));
   };
-  const handleCompletedPhoto = (e) => {
+  const handleCompletedPhoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setForm((f) => ({ ...f, completedPhotoUrl: URL.createObjectURL(file) }));
+    const base64 = await compressImageToBase64(file);
+    if (base64) setForm((f) => ({ ...f, completedPhotoUrl: base64 }));
   };
 
   const handleSubmit = () => {
