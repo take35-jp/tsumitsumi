@@ -737,7 +737,7 @@ function TagInput({ tags, onChange }) {
       <div style={{ display: "flex", gap: 6 }}>
         <input
           style={{ flex: 1, border: "none", background: "none", outline: "none", fontSize: 13, color: "#111" }}
-          placeholder="タグを入力してEnter（例：次に作る）"
+          placeholder="タグを入力してEnter（例：プレバン限定品）"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(input); } }}
@@ -1422,6 +1422,25 @@ export default function App() {
               {SCALE_OPTIONS.map((o) => <option key={o}>{o}</option>)}
             </select>
 
+            <label style={s.label}>タグ</label>
+            <TagInput tags={form.tags || []} onChange={(tags) => setForm((f) => ({ ...f, tags }))} />
+
+            <label style={s.label}>状態</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              {CONDITION_OPTIONS.map((opt) => (
+                <button key={opt}
+                  style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: form.condition === opt ? "#111" : "#f3f4f6",
+                    color: form.condition === opt ? "#fff" : "#374151",
+                    borderColor: form.condition === opt ? "#111" : "#e5e7eb" }}
+                  onClick={() => setForm((f) => ({ ...f, condition: f.condition === opt ? "" : opt }))}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <input style={{ ...s.input, marginBottom: 4 }} placeholder="状態のメモ（欠品内容など自由に）" value={form.conditionNote}
+              onChange={(e) => setForm((f) => ({ ...f, conditionNote: e.target.value }))} />
+
             <label style={s.label}>購入日</label>
             <input style={s.input} type="date" value={form.purchaseDate} onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))} />
 
@@ -1468,26 +1487,7 @@ export default function App() {
             </div>
             <input ref={completedFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleCompletedPhoto} />
 
-            <label style={s.label}>状態</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-              {CONDITION_OPTIONS.map((opt) => (
-                <button key={opt}
-                  style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    background: form.condition === opt ? "#111" : "#f3f4f6",
-                    color: form.condition === opt ? "#fff" : "#374151",
-                    borderColor: form.condition === opt ? "#111" : "#e5e7eb" }}
-                  onClick={() => setForm((f) => ({ ...f, condition: f.condition === opt ? "" : opt }))}>
-                  {opt}
-                </button>
-              ))}
-            </div>
-            <input style={{ ...s.input, marginBottom: 4 }} placeholder="状態のメモ（欠品内容など自由に）" value={form.conditionNote}
-              onChange={(e) => setForm((f) => ({ ...f, conditionNote: e.target.value }))} />
-
             <label style={s.label}>メモ</label>
-            <label style={s.label}>タグ</label>
-            <TagInput tags={form.tags || []} onChange={(tags) => setForm((f) => ({ ...f, tags }))} />
-
             <textarea style={{ ...s.input, minHeight: 60, resize: "vertical" }} placeholder="自由にメモを残そう" value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
 
             <div style={s.formBtns}>
