@@ -37,7 +37,7 @@ function guessScale(name) {
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  const { grade, page = "1" } = req.query;
+  const { grade, page = "1", q = "" } = req.query;
   if (!grade) return res.status(400).json({ error: "grade required" });
 
   const gradeKeywords = {
@@ -49,9 +49,11 @@ export default async function handler(req, res) {
     MGSD: "MGSD ガンダム バンダイ",
   };
 
-  const keyword = gradeKeywords[grade];
-  if (!keyword) return res.status(400).json({ error: "invalid grade" });
+  const baseKeyword = gradeKeywords[grade];
+  if (!baseKeyword) return res.status(400).json({ error: "invalid grade" });
 
+  // 検索ワードがある場合はグレード+検索ワードで検索
+  const keyword = q.trim() ? `${grade} ${q.trim()} ガンダム プラモデル` : baseKeyword;
   const start = (Number(page) - 1) * 30 + 1;
 
   try {
@@ -60,7 +62,7 @@ export default async function handler(req, res) {
     const data = await r.json();
 
     if (data.Error) {
-      return res.status(400).json({ error: data.Error.Message, debug: data });
+      return res.status(400).json({ error: data.Error.Message });
     }
 
     const seen = new Set();
@@ -73,7 +75,6 @@ export default async function handler(req, res) {
     }))
     .filter(item => item.name.length > 2)
     .filter(item => {
-      // JANがある場合はJANで、ない場合はキット名で重複除去
       const key = item.jan || item.name;
       if (seen.has(key)) return false;
       seen.add(key);
