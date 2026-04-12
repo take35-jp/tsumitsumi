@@ -87,6 +87,7 @@ function guessSeriesFromName(name) {
   return "";
 }
 function guessScaleFromName(name) {
+  if (/\bMGSD\b/i.test(name)) return "MGSD";
   if (/\bPG\b/i.test(name)) return "PG";
   if (/\bMG\b/i.test(name)) return "MG";
   if (/\bRG\b/i.test(name)) return "RG";
