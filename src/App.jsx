@@ -578,6 +578,138 @@ const suggS = {
 };
 
 // ---- Help Modal ----
+// ---- Browse Modal（グレード別一覧から一括登録）----
+function BrowseModal({ onBulkAdd, onClose }) {
+  const GRADES = ["HG", "RG", "MG", "MGSD", "PG", "SD"];
+  const [grade, setGrade] = useState("HG");
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [selected, setSelected] = useState(new Set());
+  const [searched, setSearched] = useState(false);
+
+  const search = async (g, p) => {
+    setLoading(true);
+    setSearched(true);
+    try {
+      const res = await fetch(`/api/browse?grade=${g}&page=${p}`);
+      const data = await res.json();
+      setItems(data.items || []);
+      setTotal(data.total || 0);
+    } catch (e) {}
+    setLoading(false);
+  };
+
+  const toggleSelect = (idx) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(idx) ? next.delete(idx) : next.add(idx);
+      return next;
+    });
+  };
+
+  const handleBulkAdd = () => {
+    const toAdd = [...selected].map(idx => ({
+      ...{ name: "", series: "ガンプラ", scale: "", purchaseDate: "", price: "", count: 1, rating: 0,
+           photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "", condition: "", conditionNote: "", tags: [] },
+      ...items[idx],
+      id: Date.now() + idx,
+      priority: "中",
+    }));
+    onBulkAdd(toAdd);
+    onClose();
+  };
+
+  return (
+    <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box", padding: "20px 20px 32px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: "#111" }}>📋 リストから一括登録</span>
+        <button style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" }} onClick={onClose}>✕</button>
+      </div>
+
+      {/* グレード選択 */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+        {GRADES.map(g => (
+          <button key={g} style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 700, cursor: "pointer",
+            background: grade === g ? "#111" : "#f3f4f6", color: grade === g ? "#fff" : "#374151", borderColor: grade === g ? "#111" : "#e5e7eb" }}
+            onClick={() => { setGrade(g); setItems([]); setSelected(new Set()); setPage(1); setSearched(false); }}>
+            {g}
+          </button>
+        ))}
+      </div>
+
+      <button style={{ width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}
+        onClick={() => { setPage(1); setSelected(new Set()); search(grade, 1); }}>
+        🔍 {grade} の一覧を表示
+      </button>
+
+      {loading && <div style={{ textAlign: "center", padding: "20px 0", color: "#9ca3af", fontSize: 13 }}>読み込み中...</div>}
+
+      {!loading && searched && items.length === 0 && (
+        <div style={{ textAlign: "center", padding: "20px 0", color: "#9ca3af", fontSize: 13 }}>見つかりませんでした</div>
+      )}
+
+      {/* キット一覧 */}
+      {items.length > 0 && (
+        <>
+          <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
+            約{total.toLocaleString()}件中 {(page-1)*30+1}〜{Math.min(page*30, total)}件表示
+            　{selected.size > 0 && <span style={{ color: "#22c55e", fontWeight: 700 }}>{selected.size}件選択中</span>}
+          </div>
+
+          {/* 全選択 */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <button style={{ fontSize: 12, padding: "4px 12px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151" }}
+              onClick={() => setSelected(new Set(items.map((_, i) => i)))}>すべて選択</button>
+            <button style={{ fontSize: 12, padding: "4px 12px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151" }}
+              onClick={() => setSelected(new Set())}>選択解除</button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+            {items.map((item, idx) => (
+              <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, cursor: "pointer",
+                background: selected.has(idx) ? "#f0fdf4" : "#fafafa", border: `1.5px solid ${selected.has(idx) ? "#22c55e" : "#e5e7eb"}` }}
+                onClick={() => toggleSelect(idx)}>
+                <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${selected.has(idx) ? "#22c55e" : "#d1d5db"}`,
+                  background: selected.has(idx) ? "#22c55e" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {selected.has(idx) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
+                </div>
+                {item.photoUrl && <img src={item.photoUrl} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} alt="" />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111", wordBreak: "break-word" }}>{item.name}</div>
+                  <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>{item.scale}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ページネーション */}
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+            {page > 1 && (
+              <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
+                onClick={() => { const p = page - 1; setPage(p); setSelected(new Set()); search(grade, p); }}>← 前へ</button>
+            )}
+            <span style={{ fontSize: 12, color: "#9ca3af", alignSelf: "center" }}>{page}ページ</span>
+            {page * 30 < total && (
+              <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
+                onClick={() => { const p = page + 1; setPage(p); setSelected(new Set()); search(grade, p); }}>次へ →</button>
+            )}
+          </div>
+
+          {/* 一括登録ボタン */}
+          {selected.size > 0 && (
+            <button style={{ width: "100%", padding: "14px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+              onClick={handleBulkAdd}>
+              ✓ {selected.size}件をまとめて登録
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ---- Backup Modal ----
 function BackupModal({ kits, onImport, onClose }) {
   const fileRef = useRef();
@@ -1025,7 +1157,8 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showLegal, setShowLegal] = useState(null);
-  const [showBackup, setShowBackup] = useState(false); // "privacy" | "terms" | null
+  const [showBackup, setShowBackup] = useState(false);
+  const [showBrowse, setShowBrowse] = useState(false); // "privacy" | "terms" | null
   const [filterCondition, setFilterCondition] = useState("");
   const [filterTags, setFilterTags] = useState([]); // 選択中のタグ
   const [showAppShare, setShowAppShare] = useState(false);
@@ -1073,6 +1206,10 @@ export default function App() {
     setForm(data?.name ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl } : { ...emptyForm, jan });
     setEditId(null);
     setShowForm(true);
+  };
+
+  const handleBulkAdd = (newKits) => {
+    setKits(prev => [...prev, ...newKits]);
   };
 
   const handleImport = (importedKits) => {
@@ -1127,6 +1264,12 @@ export default function App() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button style={s.searchIconBtn} onClick={() => setShowSearch(v => !v)}>🔍</button>
+          <button style={s.searchIconBtn} onClick={() => setShowBrowse(true)} title="リストから登録">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
           <button style={s.searchIconBtn} onClick={() => setShowBackup(true)} title="バックアップ">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" />
@@ -1358,6 +1501,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowHelp(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <HelpModal onClose={() => setShowHelp(false)} />
+          </div>
+        </div>
+      )}
+
+      {showBrowse && (
+        <div style={s.overlay} onClick={() => setShowBrowse(false)}>
+          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <BrowseModal onBulkAdd={handleBulkAdd} onClose={() => setShowBrowse(false)} />
           </div>
         </div>
       )}
