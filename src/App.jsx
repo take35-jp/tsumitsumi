@@ -594,14 +594,6 @@ function LegalModal({ type, onClose }) {
             <div style={hs.desc}>本アプリはお客様の個人情報を収集・サーバーへ送信しません。登録されたキット情報はお使いの端末のブラウザ（localStorage）にのみ保存されます。</div>
           </div>
           <div style={hs.section}>
-            <div style={hs.sectionTitle}>外部サービスの利用</div>
-            <div style={hs.desc}>バーコードスキャン時の商品情報取得にYahoo!ショッピングAPIを使用しています。取得した情報（商品名・画像URL・価格）は端末内にのみ保存され、第三者に提供されません。</div>
-          </div>
-          <div style={hs.section}>
-            <div style={hs.sectionTitle}>アクセス解析</div>
-            <div style={hs.desc}>現在、アクセス解析ツールは導入していません。</div>
-          </div>
-          <div style={hs.section}>
             <div style={hs.sectionTitle}>お問い合わせ</div>
             <div style={hs.desc}>プライバシーに関するお問い合わせは X（@takerunomin）のDMにてご連絡ください。</div>
           </div>
@@ -611,7 +603,7 @@ function LegalModal({ type, onClose }) {
         <>
           <div style={hs.section}>
             <div style={hs.sectionTitle}>サービスについて</div>
-            <div style={hs.desc}>ツミツミ（以下「本アプリ」）は、プラモデルの積みプラ管理を目的とした個人開発のWebアプリです。現在β版として提供しています。</div>
+            <div style={hs.desc}>ツミツミ（以下「本アプリ」）は、プラモデルの積みプラ管理を目的とした個人開発のWebアプリです。</div>
           </div>
           <div style={hs.section}>
             <div style={hs.sectionTitle}>禁止事項</div>
