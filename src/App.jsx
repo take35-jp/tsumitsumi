@@ -1170,7 +1170,7 @@ export default function App() {
 
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0" }}>
         <div style={s.tabs}>
-          {[["all","すべて"],["pending","積みプラ"],["done","完成済み"]].map(([val, label]) => (
+          {[["pending","積みプラ"],["done","完成済み"],["all","すべて"]].map(([val, label]) => (
             <button key={val} style={{ ...s.tab, ...(filter === val ? s.tabActive : {}) }} onClick={() => setFilter(val)}>{label}</button>
           ))}
         </div>
