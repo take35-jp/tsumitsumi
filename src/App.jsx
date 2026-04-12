@@ -611,6 +611,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
   const [total, setTotal] = useState(0);
   const [selectedItems, setSelectedItems] = useState({}); // key: "name_jan", value: item
   const [searched, setSearched] = useState(false);
+  const [browseQuery, setBrowseQuery] = useState("");
 
   const getKey = (item) => `${item.name}_${item.jan}`;
 
@@ -694,15 +695,22 @@ function BrowseModal({ onBulkAdd, onClose }) {
           </div>
 
           {/* 全選択 */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <button style={{ fontSize: 12, padding: "4px 12px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151" }}
-              onClick={() => setSelectedItems(prev => { const next = {...prev}; items.forEach(item => next[getKey(item)] = item); return next; })}>このページを全選択</button>
-            <button style={{ fontSize: 12, padding: "4px 12px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151" }}
+          <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+            <button style={{ fontSize: 12, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151", flexShrink: 0 }}
+              onClick={() => setSelectedItems(prev => { const next = {...prev}; filteredItems.forEach(item => next[getKey(item)] = item); return next; })}>全選択</button>
+            <button style={{ fontSize: 12, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151", flexShrink: 0 }}
               onClick={() => setSelectedItems({})}>全解除</button>
+            <input
+              style={{ flex: 1, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, fontSize: 12, outline: "none", background: "#fafafa", minWidth: 0 }}
+              placeholder="キット名で絞り込み..."
+              value={browseQuery}
+              onChange={(e) => setBrowseQuery(e.target.value)}
+            />
           </div>
 
+          {(() => { const filteredItems = browseQuery.trim() ? items.filter(item => item.name.includes(browseQuery.trim())) : items; return (
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-            {items.map((item, idx) => (
+            {filteredItems.map((item, idx) => (
               <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, cursor: "pointer",
                 background: isSelected(item) ? "#f0fdf4" : "#fafafa", border: `1.5px solid ${isSelected(item) ? "#22c55e" : "#e5e7eb"}` }}
                 onClick={() => toggleSelect(item)}>
@@ -718,17 +726,18 @@ function BrowseModal({ onBulkAdd, onClose }) {
               </div>
             ))}
           </div>
+          ); })()}
 
           {/* ページネーション */}
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
             {page > 1 && (
               <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page - 1; setPage(p); search(grade, p); }}>← 前へ</button>
+                onClick={() => { const p = page - 1; setPage(p); setBrowseQuery(''); search(grade, p); }}>← 前へ</button>
             )}
             <span style={{ fontSize: 12, color: "#9ca3af", alignSelf: "center" }}>{page}ページ</span>
             {page * 30 < total && (
               <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page + 1; setPage(p); search(grade, p); }}>次へ →</button>
+                onClick={() => { const p = page + 1; setPage(p); setBrowseQuery(''); search(grade, p); }}>次へ →</button>
             )}
           </div>
 
