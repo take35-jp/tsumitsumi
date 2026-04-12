@@ -578,6 +578,84 @@ const suggS = {
 };
 
 // ---- Help Modal ----
+// ---- Backup Modal ----
+function BackupModal({ kits, onImport, onClose }) {
+  const fileRef = useRef();
+  const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState(""); // "ok" | "err"
+
+  const handleExport = () => {
+    const data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), kits }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tsumitsumi_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMsg("バックアップファイルをダウンロードしました！");
+    setMsgType("ok");
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        const imported = data.kits || data;
+        if (!Array.isArray(imported)) throw new Error();
+        onImport(imported);
+        setMsg(`${imported.length}件のデータをインポートしました！`);
+        setMsgType("ok");
+      } catch {
+        setMsg("ファイルの読み込みに失敗しました。正しいバックアップファイルを選択してください。");
+        setMsgType("err");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div style={hs.wrap}>
+      <div style={hs.header}>
+        <span style={hs.title}>💾 バックアップ</span>
+        <button style={hs.closeBtn} onClick={onClose}>✕</button>
+      </div>
+
+      {msg && (
+        <div style={{ background: msgType === "ok" ? "#f0fdf4" : "#fee2e2", color: msgType === "ok" ? "#166534" : "#b91c1c", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16, wordBreak: "break-word" }}>
+          {msg}
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>📤 エクスポート（バックアップ）</div>
+          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>現在の積みプラデータをJSONファイルとして保存します。iCloudやGoogleドライブに保存しておくと安心です。</div>
+          <button
+            style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+            onClick={handleExport}>
+            ダウンロード（{kits.length}件）
+          </button>
+        </div>
+
+        <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>📥 インポート（復元）</div>
+          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>バックアップファイルからデータを復元します。現在のデータは上書きされます。</div>
+          <button
+            style={{ width: "100%", padding: "12px 0", background: "#fff", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+            onClick={() => fileRef.current.click()}>
+            ファイルを選択
+          </button>
+          <input ref={fileRef} type="file" accept=".json" style={{ display: "none" }} onChange={handleImport} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- Legal Modal ----
 function LegalModal({ type, onClose }) {
   const isPrivacy = type === "privacy";
@@ -901,7 +979,8 @@ export default function App() {
   const [filterRating, setFilterRating] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [showLegal, setShowLegal] = useState(null); // "privacy" | "terms" | null
+  const [showLegal, setShowLegal] = useState(null);
+  const [showBackup, setShowBackup] = useState(false); // "privacy" | "terms" | null
   const [filterCondition, setFilterCondition] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -948,6 +1027,10 @@ export default function App() {
     setForm(data?.name ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl } : { ...emptyForm, jan });
     setEditId(null);
     setShowForm(true);
+  };
+
+  const handleImport = (importedKits) => {
+    setKits(importedKits);
   };
 
   const handleWant = (kit) => {
@@ -997,6 +1080,12 @@ export default function App() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button style={s.searchIconBtn} onClick={() => setShowSearch(v => !v)}>🔍</button>
+          <button style={s.searchIconBtn} onClick={() => setShowBackup(true)} title="バックアップ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+              <path d="M12 8v8M8 12l4 4 4-4" />
+            </svg>
+          </button>
           <button style={s.searchIconBtn} onClick={() => setShowHelp(true)}>❓</button>
           <button style={s.searchIconBtn} onClick={() => setShowAppShare(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1200,6 +1289,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowHelp(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <HelpModal onClose={() => setShowHelp(false)} />
+          </div>
+        </div>
+      )}
+
+      {showBackup && (
+        <div style={s.overlay} onClick={() => setShowBackup(false)}>
+          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <BackupModal kits={kits} onImport={handleImport} onClose={() => setShowBackup(false)} />
           </div>
         </div>
       )}
