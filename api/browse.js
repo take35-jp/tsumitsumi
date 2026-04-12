@@ -28,7 +28,6 @@ function guessScale(name) {
   if (/\bMG\b/i.test(name)) return "MG";
   if (/\bRG\b/i.test(name)) return "RG";
   if (/\bHG\b/i.test(name)) return "HG";
-  if (/\bEG\b/i.test(name)) return "HG";
   if (/\bSD\b/i.test(name)) return "SD";
   if (/1\/100/i.test(name)) return "1/100";
   if (/1\/144/i.test(name)) return "1/144";
@@ -37,18 +36,17 @@ function guessScale(name) {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET");
 
   const { grade, page = "1" } = req.query;
   if (!grade) return res.status(400).json({ error: "grade required" });
 
   const gradeKeywords = {
-    MG:   "MG 1/100 ガンプラ",
-    HG:   "HG 1/144 ガンプラ",
-    RG:   "RG 1/144 ガンプラ",
-    PG:   "PG ガンプラ",
-    SD:   "SD ガンプラ BB戦士",
-    MGSD: "MGSD ガンプラ",
+    MG:   "MG ガンダム プラモデル",
+    HG:   "HG ガンダム プラモデル",
+    RG:   "RG ガンダム プラモデル",
+    PG:   "PG ガンダム プラモデル",
+    SD:   "SD ガンダム BB戦士",
+    MGSD: "MGSD ガンダム",
   };
 
   const keyword = gradeKeywords[grade];
@@ -57,13 +55,17 @@ export default async function handler(req, res) {
   const start = (Number(page) - 1) * 30 + 1;
 
   try {
-    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&keyword=${encodeURIComponent(keyword)}&results=30&start=${start}&output=json&sort=-score`;
+    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&keyword=${encodeURIComponent(keyword)}&results=30&start=${start}&output=json`;
     const r = await fetch(url);
     const data = await r.json();
 
+    // エラーレスポンスをそのまま返す（デバッグ用）
+    if (data.error) {
+      return res.status(400).json({ error: data.error, debug: data });
+    }
+
     const items = (data?.hits || []).map(item => ({
       name: cleanName(item.name || ""),
-      rawName: item.name || "",
       scale: guessScale(item.name || ""),
       photoUrl: item.image?.medium || item.image?.small || "",
       jan: item.janCode || "",
