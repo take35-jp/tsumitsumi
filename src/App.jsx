@@ -838,6 +838,7 @@ export default function App() {
   const [showAppShare, setShowAppShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
+  const [viewMode, setViewMode] = useState("list"); // "list" | "grid"
   const fileRef = useRef();
   const completedFileRef = useRef();
 
@@ -1004,16 +1005,43 @@ export default function App() {
               : "該当するキットがありません"}
           </div>
         )}
-        {filtered.length > 1 && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-            <button
-              style={{ fontSize: 12, padding: "4px 12px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
-              onClick={() => setReorderMode(v => !v)}>
-              {reorderMode ? "✓ 並び替え完了" : "↕ 並び替え"}
-            </button>
+        {filtered.length > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button
+                style={{ fontSize: 12, padding: "4px 10px", border: `1.5px solid ${viewMode === "list" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "list" ? "#111" : "#fff", color: viewMode === "list" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
+                onClick={() => setViewMode("list")}>☰ 詳細</button>
+              <button
+                style={{ fontSize: 12, padding: "4px 10px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
+                onClick={() => setViewMode("grid")}>⊞ サムネイル</button>
+            </div>
+            {filtered.length > 1 && (
+              <button
+                style={{ fontSize: 12, padding: "4px 12px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
+                onClick={() => setReorderMode(v => !v)}>
+                {reorderMode ? "✓ 並び替え完了" : "↕ 並び替え"}
+              </button>
+            )}
           </div>
         )}
-        {filtered.map((kit, index) => (
+        {viewMode === "grid" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            {filtered.map((kit) => (
+              <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
+                {kit.photoUrl
+                  ? <img src={kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} alt="" />
+                  : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>
+                }
+                <div style={{ padding: "6px 6px 8px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#111", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.3 }}>{kit.name}</div>
+                  {kit.scale && <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{kit.scale}</div>}
+                </div>
+                {kit.completed && <div style={{ position: "absolute", top: 6, right: 6, background: "#22c55e", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff", fontWeight: 700 }}>✓</div>}
+              </div>
+            ))}
+          </div>
+        )}
+        {viewMode === "list" && filtered.map((kit, index) => (
           <div key={kit.id} style={{ ...s.card }} onClick={() => !reorderMode && setDetail(kit)}>
             {reorderMode && (
               <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
