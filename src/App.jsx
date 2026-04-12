@@ -707,7 +707,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
               onClick={() => setSelectedItems({})}>全解除</button>
             <input
               style={{ flex: 1, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, fontSize: 12, outline: "none", background: "#fafafa", minWidth: 0 }}
-              placeholder="キット名を検索..."
+              placeholder="例：ザク シャア（スペースでAND検索）"
               value={browseQuery}
               onChange={(e) => setBrowseQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); search(grade, 1, browseQuery); } }}
