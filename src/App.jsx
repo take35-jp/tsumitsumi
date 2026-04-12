@@ -1196,6 +1196,7 @@ export default function App() {
   const [showBrowse, setShowBrowse] = useState(false); // "privacy" | "terms" | null
   const [filterCondition, setFilterCondition] = useState("");
   const [filterTags, setFilterTags] = useState([]); // 選択中のタグ
+  const [filterScale, setFilterScale] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
@@ -1287,9 +1288,10 @@ export default function App() {
       (k.scale || "").toLowerCase().includes(q)
     );
   }
-  if (filterSeries) filtered = filtered.filter(k => (k.series || "") === filterSeries);
+  if (filterSeries) filtered = filtered.filter(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim() === filterSeries);
   if (filterRating) filtered = filtered.filter(k => (k.rating || 0) === Number(filterRating));
   if (filterCondition) filtered = filtered.filter(k => (k.condition || "") === filterCondition);
+  if (filterScale) filtered = filtered.filter(k => (k.scale || "") === filterScale);
   if (filterTags.length > 0) filtered = filtered.filter(k => filterTags.every(tag => (k.tags || []).includes(tag)));
 
   return (
@@ -1354,28 +1356,39 @@ export default function App() {
             <button key={val} style={{ ...s.tab, ...(filter === val ? s.tabActive : {}) }} onClick={() => setFilter(val)}>{label}</button>
           ))}
         </div>
-        <div style={{ padding: "8px 16px 10px", display: "flex", gap: 8 }}>
-          <select style={{ flex: 1, padding: "6px 10px", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 10, fontSize: 12, background: filterSeries ? "#eff6ff" : "#fafafa", outline: "none", color: "#111" }}
-            value={filterSeries} onChange={(e) => setFilterSeries(e.target.value)}>
-            <option value="">シリーズ：すべて</option>
-            {[...new Set(kits.map(k => k.series).filter(Boolean))].sort().map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <select style={{ flex: 1, padding: "6px 10px", border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, borderRadius: 10, fontSize: 12, background: filterRating ? "#fffbeb" : "#fafafa", outline: "none", color: "#111" }}
-            value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
-            <option value="">★：すべて</option>
-            <option value="5">★★★★★</option>
-            <option value="4">★★★★☆</option>
-            <option value="3">★★★☆☆</option>
-            <option value="2">★★☆☆☆</option>
-            <option value="1">★☆☆☆☆</option>
-          </select>
-          <select style={{ flex: 1, padding: "6px 10px", border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, borderRadius: 10, fontSize: 12, background: filterCondition ? "#f5f3ff" : "#fafafa", outline: "none", color: "#111" }}
-            value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
-            <option value="">状態：すべて</option>
-            {CONDITION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
+        <div style={{ padding: "8px 16px 4px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
+              value={filterScale} onChange={(e) => setFilterScale(e.target.value)}>
+              <option value="">スケール</option>
+              {[...new Set(kits.map(k => k.scale).filter(Boolean))].sort().map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
+              value={filterSeries} onChange={(e) => setFilterSeries(e.target.value)}>
+              <option value="">シリーズ</option>
+              {[...new Set(kits.map(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim()).filter(Boolean))].sort().map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, background: filterRating ? "#fffbeb" : "#fafafa" }}
+              value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
+              <option value="">評価</option>
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★☆</option>
+              <option value="3">★★★☆☆</option>
+              <option value="2">★★☆☆☆</option>
+              <option value="1">★☆☆☆☆</option>
+            </select>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+            <select style={{ ...{ flex: 1, padding: "4px 6px", border: "1.5px solid", borderRadius: 8, fontSize: 11, outline: "none", color: "#111", minWidth: 0 }, border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, background: filterCondition ? "#f5f3ff" : "#fafafa" }}
+              value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
+              <option value="">状態</option>
+              {CONDITION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
         </div>
         {(() => {
           const allTags = [...new Set(kits.flatMap(k => k.tags || []))];
