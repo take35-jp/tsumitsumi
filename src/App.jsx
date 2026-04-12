@@ -578,6 +578,63 @@ const suggS = {
 };
 
 // ---- Help Modal ----
+// ---- Legal Modal ----
+function LegalModal({ type, onClose }) {
+  const isPrivacy = type === "privacy";
+  return (
+    <div style={hs.wrap}>
+      <div style={hs.header}>
+        <span style={hs.title}>{isPrivacy ? "🔒 プライバシーポリシー" : "📋 利用規約"}</span>
+        <button style={hs.closeBtn} onClick={onClose}>✕</button>
+      </div>
+      {isPrivacy ? (
+        <>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>収集する情報</div>
+            <div style={hs.desc}>本アプリはお客様の個人情報を収集・サーバーへ送信しません。登録されたキット情報はお使いの端末のブラウザ（localStorage）にのみ保存されます。</div>
+          </div>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>外部サービスの利用</div>
+            <div style={hs.desc}>バーコードスキャン時の商品情報取得にYahoo!ショッピングAPIを使用しています。取得した情報（商品名・画像URL・価格）は端末内にのみ保存され、第三者に提供されません。</div>
+          </div>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>アクセス解析</div>
+            <div style={hs.desc}>現在、アクセス解析ツールは導入していません。</div>
+          </div>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>お問い合わせ</div>
+            <div style={hs.desc}>プライバシーに関するお問い合わせは X（@takerunomin）のDMにてご連絡ください。</div>
+          </div>
+          <div style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", paddingTop: 8 }}>最終更新：2025年4月</div>
+        </>
+      ) : (
+        <>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>サービスについて</div>
+            <div style={hs.desc}>ツミツミ（以下「本アプリ」）は、プラモデルの積みプラ管理を目的とした個人開発のWebアプリです。現在β版として提供しています。</div>
+          </div>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>禁止事項</div>
+            <div style={hs.desc}>以下の行為を禁止します。</div>
+            <div style={hs.item}><span style={hs.warn}>!</span>本アプリを利用した詐欺・不正行為</div>
+            <div style={hs.item}><span style={hs.warn}>!</span>他のユーザーへの迷惑行為・嫌がらせ</div>
+            <div style={hs.item}><span style={hs.warn}>!</span>本アプリの無断複製・改変・再配布</div>
+          </div>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>免責事項</div>
+            <div style={hs.desc}>本アプリの利用により生じたいかなる損害についても、開発者は責任を負いません。ユーザー間の取引（譲渡・売買等）は当事者間の責任で行ってください。</div>
+          </div>
+          <div style={hs.section}>
+            <div style={hs.sectionTitle}>サービスの変更・終了</div>
+            <div style={hs.desc}>予告なく機能の変更・サービスの終了を行う場合があります。データのバックアップは定期的に行ってください。</div>
+          </div>
+          <div style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", paddingTop: 8 }}>最終更新：2025年4月</div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function HelpModal({ onClose }) {
   return (
     <div style={hs.wrap}>
@@ -618,6 +675,14 @@ function HelpModal({ onClose }) {
       <div style={hs.section}>
         <div style={hs.sectionTitle}>↕ 並び替え</div>
         <div style={hs.desc}>リスト右上の「↕ 並び替え」ボタンをタップすると▲▼ボタンが表示され、1つずつ順番を変えられます。</div>
+      </div>
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>💾 データのバックアップ・機種変更</div>
+        <div style={hs.desc}>データはブラウザ内にのみ保存されるため、機種変更や初期化の前にバックアップをお取りください。</div>
+        <div style={hs.item}><span style={hs.num}>1</span>画面右上の「⋯」メニュー（または設定）から「エクスポート」をタップ</div>
+        <div style={hs.item}><span style={hs.num}>2</span>ダウンロードされたJSONファイルをiCloudやGoogleドライブに保存</div>
+        <div style={hs.item}><span style={hs.num}>3</span>新しい端末で同じURLを開き、「インポート」からファイルを読み込む</div>
+        <div style={hs.tip}>💡 定期的にエクスポートしておくと安心です</div>
       </div>
       <div style={{ textAlign: "center", paddingTop: 8 }}>
         <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 12 }}>お問い合わせ・バグ報告はこちら</div>
@@ -844,6 +909,7 @@ export default function App() {
   const [filterRating, setFilterRating] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showLegal, setShowLegal] = useState(null); // "privacy" | "terms" | null
   const [filterCondition, setFilterCondition] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1080,6 +1146,14 @@ export default function App() {
         ))}
       </div>
 
+      {/* フッター */}
+      <div style={{ textAlign: "center", padding: "16px 20px 100px", borderTop: "1px solid #f0f0f0" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
+          <button style={{ background: "none", border: "none", fontSize: 11, color: "#9ca3af", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowLegal("privacy")}>プライバシーポリシー</button>
+          <button style={{ background: "none", border: "none", fontSize: 11, color: "#9ca3af", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowLegal("terms")}>利用規約</button>
+        </div>
+      </div>
+
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>スキャン登録</span>
@@ -1134,6 +1208,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowHelp(false)}>
           <div style={{ width: "100%", maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
             <HelpModal onClose={() => setShowHelp(false)} />
+          </div>
+        </div>
+      )}
+
+      {showLegal && (
+        <div style={s.overlay} onClick={() => setShowLegal(null)}>
+          <div style={{ width: "100%", maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+            <LegalModal type={showLegal} onClose={() => setShowLegal(null)} />
           </div>
         </div>
       )}
