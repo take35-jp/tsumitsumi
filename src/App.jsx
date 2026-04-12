@@ -619,6 +619,16 @@ function HelpModal({ onClose }) {
         <div style={hs.sectionTitle}>↕ 並び替え</div>
         <div style={hs.desc}>リスト右上の「↕ 並び替え」ボタンをタップすると▲▼ボタンが表示され、1つずつ順番を変えられます。</div>
       </div>
+      <div style={{ textAlign: "center", paddingTop: 8 }}>
+        <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 12 }}>お問い合わせ・バグ報告はこちら</div>
+        <a
+          href="https://twitter.com/messages/compose?recipient_id=takerunomin"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 20, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+          𝕏 @takerunomin にDM
+        </a>
+      </div>
     </div>
   );
 }
