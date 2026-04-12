@@ -637,6 +637,85 @@ const hs = {
   tip: { fontSize: 12, color: "#4f8ef7", background: "#eff6ff", borderRadius: 8, padding: "6px 10px", marginTop: 8 },
 };
 
+// ---- App Share Modal ----
+function AppShareModal({ onClose }) {
+  const url = "https://tsumitsumi.vercel.app";
+  const text = "積みプラ管理アプリ「TSUMI TSUMI」🗂️\nバーコードスキャンで簡単登録！\n#積みプラ #プラモデル #ツミツミ";
+  const [copied, setCopied] = useState(false);
+
+  const copyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (_) {}
+  };
+
+  const shareNative = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "TSUMI TSUMI", text, url });
+      } catch (_) {}
+    }
+  };
+
+  const buttons = [
+    {
+      label: "🔗 URLをコピー",
+      sub: copied ? "コピーしました！" : url,
+      color: "#111",
+      action: copyUrl,
+    },
+    {
+      label: "𝕏 Xでシェア",
+      sub: "Twitterで紹介する",
+      color: "#000",
+      action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + "\n" + url)}`, "_blank"),
+    },
+    {
+      label: "📱 共有メニューを開く",
+      sub: "LINEやメールなど",
+      color: "#4f8ef7",
+      action: shareNative,
+      hide: !navigator.share,
+    },
+  ];
+
+  return (
+    <div style={as.wrap}>
+      <div style={as.header}>
+        <span style={as.title}>🗂️ TSUMI TSUMIを共有</span>
+        <button style={as.closeBtn} onClick={onClose}>✕</button>
+      </div>
+      <div style={as.appCard}>
+        <div style={{ fontSize: 36, marginBottom: 8 }}>📦</div>
+        <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: 2 }}>TSUMI TSUMI</div>
+        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>PLASTIC MODEL TRACKER</div>
+        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 }}>
+          バーコードスキャンで積みプラを<br/>かんたん管理できる無料Webアプリ
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {buttons.filter(b => !b.hide).map((b, i) => (
+          <button key={i} style={{ ...as.btn, background: b.color }} onClick={b.action}>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>{b.label}</div>
+            <div style={{ fontSize: 11, opacity: 0.75, marginTop: 2 }}>{b.sub}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const as = {
+  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  title: { fontSize: 16, fontWeight: 700, color: "#111" },
+  closeBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" },
+  appCard: { background: "#f8f9fa", borderRadius: 16, padding: "20px", textAlign: "center", marginBottom: 20 },
+  btn: { width: "100%", padding: "14px 16px", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", textAlign: "left" },
+};
+
 function getCondStyle(condition) {
   switch(condition) {
     case "未開封":     return { background: "#eff6ff", color: "#1d4ed8" };
@@ -756,6 +835,7 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [filterCondition, setFilterCondition] = useState("");
+  const [showAppShare, setShowAppShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
   const fileRef = useRef();
@@ -849,6 +929,7 @@ export default function App() {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button style={s.searchIconBtn} onClick={() => setShowSearch(v => !v)}>🔍</button>
           <button style={s.searchIconBtn} onClick={() => setShowHelp(true)}>❓</button>
+          <button style={s.searchIconBtn} onClick={() => setShowAppShare(true)}>🔗</button>
           <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏 シェア</button>
         </div>
       </div>
@@ -1007,6 +1088,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowHelp(false)}>
           <div style={{ width: "100%", maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
             <HelpModal onClose={() => setShowHelp(false)} />
+          </div>
+        </div>
+      )}
+
+      {showAppShare && (
+        <div style={s.overlay} onClick={() => setShowAppShare(false)}>
+          <div style={{ width: "100%", maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+            <AppShareModal onClose={() => setShowAppShare(false)} />
           </div>
         </div>
       )}
