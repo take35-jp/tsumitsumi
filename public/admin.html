@@ -185,6 +185,7 @@
       <button class="tab-btn active" onclick="switchTab('search')">🔍 Yahoo検索から登録</button>
       <button class="tab-btn" onclick="switchTab('direct')">✏️ 直接入力</button>
       <button class="tab-btn" onclick="switchTab('master')">📋 マスタ一覧</button>
+      <button class="tab-btn" onclick="switchTab('excel')">📊 Excel入出力</button>
     </div>
 
     <!-- TAB: Yahoo検索 -->
@@ -197,7 +198,7 @@
           <div class="row" style="align-items:flex-end; gap:8px; flex-wrap:wrap;">
             <div class="field">
               <span class="label">グレード</span>
-              <select class="select" id="auto-grade">
+              <select class="select" id="auto-grade" onchange="checkGradeTotal()">
                 <option value="HG ガンダム プラモデル バンダイ" data-grade="HG">HG</option>
                 <option value="MG ガンダム プラモデル バンダイ" data-grade="MG">MG</option>
                 <option value="RG ガンダム プラモデル バンダイ" data-grade="RG">RG</option>
@@ -205,6 +206,7 @@
                 <option value="MGSD ガンダム バンダイ" data-grade="MGSD">MGSD</option>
                 <option value="SD ガンダム BB戦士 バンダイ" data-grade="SD">SD</option>
               </select>
+              <div id="grade-total" style="font-size:11px; color:#166534; margin-top:4px;"></div>
             </div>
             <div class="field">
               <span class="label">開始ページ</span>
@@ -307,6 +309,38 @@
       </div>
     </div>
 
+    <!-- TAB: Excel入出力 -->
+    <div class="tab-panel" id="tab-excel">
+      <div id="excel-msg"></div>
+
+      <!-- エクスポート -->
+      <div class="search-box" style="margin-bottom:16px;">
+        <div style="font-size:15px; font-weight:700; margin-bottom:8px;">📤 エクスポート（Excel/CSV）</div>
+        <div style="font-size:12px; color:#6b7280; margin-bottom:16px;">Supabaseのマスタデータをダウンロードします。Excelで編集後にインポートできます。</div>
+        <div class="row">
+          <button class="btn btn-primary" onclick="exportCSV()">📥 CSVダウンロード</button>
+          <button class="btn btn-success" onclick="exportExcel()">📗 Excelダウンロード</button>
+        </div>
+      </div>
+
+      <!-- インポート -->
+      <div class="search-box">
+        <div style="font-size:15px; font-weight:700; margin-bottom:8px;">📥 インポート（Excel/CSV）</div>
+        <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">編集したCSVまたはExcelファイルをアップロードします。JANコードが一致するものは上書き、新規は追加されます。</div>
+        <div style="font-size:11px; color:#ef4444; margin-bottom:16px;">⚠️ 列の順番：jan, name, maker, series, scale, image_url</div>
+        <div class="row" style="align-items:center; gap:12px;">
+          <input type="file" id="import-file" accept=".csv,.xlsx,.xls" style="font-size:13px;">
+          <button class="btn btn-primary" onclick="importFile()">アップロード・登録</button>
+        </div>
+        <div id="import-progress" style="margin-top:12px; display:none;">
+          <div style="background:#e5e7eb; border-radius:6px; height:8px; margin-bottom:6px; overflow:hidden;">
+            <div id="import-bar" style="background:#111; height:100%; width:0%; transition:width 0.3s;"></div>
+          </div>
+          <div id="import-status" style="font-size:12px; color:#374151;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB: マスタ一覧 -->
     <div class="tab-panel" id="tab-master">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -353,10 +387,10 @@ function logout() {
 // ---- TABS ----
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['search','direct','master'][i] === name);
+    b.classList.toggle('active', ['search','direct','master','excel'][i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach((p, i) => {
-    p.classList.toggle('active', ['tab-search','tab-direct','tab-master'][i] === `tab-${name}`);
+    p.classList.toggle('active', ['tab-search','tab-direct','tab-master','tab-excel'][i] === `tab-${name}`);
   });
   if (name === 'master') loadMaster();
 }
@@ -640,7 +674,7 @@ async function autoRegister() {
   const startPage = parseInt(document.getElementById('auto-start-page').value) || 1;
   const endPage = parseInt(document.getElementById('auto-end-page').value) || 9999;
 
-  // 登録済みJANをSupabaseから取得
+  // ① 登録済みJANをSupabaseから取得
   document.getElementById('auto-status').textContent = '登録済みデータを確認中...';
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/products?select=jan&limit=100000`, {
@@ -650,18 +684,30 @@ async function autoRegister() {
     registeredJans = new Set(data.filter(d => d.jan).map(d => d.jan));
   } catch (e) {}
 
+  // ② 全ページ数を取得
+  let totalYahooPages = endPage;
+  document.getElementById('auto-status').textContent = '全件数を確認中...';
+  try {
+    const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=1`);
+    const data = await r.json();
+    const totalItems = data.total || 0;
+    totalYahooPages = Math.min(endPage, Math.ceil(totalItems / 20));
+    document.getElementById('auto-status').textContent =
+      `全${totalItems.toLocaleString()}件（約${totalYahooPages}ページ）を登録します...`;
+    await new Promise(r => setTimeout(r, 1000));
+  } catch (e) {}
+
   let totalSaved = 0;
   let totalSkipped = 0;
   let page = startPage;
 
-  while (autoRunning && page <= endPage) {
-    const progress = endPage >= 9999 ? `${page}ページ` : `${page}/${endPage}ページ`;
+  while (autoRunning && page <= totalYahooPages) {
+    const pagesTotal = totalYahooPages >= 9999 ? '?' : totalYahooPages;
     document.getElementById('auto-status').textContent =
-      `${progress}処理中... 新規登録: ${totalSaved}件 / スキップ: ${totalSkipped}件`;
-    if (endPage < 9999) {
-      document.getElementById('auto-bar').style.width = `${((page-startPage)/(endPage-startPage+1)*100).toFixed(0)}%`;
-    } else {
-      document.getElementById('auto-bar').style.width = '100%';
+      `${page}/${pagesTotal}ページ処理中... 新規登録: ${totalSaved}件 / スキップ: ${totalSkipped}件`;
+    if (totalYahooPages < 9999) {
+      document.getElementById('auto-bar').style.width =
+        `${((page - startPage) / (totalYahooPages - startPage + 1) * 100).toFixed(0)}%`;
     }
 
     const start = (page - 1) * 20 + 1;
@@ -726,7 +772,24 @@ async function autoRegister() {
   // 次回の開始ページをセット
   document.getElementById('auto-start-page').value = page;
   document.getElementById('auto-status').textContent =
-    `✅ 完了！新規: ${totalSaved}件登録 / スキップ: ${totalSkipped}件（登録済み）　次回は${page}ページから再開できます`;
+    `✅ 完了！新規: ${totalSaved}件登録 / スキップ: ${totalSkipped}件（登録済み）　${page <= totalYahooPages ? `次回は${page}ページから再開` : '全件完了！'}`;
+}
+
+async function checkGradeTotal() {
+  const query = document.getElementById('auto-grade').value;
+  document.getElementById('grade-total').textContent = '確認中...';
+  try {
+    const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=1`);
+    const data = await r.json();
+    if (data.total) {
+      const pages = Math.ceil(data.total / 20);
+      document.getElementById('grade-total').textContent = `約${data.total.toLocaleString()}件（${pages}ページ）`;
+    } else {
+      document.getElementById('grade-total').textContent = data.error || '取得失敗';
+    }
+  } catch (e) {
+    document.getElementById('grade-total').textContent = 'エラー';
+  }
 }
 
 function stopAuto() {
@@ -734,6 +797,131 @@ function stopAuto() {
   document.getElementById('auto-btn').style.display = 'inline-block';
   document.getElementById('auto-stop-btn').style.display = 'none';
   document.getElementById('auto-status').textContent += '（停止しました）';
+}
+
+// ---- EXCEL / CSV ----
+async function fetchAllMaster() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/products?order=id.asc&limit=100000`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  return await r.json();
+}
+
+async function exportCSV() {
+  showMsg('excel-msg', '読み込み中...', 'ok');
+  const data = await fetchAllMaster();
+  const header = ['jan','name','maker','series','scale','image_url'];
+  const rows = [header, ...data.map(d => header.map(k => (d[k] || '').toString().replace(/,/g, '、')))];
+  const csv = '﻿' + rows.map(r => r.join(',')).join('
+');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tsumitsumi_master_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showMsg('excel-msg', `${data.length}件をCSVダウンロードしました`, 'ok');
+}
+
+async function exportExcel() {
+  showMsg('excel-msg', 'Excel生成中...', 'ok');
+  const data = await fetchAllMaster();
+  const header = ['jan','name','maker','series','scale','image_url'];
+
+  // SheetJSを動的ロード
+  if (!window.XLSX) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  const wsData = [header, ...data.map(d => header.map(k => d[k] || ''))];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  // 列幅設定
+  ws['!cols'] = [
+    {wch:16},{wch:50},{wch:16},{wch:16},{wch:10},{wch:60}
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'マスタ');
+  XLSX.writeFile(wb, `tsumitsumi_master_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.xlsx`);
+  showMsg('excel-msg', `${data.length}件をExcelダウンロードしました`, 'ok');
+}
+
+async function importFile() {
+  const file = document.getElementById('import-file').files[0];
+  if (!file) return showMsg('excel-msg', 'ファイルを選択してください', 'err');
+
+  // SheetJSを動的ロード
+  if (!window.XLSX) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      const header = rows[0].map(h => h?.toString().trim().toLowerCase());
+      const janIdx = header.indexOf('jan');
+      const nameIdx = header.indexOf('name');
+      const makerIdx = header.indexOf('maker');
+      const seriesIdx = header.indexOf('series');
+      const scaleIdx = header.indexOf('scale');
+      const imageIdx = header.indexOf('image_url');
+
+      if (nameIdx === -1) return showMsg('excel-msg', 'name列が見つかりません', 'err');
+
+      const dataRows = rows.slice(1).filter(r => r[nameIdx]);
+      document.getElementById('import-progress').style.display = 'block';
+
+      let saved = 0;
+      for (let i = 0; i < dataRows.length; i++) {
+        const row = dataRows[i];
+        const payload = {
+          jan: janIdx >= 0 ? (row[janIdx]?.toString().trim() || null) : null,
+          name: row[nameIdx]?.toString().trim() || '',
+          maker: makerIdx >= 0 ? (row[makerIdx]?.toString().trim() || '') : '',
+          series: seriesIdx >= 0 ? (row[seriesIdx]?.toString().trim() || '') : '',
+          scale: scaleIdx >= 0 ? (row[scaleIdx]?.toString().trim() || '') : '',
+          image_url: imageIdx >= 0 ? (row[imageIdx]?.toString().trim() || '') : '',
+          updated_at: new Date().toISOString(),
+        };
+        if (!payload.name) continue;
+
+        await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(payload),
+        });
+        saved++;
+        document.getElementById('import-bar').style.width = `${((i+1)/dataRows.length*100).toFixed(0)}%`;
+        document.getElementById('import-status').textContent = `${i+1}/${dataRows.length}件処理中...`;
+        if (i % 10 === 0) await new Promise(r => setTimeout(r, 50));
+      }
+
+      document.getElementById('import-status').textContent = `✅ ${saved}件を登録・更新しました！`;
+      showMsg('excel-msg', `${saved}件の登録・更新が完了しました`, 'ok');
+    } catch (e) {
+      showMsg('excel-msg', `エラー: ${e.message}`, 'err');
+    }
+  };
+  reader.readAsBinaryString(file);
 }
 
 // ---- UTILS ----
