@@ -199,12 +199,65 @@
             <div class="field">
               <span class="label">グレード</span>
               <select class="select" id="auto-grade" onchange="checkGradeTotal()">
-                <option value="HG ガンダム プラモデル バンダイ" data-grade="HG">HG</option>
-                <option value="MG ガンダム プラモデル バンダイ" data-grade="MG">MG</option>
-                <option value="RG ガンダム プラモデル バンダイ" data-grade="RG">RG</option>
-                <option value="PG ガンダム プラモデル バンダイ" data-grade="PG">PG</option>
-                <option value="MGSD ガンダム バンダイ" data-grade="MGSD">MGSD</option>
-                <option value="SD ガンダム BB戦士 バンダイ" data-grade="SD">SD</option>
+                <optgroup label="── HG 作品別 ──">
+                  <option value="HG 機動戦士ガンダム バンダイ">HG｜機動戦士ガンダム</option>
+                  <option value="HG 08MS小隊 バンダイ">HG｜08MS小隊</option>
+                  <option value="HG 0080 ポケットの中の戦争 バンダイ">HG｜0080</option>
+                  <option value="HG 0083 スターダストメモリー バンダイ">HG｜0083</option>
+                  <option value="HG Zガンダム バンダイ">HG｜Zガンダム</option>
+                  <option value="HG ZZガンダム バンダイ">HG｜ZZガンダム</option>
+                  <option value="HG 逆襲のシャア バンダイ">HG｜逆襲のシャア</option>
+                  <option value="HG ユニコーンガンダム バンダイ">HG｜ユニコーン</option>
+                  <option value="HG F91 バンダイ">HG｜F91</option>
+                  <option value="HG Vガンダム バンダイ">HG｜Vガンダム</option>
+                  <option value="HG 閃光のハサウェイ バンダイ">HG｜閃光のハサウェイ</option>
+                  <option value="HG サンダーボルト バンダイ">HG｜サンダーボルト</option>
+                  <option value="HG THE ORIGIN バンダイ">HG｜THE ORIGIN</option>
+                  <option value="HG クロスボーンガンダム バンダイ">HG｜クロスボーン</option>
+                  <option value="HG MSV バンダイ">HG｜MSV</option>
+                  <option value="HG バトルオペレーション バンダイ">HG｜バトルオペレーション</option>
+                  <option value="HG Gガンダム バンダイ">HG｜Gガンダム</option>
+                  <option value="HG ガンダムW バンダイ">HG｜ガンダムW</option>
+                  <option value="HG ガンダムX バンダイ">HG｜ガンダムX</option>
+                  <option value="HG ターンエーガンダム バンダイ">HG｜∀ガンダム</option>
+                  <option value="HG ガンダムSEED バンダイ">HG｜SEED</option>
+                  <option value="HG ガンダムSEED DESTINY バンダイ">HG｜SEED DESTINY</option>
+                  <option value="HG ガンダムSEED FREEDOM バンダイ">HG｜SEED FREEDOM</option>
+                  <option value="HG ガンダム00 バンダイ">HG｜ガンダム00</option>
+                  <option value="HG ガンダムAGE バンダイ">HG｜AGE</option>
+                  <option value="HG Gのレコンギスタ バンダイ">HG｜Gレコ</option>
+                  <option value="HG 鉄血のオルフェンズ バンダイ">HG｜鉄血のオルフェンズ</option>
+                  <option value="HG 水星の魔女 バンダイ">HG｜水星の魔女</option>
+                  <option value="HG ビルドファイターズ バンダイ">HG｜ビルドファイターズ</option>
+                  <option value="HG ビルドダイバーズ バンダイ">HG｜ビルドダイバーズ</option>
+                  <option value="HG ナラティブ バンダイ">HG｜ナラティブ</option>
+                  <option value="HG 復讐のレクイエム バンダイ">HG｜復讐のレクイエム</option>
+                  <option value="HG GQuuuuuuX バンダイ">HG｜GQuuuuuuX</option>
+                  <option value="HG 機動戦士ガンダム 水星の魔女 バンダイ">HG｜水星の魔女（追加）</option>
+                </optgroup>
+                <optgroup label="── MG 作品別 ──">
+                  <option value="MG 機動戦士ガンダム バンダイ">MG｜機動戦士ガンダム</option>
+                  <option value="MG Zガンダム バンダイ">MG｜Zガンダム</option>
+                  <option value="MG ZZガンダム バンダイ">MG｜ZZガンダム</option>
+                  <option value="MG 逆襲のシャア バンダイ">MG｜逆襲のシャア</option>
+                  <option value="MG ユニコーンガンダム バンダイ">MG｜ユニコーン</option>
+                  <option value="MG F91 バンダイ">MG｜F91</option>
+                  <option value="MG Vガンダム バンダイ">MG｜Vガンダム</option>
+                  <option value="MG クロスボーンガンダム バンダイ">MG｜クロスボーン</option>
+                  <option value="MG Gガンダム バンダイ">MG｜Gガンダム</option>
+                  <option value="MG ガンダムW バンダイ">MG｜ガンダムW</option>
+                  <option value="MG ガンダムSEED バンダイ">MG｜SEED</option>
+                  <option value="MG ガンダムSEED DESTINY バンダイ">MG｜SEED DESTINY</option>
+                  <option value="MG ガンダム00 バンダイ">MG｜ガンダム00</option>
+                  <option value="MG 鉄血のオルフェンズ バンダイ">MG｜鉄血のオルフェンズ</option>
+                </optgroup>
+                <optgroup label="── RG / PG / MGSD / SD ──">
+                  <option value="RG ガンダム バンダイ">RG｜全般</option>
+                  <option value="PG ガンダム バンダイ">PG｜全般</option>
+                  <option value="MGSD ガンダム バンダイ">MGSD｜全般</option>
+                  <option value="SD ガンダム BB戦士 バンダイ">SD｜BB戦士</option>
+                  <option value="SDガンダム クロスシルエット バンダイ">SD｜クロスシルエット</option>
+                </optgroup>
               </select>
               <div id="grade-total" style="font-size:11px; color:#166534; margin-top:4px;"></div>
             </div>
