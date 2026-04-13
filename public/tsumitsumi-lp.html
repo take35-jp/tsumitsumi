@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ツミツミ（TSUMI TSUMI）— 積みプラ管理アプリ | バーコードスキャンで簡単登録</title>
+  <meta name="description" content="積みプラ管理アプリ「ツミツミ」。バーコードをスキャンするだけでガンプラ・プラモデルを簡単登録。スケール・シリーズ・タグでフィルタリング。Xでシェア・譲渡もできる無料アプリ。インストール不要。">
+  <meta name="keywords" content="積みプラ,積みプラ管理,プラモデル,ガンプラ,積みプラアプリ,プラモ管理,バーコードスキャン,ガンプラ管理,積みガンプラ,HG,MG,RG,PG">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="tsumitsumi_pla">
+  <link rel="canonical" href="https://tsumitsumi.vercel.app/tsumitsumi-lp.html">
+
+  <!-- OGP -->
+  <meta property="og:title" content="ツミツミ — 積みプラ管理アプリ">
+  <meta property="og:description" content="バーコードをスキャンするだけでプラモデルを簡単登録。ガンプラからスケールモデルまですべてに対応。無料・インストール不要。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tsumitsumi.vercel.app/tsumitsumi-lp.html">
+  <meta property="og:site_name" content="ツミツミ">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ツミツミ — 積みプラ管理アプリ">
+  <meta name="twitter:description" content="バーコードをスキャンするだけでプラモデルを簡単登録。無料・インストール不要。">
+  <meta name="twitter:site" content="@tsumitsumi_pla">
+
+  <!-- 構造化データ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "ツミツミ",
+    "alternateName": "TSUMI TSUMI",
+    "description": "積みプラ管理アプリ。バーコードをスキャンするだけでガンプラ・プラモデルを簡単登録できる無料Webアプリ。",
+    "url": "https://tsumitsumi.vercel.app",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "iOS, Android",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "JPY"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "tsumitsumi_pla"
+    }
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #080808;
+      --white: #f5f5f0;
+      --accent: #ff6b2b;
+      --gray: #1a1a1a;
+      --gray2: #2a2a2a;
+      --muted: #666;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #080808 !important;
+      color: #f5f5f0 !important;
+      font-family: 'Noto Sans JP', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ---- HERO ---- */
+    .hero {
+      background: #080808;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,107,43,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(255,107,43,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-app-label {
+      font-size: clamp(22px, 6vw, 36px);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 4px;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.1s forwards;
+    }
+
+    .hero-eyebrow {
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 20vw, 160px);
+      line-height: 0.9;
+      letter-spacing: -2px;
+      margin-bottom: 8px;
+      color: #f5f5f0;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards;
+    }
+
+    .hero-title span {
+      color: var(--accent);
+      display: block;
+    }
+
+    .hero-sub {
+      font-size: 13px;
+      letter-spacing: 6px;
+      color: #999;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      line-height: 1.9;
+      color: #cccccc;
+      max-width: 400px;
+      margin-bottom: 56px;
+      font-weight: 300;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+
+    .cta-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      opacity: 0;
+      animation: fadeUp 0.8s 1s forwards;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--black);
+      border: none;
+      padding: 18px 48px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(255,107,43,0.3);
+    }
+
+    .cta-note {
+      font-size: 11px;
+      color: #999;
+      letter-spacing: 1px;
+    }
+
+    /* ---- SCROLL INDICATOR ---- */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeIn 1s 1.5s forwards;
+    }
+
+    .scroll-indicator span {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--muted);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      animation: scrollPulse 2s infinite;
+    }
+
+    /* ---- FEATURES ---- */
+    .section {
+      padding: 100px 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: var(--accent);
+      margin-bottom: 48px;
+    }
+
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .feature {
+      padding: 36px 0;
+      border-top: 1px solid var(--gray2);
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 24px;
+      align-items: start;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s, transform 0.6s;
+    }
+
+    .feature.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .feature-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .feature-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: #cccccc;
+      line-height: 1.8;
+      font-weight: 300;
+    }
+
+    /* ---- HOW TO ---- */
+    .howto {
+      background: #1a1a1a;
+      padding: 100px 24px;
+    }
+
+    .howto-inner {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .howto-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      margin-bottom: 56px;
+      letter-spacing: 2px;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step {
+      display: flex;
+      gap: 24px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--gray2);
+      align-items: center;
+    }
+
+    .step-badge {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #cccccc;
+    }
+
+    .step-text strong {
+      color: var(--white);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    /* ---- SPECS ---- */
+    .specs {
+      padding: 100px 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--gray2);
+      border: 1px solid var(--gray2);
+      margin-top: 48px;
+    }
+
+    .spec-item {
+      background: #080808;
+      padding: 24px 20px;
+    }
+
+    .spec-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .spec-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    /* ---- CTA BOTTOM ---- */
+    .cta-bottom {
+      background: var(--accent);
+      padding: 100px 24px;
+      text-align: center;
+    }
+
+    .cta-bottom-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 12vw, 96px);
+      color: var(--black);
+      line-height: 0.9;
+      margin-bottom: 40px;
+      letter-spacing: 2px;
+    }
+
+    .btn-dark {
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      padding: 18px 48px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .btn-dark:hover { transform: translateY(-2px); }
+
+    .cta-bottom-note {
+      margin-top: 20px;
+      font-size: 12px;
+      color: rgba(0,0,0,0.6);
+      letter-spacing: 1px;
+    }
+
+    /* ---- FOOTER ---- */
+    footer {
+      padding: 40px 24px;
+      text-align: center;
+      border-top: 1px solid var(--gray2);
+    }
+
+    footer p {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    /* ---- TICKER ---- */
+    .ticker {
+      background: var(--accent);
+      overflow: hidden;
+      padding: 12px 0;
+      white-space: nowrap;
+    }
+
+    .ticker-inner {
+      display: inline-flex;
+      gap: 48px;
+      animation: ticker 20s linear infinite;
+    }
+
+    .ticker-item {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      color: var(--black);
+      letter-spacing: 3px;
+    }
+
+    /* ---- ANIMATIONS ---- */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-app-label">積みプラ管理アプリ</p>
+    <p class="hero-eyebrow">PLASTIC MODEL TRACKER</p>
+    <h1 class="hero-title">TSUMI<span>TSUMI</span></h1>
+    <p class="hero-sub">TSUMITSUMI — STACK MANAGEMENT APP</p>
+    <p class="hero-desc">
+      ガンプラからスケールモデルまで、<br>すべてのプラモデルに対応。<br><br>バーコードをスキャンするだけで<br>積みプラをスマートに管理する。
+    </p>
+    <div class="cta-group">
+      <a href="https://tsumitsumi.vercel.app" class="btn-primary">アプリを開く →</a>
+      <p class="cta-note">ブラウザから無料で使えます・インストール不要</p>
+    </div>
+    <div class="scroll-indicator">
+      <span>SCROLL</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="ticker">
+    <div class="ticker-inner">
+      <span class="ticker-item">ALL PLASTIC MODELS</span>
+      <span class="ticker-item">BARCODE SCAN</span>
+      <span class="ticker-item">AUTO REGISTRATION</span>
+      <span class="ticker-item">SHARE ON X</span>
+      <span class="ticker-item">BULK IMPORT</span>
+      <span class="ticker-item">TAG FILTER</span>
+      <span class="ticker-item">BACKUP & RESTORE</span>
+      <span class="ticker-item">ALL PLASTIC MODELS</span>
+      <span class="ticker-item">BARCODE SCAN</span>
+      <span class="ticker-item">AUTO REGISTRATION</span>
+      <span class="ticker-item">SHARE ON X</span>
+      <span class="ticker-item">BULK IMPORT</span>
+      <span class="ticker-item">TAG FILTER</span>
+      <span class="ticker-item">BACKUP & RESTORE</span>
+    </div>
+  </div>
+
+  <!-- ALL MODELS BANNER -->
+  <section style="background:#1a1a1a; padding: 64px 24px; text-align:center;">
+    <p style="font-size:10px; letter-spacing:5px; color:#ff6b2b; margin-bottom:20px;">COMPATIBLE WITH</p>
+    <h2 style="font-family:'Bebas Neue',sans-serif; font-size:clamp(28px,8vw,52px); color:#f5f5f0; line-height:1.3; margin-bottom:20px; letter-spacing:2px;">
+      すべてのプラモに対応。
+    </h2>
+    <p style="font-size:13px; color:#cccccc; line-height:1.9; max-width:400px; margin:0 auto 32px;">
+      あらゆるプラモデルを一元管理。
+    </p>
+
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section">
+    <p class="section-label">FEATURES</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-num">01</div>
+        <div>
+          <div class="feature-title">バーコードスキャンで<br>即登録</div>
+          <div class="feature-desc">箱のバーコードを読み取るだけで商品名・スケール・パッケージ画像を自動取得。面倒な入力は不要。</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-num">02</div>
+        <div>
+          <div class="feature-title">リストから<br>一括登録</div>
+          <div class="feature-desc">ガンプラのHG・MG・RG・PG・SDから一括登録。スケールモデルはバーコードスキャンで即登録。</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-num">03</div>
+        <div>
+          <div class="feature-title">タグ・フィルターで<br>整理</div>
+          <div class="feature-desc">スケール・シリーズ・状態・タグで絞り込み。タグは自由に作成可。</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-num">04</div>
+        <div>
+          <div class="feature-title">Xでシェア＆<br>譲渡</div>
+          <div class="feature-desc">積みプラ一覧をXにポスト。譲りたいキットがあれば「作ってもらえる方に譲りたい！」ボタンで投稿ができる。</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-num">05</div>
+        <div>
+          <div class="feature-title">バックアップ＆<br>機種変更対応</div>
+          <div class="feature-desc">登録した積みプラデータをエクスポート。iCloudやGoogleドライブに保存して機種変更も安心。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW TO -->
+  <div class="howto">
+    <div class="howto-inner">
+      <p class="section-label">HOW TO START</p>
+      <h2 class="howto-title">始め方は<br>30秒。</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-badge">1</div>
+          <div class="step-text">
+            <strong>URLにアクセス</strong>
+            Safari または Chrome で<br>
+            <span style="color: #ff6b2b; font-weight: 700;">tsumitsumi.vercel.app</span> を開く
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-badge">2</div>
+          <div class="step-text">
+            <strong>ホーム画面に追加</strong>
+            iPhoneは共有ボタン →「ホーム画面に追加」<br>
+            Androidは右上メニュー → 「ホーム画面に追加」
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-badge">3</div>
+          <div class="step-text">
+            <strong>バーコードをスキャン</strong>
+            右下のカメラボタンをタップして<br>
+            箱のバーコードを読み取るだけ
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPECS -->
+  <section class="specs">
+    <p class="section-label">SPEC</p>
+    <div class="specs-grid">
+      <div class="spec-item">
+        <div class="spec-label">PRICE</div>
+        <div class="spec-value">完全無料</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">PLATFORM</div>
+        <div class="spec-value">iOS / Android</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">INSTALL</div>
+        <div class="spec-value">不要（PWA）</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">ACCOUNT</div>
+        <div class="spec-value">不要</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">DATA</div>
+        <div class="spec-value">端末内に保存</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">CONTACT</div>
+        <div class="spec-value">@tsumitsumi_pla</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BOTTOM -->
+  <section class="cta-bottom">
+    <h2 class="cta-bottom-title">積みプラを<br>管理しよう。</h2>
+    <a href="https://tsumitsumi.vercel.app" class="btn-dark">今すぐ始める →</a>
+    <p class="cta-bottom-note">インストール不要・無料・アカウント登録なし</p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p style="margin-bottom: 16px;">© 2025 TSUMI TSUMI — PLASTIC MODEL TRACKER</p>
+    <button onclick="document.getElementById('contact-popup').style.display=document.getElementById('contact-popup').style.display==='none'?'block':'none'"
+       style="background: none; border: none; color: #666; font-size: 11px; letter-spacing: 1px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif;">
+      お問い合わせ・バグ報告
+    </button>
+    <div id="contact-popup" style="display:none; margin-top: 12px;">
+      <a href="https://twitter.com/messages/compose?recipient_id=tsumitsumi_pla"
+         target="_blank"
+         style="display: inline-flex; align-items: center; gap: 6px; background: #111; color: #f5f5f0; padding: 10px 20px; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-decoration: none; border: 1px solid #333;">
+        𝕏 @tsumitsumi_pla にDM
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll animation for features
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, i * 100);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feature').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
