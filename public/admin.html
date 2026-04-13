@@ -812,8 +812,7 @@ async function exportCSV() {
   const data = await fetchAllMaster();
   const header = ['jan','name','maker','series','scale','image_url'];
   const rows = [header, ...data.map(d => header.map(k => (d[k] || '').toString().replace(/,/g, '、')))];
-  const csv = '﻿' + rows.map(r => r.join(',')).join('
-');
+  const csv = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
