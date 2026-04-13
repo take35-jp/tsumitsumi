@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ツミツミ 管理ツール</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Helvetica Neue', sans-serif; background: #f8f9fa; color: #111; }
+
+    /* ---- LOGIN ---- */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+    }
+    .login-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 40px;
+      width: 320px;
+      text-align: center;
+    }
+    .login-title { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .login-sub { color: #666; font-size: 12px; margin-bottom: 24px; }
+    .login-input {
+      width: 100%; padding: 12px; background: #222; border: 1px solid #444;
+      border-radius: 8px; color: #fff; font-size: 14px; outline: none; margin-bottom: 12px;
+    }
+    .login-btn {
+      width: 100%; padding: 12px; background: #ff6b2b; color: #fff; border: none;
+      border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .login-error { color: #ef4444; font-size: 12px; margin-top: 8px; }
+
+    /* ---- MAIN ---- */
+    #main-screen { display: none; }
+
+    .header {
+      background: #111; color: #fff; padding: 16px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .header-title { font-size: 18px; font-weight: 700; }
+    .header-sub { font-size: 11px; color: #666; margin-top: 2px; }
+    .logout-btn {
+      background: #333; color: #fff; border: none; padding: 6px 14px;
+      border-radius: 6px; font-size: 12px; cursor: pointer;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 24px; }
+
+    /* ---- TABS ---- */
+    .tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid #e5e7eb; }
+    .tab-btn {
+      padding: 10px 20px; border: none; background: none; font-size: 14px;
+      font-weight: 600; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+    .tab-btn.active { color: #111; border-bottom-color: #111; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ---- SEARCH PANEL ---- */
+    .search-box {
+      background: #fff; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 16px;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .label { font-size: 11px; font-weight: 600; color: #6b7280; }
+    .select, .input {
+      padding: 8px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px;
+      font-size: 13px; color: #111; background: #fafafa; outline: none;
+    }
+    .btn {
+      padding: 8px 20px; border: none; border-radius: 8px; font-size: 13px;
+      font-weight: 700; cursor: pointer;
+    }
+    .btn-primary { background: #111; color: #fff; }
+    .btn-success { background: #22c55e; color: #fff; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-gray { background: #f3f4f6; color: #374151; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* ---- RESULTS ---- */
+    .result-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .result-count { font-size: 12px; color: #6b7280; }
+    .pagination { display: flex; gap: 8px; align-items: center; }
+    .page-btn {
+      padding: 4px 12px; border: 1.5px solid #e5e7eb; border-radius: 6px;
+      background: #fff; font-size: 12px; cursor: pointer;
+    }
+    .page-info { font-size: 12px; color: #6b7280; }
+
+    .product-list { display: flex; flex-direction: column; gap: 8px; }
+    .product-card {
+      background: #fff; border-radius: 10px; padding: 12px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: grid; grid-template-columns: 60px 1fr auto;
+      gap: 12px; align-items: center;
+    }
+    .product-card.registered { border-left: 4px solid #22c55e; }
+    .product-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; background: #f3f4f6; }
+    .product-img-ph { width: 60px; height: 60px; border-radius: 6px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .product-info { min-width: 0; }
+    .product-name-input {
+      width: 100%; padding: 6px 8px; border: 1.5px solid #e5e7eb; border-radius: 6px;
+      font-size: 13px; font-weight: 600; color: #111; background: #fafafa;
+      outline: none; margin-bottom: 6px;
+    }
+    .product-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .meta-select {
+      padding: 3px 8px; border: 1px solid #e5e7eb; border-radius: 6px;
+      font-size: 11px; color: #374151; background: #fafafa; outline: none;
+    }
+    .jan-text { font-size: 11px; color: #9ca3af; }
+    .registered-badge {
+      font-size: 10px; background: #f0fdf4; color: #166534;
+      border-radius: 20px; padding: 2px 8px; font-weight: 700;
+    }
+
+    /* ---- DIRECT INPUT ---- */
+    .direct-box {
+      background: #fff; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 16px;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-input {
+      padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px;
+      font-size: 13px; color: #111; background: #fafafa; outline: none;
+    }
+    .form-full { grid-column: 1 / -1; }
+
+    /* ---- MASTER LIST ---- */
+    .master-card {
+      background: #fff; border-radius: 10px; padding: 12px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: grid; grid-template-columns: 60px 1fr auto;
+      gap: 12px; align-items: center; margin-bottom: 8px;
+    }
+
+    /* ---- MSG ---- */
+    .msg {
+      padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px;
+    }
+    .msg-ok { background: #f0fdf4; color: #166534; }
+    .msg-err { background: #fee2e2; color: #b91c1c; }
+
+    .loading { text-align: center; padding: 40px; color: #9ca3af; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-title">🔒 管理ツール</div>
+    <div class="login-sub">TSUMI TSUMI ADMIN</div>
+    <input class="login-input" type="password" id="pw-input" placeholder="パスワード" onkeydown="if(event.key==='Enter')login()">
+    <button class="login-btn" onclick="login()">ログイン</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main-screen">
+  <div class="header">
+    <div>
+      <div class="header-title">ツミツミ 管理ツール</div>
+      <div class="header-sub">商品マスタ管理</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">ログアウト</button>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('search')">🔍 Yahoo検索から登録</button>
+      <button class="tab-btn" onclick="switchTab('direct')">✏️ 直接入力</button>
+      <button class="tab-btn" onclick="switchTab('master')">📋 マスタ一覧</button>
+    </div>
+
+    <!-- TAB: Yahoo検索 -->
+    <div class="tab-panel active" id="tab-search">
+      <div class="search-box">
+        <div class="row">
+          <div class="field">
+            <span class="label">メーカー</span>
+            <select class="select" id="maker-select">
+              <option value="バンダイ">バンダイ（ガンプラ）</option>
+              <option value="タミヤ">タミヤ</option>
+              <option value="ハセガワ">ハセガワ</option>
+              <option value="フジミ">フジミ</option>
+              <option value="アオシマ">アオシマ</option>
+              <option value="グッドスマイルカンパニー">グッドスマイルカンパニー</option>
+              <option value="ボークス">ボークス</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="label">スケール・グレード</span>
+            <select class="select" id="scale-select">
+              <option value="">指定なし</option>
+              <option value="HG">HG</option>
+              <option value="MG">MG</option>
+              <option value="RG">RG</option>
+              <option value="PG">PG</option>
+              <option value="MGSD">MGSD</option>
+              <option value="SD">SD</option>
+              <option value="1/144">1/144</option>
+              <option value="1/100">1/100</option>
+              <option value="1/72">1/72</option>
+              <option value="1/48">1/48</option>
+              <option value="1/35">1/35</option>
+              <option value="1/24">1/24</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1; min-width:160px;">
+            <span class="label">キーワード（任意）</span>
+            <input class="input" id="kw-input" placeholder="例：ザク" onkeydown="if(event.key==='Enter')searchYahoo()">
+          </div>
+          <div class="field">
+            <button class="btn btn-primary" onclick="searchYahoo()">検索</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="search-msg"></div>
+      <div id="search-results"></div>
+    </div>
+
+    <!-- TAB: 直接入力 -->
+    <div class="tab-panel" id="tab-direct">
+      <div class="direct-box">
+        <div id="direct-msg"></div>
+        <div class="form-grid">
+          <div class="form-field form-full">
+            <span class="label">JANコード</span>
+            <input class="form-input" id="d-jan" placeholder="例：4573102614650">
+          </div>
+          <div class="form-field form-full">
+            <span class="label">商品名 *</span>
+            <input class="form-input" id="d-name" placeholder="例：HG 1/144 RX-78-2 ガンダム">
+          </div>
+          <div class="form-field">
+            <span class="label">メーカー</span>
+            <input class="form-input" id="d-maker" placeholder="例：バンダイ">
+          </div>
+          <div class="form-field">
+            <span class="label">シリーズ</span>
+            <input class="form-input" id="d-series" placeholder="例：ガンプラ">
+          </div>
+          <div class="form-field">
+            <span class="label">スケール</span>
+            <input class="form-input" id="d-scale" placeholder="例：HG">
+          </div>
+          <div class="form-field">
+            <span class="label">画像URL（任意）</span>
+            <input class="form-input" id="d-image" placeholder="https://...">
+          </div>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:8px;">
+          <button class="btn btn-primary" onclick="directSave()">マスタに登録</button>
+          <button class="btn btn-gray" onclick="directClear()">クリア</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: マスタ一覧 -->
+    <div class="tab-panel" id="tab-master">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div class="field" style="flex:1; max-width:300px;">
+          <input class="input" id="master-search" placeholder="商品名・JANで検索..." oninput="filterMaster()">
+        </div>
+        <button class="btn btn-primary" onclick="loadMaster()">🔄 更新</button>
+      </div>
+      <div id="master-msg"></div>
+      <div id="master-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
+const PASSWORD = "Take35@pla";
+const YAHOO_APP_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
+
+let currentPage = 1;
+let currentTotal = 0;
+let currentItems = [];
+let masterData = [];
+let registeredJans = new Set();
+
+// ---- AUTH ----
+function login() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    loadMaster();
+  } else {
+    document.getElementById('login-error').textContent = 'パスワードが違います';
+  }
+}
+function logout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-screen').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+}
+
+// ---- TABS ----
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['search','direct','master'][i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach((p, i) => {
+    p.classList.toggle('active', ['tab-search','tab-direct','tab-master'][i] === `tab-${name}`);
+  });
+  if (name === 'master') loadMaster();
+}
+
+// ---- CLEAN NAME ----
+function cleanName(name) {
+  name = name.replace(/『[^』]*』/g, '');
+  name = name.replace(/【[^】]*】/g, '');
+  name = name.replace(/［[^］]*］/g, '');
+  const noise = ['爆買','再販','再生産','新品','送料無料','即納','即日','プレミアムバンダイ限定','プレバン限定','代引き不可','プラモデル','プラスチックモデルキット'];
+  noise.forEach(w => { name = name.replaceAll(w, ''); });
+  name = name.replace(/[（(]\d{4,}[）)]/g, '');
+  const starts = [/\bMGSD\b/,/\bPG\b/,/\bRG\b/,/\bHG\b/,/\bEG\b/,/\bSD\b/,/\bMG\b/,/1\/144/,/1\/100/,/1\/72/,/1\/60/,/1\/48/,/1\/35/,/1\/24/,/Figure-rise/,/フィギュアライズ/];
+  for (const kw of starts) {
+    const m = name.match(kw);
+    if (m) { name = name.slice(name.indexOf(m[0])); break; }
+  }
+  const stops = [/\s+バンダイ/,/\s+BANDAI/i,/\s+爆買/,/\s+再販/];
+  for (const kw of stops) {
+    const m = name.match(kw);
+    if (m) name = name.slice(0, name.indexOf(m[0]));
+  }
+  return name.replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+}
+
+function guessScale(name) {
+  if (/\bMGSD\b/i.test(name)) return 'MGSD';
+  if (/\bPG\b/i.test(name)) return 'PG';
+  if (/\bRG\b/i.test(name)) return 'RG';
+  if (/\bHG\b/i.test(name)) return 'HG';
+  if (/\bSD\b/i.test(name)) return 'SD';
+  if (/\bMG\b/i.test(name)) return 'MG';
+  if (/1\/100/i.test(name)) return '1/100';
+  if (/1\/144/i.test(name)) return '1/144';
+  if (/1\/72/i.test(name)) return '1/72';
+  if (/1\/60/i.test(name)) return '1/60';
+  if (/1\/48/i.test(name)) return '1/48';
+  if (/1\/35/i.test(name)) return '1/35';
+  return '';
+}
+
+// ---- YAHOO SEARCH ----
+async function searchYahoo(page = 1) {
+  currentPage = page;
+  const maker = document.getElementById('maker-select').value;
+  const scale = document.getElementById('scale-select').value;
+  const kw = document.getElementById('kw-input').value.trim();
+
+  let query = maker;
+  if (scale) query += ` ${scale}`;
+  if (kw) query += ` ${kw}`;
+  query += ' プラモデル';
+
+  const start = (page - 1) * 20 + 1;
+  const url = `/api/admin-search?q=${encodeURIComponent(query)}&start=${start}`;
+
+  document.getElementById('search-results').innerHTML = '<div class="loading">検索中...</div>';
+  document.getElementById('search-msg').innerHTML = '';
+
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    currentItems = (data.items || []);
+    currentTotal = data.total || 0;
+    renderResults(maker);
+  } catch (e) {
+    document.getElementById('search-msg').innerHTML = `<div class="msg msg-err">エラー: ${e.message}</div>`;
+    document.getElementById('search-results').innerHTML = '';
+  }
+}
+
+function renderResults(maker) {
+  const el = document.getElementById('search-results');
+  if (!currentItems.length) {
+    el.innerHTML = '<div class="loading">結果がありません</div>';
+    return;
+  }
+
+  const totalPages = Math.ceil(currentTotal / 20);
+  let html = `
+    <div class="result-header">
+      <span class="result-count">約${currentTotal.toLocaleString()}件中 ${(currentPage-1)*20+1}〜${Math.min(currentPage*20, currentTotal)}件</span>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn btn-success" onclick="saveAll()">✓ 表示中を全登録</button>
+        <div class="pagination">
+          ${currentPage > 1 ? `<button class="page-btn" onclick="searchYahoo(${currentPage-1})">← 前へ</button>` : ''}
+          <span class="page-info">${currentPage} / ${totalPages}ページ</span>
+          ${currentPage < totalPages ? `<button class="page-btn" onclick="searchYahoo(${currentPage+1})">次へ →</button>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="product-list">`;
+
+  currentItems.forEach((item, idx) => {
+    const isReg = registeredJans.has(item.jan);
+    html += `
+      <div class="product-card ${isReg ? 'registered' : ''}" id="card-${idx}">
+        ${item.photoUrl ? `<img class="product-img" src="${item.photoUrl}" onerror="this.style.display='none'" alt="">` : `<div class="product-img-ph">📦</div>`}
+        <div class="product-info">
+          <input class="product-name-input" id="name-${idx}" value="${item.name.replace(/"/g, '&quot;')}">
+          <div class="product-meta">
+            <select class="meta-select" id="scale-${idx}">
+              ${['','HG','MG','RG','PG','MGSD','SD','1/144','1/100','1/72','1/60','1/48','1/35','1/24'].map(s => `<option value="${s}" ${item.scale===s?'selected':''}>${s||'スケール'}</option>`).join('')}
+            </select>
+            <input class="meta-select" style="width:90px;" id="maker-${idx}" value="${maker}" placeholder="メーカー">
+            <input class="meta-select" style="width:80px;" id="series-${idx}" value="ガンプラ" placeholder="シリーズ">
+            <span class="jan-text">JAN: ${item.jan || '不明'}</span>
+            ${isReg ? '<span class="registered-badge">✓ 登録済み</span>' : ''}
+          </div>
+        </div>
+        <button class="btn ${isReg ? 'btn-gray' : 'btn-success'}" onclick="saveItem(${idx})" id="btn-${idx}">
+          ${isReg ? '更新' : '登録'}
+        </button>
+      </div>`;
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ---- SAVE ----
+async function saveItem(idx) {
+  const item = currentItems[idx];
+  const name = document.getElementById(`name-${idx}`).value.trim();
+  const scale = document.getElementById(`scale-${idx}`).value;
+  const maker = document.getElementById(`maker-${idx}`).value.trim();
+  const series = document.getElementById(`series-${idx}`).value.trim();
+  if (!name) return alert('商品名を入力してください');
+
+  const payload = {
+    jan: item.jan || null,
+    name,
+    maker,
+    series,
+    scale,
+    image_url: item.photoUrl || '',
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    // JANがあればupsert、なければinsert
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (r.ok || r.status === 201) {
+      if (item.jan) registeredJans.add(item.jan);
+      document.getElementById(`card-${idx}`).classList.add('registered');
+      document.getElementById(`btn-${idx}`).textContent = '更新';
+      document.getElementById(`btn-${idx}`).className = 'btn btn-gray';
+      showMsg('search-msg', `「${name}」を登録しました`, 'ok');
+    } else {
+      const err = await r.json();
+      showMsg('search-msg', `エラー: ${JSON.stringify(err)}`, 'err');
+    }
+  } catch (e) {
+    showMsg('search-msg', `エラー: ${e.message}`, 'err');
+  }
+}
+
+async function saveAll() {
+  for (let i = 0; i < currentItems.length; i++) {
+    await saveItem(i);
+    await new Promise(r => setTimeout(r, 100));
+  }
+  showMsg('search-msg', '表示中の商品をすべて登録しました！', 'ok');
+}
+
+// ---- DIRECT INPUT ----
+async function directSave() {
+  const name = document.getElementById('d-name').value.trim();
+  if (!name) return showMsg('direct-msg', '商品名は必須です', 'err');
+
+  const payload = {
+    jan: document.getElementById('d-jan').value.trim() || null,
+    name,
+    maker: document.getElementById('d-maker').value.trim(),
+    series: document.getElementById('d-series').value.trim(),
+    scale: document.getElementById('d-scale').value.trim(),
+    image_url: document.getElementById('d-image').value.trim(),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (r.ok || r.status === 201) {
+      showMsg('direct-msg', `「${name}」を登録しました！`, 'ok');
+      directClear();
+    } else {
+      const err = await r.json();
+      showMsg('direct-msg', `エラー: ${JSON.stringify(err)}`, 'err');
+    }
+  } catch (e) {
+    showMsg('direct-msg', `エラー: ${e.message}`, 'err');
+  }
+}
+
+function directClear() {
+  ['d-jan','d-name','d-maker','d-series','d-scale','d-image'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+// ---- MASTER LIST ----
+async function loadMaster() {
+  document.getElementById('master-list').innerHTML = '<div class="loading">読み込み中...</div>';
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?order=created_at.desc&limit=500`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    masterData = await r.json();
+    registeredJans = new Set(masterData.filter(d => d.jan).map(d => d.jan));
+    filterMaster();
+  } catch (e) {
+    document.getElementById('master-list').innerHTML = `<div class="msg msg-err">読み込みエラー: ${e.message}</div>`;
+  }
+}
+
+function filterMaster() {
+  const q = document.getElementById('master-search').value.toLowerCase();
+  const filtered = q ? masterData.filter(d => d.name.toLowerCase().includes(q) || (d.jan||'').includes(q)) : masterData;
+
+  const el = document.getElementById('master-list');
+  if (!filtered.length) { el.innerHTML = '<div class="loading">データがありません</div>'; return; }
+
+  el.innerHTML = `<div style="font-size:12px; color:#6b7280; margin-bottom:12px;">${filtered.length}件</div>` +
+    filtered.map(d => `
+      <div class="master-card">
+        ${d.image_url ? `<img class="product-img" src="${d.image_url}" onerror="this.style.display='none'" alt="">` : `<div class="product-img-ph">📦</div>`}
+        <div>
+          <div style="font-size:13px; font-weight:700; margin-bottom:4px;">${d.name}</div>
+          <div style="font-size:11px; color:#6b7280;">${[d.maker, d.series, d.scale].filter(Boolean).join(' · ')}</div>
+          <div style="font-size:11px; color:#9ca3af; margin-top:2px;">JAN: ${d.jan || '不明'}</div>
+        </div>
+        <button class="btn btn-danger" style="font-size:11px; padding:6px 10px;" onclick="deleteItem(${d.id}, '${d.name.replace(/'/g,"\\'")}')">削除</button>
+      </div>`).join('');
+}
+
+async function deleteItem(id, name) {
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    showMsg('master-msg', `「${name}」を削除しました`, 'ok');
+    loadMaster();
+  } catch (e) {
+    showMsg('master-msg', `エラー: ${e.message}`, 'err');
+  }
+}
+
+// ---- UTILS ----
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="msg msg-${type}">${text}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+</script>
+</body>
+</html>
