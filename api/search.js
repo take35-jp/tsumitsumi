@@ -1,3 +1,6 @@
+const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
+
 const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
 
 function cleanName(name) {
@@ -87,6 +90,27 @@ export default async function handler(req, res) {
 
   if (!jan) return res.status(400).json({ error: "jan or q required" });
 
+  // ① まずSupabaseマスタを検索
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?jan=eq.${encodeURIComponent(jan)}&limit=1`, {
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    const data = await r.json();
+    const master = data?.[0];
+    if (master?.name) {
+      return res.json({
+        name: master.name,
+        photoUrl: master.image_url || "",
+        price: "",
+        series: master.series || "",
+        scale: master.scale || "",
+        maker: master.maker || "",
+        source: "master",
+      });
+    }
+  } catch (e) {}
+
+  // ② マスタになければYahoo APIで検索
   try {
     const item = await yahooSearch(`jan_code=${jan}`);
     if (item?.name) return res.json({ name: cleanName(item.name), photoUrl: item.image?.medium || item.image?.small || "", price: "" });
