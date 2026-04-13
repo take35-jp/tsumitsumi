@@ -640,12 +640,23 @@ async function autoRegister() {
   const grade = gradeEl.options[gradeEl.selectedIndex].dataset.grade;
   const maxPages = parseInt(document.getElementById('auto-pages').value);
 
+  // 登録済みJANをSupabaseから取得
+  document.getElementById('auto-status').textContent = '登録済みデータを確認中...';
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?select=jan&limit=10000`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const data = await r.json();
+    registeredJans = new Set(data.filter(d => d.jan).map(d => d.jan));
+  } catch (e) {}
+
   let totalSaved = 0;
+  let totalSkipped = 0;
   let page = 1;
 
   while (autoRunning && page <= maxPages) {
     document.getElementById('auto-status').textContent =
-      `${page}/${maxPages}ページ処理中... 登録済み: ${totalSaved}件`;
+      `${page}/${maxPages}ページ処理中... 新規登録: ${totalSaved}件 / スキップ: ${totalSkipped}件`;
     document.getElementById('auto-bar').style.width = `${(page/maxPages*100).toFixed(0)}%`;
 
     const start = (page - 1) * 20 + 1;
@@ -658,8 +669,16 @@ async function autoRegister() {
       for (const item of items) {
         if (!autoRunning) break;
         if (!item.name || item.name.length < 3) continue;
+
+        // 登録済みJANはスキップ
+        if (item.jan && registeredJans.has(item.jan)) {
+          totalSkipped++;
+          continue;
+        }
+
         const name = cleanName(item.name);
         if (!name || name.length < 3) continue;
+
         const payload = {
           jan: item.jan || null,
           name,
@@ -670,7 +689,7 @@ async function autoRegister() {
           updated_at: new Date().toISOString(),
         };
         try {
-          await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
             method: 'POST',
             headers: {
               'apikey': SUPABASE_KEY,
@@ -680,7 +699,10 @@ async function autoRegister() {
             },
             body: JSON.stringify(payload),
           });
-          totalSaved++;
+          if (res.ok || res.status === 201) {
+            totalSaved++;
+            if (item.jan) registeredJans.add(item.jan);
+          }
         } catch (e) {}
         await new Promise(r => setTimeout(r, 50));
       }
@@ -697,7 +719,7 @@ async function autoRegister() {
   document.getElementById('auto-stop-btn').style.display = 'none';
   document.getElementById('auto-bar').style.width = '100%';
   document.getElementById('auto-status').textContent =
-    `✅ 完了！${totalSaved}件を登録しました`;
+    `✅ 完了！新規: ${totalSaved}件登録 / スキップ: ${totalSkipped}件（登録済み）`;
 }
 
 function stopAuto() {
