@@ -1,36 +1,77 @@
 const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
 
 function cleanName(name) {
+  // 『』で囲まれた部分を削除
+  name = name.replace(/『[^』]*』/g, "");
+  // 【】で囲まれた部分を削除
+  name = name.replace(/【[^】]*】/g, "");
+  // ［］で囲まれた部分を削除
+  name = name.replace(/［[^］]*］/g, "");
+  // 〔〕で囲まれた部分を削除
+  name = name.replace(/〔[^〕]*〕/g, "");
+
+  // 余計なワードを削除
+  const noiseWords = [
+    /爆買/g, /再販/g, /新品/g, /送料無料/g, /即納/g, /即日/g,
+    /在庫あり/g, /お得/g, /限定/g, /セール/g, /SALE/gi,
+    /プレミアムバンダイ限定/g, /プレバン限定/g,
+    /代引き不可/g, /〈プラモデル〉/g, /＜プラモデル＞/g,
+    /<プラモデル>/g, /（プラモデル）/g, /\(プラモデル\)/g,
+    /バンダイホビー/g, /バンダイスピリッツ/g,
+  ];
+  for (const w of noiseWords) name = name.replace(w, "");
+
+  // 数字コードの括弧を削除（例：(0194873)、（6552））
+  name = name.replace(/[（(][0-9]{4,}[）)]/g, "");
+
+  // グレード・スケールのキーワードが出てきた位置から取り出す
   const startKeywords = [
-    /\bPG\b/, /\bMG\b/, /\bRG\b/, /\bHG\b/, /\bEG\b/, /\bSD\b/, /\bMGSD\b/,
-    /1\/144/, /1\/100/, /1\/60/, /1\/72/, /1\/35/, /1\/24/, /1\/12/,
+    /\bMGSD\b/, /\bPG\b/, /\bRG\b/, /\bHG[A-Z\s]*\b/, /\bEG\b/, /\bSD\b/, /\bMG\b/,
+    /1\/144/, /1\/100/, /1\/60/, /1\/72/, /1\/48/, /1\/35/, /1\/24/, /1\/12/,
   ];
   for (const kw of startKeywords) {
     const match = name.match(kw);
-    if (match) { name = name.slice(name.indexOf(match[0])); break; }
+    if (match) {
+      name = name.slice(name.indexOf(match[0]));
+      break;
+    }
   }
+
+  // グレード・スケールの後ろの余計なものを削除
   const stopKeywords = [
-    /\s+プラモデル/, /\s+バンダイ/, /\s+BANDAI/i,
-    /\s+機動戦士/, /\s+機動新世紀/, /\s+新機動/, /\s+閃光/,
-    /\s+鉄血/, /\s+水星/, /\s+SEED/, /\s+ユニコーン/,
-    /\([0-9]{6,}\)/,
+    /\s+プラモデル/, /\s+バンダイ(?!ホビー)/, /\s+BANDAI/i,
+    /\s+機動戦士ガンダム(?!X|W|F91|V|00|SEED)/, /\s+機動新世紀/, /\s+新機動/,
+    /\s+鉄血のオルフェンズ/, /\s+水星の魔女/, /\s+宇宙世紀/,
+    /\s+ガンダムSEED(?!DESTINY)/, /\s+ガンダムWing/, /\s+ガンダム00/,
+    /\s+爆買/, /\s+再販/,
   ];
   for (const kw of stopKeywords) {
     const match = name.match(kw);
     if (match) name = name.slice(0, name.indexOf(match[0]));
   }
-  return name.replace(/\s+/g, " ").trim();
+
+  // &amp; を & に
+  name = name.replace(/&amp;/g, "&");
+
+  // 連続スペース・前後スペースを整理
+  name = name.replace(/\s+/g, " ").trim();
+
+  return name;
 }
 
 function guessScale(name) {
   if (/\bMGSD\b/i.test(name)) return "MGSD";
   if (/\bPG\b/i.test(name)) return "PG";
-  if (/\bMG\b/i.test(name)) return "MG";
   if (/\bRG\b/i.test(name)) return "RG";
   if (/\bHG\b/i.test(name)) return "HG";
   if (/\bSD\b/i.test(name)) return "SD";
+  if (/\bMG\b/i.test(name)) return "MG";
   if (/1\/100/i.test(name)) return "1/100";
   if (/1\/144/i.test(name)) return "1/144";
+  if (/1\/72/i.test(name)) return "1/72";
+  if (/1\/60/i.test(name)) return "1/60";
+  if (/1\/48/i.test(name)) return "1/48";
+  if (/1\/35/i.test(name)) return "1/35";
   return "";
 }
 
@@ -52,7 +93,6 @@ export default async function handler(req, res) {
   const baseKeyword = gradeKeywords[grade];
   if (!baseKeyword) return res.status(400).json({ error: "invalid grade" });
 
-  // 検索ワードがある場合はグレード+検索ワードで検索
   const keyword = q.trim() ? `${grade} ${q.trim()} ガンダム プラモデル` : baseKeyword;
   const start = (Number(page) - 1) * 30 + 1;
 
@@ -61,31 +101,26 @@ export default async function handler(req, res) {
     const r = await fetch(url);
     const data = await r.json();
 
-    if (data.Error) {
-      return res.status(400).json({ error: data.Error.Message });
-    }
+    if (data.Error) return res.status(400).json({ error: data.Error.Message });
 
     const seen = new Set();
-    const items = (data?.hits || []).map(item => ({
-      name: cleanName(item.name || ""),
-      scale: guessScale(item.name || ""),
-      photoUrl: item.image?.medium || item.image?.small || "",
-      jan: item.janCode || "",
-      price: item.price ? String(item.price) : "",
-    }))
-    .filter(item => item.name.length > 2)
-    .filter(item => {
-      const key = item.jan || item.name;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+    const items = (data?.hits || [])
+      .map(item => ({
+        name: cleanName(item.name || ""),
+        scale: guessScale(item.name || ""),
+        photoUrl: item.image?.medium || item.image?.small || "",
+        jan: item.janCode || "",
+        price: item.price ? String(item.price) : "",
+      }))
+      .filter(item => item.name.length > 2)
+      .filter(item => {
+        const key = item.jan || item.name;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-    return res.json({
-      items,
-      total: data?.totalResultsAvailable || 0,
-      page: Number(page),
-    });
+    return res.json({ items, total: data?.totalResultsAvailable || 0, page: Number(page) });
   } catch (e) {
     return res.status(500).json({ error: String(e) });
   }

@@ -1,32 +1,48 @@
 const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
 
 function cleanName(name) {
+  // 『』【】などの括弧ごと削除
+  name = name.replace(/『[^』]*』/g, "");
+  name = name.replace(/【[^】]*】/g, "");
+  name = name.replace(/［[^］]*］/g, "");
+
+  // 余計なワードを削除
+  const noiseWords = [
+    /爆買/g, /再販/g, /再生産/g, /新品/g, /送料無料/g, /即納/g, /即日/g,
+    /在庫あり/g, /お得/g, /プレミアムバンダイ限定/g, /プレバン限定/g,
+    /代引き不可/g, /〈プラモデル〉/g, /＜プラモデル＞/g,
+    /<プラモデル>/g, /（プラモデル）/g, /プラモデル/g,
+    /プラスチックモデルキット/g, /返品種別[A-Z]/g,
+  ];
+  for (const w of noiseWords) name = name.replace(w, "");
+
+  // 数字コードの括弧を削除
+  name = name.replace(/[（(][0-9]{4,}[）)]/g, "");
+
+  // グレード・スケールが出てきた位置から取り出す
   const startKeywords = [
-    /\bPG\b/, /\bMG\b/, /\bRG\b/, /\bHG\b/, /\bEG\b/, /\bSD\b/,
-    /1\/144/, /1\/100/, /1\/60/, /1\/72/, /1\/35/, /1\/24/, /1\/12/,
+    /MGSD/, /PG/, /RG/, /HG[A-Z\s]*/, /EG/, /SD/, /MG/,
+    /1\/144/, /1\/100/, /1\/60/, /1\/72/, /1\/48/, /1\/35/, /1\/24/, /1\/12/,
     /Figure-rise/, /フィギュアライズ/,
   ];
   for (const kw of startKeywords) {
     const match = name.match(kw);
     if (match) { name = name.slice(name.indexOf(match[0])); break; }
   }
-  const removePatterns = [
-    /プラスチックモデルキット\s*/g, /プラモデル\s*/g, /返品種別[A-Z]\s*/g,
-    /\([0-9]{6,}\)/g, /【[^】]*】/g, /\s+バンダイ$/, /\s+BANDAI$/i,
-    // 再販・新商品系
-    /[\(（【]?再生産[\)）】]?\s*/g, /[\(（【]?再販売[\)）】]?\s*/g, /[\(（【]?再販[\)）】]?\s*/g,
-    /[\(（【]?新商品[\)）】]?\s*/g, /[\(（【]?新発売[\)）】]?\s*/g, /[\(（【]?新製品[\)）】]?\s*/g,
-    /[\(（【]?予約品[\)）】]?\s*/g,
-  ];
-  for (const p of removePatterns) name = name.replace(p, "");
+
+  // 後半の余計な部分を削除
   const stopKeywords = [
-    /\s+機動戦士/, /\s+機動新世紀/, /\s+新機動/, /\s+閃光のハサウェイ/,
-    /\s+鉄血/, /\s+水星/, /\s+SEED/, /\s+ユニコーン/,
+    /\s+機動戦士ガンダム(?!X|W|F91|V|00|SEED)/, /\s+機動新世紀/, /\s+新機動/,
+    /\s+閃光のハサウェイ/, /\s+鉄血のオルフェンズ/, /\s+水星の魔女/,
+    /\s+ガンダムSEED(?!DESTINY)/, /\s+バンダイ/, /\s+BANDAI/i,
+    /\s+爆買/, /\s+再販/,
   ];
   for (const kw of stopKeywords) {
     const match = name.match(kw);
     if (match) name = name.slice(0, name.indexOf(match[0]));
   }
+
+  name = name.replace(/&amp;/g, "&");
   return name.replace(/\s+/g, " ").trim();
 }
 
