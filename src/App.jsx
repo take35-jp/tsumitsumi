@@ -863,7 +863,7 @@ function LegalModal({ type, onClose }) {
           </div>
           <div style={hs.section}>
             <div style={hs.sectionTitle}>お問い合わせ</div>
-            <div style={hs.desc}>プライバシーに関するお問い合わせは X（@takerunomin）のDMにてご連絡ください。</div>
+            <div style={hs.desc}>プライバシーに関するお問い合わせは X（@tsumitsumi_pla）のDMにてご連絡ください。</div>
           </div>
           <div style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", paddingTop: 8 }}>最終更新：2025年4月</div>
         </>
@@ -986,11 +986,11 @@ function HelpModal({ onClose }) {
       <div style={{ textAlign: "center", paddingTop: 8 }}>
         <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 12 }}>お問い合わせ・バグ報告はこちら</div>
         <a
-          href="https://twitter.com/messages/compose?recipient_id=takerunomin"
+          href="https://twitter.com/messages/compose?recipient_id=tsumitsumi_pla"
           target="_blank"
           rel="noopener noreferrer"
           style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 20, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
-          𝕏 @takerunomin にDM
+          𝕏 @tsumitsumi_pla にDM
         </a>
       </div>
     </div>
