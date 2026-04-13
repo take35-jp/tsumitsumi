@@ -207,13 +207,12 @@
               </select>
             </div>
             <div class="field">
-              <span class="label">最大ページ数</span>
-              <select class="select" id="auto-pages">
-                <option value="10">10ページ（200件）</option>
-                <option value="25">25ページ（500件）</option>
-                <option value="50" selected>50ページ（1,000件）</option>
-                <option value="100">100ページ（2,000件）</option>
-              </select>
+              <span class="label">開始ページ</span>
+              <input class="select" type="number" id="auto-start-page" value="1" min="1" style="width:80px;">
+            </div>
+            <div class="field">
+              <span class="label">終了ページ</span>
+              <input class="select" type="number" id="auto-end-page" value="9999" min="1" style="width:80px;" placeholder="9999=全件">
             </div>
             <button class="btn btn-success" id="auto-btn" onclick="autoRegister()">▶ 自動登録開始</button>
             <button class="btn btn-danger" id="auto-stop-btn" onclick="stopAuto()" style="display:none;">⏹ 停止</button>
@@ -638,12 +637,13 @@ async function autoRegister() {
   const query = document.getElementById('auto-grade').value;
   const gradeEl = document.getElementById('auto-grade');
   const grade = gradeEl.options[gradeEl.selectedIndex].dataset.grade;
-  const maxPages = parseInt(document.getElementById('auto-pages').value);
+  const startPage = parseInt(document.getElementById('auto-start-page').value) || 1;
+  const endPage = parseInt(document.getElementById('auto-end-page').value) || 9999;
 
   // 登録済みJANをSupabaseから取得
   document.getElementById('auto-status').textContent = '登録済みデータを確認中...';
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?select=jan&limit=10000`, {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?select=jan&limit=100000`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
     const data = await r.json();
@@ -652,12 +652,17 @@ async function autoRegister() {
 
   let totalSaved = 0;
   let totalSkipped = 0;
-  let page = 1;
+  let page = startPage;
 
-  while (autoRunning && page <= maxPages) {
+  while (autoRunning && page <= endPage) {
+    const progress = endPage >= 9999 ? `${page}ページ` : `${page}/${endPage}ページ`;
     document.getElementById('auto-status').textContent =
-      `${page}/${maxPages}ページ処理中... 新規登録: ${totalSaved}件 / スキップ: ${totalSkipped}件`;
-    document.getElementById('auto-bar').style.width = `${(page/maxPages*100).toFixed(0)}%`;
+      `${progress}処理中... 新規登録: ${totalSaved}件 / スキップ: ${totalSkipped}件`;
+    if (endPage < 9999) {
+      document.getElementById('auto-bar').style.width = `${((page-startPage)/(endPage-startPage+1)*100).toFixed(0)}%`;
+    } else {
+      document.getElementById('auto-bar').style.width = '100%';
+    }
 
     const start = (page - 1) * 20 + 1;
     try {
@@ -718,8 +723,10 @@ async function autoRegister() {
   document.getElementById('auto-btn').style.display = 'inline-block';
   document.getElementById('auto-stop-btn').style.display = 'none';
   document.getElementById('auto-bar').style.width = '100%';
+  // 次回の開始ページをセット
+  document.getElementById('auto-start-page').value = page;
   document.getElementById('auto-status').textContent =
-    `✅ 完了！新規: ${totalSaved}件登録 / スキップ: ${totalSkipped}件（登録済み）`;
+    `✅ 完了！新規: ${totalSaved}件登録 / スキップ: ${totalSkipped}件（登録済み）　次回は${page}ページから再開できます`;
 }
 
 function stopAuto() {
