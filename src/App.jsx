@@ -1289,7 +1289,7 @@ export default function App() {
     });
   };
 
-  const totalKits = kits.length;
+  const totalKits = kits.reduce((sum, k) => sum + (k.count || 1), 0);
   const rank = getRank(totalKits);
   const pending = kits.filter((k) => !k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
   const done = kits.filter((k) => k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
