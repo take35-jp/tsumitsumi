@@ -1291,8 +1291,8 @@ export default function App() {
 
   const totalKits = kits.length;
   const rank = getRank(totalKits);
-  const pending = kits.filter((k) => !k.completed).length;
-  const done = kits.filter((k) => k.completed).length;
+  const pending = kits.filter((k) => !k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
+  const done = kits.filter((k) => k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
 
   let filtered = kits.filter((k) =>
     filter === "pending" ? !k.completed : filter === "done" ? k.completed : true
@@ -1353,7 +1353,7 @@ export default function App() {
       )}
 
       <div style={s.stats}>
-        {[["積みプラ", pending, "#ef4444", "pending"], ["完成", done, "#22c55e", "done"], ["総数", kits.length, "#111", "all"]].map(([label, num, color, f]) => (
+        {[["積みプラ", pending, "#ef4444", "pending"], ["完成", done, "#22c55e", "done"], ["総数", kits.reduce((sum, k) => sum + (k.count || 1), 0), "#111", "all"]].map(([label, num, color, f]) => (
           <div key={f} style={s.statBox} onClick={() => setFilter(f)}>
             <div style={{ ...s.statNum, color }}>{num}</div>
             <div style={s.statLabel}>{label}</div>
