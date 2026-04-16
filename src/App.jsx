@@ -1232,7 +1232,11 @@ export default function App() {
   const [showAppShare, setShowAppShare] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
-  const [viewMode, setViewMode] = useState("list"); // "list" | "grid"
+  const [viewMode, setViewMode] = useState("list");
+  const [sortKey, setSortKey] = useState("custom"); // custom | name | date | purchaseDate
+  const [sortDir, setSortDir] = useState("asc");
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState(new Set()); // "list" | "grid"
   const fileRef = useRef();
   const completedFileRef = useRef();
 
@@ -1291,6 +1295,20 @@ export default function App() {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  const handleBulkDelete = () => {
+    if (bulkSelected.size === 0) return;
+    if (!window.confirm(`選択した${bulkSelected.size}件を削除しますか？`)) return;
+    setKits(prev => prev.filter(k => !bulkSelected.has(k.id)));
+    setBulkSelected(new Set());
+    setBulkMode(false);
+  };
+
+  const handleBulkComplete = (completed) => {
+    setKits(prev => prev.map(k => bulkSelected.has(k.id) ? { ...k, completed } : k));
+    setBulkSelected(new Set());
+    setBulkMode(false);
+  };
+
   const moveKit = (id, dir) => {
     setKits((ks) => {
       const idx = ks.findIndex(k => k.id === id);
@@ -1325,6 +1343,19 @@ export default function App() {
   if (filterCondition) filtered = filtered.filter(k => (k.condition || "") === filterCondition);
   if (filterScale) filtered = filtered.filter(k => (k.scale || "") === filterScale);
   if (filterTags.length > 0) filtered = filtered.filter(k => filterTags.every(tag => (k.tags || []).includes(tag)));
+
+  // ソート（手動並び替えモード以外）
+  if (sortKey !== "custom") {
+    filtered = [...filtered].sort((a, b) => {
+      let va, vb;
+      if (sortKey === "name") { va = (a.name || ""); vb = (b.name || ""); }
+      else if (sortKey === "date") { va = (a.id || 0); vb = (b.id || 0); }
+      else if (sortKey === "purchaseDate") { va = (a.purchaseDate || ""); vb = (b.purchaseDate || ""); }
+      if (va < vb) return sortDir === "asc" ? -1 : 1;
+      if (va > vb) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
 
   return (
     <div style={s.root}>
@@ -1458,13 +1489,30 @@ export default function App() {
                 style={{ fontSize: 12, padding: "4px 10px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
                 onClick={() => setViewMode("grid")}>⊞ サムネイル</button>
             </div>
-            {filtered.length > 1 && (
+            {/* ソートセレクト */}
+            <select style={{ fontSize: 11, padding: "4px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer" }}
+              value={sortKey} onChange={(e) => { setSortKey(e.target.value); setReorderMode(false); }}>
+              <option value="custom">手動順</option>
+              <option value="name">名前順</option>
+              <option value="date">登録順</option>
+              <option value="purchaseDate">購入日順</option>
+            </select>
+            <button style={{ fontSize: 11, padding: "4px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer" }}
+              onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}>
+              {sortDir === "asc" ? "↑昇順" : "↓降順"}
+            </button>
+            {filtered.length > 1 && sortKey === "custom" && (
               <button
-                style={{ fontSize: 12, padding: "4px 12px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
+                style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
                 onClick={() => setReorderMode(v => !v)}>
-                {reorderMode ? "✓ 並び替え完了" : "↕ 並び替え"}
+                {reorderMode ? "✓完了" : "↕手動"}
               </button>
             )}
+            {/* 一括操作ボタン */}
+            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${bulkMode ? "#ef4444" : "#e5e7eb"}`, borderRadius: 20, background: bulkMode ? "#fee2e2" : "#fff", color: bulkMode ? "#ef4444" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
+              onClick={() => { setBulkMode(v => !v); setBulkSelected(new Set()); }}>
+              {bulkMode ? "✕ 選択解除" : "☑ 一括"}
+            </button>
           </div>
         )}
         {viewMode === "grid" && (
@@ -1484,9 +1532,29 @@ export default function App() {
             ))}
           </div>
         )}
+        {/* 一括操作バー */}
+        {bulkMode && (
+          <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 16px", background: "#fff", borderRadius: 10, marginBottom: 8, border: "1.5px solid #e5e7eb" }}>
+            <span style={{ fontSize: 12, color: "#6b7280", flex: 1 }}>{bulkSelected.size}件選択中</span>
+            <button style={{ fontSize: 12, padding: "6px 12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+              onClick={() => handleBulkComplete(true)}>✓ 完成にする</button>
+            <button style={{ fontSize: 12, padding: "6px 12px", background: "#6b7280", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+              onClick={() => handleBulkComplete(false)}>□ 未完成に戻す</button>
+            <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+              onClick={handleBulkDelete}>🗑 削除</button>
+          </div>
+        )}
         {viewMode === "list" && filtered.map((kit, index) => (
-          <div key={kit.id} style={{ ...s.card }} onClick={() => !reorderMode && setDetail(kit)}>
-            {reorderMode && (
+          <div key={kit.id} style={{ ...s.card, ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
+            if (bulkMode) { setBulkSelected(prev => { const n = new Set(prev); n.has(kit.id) ? n.delete(kit.id) : n.add(kit.id); return n; }); return; }
+            if (!reorderMode) setDetail(kit);
+          }}>
+            {bulkMode && (
+              <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {bulkSelected.has(kit.id) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
+              </div>
+            )}
+            {reorderMode && !bulkMode && (
               <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
                 <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                   onClick={(e) => { e.stopPropagation(); moveKit(kit.id, -1); }} disabled={index === 0}>▲</button>
