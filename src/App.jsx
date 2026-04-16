@@ -1236,7 +1236,8 @@ export default function App() {
   const [sortKey, setSortKey] = useState("custom"); // custom | name | date | purchaseDate
   const [sortDir, setSortDir] = useState("asc");
   const [bulkMode, setBulkMode] = useState(false);
-  const [bulkSelected, setBulkSelected] = useState(new Set()); // "list" | "grid"
+  const [bulkSelected, setBulkSelected] = useState(new Set());
+  const [bulkTagInput, setBulkTagInput] = useState(""); // "list" | "grid"
   const fileRef = useRef();
   const completedFileRef = useRef();
 
@@ -1368,7 +1369,7 @@ export default function App() {
 
   return (
     <div style={s.root}>
-      {!bulkMode && <div style={s.header}>
+      <div style={{ ...s.header, display: bulkMode ? "none" : undefined }}>
         <div>
           <div style={s.headerTitle}>TSUMI TSUMI</div>
           <div style={s.headerSub}>PLASTIC MODEL TRACKER</div>
@@ -1391,14 +1392,14 @@ export default function App() {
           </button>
           <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
-      </div>}
+      </div>
 
-      {!bulkMode && <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
-      </div>}
+      </div>
 
-      {!bulkMode && showSearch && (
+      {showSearch && !bulkMode && (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "10px 16px" }}>
           <input autoFocus
             style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
@@ -1407,16 +1408,16 @@ export default function App() {
         </div>
       )}
 
-      {!bulkMode && <div style={s.stats}>
+      <div style={{ ...s.stats, display: bulkMode ? "none" : undefined }}>
         {[["積みプラ", pending, "#ef4444", "pending"], ["完成", done, "#22c55e", "done"], ["総数", kits.reduce((sum, k) => sum + (k.count || 1), 0), "#111", "all"]].map(([label, num, color, f]) => (
           <div key={f} style={s.statBox} onClick={() => setFilter(f)}>
             <div style={{ ...s.statNum, color }}>{num}</div>
             <div style={s.statLabel}>{label}</div>
           </div>
         ))}
-      </div>}
+      </div>
 
-      {!bulkMode && <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0" }}>
+      <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", display: bulkMode ? "none" : undefined }}>
         <div style={s.tabs}>
           {[["pending","積みプラ"],["done","完成済み"],["all","すべて"]].map(([val, label]) => (
             <button key={val} style={{ ...s.tab, ...(filter === val ? s.tabActive : {}) }} onClick={() => setFilter(val)}>{label}</button>
@@ -1476,7 +1477,7 @@ export default function App() {
             </div>
           );
         })()}
-      </div>}
+      </div>
 
       {scanLoading && <div style={s.loadingBar}>🔍 商品情報を検索中...</div>}
 
@@ -1550,7 +1551,6 @@ export default function App() {
           </div>
         )}
         {bulkMode && (() => {
-          const [bulkTagInput, setBulkTagInput] = React.useState("");
           const allExistingTags = [...new Set(kits.flatMap(k => k.tags || []))];
           return (
             <div style={{ background: "#fff", borderRadius: 10, marginBottom: 8, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
@@ -1568,7 +1568,7 @@ export default function App() {
                 {allExistingTags.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
                     {allExistingTags.map(t => (
-                      <button key={t} onClick={() => { handleBulkAddTag(t); }}
+                      <button key={t} onClick={() => handleBulkAddTag(t)}
                         style={{ background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", borderRadius: 20, padding: "2px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
                         ＋#{t}
                       </button>
