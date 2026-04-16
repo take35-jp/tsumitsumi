@@ -1296,6 +1296,13 @@ export default function App() {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  const handleBulkSetField = (field, value) => {
+    if (!value) return;
+    setKits(prev => prev.map(k =>
+      bulkSelected.has(k.id) ? { ...k, [field]: value } : k
+    ));
+  };
+
   const handleBulkAddTag = (tag) => {
     if (!tag.trim()) return;
     setKits(prev => prev.map(k =>
@@ -1542,15 +1549,49 @@ export default function App() {
           const allExistingTags = [...new Set(kits.flatMap(k => k.tags || []))];
           return (
             <div style={{ background: "#fff", borderRadius: 10, marginBottom: 8, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
-              <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
+              {/* ヘッダー：件数・削除 */}
+              <div style={{ display: "flex", alignItems: "center", padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <span style={{ fontSize: 12, color: "#6b7280", flex: 1 }}>{bulkSelected.size}件選択中</span>
-                <button style={{ fontSize: 12, padding: "6px 12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
-                  onClick={() => handleBulkComplete(true)}>✓ 完成</button>
-                <button style={{ fontSize: 12, padding: "6px 12px", background: "#6b7280", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
-                  onClick={() => handleBulkComplete(false)}>□ 未完成</button>
                 <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
                   onClick={handleBulkDelete}>🗑 削除</button>
               </div>
+              {/* 状態 */}
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>状態を一括設定</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {CONDITION_OPTIONS.map(opt => (
+                    <button key={opt} onClick={() => handleBulkSetField("condition", opt)}
+                      style={{ padding: "5px 12px", borderRadius: 20, border: "1.5px solid #e5e7eb", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#374151" }}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* シリーズ */}
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>シリーズを一括設定</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none", background: "#fafafa" }}
+                    onChange={(e) => { if (e.target.value) handleBulkSetField("series", e.target.value); e.target.value = ""; }}
+                    defaultValue="">
+                    <option value="">シリーズを選択...</option>
+                    {SERIES_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              </div>
+              {/* スケール */}
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>スケールを一括設定</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none", background: "#fafafa" }}
+                    onChange={(e) => { if (e.target.value) handleBulkSetField("scale", e.target.value); e.target.value = ""; }}
+                    defaultValue="">
+                    <option value="">スケールを選択...</option>
+                    {SCALE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              </div>
+              {/* タグ */}
               <div style={{ padding: "10px 16px" }}>
                 <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグを一括追加</div>
                 {allExistingTags.length > 0 && (
