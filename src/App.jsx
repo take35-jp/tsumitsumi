@@ -1490,36 +1490,29 @@ export default function App() {
           </div>
         )}
         {filtered.length > 0 && !bulkMode && (
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <div style={{ display: "flex", gap: 6 }}>
-              <button
-                style={{ fontSize: 12, padding: "4px 10px", border: `1.5px solid ${viewMode === "list" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "list" ? "#111" : "#fff", color: viewMode === "list" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
-                onClick={() => setViewMode("list")}>☰ 詳細</button>
-              <button
-                style={{ fontSize: 12, padding: "4px 10px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
-                onClick={() => setViewMode("grid")}>⊞ サムネイル</button>
-            </div>
-            {/* ソートセレクト */}
-            <select style={{ fontSize: 11, padding: "4px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer" }}
+          <div style={{ display: "flex", flexWrap: "nowrap", alignItems: "center", gap: 5, marginBottom: 4, overflowX: "auto", paddingBottom: 2 }}>
+            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "list" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "list" ? "#111" : "#fff", color: viewMode === "list" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+              onClick={() => setViewMode("list")}>☰ 詳細</button>
+            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+              onClick={() => setViewMode("grid")}>⊞ サムネ</button>
+            <select style={{ fontSize: 11, padding: "3px 6px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", flexShrink: 0 }}
               value={sortKey} onChange={(e) => { setSortKey(e.target.value); setReorderMode(false); }}>
               <option value="custom">手動順</option>
               <option value="name">名前順</option>
               <option value="date">登録順</option>
               <option value="purchaseDate">購入日順</option>
             </select>
-            <button style={{ fontSize: 11, padding: "4px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer" }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}>
-              {sortDir === "asc" ? "↑昇順" : "↓降順"}
+              {sortDir === "asc" ? "↑昇" : "↓降"}
             </button>
             {filtered.length > 1 && sortKey === "custom" && (
-              <button
-                style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
+              <button style={{ fontSize: 11, padding: "3px 8px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
                 onClick={() => setReorderMode(v => !v)}>
                 {reorderMode ? "✓完了" : "↕手動"}
               </button>
             )}
-            {/* 一括操作ボタン */}
-            <button style={{ fontSize: 11, padding: "4px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", fontWeight: 600 }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => { setBulkMode(true); setBulkSelected(new Set()); }}>
               ☑ 一括
             </button>
@@ -1661,10 +1654,20 @@ export default function App() {
               <div style={s.modalTitle}>{detail.name}</div>
               {detail.completed && <div style={s.doneBadge}>✓ 完成済み</div>}
               <table style={s.table}><tbody>
-                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["タグ", detail.tags?.length > 0 ? detail.tags.join("　") : null], ["JAN", detail.jan], ["メモ", detail.memo]]
+                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
                   .filter(([, v]) => v && v !== "—")
                   .map(([k, v]) => <tr key={k}><td style={s.td1}>{k}</td><td style={s.td2}>{v}</td></tr>)}
               </tbody></table>
+              {detail.tags?.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 6 }}>タグ</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {detail.tags.map(tag => (
+                      <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>#{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
               {!detail.completed && (
                 <button style={s.wantBtn} onClick={() => handleWant(detail)}>
                   🙋 これを作ってくれる人に譲りたい！とポストする
