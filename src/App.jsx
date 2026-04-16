@@ -916,12 +916,20 @@ function TagInput({ tags, onChange, allTags = [] }) {
   return (
     <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", background: "#fafafa" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: tags.length > 0 ? 8 : 0 }}>
-        {tags.map(tag => (
-          <span key={tag} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>
-            #{tag}
-            <button style={{ background: "none", border: "none", cursor: "pointer", color: "#166534", fontSize: 14, lineHeight: 1, padding: 0 }} onClick={() => removeTag(tag)}>×</button>
-          </span>
-        ))}
+        {tags.map(tag => {
+          let pressTimer = null;
+          return (
+            <span key={tag}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600, cursor: "pointer", userSelect: "none", WebkitUserSelect: "none" }}
+              onContextMenu={(e) => { e.preventDefault(); removeTag(tag); }}
+              onTouchStart={() => { pressTimer = setTimeout(() => removeTag(tag), 600); }}
+              onTouchEnd={() => { clearTimeout(pressTimer); }}
+              onTouchMove={() => { clearTimeout(pressTimer); }}
+            >
+              #{tag}
+            </span>
+          );
+        })}
       </div>
       {suggestions.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
