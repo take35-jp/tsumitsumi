@@ -1295,6 +1295,15 @@ export default function App() {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+  const handleBulkAddTag = (tag) => {
+    if (!tag.trim()) return;
+    setKits(prev => prev.map(k =>
+      bulkSelected.has(k.id)
+        ? { ...k, tags: [...new Set([...(k.tags || []), tag.trim()])] }
+        : k
+    ));
+  };
+
   const handleBulkDelete = () => {
     if (bulkSelected.size === 0) return;
     if (!window.confirm(`選択した${bulkSelected.size}件を削除しますか？`)) return;
@@ -1359,7 +1368,7 @@ export default function App() {
 
   return (
     <div style={s.root}>
-      <div style={s.header}>
+      {!bulkMode && <div style={s.header}>
         <div>
           <div style={s.headerTitle}>TSUMI TSUMI</div>
           <div style={s.headerSub}>PLASTIC MODEL TRACKER</div>
@@ -1382,14 +1391,14 @@ export default function App() {
           </button>
           <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
-      </div>
+      </div>}
 
-      <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: "flex", alignItems: "center", gap: 10 }}>
+      {!bulkMode && <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
-      </div>
+      </div>}
 
-      {showSearch && (
+      {!bulkMode && showSearch && (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "10px 16px" }}>
           <input autoFocus
             style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
@@ -1398,16 +1407,16 @@ export default function App() {
         </div>
       )}
 
-      <div style={s.stats}>
+      {!bulkMode && <div style={s.stats}>
         {[["積みプラ", pending, "#ef4444", "pending"], ["完成", done, "#22c55e", "done"], ["総数", kits.reduce((sum, k) => sum + (k.count || 1), 0), "#111", "all"]].map(([label, num, color, f]) => (
           <div key={f} style={s.statBox} onClick={() => setFilter(f)}>
             <div style={{ ...s.statNum, color }}>{num}</div>
             <div style={s.statLabel}>{label}</div>
           </div>
         ))}
-      </div>
+      </div>}
 
-      <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0" }}>
+      {!bulkMode && <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0" }}>
         <div style={s.tabs}>
           {[["pending","積みプラ"],["done","完成済み"],["all","すべて"]].map(([val, label]) => (
             <button key={val} style={{ ...s.tab, ...(filter === val ? s.tabActive : {}) }} onClick={() => setFilter(val)}>{label}</button>
@@ -1467,7 +1476,7 @@ export default function App() {
             </div>
           );
         })()}
-      </div>
+      </div>}
 
       {scanLoading && <div style={s.loadingBar}>🔍 商品情報を検索中...</div>}
 
@@ -1479,7 +1488,7 @@ export default function App() {
               : "該当するキットがありません"}
           </div>
         )}
-        {filtered.length > 0 && (
+        {filtered.length > 0 && !bulkMode && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
             <div style={{ display: "flex", gap: 6 }}>
               <button
@@ -1509,9 +1518,9 @@ export default function App() {
               </button>
             )}
             {/* 一括操作ボタン */}
-            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${bulkMode ? "#ef4444" : "#e5e7eb"}`, borderRadius: 20, background: bulkMode ? "#fee2e2" : "#fff", color: bulkMode ? "#ef4444" : "#6b7280", cursor: "pointer", fontWeight: 600 }}
-              onClick={() => { setBulkMode(v => !v); setBulkSelected(new Set()); }}>
-              {bulkMode ? "✕ 選択解除" : "☑ 一括"}
+            <button style={{ fontSize: 11, padding: "4px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", fontWeight: 600 }}
+              onClick={() => { setBulkMode(true); setBulkSelected(new Set()); }}>
+              ☑ 一括
             </button>
           </div>
         )}
@@ -1534,16 +1543,52 @@ export default function App() {
         )}
         {/* 一括操作バー */}
         {bulkMode && (
-          <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 16px", background: "#fff", borderRadius: 10, marginBottom: 8, border: "1.5px solid #e5e7eb" }}>
-            <span style={{ fontSize: 12, color: "#6b7280", flex: 1 }}>{bulkSelected.size}件選択中</span>
-            <button style={{ fontSize: 12, padding: "6px 12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
-              onClick={() => handleBulkComplete(true)}>✓ 完成にする</button>
-            <button style={{ fontSize: 12, padding: "6px 12px", background: "#6b7280", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
-              onClick={() => handleBulkComplete(false)}>□ 未完成に戻す</button>
-            <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
-              onClick={handleBulkDelete}>🗑 削除</button>
+          <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: "#111", color: "#fff" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>☑ 一括編集モード</span>
+            <button style={{ fontSize: 12, padding: "4px 12px", background: "#fff", color: "#111", border: "none", borderRadius: 20, fontWeight: 700, cursor: "pointer" }}
+              onClick={() => { setBulkMode(false); setBulkSelected(new Set()); }}>✕ 解除</button>
           </div>
         )}
+        {bulkMode && (() => {
+          const [bulkTagInput, setBulkTagInput] = React.useState("");
+          const allExistingTags = [...new Set(kits.flatMap(k => k.tags || []))];
+          return (
+            <div style={{ background: "#fff", borderRadius: 10, marginBottom: 8, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
+                <span style={{ fontSize: 12, color: "#6b7280", flex: 1 }}>{bulkSelected.size}件選択中</span>
+                <button style={{ fontSize: 12, padding: "6px 12px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+                  onClick={() => handleBulkComplete(true)}>✓ 完成</button>
+                <button style={{ fontSize: 12, padding: "6px 12px", background: "#6b7280", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+                  onClick={() => handleBulkComplete(false)}>□ 未完成</button>
+                <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+                  onClick={handleBulkDelete}>🗑 削除</button>
+              </div>
+              <div style={{ padding: "10px 16px" }}>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグを一括追加</div>
+                {allExistingTags.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+                    {allExistingTags.map(t => (
+                      <button key={t} onClick={() => { handleBulkAddTag(t); }}
+                        style={{ background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", borderRadius: 20, padding: "2px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
+                        ＋#{t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none" }}
+                    placeholder="新しいタグを入力..."
+                    value={bulkTagInput}
+                    onChange={(e) => setBulkTagInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { handleBulkAddTag(bulkTagInput); setBulkTagInput(""); } }}
+                  />
+                  <button style={{ padding: "6px 14px", background: "#111", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                    onClick={() => { handleBulkAddTag(bulkTagInput); setBulkTagInput(""); }}>追加</button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
         {viewMode === "list" && filtered.map((kit, index) => (
           <div key={kit.id} style={{ ...s.card, ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
             if (bulkMode) { setBulkSelected(prev => { const n = new Set(prev); n.has(kit.id) ? n.delete(kit.id) : n.add(kit.id); return n; }); return; }
