@@ -17,7 +17,7 @@ const SERIES_OPTIONS = [
   "ピットロード", "ファインモールド", "ドラゴン", "トランペッター",
   "ガレージキット", "レジンキット", "その他",
 ];
-const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "フルメカニクス", "その他"];
+const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "HG", "RG", "MG", "RE/100", "MGSD", "MGEX", "PG", "SD", "フルメカニクス", "UNLEASHED", "その他"];
 
 const RANKS = [
   { min: 500, label: "模型屋", color: "#7c3aed" },
@@ -896,7 +896,7 @@ function LegalModal({ type, onClose }) {
 }
 
 // ---- Tag Input ----
-function TagInput({ tags, onChange }) {
+function TagInput({ tags, onChange, allTags = [] }) {
   const [input, setInput] = useState("");
 
   const addTag = (val) => {
@@ -908,6 +908,11 @@ function TagInput({ tags, onChange }) {
 
   const removeTag = (tag) => onChange(tags.filter(t => t !== tag));
 
+  // 候補：入力中はフィルター、未入力は既存タグから未選択のものを最大5件
+  const suggestions = input.trim()
+    ? allTags.filter(t => t.includes(input.trim()) && !tags.includes(t)).slice(0, 5)
+    : allTags.filter(t => !tags.includes(t)).slice(0, 5);
+
   return (
     <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", background: "#fafafa" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: tags.length > 0 ? 8 : 0 }}>
@@ -918,6 +923,16 @@ function TagInput({ tags, onChange }) {
           </span>
         ))}
       </div>
+      {suggestions.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+          {suggestions.map(t => (
+            <button key={t} onClick={() => addTag(t)}
+              style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 20, padding: "2px 10px", fontSize: 11, color: "#374151", cursor: "pointer" }}>
+              ＋{t}
+            </button>
+          ))}
+        </div>
+      )}
       <div style={{ display: "flex", gap: 6 }}>
         <input
           style={{ flex: 1, border: "none", background: "none", outline: "none", fontSize: 13, color: "#111" }}
@@ -1617,6 +1632,22 @@ export default function App() {
             <KitNameInput value={form.name} onChange={(name) => setForm((f) => ({ ...f, name }))}
               onSelect={(item) => setForm((f) => ({ ...f, name: item.name, photoUrl: item.photoUrl || f.photoUrl, series: item.series || f.series, scale: item.scale || f.scale }))} />
 
+            <label style={s.label}>状態</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              {CONDITION_OPTIONS.map((opt) => (
+                <button key={opt}
+                  style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: form.condition === opt ? "#111" : "#f3f4f6",
+                    color: form.condition === opt ? "#fff" : "#374151",
+                    borderColor: form.condition === opt ? "#111" : "#e5e7eb" }}
+                  onClick={() => setForm((f) => ({ ...f, condition: f.condition === opt ? "" : opt }))}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <input style={{ ...s.input, marginBottom: 4 }} placeholder="状態のメモ（欠品内容など自由に）" value={form.conditionNote}
+              onChange={(e) => setForm((f) => ({ ...f, conditionNote: e.target.value }))} />
+
             <label style={s.label}>シリーズ</label>
             <select style={s.input}
               value={SERIES_OPTIONS.includes(form.series) ? form.series : form.series ? "__custom__" : ""}
@@ -1637,23 +1668,7 @@ export default function App() {
             </select>
 
             <label style={s.label}>タグ</label>
-            <TagInput tags={form.tags || []} onChange={(tags) => setForm((f) => ({ ...f, tags }))} />
-
-            <label style={s.label}>状態</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-              {CONDITION_OPTIONS.map((opt) => (
-                <button key={opt}
-                  style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    background: form.condition === opt ? "#111" : "#f3f4f6",
-                    color: form.condition === opt ? "#fff" : "#374151",
-                    borderColor: form.condition === opt ? "#111" : "#e5e7eb" }}
-                  onClick={() => setForm((f) => ({ ...f, condition: f.condition === opt ? "" : opt }))}>
-                  {opt}
-                </button>
-              ))}
-            </div>
-            <input style={{ ...s.input, marginBottom: 4 }} placeholder="状態のメモ（欠品内容など自由に）" value={form.conditionNote}
-              onChange={(e) => setForm((f) => ({ ...f, conditionNote: e.target.value }))} />
+            <TagInput tags={form.tags || []} onChange={(tags) => setForm((f) => ({ ...f, tags }))} allTags={[...new Set(kits.flatMap(k => k.tags || []))]} />
 
             <label style={s.label}>購入日</label>
             <input style={s.input} type="date" value={form.purchaseDate} onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))} />
@@ -1704,7 +1719,8 @@ export default function App() {
             <label style={s.label}>メモ</label>
             <textarea style={{ ...s.input, minHeight: 60, resize: "vertical" }} placeholder="自由にメモを残そう" value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
 
-            <div style={s.formBtns}>
+            <div style={{ height: 80 }} />
+            <div style={{ position: "sticky", bottom: 0, background: "#fff", paddingTop: 10, paddingBottom: 16, marginTop: 8, borderTop: "1px solid #f0f0f0", display: "flex", gap: 10 }}>
               <button style={s.cancelBtn} onClick={() => setShowForm(false)}>キャンセル</button>
               <button style={s.saveBtn} onClick={handleSubmit}>{editId ? "更新" : "追加"}</button>
             </div>
