@@ -1408,7 +1408,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ ...s.stats, display: bulkMode ? "none" : undefined }}>
+      <div style={{ ...s.stats, display: bulkMode ? "none" : "flex" }}>
         {[["積みプラ", pending, "#ef4444", "pending"], ["完成", done, "#22c55e", "done"], ["総数", kits.reduce((sum, k) => sum + (k.count || 1), 0), "#111", "all"]].map(([label, num, color, f]) => (
           <div key={f} style={s.statBox} onClick={() => setFilter(f)}>
             <div style={{ ...s.statNum, color }}>{num}</div>
@@ -1855,9 +1855,9 @@ const s = {
   shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
   searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 16, cursor: "pointer" },
   stats: { display: "flex", background: "#fff", borderBottom: "1px solid #f0f0f0" },
-  statBox: { flex: 1, padding: "11px 0", textAlign: "center", cursor: "pointer" },
-  statNum: { fontSize: 19, fontWeight: 700 },
-  statLabel: { fontSize: 10, color: "#9ca3af", marginTop: 2 },
+  statBox: { flex: 1, padding: "9px 0", textAlign: "center", cursor: "pointer" },
+  statNum: { fontSize: 16, fontWeight: 700 },
+  statLabel: { fontSize: 9, color: "#9ca3af", marginTop: 2 },
   tabs: { display: "flex", padding: "12px 16px 0", gap: 8 },
   tab: { flex: 1, padding: "8px 0", border: "none", background: "none", fontSize: 13, color: "#9ca3af", cursor: "pointer", borderBottom: "2px solid transparent", fontWeight: 500 },
   tabActive: { color: "#111", borderBottom: "2px solid #111", fontWeight: 700 },
