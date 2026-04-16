@@ -1369,28 +1369,28 @@ export default function App() {
 
   return (
     <div style={s.root}>
-      <div style={{ ...s.header, display: bulkMode ? "none" : undefined }}>
-        <div>
+      <div style={{ ...s.header, display: bulkMode ? "none" : "flex", alignItems: "center", gap: 8, padding: "10px 16px" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={s.headerTitle}>TSUMI TSUMI</div>
           <div style={s.headerSub}>PLASTIC MODEL TRACKER</div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button style={s.searchIconBtn} onClick={() => setShowSearch(v => !v)}>🔍</button>
-          <button style={s.searchIconBtn} onClick={() => setShowBackup(true)} title="バックアップ">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{ display: "flex", gap: 5, alignItems: "center", flexShrink: 0 }}>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowSearch(v => !v)}>🔍</button>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowBackup(true)} title="バックアップ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" />
               <path d="M12 8v8M8 12l4 4 4-4" />
             </svg>
           </button>
-          <button style={s.searchIconBtn} onClick={() => setShowHelp(true)}>❓</button>
-          <button style={s.searchIconBtn} onClick={() => setShowAppShare(true)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowHelp(true)}>❓</button>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowAppShare(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M8 10L12 6L16 10" />
               <line x1="12" y1="6" x2="12" y2="17" />
               <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
             </svg>
           </button>
-          <button style={s.shareBtn} onClick={() => setShowShare(true)}>𝕏</button>
+          <button style={{ ...s.shareBtn, width: 30, height: 30, fontSize: 13 }} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
       </div>
 
@@ -1418,11 +1418,6 @@ export default function App() {
       </div>
 
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", display: bulkMode ? "none" : undefined }}>
-        <div style={s.tabs}>
-          {[["pending","積みプラ"],["done","完成済み"],["all","すべて"]].map(([val, label]) => (
-            <button key={val} style={{ ...s.tab, ...(filter === val ? s.tabActive : {}) }} onClick={() => setFilter(val)}>{label}</button>
-          ))}
-        </div>
         <div style={{ padding: "8px 16px 4px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 5 }}>
             <select style={{ padding: "3px 4px", border: "1.5px solid", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
@@ -1850,8 +1845,8 @@ export default function App() {
 const s = {
   root: { maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#f8f9fa", fontFamily: "'Hiragino Sans', 'Noto Sans JP', sans-serif", paddingBottom: 120 },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 20px 14px", background: "#fff", borderBottom: "1px solid #f0f0f0" },
-  headerTitle: { fontSize: 20, fontWeight: 700, color: "#111", letterSpacing: 2 },
-  headerSub: { fontSize: 10, color: "#aaa", letterSpacing: 3, marginTop: 2 },
+  headerTitle: { fontSize: 15, fontWeight: 700, color: "#111", letterSpacing: 1 },
+  headerSub: { fontSize: 8, color: "#aaa", letterSpacing: 2, marginTop: 1 },
   shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
   searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 16, cursor: "pointer" },
   stats: { display: "flex", background: "#fff", borderBottom: "1px solid #f0f0f0" },
