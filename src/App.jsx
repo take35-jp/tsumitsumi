@@ -896,32 +896,15 @@ function LegalModal({ type, onClose }) {
 }
 
 // ---- Bulk Tag Badge ----
-function BulkTagBadge({ tag, onAdd, onRemove }) {
-  const [selected, setSelected] = useState(false);
+function BulkTagBadge({ tag, onApply, onRemove }) {
   return (
-    <span
-      onClick={() => { if (selected) { setSelected(false); } else { onAdd(); } }}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 4,
-        background: selected ? "#fee2e2" : "#f0fdf4",
-        color: selected ? "#b91c1c" : "#166534",
-        border: `1px solid ${selected ? "#fca5a5" : "#bbf7d0"}`,
-        borderRadius: 20, padding: "3px 10px", fontSize: 11,
-        cursor: "pointer", fontWeight: 600,
-        userSelect: "none", WebkitUserSelect: "none",
-        transition: "background 0.15s",
-      }}
-      onContextMenu={(e) => { e.preventDefault(); setSelected(v => !v); }}
-    >
-      {selected ? "−" : "＋"}#{tag}
-      {selected && (
-        <span
-          onClick={(e) => { e.stopPropagation(); onRemove(); setSelected(false); }}
-          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, background: "#ef4444", borderRadius: "50%", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>
-          ×
-        </span>
-      )}
-    </span>
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 3, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 20, padding: "3px 6px 3px 10px", fontSize: 11, fontWeight: 600, userSelect: "none", WebkitUserSelect: "none" }}>
+      <span onClick={onApply} style={{ color: "#166534", cursor: "pointer" }}>#{tag}</span>
+      <button onClick={onRemove}
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, background: "#ef4444", borderRadius: "50%", color: "#fff", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
+        ×
+      </button>
+    </div>
   );
 }
 
@@ -1364,9 +1347,20 @@ export default function App() {
 
   const handleBulkAddTag = (tag) => {
     if (!tag.trim()) return;
+    // 選択キットがあれば反映、なくてもタグ一覧に追加（既存キットに1件でも追加）
+    setKits(prev => prev.map(k =>
+      bulkSelected.size > 0
+        ? (bulkSelected.has(k.id) ? { ...k, tags: [...new Set([...(k.tags || []), tag.trim()])] } : k)
+        : k
+    ));
+    setBulkTagInput("");
+  };
+
+  const handleBulkApplyTag = (tag) => {
+    if (bulkSelected.size === 0) return;
     setKits(prev => prev.map(k =>
       bulkSelected.has(k.id)
-        ? { ...k, tags: [...new Set([...(k.tags || []), tag.trim()])] }
+        ? { ...k, tags: [...new Set([...(k.tags || []), tag])] }
         : k
     ));
   };
@@ -1652,12 +1646,13 @@ export default function App() {
               </div>
               {/* タグ */}
               <div style={{ padding: "10px 16px" }}>
-                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグを一括追加 / 削除（タップで追加・長押しで削除）</div>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグ名タップ→選択キットに追加 ／ ×→全キットから削除</div>
+                {bulkSelected.size === 0 && <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 6 }}>⚠ タグ名タップはキット選択後に有効になります</div>}
                 {allExistingTags.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
                     {allExistingTags.map(t => (
                       <BulkTagBadge key={t} tag={t}
-                        onAdd={() => handleBulkAddTag(t)}
+                        onApply={() => handleBulkApplyTag(t)}
                         onRemove={() => handleBulkRemoveTag(t)} />
                     ))}
                   </div>
@@ -1700,6 +1695,9 @@ export default function App() {
               <div style={s.cardMeta}>
                 {kit.series && <span>{kit.series}</span>}
                 {kit.scale && <span style={s.badge}>{kit.scale}</span>}
+                {kit.tags?.length > 0 && kit.tags.map(tag => (
+                  <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
+                ))}
               </div>
               <div style={s.cardBottom}>
                 {kit.rating > 0 && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
