@@ -1203,19 +1203,210 @@ function getCondStyle(condition) {
 }
 
 // ---- X Share Modal ----
+// ---- 画像生成ユーティリティ ----
+function getScaleColor(scale) {
+  if (!scale) return { bg: "#222", text: "#888" };
+  if (/^HG/i.test(scale)) return { bg: "#0f2a0f", text: "#4ade80" };
+  if (/^MG/i.test(scale)) return { bg: "#0f1a2a", text: "#60a5fa" };
+  if (/^RG/i.test(scale)) return { bg: "#2a0f0f", text: "#f87171" };
+  if (/^PG/i.test(scale)) return { bg: "#2a2a0f", text: "#facc15" };
+  if (/^MGSD/i.test(scale)) return { bg: "#1a0f2a", text: "#c084fc" };
+  if (/^SD/i.test(scale)) return { bg: "#2a1a0f", text: "#fb923c" };
+  if (/^RE/i.test(scale)) return { bg: "#0f2a2a", text: "#34d399" };
+  return { bg: "#1a1a1a", text: "#aaa" };
+}
+
+async function generateShareImages(kits, rank) {
+  const W = 1200, CARD_W = 297, CARD_H = 130, COLS = 4, GAP = 1;
+  const HEADER_H = 80, FOOTER_H = 50;
+  const PER_PAGE = Math.floor((2400 - HEADER_H - FOOTER_H) / (CARD_H + GAP)) * COLS;
+
+  const pages = [];
+  for (let i = 0; i < kits.length; i += PER_PAGE) {
+    pages.push(kits.slice(i, i + PER_PAGE));
+  }
+
+  const blobs = [];
+  for (let p = 0; p < pages.length; p++) {
+    const pageKits = pages[p];
+    const rows = Math.ceil(pageKits.length / COLS);
+    const H = HEADER_H + rows * (CARD_H + GAP) + FOOTER_H;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // 背景
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(0, 0, W, H);
+
+    // ヘッダー
+    ctx.fillStyle = "#111";
+    ctx.fillRect(0, 0, W, HEADER_H);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, HEADER_H - 1, W, 1);
+
+    ctx.fillStyle = "#ff6b2b";
+    ctx.font = "bold 28px 'Arial'";
+    ctx.fillText("TSUMI TSUMI", 24, 34);
+    ctx.fillStyle = "#555";
+    ctx.font = "14px Arial";
+    ctx.fillText(rank || "", 24, 58);
+
+    // 件数
+    ctx.fillStyle = "#ff6b2b";
+    ctx.font = "bold 36px Arial";
+    const totalText = `${kits.length}`;
+    const tw = ctx.measureText(totalText).width;
+    ctx.fillText(totalText, W - 24 - tw, 44);
+    ctx.fillStyle = "#555";
+    ctx.font = "12px Arial";
+    ctx.fillText("積みプラ", W - 24 - 56, 64);
+
+    // ページ番号
+    if (pages.length > 1) {
+      ctx.fillStyle = "#333";
+      ctx.font = "11px Arial";
+      ctx.fillText(`${p + 1} / ${pages.length}`, W / 2 - 16, 68);
+    }
+
+    // カード描画
+    for (let i = 0; i < pageKits.length; i++) {
+      const kit = pageKits[i];
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const x = col * (CARD_W + GAP);
+      const y = HEADER_H + row * (CARD_H + GAP);
+
+      // カード背景
+      ctx.fillStyle = "#111";
+      ctx.fillRect(x, y, CARD_W, CARD_H);
+
+      // サムネイル
+      const THUMB_W = 86, THUMB_H = 76, THUMB_X = x + 6, THUMB_Y = y + 6;
+      ctx.fillStyle = "#1e1e1e";
+      ctx.fillRect(THUMB_X, THUMB_Y, THUMB_W, THUMB_H);
+
+      if (kit.photoUrl) {
+        try {
+          await new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              ctx.drawImage(img, THUMB_X, THUMB_Y, THUMB_W, THUMB_H);
+              resolve();
+            };
+            img.onerror = resolve;
+            img.src = kit.photoUrl;
+          });
+        } catch (_) {}
+      } else {
+        ctx.fillStyle = "#2a2a2a";
+        ctx.font = "20px Arial";
+        ctx.fillText("📦", THUMB_X + 28, THUMB_Y + 46);
+      }
+
+      // キット名
+      const TEXT_X = x + 98, TEXT_Y = y + 20, TEXT_W = CARD_W - 104;
+      ctx.fillStyle = "#e0e0e0";
+      ctx.font = "bold 11px Arial";
+      const name = kit.name || "";
+      const maxLen = 22;
+      const line1 = name.slice(0, maxLen);
+      const line2 = name.length > maxLen ? name.slice(maxLen, maxLen * 2) : "";
+      ctx.fillText(line1, TEXT_X, TEXT_Y);
+      if (line2) {
+        ctx.fillStyle = "#aaa";
+        ctx.fillText(line2, TEXT_X, TEXT_Y + 16);
+      }
+
+      // スケールバッジ
+      if (kit.scale) {
+        const { bg, text } = getScaleColor(kit.scale);
+        const BADGE_Y = y + CARD_H - 28;
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        ctx.roundRect(TEXT_X, BADGE_Y, 60, 18, 3);
+        ctx.fill();
+        ctx.fillStyle = text;
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(kit.scale, TEXT_X + 6, BADGE_Y + 13);
+      }
+
+      // 状態バッジ
+      if (kit.condition) {
+        const COND_Y = y + CARD_H - 28;
+        ctx.fillStyle = "#1a1a1a";
+        ctx.font = "9px Arial";
+        ctx.fillStyle = "#555";
+        ctx.fillText(kit.condition, TEXT_X + 66, COND_Y + 13);
+      }
+
+      // 区切り線
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fillRect(x + CARD_W, y, GAP, CARD_H);
+      ctx.fillRect(x, y + CARD_H, CARD_W, GAP);
+    }
+
+    // フッター
+    const FY = H - FOOTER_H;
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(0, FY, W, FOOTER_H);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, FY, W, 1);
+    ctx.fillStyle = "#ff6b2b";
+    ctx.font = "bold 14px Arial";
+    ctx.fillText("TSUMI TSUMI", 24, FY + 30);
+    ctx.fillStyle = "#333";
+    ctx.font = "11px Arial";
+    ctx.fillText("tsumitsumi.vercel.app", W - 200, FY + 30);
+
+    blobs.push(await new Promise(r => canvas.toBlob(r, "image/png")));
+  }
+  return blobs;
+}
+
 function XShareModal({ kits, myXId, setMyXId, onClose }) {
   const pending = kits.filter((k) => !k.completed);
   const [selected, setSelected] = useState(new Set());
   const [mode, setMode] = useState("all");
+  const [generating, setGenerating] = useState(false);
+  const [generatedCount, setGeneratedCount] = useState(0);
   const toggleSelect = (id) => setSelected((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const targetKits = mode === "all" ? pending : pending.filter((k) => selected.has(k.id));
+  const totalPages = Math.max(1, Math.ceil(targetKits.length / 68));
+
   const buildTweet = () => {
     const id = myXId.trim().replace(/^@/, "");
-    const idLine = id ? `DM→ @${id}\n\n` : "";
-    const lines = targetKits.slice(0, 10).map((k) => `📦 ${k.name}${k.scale ? ` [${k.scale}]` : ""}`);
-    const more = targetKits.length > 10 ? `\n他${targetKits.length - 10}点...` : "";
-    return `積みプラ紹介します！\n\n${lines.join("\n")}${more}\n\n${idLine}#積みプラ #プラモデル #ツミツミ #気になるツミはありますか`;
+    const idLine = id ? `DM→ @${id}
+
+` : "";
+    return `積みプラ ${targetKits.length}件 を公開中！
+
+${idLine}#積みプラ #プラモデル #ツミツミ #気になるツミはありますか`;
   };
+
+  const handleGenerateImages = async () => {
+    setGenerating(true);
+    setGeneratedCount(0);
+    try {
+      const rank = "";
+      const blobs = await generateShareImages(targetKits, rank);
+      setGeneratedCount(blobs.length);
+      blobs.forEach((blob, i) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tsumitsumi_${i + 1}of${blobs.length}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+    } catch (e) {
+      alert("画像生成エラー: " + e.message);
+    }
+    setGenerating(false);
+  };
+
   return (
     <div style={xs.wrap}>
       <div style={xs.header}><span style={xs.title}>𝕏 積みプラをシェア</span><button style={xs.closeBtn} onClick={onClose}>✕</button></div>
@@ -1246,13 +1437,32 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
             ))}
           </div>
         )}
-        <div style={xs.previewBox}>
-          <div style={xs.previewLabel}>投稿プレビュー</div>
-          <div style={xs.previewText}>{targetKits.length > 0 ? buildTweet() : "キットを選んでください"}</div>
+
+        {/* 画像生成セクション */}
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 6 }}>画像を生成してシェア</div>
+          <div style={{ fontSize: 11, color: "#166534", marginBottom: 10 }}>
+            {targetKits.length}件 → 画像{totalPages}枚（1枚あたり最大68件）
+          </div>
+          <button style={{ width: "100%", padding: "12px 0", background: generating ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: generating ? "default" : "pointer" }}
+            onClick={handleGenerateImages} disabled={generating}>
+            {generating ? "生成中..." : `画像を生成してダウンロード（${totalPages}枚）`}
+          </button>
+          {generatedCount > 0 && (
+            <div style={{ fontSize: 11, color: "#166534", marginTop: 8, textAlign: "center" }}>
+              {generatedCount}枚ダウンロード完了。Xに添付して投稿してください。
+            </div>
+          )}
         </div>
-        <button style={{ ...xs.tweetBtn, opacity: targetKits.length === 0 ? 0.4 : 1 }}
-          onClick={() => targetKits.length > 0 && window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweet())}`, "_blank")}>
-          𝕏 ポストする（{targetKits.length}件）
+
+        {/* テキスト投稿セクション */}
+        <div style={{ background: "#f8f9fa", borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, marginBottom: 6 }}>テキスト投稿プレビュー</div>
+          <div style={{ fontSize: 12, color: "#374151", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{buildTweet()}</div>
+        </div>
+        <button style={{ width: "100%", padding: "14px 0", background: "#000", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+          onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweet())}`, "_blank")}>
+          𝕏 テキストのみ投稿
         </button>
       </>)}
     </div>
