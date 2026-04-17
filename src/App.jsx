@@ -898,27 +898,19 @@ function LegalModal({ type, onClose }) {
 // ---- Tag Input ----
 function TagInput({ tags, onChange, allTags = [] }) {
   const [input, setInput] = useState("");
-  const [deletingTag, setDeletingTag] = useState(null);
-  const pressRef = useRef(null);
+  const [selectedTag, setSelectedTag] = useState(null);
 
   const addTag = (val) => {
     const tag = val.trim();
     if (!tag || tags.includes(tag)) { setInput(""); return; }
     onChange([...tags, tag]);
     setInput("");
-    setDeletingTag(null);
+    setSelectedTag(null);
   };
 
-  const removeTag = (tag) => onChange(tags.filter(t => t !== tag));
-
-  const handleTagTouchStart = (tag) => {
-    pressRef.current = setTimeout(() => {
-      setDeletingTag(prev => prev === tag ? null : tag);
-    }, 600);
-  };
-
-  const handleTagTouchEnd = () => {
-    if (pressRef.current) clearTimeout(pressRef.current);
+  const removeTag = (tag) => {
+    onChange(tags.filter(t => t !== tag));
+    setSelectedTag(null);
   };
 
   const suggestions = input.trim()
@@ -929,33 +921,24 @@ function TagInput({ tags, onChange, allTags = [] }) {
     <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", background: "#fafafa" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: tags.length > 0 ? 8 : 0 }}>
         {tags.map(tag => {
-          const isDeleting = deletingTag === tag;
+          const isSelected = selectedTag === tag;
           return (
             <span key={tag}
+              onClick={() => setSelectedTag(isSelected ? null : tag)}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 4,
-                background: isDeleting ? "#fee2e2" : "#f0fdf4",
-                color: isDeleting ? "#b91c1c" : "#166534",
-                borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600,
-                cursor: "pointer",
+                background: isSelected ? "#fee2e2" : "#f0fdf4",
+                color: isSelected ? "#b91c1c" : "#166534",
+                borderRadius: 20, padding: "3px 10px 3px 10px", fontSize: 12, fontWeight: 600,
+                cursor: "pointer", transition: "background 0.15s",
                 userSelect: "none", WebkitUserSelect: "none",
-                MozUserSelect: "none", msUserSelect: "none",
-                WebkitTouchCallout: "none",
-                KhtmlUserSelect: "none",
-                transition: "background 0.2s",
-                touchAction: "none",
               }}
-              onContextMenu={(e) => { e.preventDefault(); setDeletingTag(isDeleting ? null : tag); }}
-              onTouchStart={(e) => { e.preventDefault(); handleTagTouchStart(tag); }}
-              onTouchEnd={handleTagTouchEnd}
-              onTouchMove={handleTagTouchEnd}
             >
               #{tag}
-              {isDeleting && (
+              {isSelected && (
                 <span
-                  onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); removeTag(tag); setDeletingTag(null); }}
-                  onClick={(e) => { e.stopPropagation(); removeTag(tag); setDeletingTag(null); }}
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, background: "#ef4444", borderRadius: "50%", color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>
+                  onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, background: "#ef4444", borderRadius: "50%", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>
                   ×
                 </span>
               )}
