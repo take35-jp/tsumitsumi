@@ -116,6 +116,14 @@ export default async function handler(req, res) {
       }))
       .filter(item => item.name.length > 2)
       .filter(item => {
+        // グレード不一致を除外（例：HG検索でMGが混入するのを防ぐ）
+        if (grade === 'HG' && /\bMG\b/.test(item.name) && !/\bHG\b/.test(item.name)) return false;
+        if (grade === 'MG' && /\bHG\b/.test(item.name) && !/\bMG\b/.test(item.name)) return false;
+        if (grade === 'RG' && !/\bRG\b/.test(item.name)) return false;
+        if (grade === 'PG' && !/\bPG\b/.test(item.name)) return false;
+        return true;
+      })
+      .filter(item => {
         const key = item.jan || item.name;
         if (seen.has(key)) return false;
         seen.add(key);
