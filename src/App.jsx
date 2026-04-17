@@ -541,10 +541,21 @@ function KitNameInput({ value, onChange, onSelect }) {
     if (q.length < 2) { setSuggestions([]); return; }
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/products?name=ilike.*${encodeURIComponent(q)}*&select=name,scale,image_url,jan,series&limit=5&order=name.asc`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      );
       if (res.ok) {
         const data = await res.json();
-        setSuggestions(Array.isArray(data) ? data.slice(0, 5) : data.name ? [data] : []);
+        setSuggestions(data.map(d => ({
+          name: d.name,
+          scale: d.scale,
+          photoUrl: d.image_url,
+          jan: d.jan,
+          series: d.series,
+        })));
       }
     } catch (_) {}
     setLoading(false);
@@ -580,7 +591,7 @@ function KitNameInput({ value, onChange, onSelect }) {
               {item.photoUrl && <img src={item.photoUrl} style={suggS.thumb} alt="" />}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={suggS.name}>{item.name}</div>
-                {item.price && <div style={suggS.price}>¥{Number(item.price).toLocaleString()}</div>}
+                {item.scale && <div style={suggS.scale}>{item.scale}</div>}
               </div>
             </div>
           ))}
@@ -598,7 +609,7 @@ const suggS = {
   item: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0" },
   thumb: { width: 40, height: 40, objectFit: "cover", borderRadius: 6, flexShrink: 0 },
   name: { fontSize: 13, color: "#111", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  price: { fontSize: 11, color: "#9ca3af", marginTop: 2 },
+  scale: { fontSize: 11, color: "#4f8ef7", fontWeight: 600, marginTop: 2 },
 };
 
 // ---- Help Modal ----
