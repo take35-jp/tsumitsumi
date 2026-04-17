@@ -1231,15 +1231,20 @@ async function generateShareImages(kits, rank) {
     pages.push(kits.slice(i, i + PER_PAGE));
   }
 
-  // Base64画像をImageオブジェクトに変換するヘルパー
+  // 画像ロードヘルパー（外部URLはプロキシ経由）
   const loadImage = (src) => new Promise((resolve) => {
     if (!src) return resolve(null);
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
-    // Base64はcrossOrigin不要、URLの場合はanonymous
-    if (!src.startsWith("data:")) img.crossOrigin = "anonymous";
-    img.src = src;
+    if (src.startsWith("data:")) {
+      // Base64はそのまま
+      img.src = src;
+    } else {
+      // 外部URLはサーバープロキシ経由でCORSを回避
+      img.crossOrigin = "anonymous";
+      img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+    }
   });
 
   // 全画像を事前ロード
