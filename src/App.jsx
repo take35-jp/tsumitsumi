@@ -895,6 +895,36 @@ function LegalModal({ type, onClose }) {
   );
 }
 
+// ---- Bulk Tag Badge ----
+function BulkTagBadge({ tag, onAdd, onRemove }) {
+  const [selected, setSelected] = useState(false);
+  return (
+    <span
+      onClick={() => { if (selected) { setSelected(false); } else { onAdd(); } }}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 4,
+        background: selected ? "#fee2e2" : "#f0fdf4",
+        color: selected ? "#b91c1c" : "#166534",
+        border: `1px solid ${selected ? "#fca5a5" : "#bbf7d0"}`,
+        borderRadius: 20, padding: "3px 10px", fontSize: 11,
+        cursor: "pointer", fontWeight: 600,
+        userSelect: "none", WebkitUserSelect: "none",
+        transition: "background 0.15s",
+      }}
+      onContextMenu={(e) => { e.preventDefault(); setSelected(v => !v); }}
+    >
+      {selected ? "−" : "＋"}#{tag}
+      {selected && (
+        <span
+          onClick={(e) => { e.stopPropagation(); onRemove(); setSelected(false); }}
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, background: "#ef4444", borderRadius: "50%", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>
+          ×
+        </span>
+      )}
+    </span>
+  );
+}
+
 // ---- Tag Input ----
 function TagInput({ tags, onChange, allTags = [] }) {
   const [input, setInput] = useState("");
@@ -1326,6 +1356,12 @@ export default function App() {
     ));
   };
 
+  const handleBulkRemoveTag = (tag) => {
+    setKits(prev => prev.map(k =>
+      bulkSelected.has(k.id) ? { ...k, tags: (k.tags || []).filter(t => t !== tag) } : k
+    ));
+  };
+
   const handleBulkAddTag = (tag) => {
     if (!tag.trim()) return;
     setKits(prev => prev.map(k =>
@@ -1616,14 +1652,13 @@ export default function App() {
               </div>
               {/* タグ */}
               <div style={{ padding: "10px 16px" }}>
-                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグを一括追加</div>
+                <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグを一括追加 / 削除（タップで追加・長押しで削除）</div>
                 {allExistingTags.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
                     {allExistingTags.map(t => (
-                      <button key={t} onClick={() => handleBulkAddTag(t)}
-                        style={{ background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", borderRadius: 20, padding: "2px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
-                        ＋#{t}
-                      </button>
+                      <BulkTagBadge key={t} tag={t}
+                        onAdd={() => handleBulkAddTag(t)}
+                        onRemove={() => handleBulkRemoveTag(t)} />
                     ))}
                   </div>
                 )}
