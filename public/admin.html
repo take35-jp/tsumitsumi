@@ -318,14 +318,30 @@
         <div class="row">
           <div class="field">
             <span class="label">メーカー</span>
-            <select class="select" id="maker-select">
-              <option value="バンダイ">バンダイ（ガンプラ）</option>
-              <option value="タミヤ">タミヤ</option>
-              <option value="ハセガワ">ハセガワ</option>
-              <option value="フジミ">フジミ</option>
-              <option value="アオシマ">アオシマ</option>
-              <option value="グッドスマイルカンパニー">グッドスマイルカンパニー</option>
-              <option value="ボークス">ボークス</option>
+            <select class="select" id="maker-select" onchange="updateSeriesDefault()">
+              <optgroup label="── ガンプラ ──">
+                <option value="バンダイ">バンダイ（ガンプラ）</option>
+              </optgroup>
+              <optgroup label="── スケールモデル ──">
+                <option value="タミヤ">タミヤ</option>
+                <option value="ハセガワ">ハセガワ</option>
+                <option value="フジミ">フジミ</option>
+                <option value="アオシマ">アオシマ</option>
+                <option value="ファインモールド">ファインモールド</option>
+                <option value="ドラゴン">ドラゴン</option>
+                <option value="トランペッター">トランペッター</option>
+                <option value="ズベズダ">ズベズダ</option>
+              </optgroup>
+              <optgroup label="── キャラクターモデル ──">
+                <option value="バンダイ フィギュアライズ">バンダイ（フィギュアライズ）</option>
+                <option value="コトブキヤ">コトブキヤ</option>
+                <option value="グッドスマイルカンパニー">グッドスマイルカンパニー</option>
+                <option value="ウェーブ">ウェーブ</option>
+                <option value="ボークス">ボークス</option>
+              </optgroup>
+              <optgroup label="── その他 ──">
+                <option value="プラモデル">指定なし（キーワードのみ）</option>
+              </optgroup>
             </select>
           </div>
           <div class="field">
@@ -350,7 +366,17 @@
           </div>
           <div class="field" style="flex:1; min-width:160px;">
             <span class="label">キーワード（任意）</span>
-            <input class="input" id="kw-input" placeholder="例：ザク" onkeydown="if(event.key==='Enter')searchYahoo()">
+            <input class="input" id="kw-input" placeholder="例：ザク、タイガーI、零戦" onkeydown="if(event.key==='Enter')searchYahoo()">
+          </div>
+          <div class="field" style="min-width:120px;">
+            <span class="label">シリーズ名</span>
+            <input class="input" id="series-input" placeholder="例：ガンプラ" value="ガンプラ">
+          </div>
+          <div class="field" style="align-self:flex-end;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer; padding-bottom:6px;">
+              <input type="checkbox" id="hide-registered" checked style="width:16px; height:16px;">
+              未登録のみ表示
+            </label>
           </div>
           <div class="field">
             <button class="btn btn-primary" onclick="searchYahoo()">検索</button>
@@ -523,11 +549,42 @@ function guessScale(name) {
 }
 
 // ---- YAHOO SEARCH ----
+// 全JANをSupabaseから取得
+async function fetchAllRegisteredJans() {
+  let allJans = new Set();
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?select=jan&limit=${pageSize}&offset=${from}`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Range-Unit': 'items', 'Range': `${from}-${from+pageSize-1}` }
+    });
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length === 0) break;
+    data.forEach(d => { if (d.jan) allJans.add(d.jan); });
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return allJans;
+}
+
+function updateSeriesDefault() {
+  const maker = document.getElementById('maker-select').value;
+  const seriesInput = document.getElementById('series-input');
+  if (maker === 'バンダイ') seriesInput.value = 'ガンプラ';
+  else if (maker.includes('フィギュアライズ')) seriesInput.value = 'フィギュアライズ';
+  else if (maker === 'コトブキヤ') seriesInput.value = 'コトブキヤ';
+  else if (maker === 'タミヤ') seriesInput.value = 'タミヤ';
+  else if (maker === 'ハセガワ') seriesInput.value = 'ハセガワ';
+  else seriesInput.value = 'プラモデル';
+}
+
 async function searchYahoo(page = 1) {
   currentPage = page;
   const maker = document.getElementById('maker-select').value;
   const scale = document.getElementById('scale-select').value;
   const kw = document.getElementById('kw-input').value.trim();
+  const seriesVal = document.getElementById('series-input').value.trim();
+  const hideRegistered = document.getElementById('hide-registered').checked;
 
   let query = maker;
   if (scale) query += ` ${scale}`;
@@ -541,18 +598,28 @@ async function searchYahoo(page = 1) {
   document.getElementById('search-msg').innerHTML = '';
 
   try {
+    // 登録済みJANを最新取得（ページ1のときのみ）
+    if (page === 1) {
+      document.getElementById('search-results').innerHTML = '<div class="loading">登録済みJANを確認中...</div>';
+      registeredJans = await fetchAllRegisteredJans();
+    }
     const r = await fetch(url);
     const data = await r.json();
-    currentItems = (data.items || []);
+    let items = data.items || [];
+    // 登録済みを除外するフィルタ
+    if (hideRegistered) {
+      items = items.filter(item => !item.jan || !registeredJans.has(item.jan));
+    }
+    currentItems = items;
     currentTotal = data.total || 0;
-    renderResults(maker);
+    renderResults(maker, seriesVal || 'プラモデル');
   } catch (e) {
     document.getElementById('search-msg').innerHTML = `<div class="msg msg-err">エラー: ${e.message}</div>`;
     document.getElementById('search-results').innerHTML = '';
   }
 }
 
-function renderResults(maker) {
+function renderResults(maker, seriesVal = 'ガンプラ') {
   const el = document.getElementById('search-results');
   if (!currentItems.length) {
     el.innerHTML = '<div class="loading">結果がありません</div>';
@@ -586,7 +653,7 @@ function renderResults(maker) {
               ${['','HG','MG','RG','PG','MGSD','SD','1/144','1/100','1/72','1/60','1/48','1/35','1/24'].map(s => `<option value="${s}" ${item.scale===s?'selected':''}>${s||'スケール'}</option>`).join('')}
             </select>
             <input class="meta-select" style="width:90px;" id="maker-${idx}" value="${maker}" placeholder="メーカー">
-            <input class="meta-select" style="width:80px;" id="series-${idx}" value="ガンプラ" placeholder="シリーズ">
+            <input class="meta-select" style="width:80px;" id="series-${idx}" value="${seriesVal}" placeholder="シリーズ">
             <span class="jan-text">JAN: ${item.jan || '不明'}</span>
             ${isReg ? '<span class="registered-badge">✓ 登録済み</span>' : ''}
           </div>
