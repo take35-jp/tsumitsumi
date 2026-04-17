@@ -537,6 +537,29 @@ function KitNameInput({ value, onChange, onSelect }) {
   const [loading, setLoading] = useState(false);
   const timerRef = useRef(null);
 
+  // 候補名を「グレード 1/スケール キット名」に整形
+  const formatCandidateName = (name) => {
+    if (!name) return '';
+    let n = name;
+    // 余計な記号・カッコ内を削除
+    n = n.replace(/『[^』]*』/g, '');
+    n = n.replace(/「[^」]*」/g, '');
+    n = n.replace(/【[^】]*】/g, '');
+    n = n.replace(/\[[^\]]*\]/g, '');
+    n = n.replace(/（[^）]*）/g, '');
+    n = n.replace(/\([^)]*\)/g, '');
+    n = n.replace(/[★☆◆◇■□▲▼●○※†‡♪]/g, '');
+    // ノイズワード削除
+    const noise = ['BANDAI SPIRITS', 'バンダイスピリッツ', 'バンダイ', 'BANDAI',
+      'プラモデル', '色分け済み', '再販', '新品', '在庫品', '未開封'];
+    noise.forEach(w => { n = n.replace(new RegExp(w, 'g'), ''); });
+    // 連続スペース整理
+    n = n.replace(/\s+/g, ' ').trim();
+    // 末尾の記号を削除
+    n = n.replace(/[\s\-_,、。・]+$/, '').trim();
+    return n;
+  };
+
   const search = async (q) => {
     if (q.length < 2) { setSuggestions([]); return; }
     setLoading(true);
@@ -589,9 +612,13 @@ function KitNameInput({ value, onChange, onSelect }) {
           {suggestions.map((item, i) => (
             <div key={i} style={suggS.item} onClick={() => handleSelect(item)}>
               {item.photoUrl && <img src={item.photoUrl} style={suggS.thumb} alt="" />}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={suggS.name}>{item.name}</div>
-                {item.scale && <div style={suggS.scale}>{item.scale}</div>}
+              <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                {item.scale && (
+                  <span style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: 6, padding: "1px 7px", fontSize: 10, fontWeight: 700, marginBottom: 3 }}>
+                    {item.scale}
+                  </span>
+                )}
+                <div style={suggS.name}>{formatCandidateName(item.name)}</div>
               </div>
             </div>
           ))}
