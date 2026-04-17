@@ -1116,7 +1116,7 @@ const hs = {
 // ---- App Share Modal ----
 function AppShareModal({ onClose }) {
   const url = "https://tsumitsumi.vercel.app";
-  const text = "積みプラ管理アプリ「TSUMI TSUMI」🗂️\nバーコードスキャンで簡単登録！\n#積みプラ #プラモデル #ツミツミ";
+  const text = "積みプラ管理アプリ「TSUMI TSUMI」🗂️\nバーコードスキャンで簡単登録！\n#積みプラ #ツミツミ #TSUMITSUMI";
   const [copied, setCopied] = useState(false);
 
   const copyUrl = async () => {
@@ -1408,7 +1408,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
 ` : "";
     return `積みプラ ${targetKits.length}件 を公開中！
 
-${idLine}#積みプラ #プラモデル #ツミツミ #気になるツミはありますか`;
+${idLine}#積みプラ #ツミツミ #TSUMITSUMI`;
   };
 
   const handleGenerateImages = async () => {
@@ -1636,7 +1636,7 @@ export default function App() {
   };
 
   const handleWant = (kit) => {
-    const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします🙏 #積みプラ #プラモデル #ツミツミ`;
+    const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします🙏 #積みプラ #ツミツミ #TSUMITSUMI`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
