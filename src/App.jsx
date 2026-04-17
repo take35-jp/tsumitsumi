@@ -50,22 +50,29 @@ const emptyForm = {
 };
 
 // 画像をBase64に圧縮変換（最大800px・JPEG品質0.7）
-function compressImageToBase64(file) {
+function compressImageToBase64(file, maxPx = 320, quality = 0.5) {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const MAX = 800;
       let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else { w = Math.round(w * MAX / h); h = MAX; }
+      // 長辺を maxPx に収める
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else { w = Math.round(w * maxPx / h); h = maxPx; }
       }
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.7));
+      // 目標50KB以下になるまで品質を下げる
+      let result = canvas.toDataURL("image/jpeg", quality);
+      let q = quality;
+      while (result.length > 68000 && q > 0.2) {
+        q -= 0.05;
+        result = canvas.toDataURL("image/jpeg", q);
+      }
+      resolve(result);
     };
     img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
     img.src = url;
