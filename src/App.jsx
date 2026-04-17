@@ -1217,14 +1217,36 @@ function getScaleColor(scale) {
 }
 
 async function generateShareImages(kits, rank) {
-  const W = 1200, CARD_W = 297, CARD_H = 130, COLS = 4, GAP = 1;
-  const HEADER_H = 80, FOOTER_H = 50;
-  const PER_PAGE = Math.floor((2400 - HEADER_H - FOOTER_H) / (CARD_H + GAP)) * COLS;
+  // 縦向き：W=1200（幅）、1枚の最大高さ=2400
+  const W = 1200, COLS = 4, GAP = 2;
+  const CARD_W = Math.floor((W - GAP * (COLS - 1)) / COLS); // = 299
+  const CARD_H = 140;
+  const HEADER_H = 90, FOOTER_H = 56;
+  const MAX_H = 2400;
+  const MAX_ROWS = Math.floor((MAX_H - HEADER_H - FOOTER_H) / (CARD_H + GAP));
+  const PER_PAGE = MAX_ROWS * COLS;
 
   const pages = [];
   for (let i = 0; i < kits.length; i += PER_PAGE) {
     pages.push(kits.slice(i, i + PER_PAGE));
   }
+
+  // Base64画像をImageオブジェクトに変換するヘルパー
+  const loadImage = (src) => new Promise((resolve) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    // Base64はcrossOrigin不要、URLの場合はanonymous
+    if (!src.startsWith("data:")) img.crossOrigin = "anonymous";
+    img.src = src;
+  });
+
+  // 全画像を事前ロード
+  const imgCache = {};
+  await Promise.all(kits.map(async (k) => {
+    if (k.photoUrl) imgCache[k.id] = await loadImage(k.photoUrl);
+  }));
 
   const blobs = [];
   for (let p = 0; p < pages.length; p++) {
@@ -1233,6 +1255,7 @@ async function generateShareImages(kits, rank) {
     const H = HEADER_H + rows * (CARD_H + GAP) + FOOTER_H;
 
     const canvas = document.createElement("canvas");
+    // 縦向き：幅W、高さH（H > W になる）
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
 
@@ -1279,73 +1302,70 @@ async function generateShareImages(kits, rank) {
       const y = HEADER_H + row * (CARD_H + GAP);
 
       // カード背景
-      ctx.fillStyle = "#111";
+      ctx.fillStyle = "#111111";
       ctx.fillRect(x, y, CARD_W, CARD_H);
 
       // サムネイル
-      const THUMB_W = 86, THUMB_H = 76, THUMB_X = x + 6, THUMB_Y = y + 6;
+      const THUMB_W = 90, THUMB_H = 82, THUMB_X = x + 6, THUMB_Y = y + 6;
       ctx.fillStyle = "#1e1e1e";
       ctx.fillRect(THUMB_X, THUMB_Y, THUMB_W, THUMB_H);
 
-      if (kit.photoUrl) {
-        try {
-          await new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-              ctx.drawImage(img, THUMB_X, THUMB_Y, THUMB_W, THUMB_H);
-              resolve();
-            };
-            img.onerror = resolve;
-            img.src = kit.photoUrl;
-          });
-        } catch (_) {}
-      } else {
-        ctx.fillStyle = "#2a2a2a";
-        ctx.font = "20px Arial";
-        ctx.fillText("📦", THUMB_X + 28, THUMB_Y + 46);
+      const imgObj = imgCache[kit.id];
+      if (imgObj) {
+        // アスペクト比を保ちながらセンタークロップ
+        const iw = imgObj.naturalWidth, ih = imgObj.naturalHeight;
+        const scale = Math.max(THUMB_W / iw, THUMB_H / ih);
+        const dw = iw * scale, dh = ih * scale;
+        const dx = THUMB_X + (THUMB_W - dw) / 2;
+        const dy = THUMB_Y + (THUMB_H - dh) / 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(THUMB_X, THUMB_Y, THUMB_W, THUMB_H);
+        ctx.clip();
+        ctx.drawImage(imgObj, dx, dy, dw, dh);
+        ctx.restore();
       }
 
       // キット名
-      const TEXT_X = x + 98, TEXT_Y = y + 20, TEXT_W = CARD_W - 104;
+      const TEXT_X = x + 102, TEXT_Y = y + 18, TEXT_W = CARD_W - 108;
       ctx.fillStyle = "#e0e0e0";
       ctx.font = "bold 11px Arial";
+      // 長いテキストを折り返す
       const name = kit.name || "";
-      const maxLen = 22;
-      const line1 = name.slice(0, maxLen);
-      const line2 = name.length > maxLen ? name.slice(maxLen, maxLen * 2) : "";
+      const words = name;
+      const maxChars = Math.floor(TEXT_W / 7);
+      const line1 = words.slice(0, maxChars);
+      const line2 = words.length > maxChars ? words.slice(maxChars, maxChars * 2) : "";
+      const line3 = words.length > maxChars * 2 ? words.slice(maxChars * 2, maxChars * 3) : "";
       ctx.fillText(line1, TEXT_X, TEXT_Y);
-      if (line2) {
-        ctx.fillStyle = "#aaa";
-        ctx.fillText(line2, TEXT_X, TEXT_Y + 16);
-      }
+      if (line2) { ctx.fillStyle = "#ccc"; ctx.fillText(line2, TEXT_X, TEXT_Y + 15); }
+      if (line3) { ctx.fillStyle = "#aaa"; ctx.fillText(line3, TEXT_X, TEXT_Y + 30); }
 
       // スケールバッジ
       if (kit.scale) {
         const { bg, text } = getScaleColor(kit.scale);
-        const BADGE_Y = y + CARD_H - 28;
+        const BADGE_Y = y + CARD_H - 30;
         ctx.fillStyle = bg;
         ctx.beginPath();
-        ctx.roundRect(TEXT_X, BADGE_Y, 60, 18, 3);
+        ctx.roundRect(TEXT_X, BADGE_Y, 64, 20, 3);
         ctx.fill();
         ctx.fillStyle = text;
-        ctx.font = "bold 10px Arial";
-        ctx.fillText(kit.scale, TEXT_X + 6, BADGE_Y + 13);
+        ctx.font = "bold 11px Arial";
+        ctx.fillText(kit.scale, TEXT_X + 6, BADGE_Y + 14);
       }
 
-      // 状態バッジ
+      // 状態
       if (kit.condition) {
-        const COND_Y = y + CARD_H - 28;
-        ctx.fillStyle = "#1a1a1a";
-        ctx.font = "9px Arial";
+        const BADGE_Y = y + CARD_H - 30;
         ctx.fillStyle = "#555";
-        ctx.fillText(kit.condition, TEXT_X + 66, COND_Y + 13);
+        ctx.font = "10px Arial";
+        ctx.fillText(kit.condition, TEXT_X + 70, BADGE_Y + 14);
       }
 
       // 区切り線
       ctx.fillStyle = "#1a1a1a";
       ctx.fillRect(x + CARD_W, y, GAP, CARD_H);
-      ctx.fillRect(x, y + CARD_H, CARD_W, GAP);
+      ctx.fillRect(x, y + CARD_H, CARD_W + GAP, GAP);
     }
 
     // フッター
