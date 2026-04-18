@@ -124,8 +124,13 @@ function extractGradeAndScale(name) {
   else if (/\bMG\b/i.test(name))      grade = "MG";
   else if (/\bSD\b/i.test(name))      grade = "SD";
   else if (/BB戦士/i.test(name))      grade = "BB戦士";
+  else if (/SDW HEROES/i.test(name))   grade = "SDW HEROES";
+  else if (/SDBF/i.test(name))          grade = "SDBF";
+  else if (/ハロプラ/i.test(name))       grade = "ハロプラ";
+  else if (/EX MODEL|EXモデル/i.test(name)) grade = "EX MODEL";
+  else if (/HGM/i.test(name))           grade = "HGM";
 
-  const scaleMatch = name.match(/1\/(144|100|72|60|48|35|32|24|12)\b/);
+  const scaleMatch = name.match(/1\/(1700|1200|550|400|250|200|144|100|72|60|48|35|32|24|12)\b/);
   if (scaleMatch) scale = `1/${scaleMatch[1]}`;
 
   return { grade, scale };
@@ -182,10 +187,10 @@ function formatName(rawName) {
   // コア名：グレード・スケール・ノイズをさらに除去
   let core = cleaned;
   // グレード除去
-  core = core.replace(/\bMGSD\b|\bMGEX\b|\bPG\b|\bRG\b|\bHGUC\b|\bHGCE\b|\bHGBD\b|\bHGAC\b|\bHGGT\b|\bHGBO\b|\bHG\b|\bEG\b|\bRE\/100\b|\bMG\b|\bSD\b|BB戦士/gi, "");
+  core = core.replace(/\bMGSD\b|\bMGEX\b|\bPG\b|\bRG\b|\bHGUC\b|\bHGCE\b|\bHGBD\b|\bHGAC\b|\bHGGT\b|\bHGBO\b|\bHG\b|\bHGM\b|\bEG\b|\bRE\/100\b|\bMG\b|\bSD\b|BB戦士|SDW HEROES|SDBF|ハロプラ|EXモデル|EX MODEL/gi, "");
   // スケール除去
-  core = core.replace(/1\/(144|100|72|60|48|35|32|24|12)\s*スケール/g, "");
-  core = core.replace(/1\/(144|100|72|60|48|35|32|24|12)\b/g, "");
+  core = core.replace(/1\/(1700|1200|550|400|250|200|144|100|72|60|48|35|32|24|12)\s*スケール/g, "");
+  core = core.replace(/1\/(1700|1200|550|400|250|200|144|100|72|60|48|35|32|24|12)\b/g, "");
   // 残ったプラモ・ガンプラ単語
   core = core.replace(/\s*プラモデル\s*/g, " ");
   core = core.replace(/\s*ガンプラ\s*/g, " ");
