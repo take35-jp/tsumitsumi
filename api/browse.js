@@ -90,13 +90,24 @@ export default async function handler(req, res) {
     PG:   "PG ガンダム プラモデル バンダイ",
     SD:   "SD ガンダム BB戦士 バンダイ",
     MGSD: "MGSD ガンダム バンダイ",
+    "30MM":  "30MM 30 MINUTES MISSIONS プラモデル バンダイ",
+    "30MS":  "30MS 30 MINUTES SISTERS プラモデル バンダイ",
+    "30MF":  "30MF 30 MINUTES FANTASY プラモデル バンダイ",
+    "30MP":  "30MP 30 MINUTES PREFERENCE プラモデル バンダイ",
   };
 
   const baseKeyword = gradeKeywords[grade];
   if (!baseKeyword) return res.status(400).json({ error: "invalid grade" });
 
-  const keyword = q.trim() ? `${grade} ${q.trim()} ガンダム プラモデル` : baseKeyword;
+  // 30Minシリーズはガンダムを含まないのでキーワード生成を分岐
+  const is30min = ["30MM", "30MS", "30MF", "30MP"].includes(grade);
+  const keyword = q.trim()
+    ? is30min
+      ? `${grade} ${q.trim()} プラモデル`
+      : `${grade} ${q.trim()} ガンダム プラモデル`
+    : baseKeyword;
   const start = (Number(page) - 1) * 30 + 1;
+
 
   try {
     const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&query=${encodeURIComponent(keyword)}&results=30&start=${start}&output=json`;
