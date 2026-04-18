@@ -37,7 +37,7 @@ function removeNoise(name) {
   // 作品名の『』括弧除去
   n = n.replace(/『([^』]*)』/g, "$1");
   // 残ったバンダイ
-  n = n.replace(/\bバンダイ\b/g, "");
+  n = n.replace(/バンダイ/g, "");
 
   // 末尾の管理コード類（ZP... や数字コード）
   n = n.replace(/\s*（[A-Z]{2}\d{6,}）/g, "");
@@ -49,7 +49,7 @@ function removeNoise(name) {
   n = n.replace(/バンダイ\s*スピリッツ/g, "");
   n = n.replace(/BSP\(\d+\)/g, "");
   n = n.replace(/\bBANDAI\b/gi, "");
-  n = n.replace(/\bバンダイ\b/g, "");
+  n = n.replace(/バンダイ/g, "");
 
   // 商品状態・流通ノイズ
   n = n.replace(/送料無料/g, "");
@@ -77,7 +77,7 @@ function removeNoise(name) {
   n = n.replace(/プラスチックモデルキット/g, "");
 
   // 型番 [数字] や No.xx
-  n = n.replace(/\s*\[\d{3,}\]\s*/g, " ");
+  n = n.replace(/\s*\[\d+\]\s*/g, " ");
   n = n.replace(/\s*No\.\d+\s*/g, " ");
 
   // 数字のみのトークン（商品番号）
@@ -88,6 +88,10 @@ function removeNoise(name) {
   n = n.replace(/\(\s*\)/g, "");
   n = n.replace(/\s{2,}/g, " ").trim();
   n = n.replace(/^[\s\-・\/]+|[\s\-・\/]+$/g, "").trim();
+
+  // 最終バンダイ念押し除去
+  n = n.replace(/バンダイ/g, "").replace(/BANDAI/gi, "");
+  n = n.replace(/\s{2,}/g, " ").trim();
 
   return n;
 }
@@ -173,6 +177,7 @@ function formatName(rawName) {
   // グレード除去
   core = core.replace(/\bMGSD\b|\bMGEX\b|\bPG\b|\bRG\b|\bHGUC\b|\bHGCE\b|\bHGBD\b|\bHGAC\b|\bHGGT\b|\bHGBO\b|\bHG\b|\bEG\b|\bRE\/100\b|\bMG\b|\bSD\b|BB戦士/gi, "");
   // スケール除去
+  core = core.replace(/1\/(144|100|72|60|48|35|32|24|12)\s*スケール/g, "");
   core = core.replace(/1\/(144|100|72|60|48|35|32|24|12)\b/g, "");
   // 残ったプラモ・ガンプラ単語
   core = core.replace(/\s*プラモデル\s*/g, " ");
