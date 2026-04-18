@@ -1,21 +1,59 @@
 import { useState, useRef, useEffect } from "react";
 
 const SERIES_OPTIONS = [
+  // ── バンダイ ガンプラ ──
   "ガンプラ",
+  // ── バンダイ キャラクター ──
   "ポケプラ",
   "Figure-rise Standard", "Figure-rise Bust", "Figure-rise Mechanics",
-  "30 Minutes Sisters", "30 Minutes Missions",
+  "ウルトラマン（バンダイ）", "仮面ライダー（バンダイ）",
+  "スターウォーズ（バンダイ）", "マクロス（バンダイ）",
+  // ── バンダイ 30min ──
+  "30 Minutes Missions", "30 Minutes Sisters", "30 Minutes Fantasy", "30 Minutes Preference",
+  // ── バンダイ リアルロボット ──
+  "機動警察パトレイバー", "聖戦士ダンバイン", "重戦機エルガイム",
+  "機甲戦記ドラグナー", "装甲騎兵ボトムズ", "太陽の牙ダグラム",
+  "戦闘メカザブングル", "蒼き流星SPTレイズナー", "銀河漂流バイファム",
+  "機甲界ガリアン", "伝説巨神イデオン",
+  "超獣機神ダンクーガ", "新世紀エヴァンゲリオン", "交響詩篇エウレカセブン",
+  // ── コトブキヤ ──
   "フレームアームズ", "フレームアームズ・ガール", "ヘキサギア",
   "メガミデバイス", "アーマーガールズプロジェクト",
+  "アーマードコア（コトブキヤ）", "バーチャロン（コトブキヤ）",
+  "創彩少女庭園", "スタチュー（コトブキヤ）",
+  // ── グッドスマイルカンパニー / ボークス ──
   "MODEROID", "PLAMATE",
-  "FSS（ファイブスター物語）", "ドルフィードリーム",
-  "タミヤ",
+  "ドルフィードリーム",
+  // ── タカラトミー ──
+  "ゾイド", "トランスフォーマー", "ダイアクロン",
+  // ── ウェーブ ──
+  "マシーネンクリーガー", "ボトムズ（ウェーブ）", "マクロス（ウェーブ）",
+  // ── FSS ──
+  "FSS（ファイブスター物語）",
+  // ── タミヤ ──
+  "タミヤ 戦車・AFV", "タミヤ 艦船", "タミヤ 飛行機",
+  "タミヤ 自動車", "タミヤ バイク", "タミヤ ミリタリーフィギュア",
   "ミニ四駆",
-  "ハセガワ",
-  "フジミ",
-  "アオシマ",
-  "ピットロード", "ファインモールド", "ドラゴン", "トランペッター",
-  "ガレージキット", "レジンキット", "その他",
+  // ── ハセガワ ──
+  "ハセガワ 飛行機", "ハセガワ 艦船", "ハセガワ 自動車・バイク",
+  "ハセガワ キャラクター", "マシーネンクリーガー（ハセガワ）",
+  // ── フジミ ──
+  "フジミ 艦船", "フジミ 自動車", "フジミ 飛行機",
+  "フジミ 城", "フジミ キャラクター",
+  // ── アオシマ ──
+  "アオシマ 艦船", "アオシマ 自動車", "アオシマ バイク",
+  "アオシマ キャラクター",
+  // ── その他スケール系メーカー ──
+  "ピットロード", "ファインモールド",
+  "ドラゴン", "トランペッター", "タコム", "ブロンコ",
+  "レベル（ドイツ）", "エアフィックス", "ズベズダ",
+  // ── ジャンル別（メーカー混在） ──
+  "戦車・AFV", "艦船", "飛行機", "自動車", "バイク",
+  "城・建築", "SF・宇宙船", "恐竜・生物",
+  // ── ガレージキット系 ──
+  "ガレージキット", "レジンキット",
+  // ── その他 ──
+  "その他",
 ];
 const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "HG", "RG", "MG", "RE/100", "MGSD", "MGEX", "PG", "SD", "フルメカニクス", "UNLEASHED", "その他"];
 
@@ -85,10 +123,37 @@ function guessSeriesFromName(name) {
   if (/フレームアームズ|Frame Arms/i.test(name)) return "フレームアームズ";
   if (/ヘキサギア|Hexa Gear/i.test(name)) return "ヘキサギア";
   if (/メガミデバイス/i.test(name)) return "メガミデバイス";
+  if (/アーマーガールズ/i.test(name)) return "アーマーガールズプロジェクト";
+  if (/アーマードコア|ARMORED CORE/i.test(name)) return "アーマードコア（コトブキヤ）";
+  if (/創彩少女庭園/i.test(name)) return "創彩少女庭園";
+  if (/30MF|30 Minutes Fantasy/i.test(name)) return "30 Minutes Fantasy";
+  if (/30MP|30 Minutes Preference/i.test(name)) return "30 Minutes Preference";
   if (/30MS|30 Minutes Sisters/i.test(name)) return "30 Minutes Sisters";
   if (/30MM|30 Minutes Missions/i.test(name)) return "30 Minutes Missions";
   if (/Figure-rise/i.test(name)) return "Figure-rise Standard";
   if (/ポケモン|ポケプラ|Pokemon/i.test(name)) return "ポケプラ";
+  if (/ゾイド|ZOIDS/i.test(name)) return "ゾイド";
+  if (/トランスフォーマー|Transformers/i.test(name)) return "トランスフォーマー";
+  if (/マシーネンクリーガー|Ma.K\.|Maschinen Krieger/i.test(name)) return "マシーネンクリーガー";
+  if (/パトレイバー/i.test(name)) return "機動警察パトレイバー";
+  if (/ダンバイン|オーラバトラー/i.test(name)) return "聖戦士ダンバイン";
+  if (/エルガイム/i.test(name)) return "重戦機エルガイム";
+  if (/ドラグナー/i.test(name)) return "機甲戦記ドラグナー";
+  if (/ボトムズ|スコープドッグ|アーマードトルーパー/i.test(name)) return "装甲騎兵ボトムズ";
+  if (/ダグラム/i.test(name)) return "太陽の牙ダグラム";
+  if (/ザブングル/i.test(name)) return "戦闘メカザブングル";
+  if (/レイズナー/i.test(name)) return "蒼き流星SPTレイズナー";
+  if (/バイファム/i.test(name)) return "銀河漂流バイファム";
+  if (/ガリアン/i.test(name)) return "機甲界ガリアン";
+  if (/イデオン/i.test(name)) return "伝説巨神イデオン";
+  if (/ダンクーガ/i.test(name)) return "超獣機神ダンクーガ";
+  if (/エヴァンゲリオン|エヴァ|EVA/i.test(name)) return "新世紀エヴァンゲリオン";
+  if (/エウレカセブン/i.test(name)) return "交響詩篇エウレカセブン";
+  if (/ファイブスター|F\.S\.S\.|FSS/i.test(name)) return "FSS（ファイブスター物語）";
+  if (/マクロス|バルキリー|VF-/i.test(name)) return "マクロス（バンダイ）";
+  if (/スターウォーズ|STAR WARS/i.test(name)) return "スターウォーズ（バンダイ）";
+  if (/ウルトラマン/i.test(name)) return "ウルトラマン（バンダイ）";
+  if (/仮面ライダー/i.test(name)) return "仮面ライダー（バンダイ）";
   if (/ミニ四駆/i.test(name)) return "ミニ四駆";
   if (/\bPG\b|\bMG\b|\bRG\b|\bHG\b|\bEG\b|\bSD\b|ガンダム|Gundam/i.test(name)) return "ガンプラ";
   return "";
@@ -649,7 +714,7 @@ const suggS = {
 // ---- Help Modal ----
 // ---- Browse Modal（グレード別一覧から一括登録）----
 function BrowseModal({ onBulkAdd, onClose }) {
-  const GRADES = ["HG", "RG", "MG", "MGSD", "PG", "SD"];
+  const GRADES = ["HG", "RG", "MG", "MGSD", "PG", "SD", "30MM", "30MS", "30MF", "30MP"];
   const [grade, setGrade] = useState("HG");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -691,7 +756,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
 
   const handleBulkAdd = () => {
     const toAdd = Object.values(selectedItems).map((item, idx) => ({
-      ...{ name: "", series: "ガンプラ", scale: "", purchaseDate: "", price: "", count: 1, rating: 0,
+      ...{ name: "", series: "", scale: "", purchaseDate: "", price: "", count: 1, rating: 0,
            photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "", condition: "", conditionNote: "", tags: [] },
       ...item,
       id: Date.now() + idx,
@@ -721,7 +786,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
 
       <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
         <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
-          ⚠️ <strong>注意：</strong>この機能はガンプラのみ対応しています。また登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
+          ⚠️ <strong>注意：</strong>登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
         </div>
       </div>
 
