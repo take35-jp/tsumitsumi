@@ -27,8 +27,10 @@ function removeNoise(name) {
   n = n.replace(/『中古[^』]*』/g, "");
   n = n.replace(/『[^』]*在庫[^』]*』/g, "");
   n = n.replace(/《[^》]*》/g, "");
-  // 「」括弧を外して中身を残す
+  // 「」括弧を外して中身を残す（閉じていない場合も含む）
   n = n.replace(/「([^」]*)」/g, "$1");
+  n = n.replace(/「[^」]*$/g, "");
+  n = n.replace(/^[^「]*」/g, "");
   // HTMLエンティティ変換
   n = n.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ");
   n = n.replace(/\[[^\]]*在庫[^\]]*\]/g, "");
