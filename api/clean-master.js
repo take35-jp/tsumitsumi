@@ -32,6 +32,13 @@ function removeNoise(name) {
   n = n.replace(/\[[^\]]*BANDAI[^\]]*\]/gi, "");
   n = n.replace(/（[^\)]*中古[^\)]*）/g, "");
 
+  // {PTM}等のノイズ
+  n = n.replace(/{[A-Z]+}/g, "");
+  // 作品名の『』括弧除去
+  n = n.replace(/『([^』]*)』/g, "$1");
+  // 残ったバンダイ
+  n = n.replace(/\bバンダイ\b/g, "");
+
   // 末尾の管理コード類（ZP... や数字コード）
   n = n.replace(/\s*（[A-Z]{2}\d{6,}）/g, "");
   n = n.replace(/\s*\([A-Z]{2}\d{6,}\)/g, "");
