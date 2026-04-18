@@ -47,6 +47,7 @@ function removeNoise(name) {
   n = n.replace(/BANDAI SPIRITS/gi, "");
   n = n.replace(/バンダイスピリッツ/g, "");
   n = n.replace(/バンダイ\s*スピリッツ/g, "");
+  n = n.replace(/スピリッツ/g, "");
   n = n.replace(/BSP\(\d+\)/g, "");
   n = n.replace(/\bBANDAI\b/gi, "");
   n = n.replace(/バンダイ/g, "");
