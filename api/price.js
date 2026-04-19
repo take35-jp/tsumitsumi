@@ -1,14 +1,14 @@
-// api/price.js - v7（商品名ファースト）
+// api/price.js - v8（商品名のみ・JAN検索完全廃止）
 //
 // 設計思想：
-//   JANは「どの箱か」の識別子に過ぎない。再販・値上げでJANが変わっても商品名は変わらない。
-//   → 商品名でYahoo検索して定価を取るのがメイン。JANは補助。
+//   JANで価格を引くのは「古い定価が返ってくる」リスクがある。
+//   商品名で検索すれば現在の最新定価（現行品の定価）が返ってくる。
+//   → JAN検索フォールバックを完全廃止。商品名検索オンリー。
 //
 // 取得フロー:
 //   Step1: JANでSupabaseから商品名を取得
-//   Step2: 商品名でYahoo検索 → fixedPrice or listPrice（メイン）
-//   Step3: JANで直接Yahoo検索 → fixedPrice or listPrice（補完）
-//   ※ 販売価格(price)は絶対使わない・プレ値は返さない
+//   Step2: 商品名でYahoo検索 → fixedPrice or listPrice最頻値
+//   取れなければ null を返す（古い定価・プレ値は絶対返さない）
 
 const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
 const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
@@ -25,28 +25,28 @@ function mode(arr) {
   return Math.min(...candidates);
 }
 
-// Yahoo検索 → fixedPrice or listPrice のみ（販売価格は使わない）
-async function yahooSearch(params) {
+// Yahoo検索 → fixedPrice or listPrice のみ
+async function yahooSearch(keyword) {
   try {
-    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=30&output=json&${params}`;
+    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=30&output=json&query=${encodeURIComponent(keyword)}`;
     const r = await fetch(url);
     if (!r.ok) return null;
     const hits = ((await r.json())?.hits || [])
       .filter(h => !SKIP_WORDS.test(h.name || ""));
 
-    // 1. fixedPrice（最信頼 - メーカー設定の正確な定価）
+    // fixedPrice最優先
     for (const h of hits) {
       const f = h.priceLabel?.fixedPrice;
-      if (f && f > 0) return { price: f, source: "fixed" };
+      if (f && f > 0) return { price: f, source: "yahoo_fixed" };
     }
 
-    // 2. listPrice最頻値（定価欄 - 2件以上一致で信頼）
+    // listPrice最頻値（2件以上一致のみ）
     const lists = hits.map(h => h.priceLabel?.listPrice).filter(p => p && p > 0 && p < 300000);
     if (lists.length >= 2) {
       const m = mode(lists);
-      if (m) return { price: m, source: "list_mode" };
+      if (m) return { price: m, source: "yahoo_list_mode" };
     }
-    if (lists.length === 1) return { price: lists[0], source: "list_single" };
+    if (lists.length === 1) return { price: lists[0], source: "yahoo_list_single" };
 
     return null;
   } catch { return null; }
@@ -63,74 +63,58 @@ async function getProduct(jan) {
   } catch { return null; }
 }
 
-// 商品名からYahoo検索用キーワードを生成
+// 商品名から検索キーワードを複数パターン生成
 function makeKeywords(name, scale, maker) {
-  // ノイズ除去
   const clean = (name || "")
     .replace(/BANDAI SPIRITS|バンダイスピリッツ|バンダイ|BANDAI/gi, "")
     .replace(/色分け済み|再販|新品|在庫|プラモデル|ガンプラ/gi, "")
     .replace(/\s+/g, " ").trim();
 
   const kws = [];
-  // パターン1: スケール + 商品名（最も精度高い）
-  if (scale) kws.push(`${scale} ${clean.slice(0, 20)} プラモデル`);
-  // パターン2: 商品名のみ
-  kws.push(`${clean.slice(0, 30)} プラモデル`);
-  // パターン3: メーカー名付き（コトブキヤ・タミヤ・ハセガワ等）
-  const makerMap = { タミヤ:'タミヤ', ハセガワ:'ハセガワ', コトブキヤ:'コトブキヤ', アオシマ:'アオシマ', フジミ:'フジミ' };
-  if (maker && makerMap[maker]) kws.push(`${makerMap[maker]} ${clean.slice(0, 20)} プラモデル`);
-
+  // パターン1: スケール＋商品名（最精度）
+  if (scale && !['1/144','1/100','1/72','1/35','1/48','1/700','1/12','1/24'].includes(scale)) {
+    kws.push(`${scale} ${clean.slice(0, 22)} プラモデル`);
+  }
+  // パターン2: 商品名フル（括弧前まで）
+  const bracketIdx = clean.search(/[（(]/);
+  const shortName = bracketIdx > 5 ? clean.slice(0, bracketIdx).trim() : clean.slice(0, 30);
+  kws.push(`${shortName} プラモデル`);
+  // パターン3: メーカー名付き
+  const makerMap = { タミヤ:'タミヤ', ハセガワ:'ハセガワ', コトブキヤ:'コトブキヤ', アオシマ:'アオシマ', フジミ:'フジミ', ウェーブ:'ウェーブ' };
+  if (maker && makerMap[maker]) {
+    kws.push(`${makerMap[maker]} ${clean.slice(0, 18)} プラモデル`);
+  }
   return [...new Set(kws.map(k => k.trim().slice(0, 60)))];
-}
-
-// JAN直接検索はfixedPriceのみ（listPriceは古い定価の可能性があるため使わない）
-async function yahooSearchFixedOnly(params) {
-  try {
-    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=30&output=json&${params}`;
-    const r = await fetch(url);
-    if (!r.ok) return null;
-    const hits = ((await r.json())?.hits || [])
-      .filter(h => !SKIP_WORDS.test(h.name || ""));
-    for (const h of hits) {
-      const f = h.priceLabel?.fixedPrice;
-      if (f && f > 0) return { price: f, source: "fixed" };
-    }
-    return null; // fixedPriceがなければnull（listPrice・販売価格は使わない）
-  } catch { return null; }
 }
 
 export default async function handler(req, res) {
   const jan = (req.query.jan || "").trim();
   if (!jan || jan.length < 8) return res.status(400).json({ error: "jan required" });
 
-  // Step1: JANでSupabaseから商品名取得
+  // Step1: JANでマスタから商品名取得
   const product = await getProduct(jan);
-
-  // Step2: 商品名でYahoo検索（メイン - JANに依存しない）
-  if (product?.name) {
-    const keywords = makeKeywords(product.name, product.scale, product.maker);
-    for (const kw of keywords) {
-      const result = await yahooSearch(`query=${encodeURIComponent(kw)}`);
-      if (result) {
-        return res.status(200).json({
-          jan, price: result.price,
-          priceStr: `¥${result.price.toLocaleString("ja-JP")}`,
-          source: `yahoo_${result.source}_name`,
-        });
-      }
-    }
-  }
-
-  // Step3: JANで直接検索（fixedPriceのみ - listPriceは古い可能性があるため使わない）
-  const janResult = await yahooSearchFixedOnly(`jan_code=${encodeURIComponent(jan)}`);
-  if (janResult) {
+  if (!product?.name) {
+    // マスタ未登録 → 価格取得不可（JANで直接検索はしない）
     return res.status(200).json({
-      jan, price: janResult.price,
-      priceStr: `¥${janResult.price.toLocaleString("ja-JP")}`,
-      source: `yahoo_fixed_jan`,
+      jan, price: null, priceStr: null, source: null,
+      message: "not_in_master",
     });
   }
 
+  // Step2: 商品名でYahoo検索（複数キーワードパターン）
+  const keywords = makeKeywords(product.name, product.scale, product.maker);
+  for (const kw of keywords) {
+    const result = await yahooSearch(kw);
+    if (result) {
+      return res.status(200).json({
+        jan, price: result.price,
+        priceStr: `¥${result.price.toLocaleString("ja-JP")}`,
+        source: result.source,
+      });
+    }
+  }
+
+  // 取得不可（商品名検索でも定価情報なし）
   return res.status(200).json({
     jan, price: null, priceStr: null, source: null, message: "not_found",
   });
