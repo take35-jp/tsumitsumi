@@ -172,12 +172,23 @@ function guessScaleFromName(name) {
 
 async function fetchProductByJAN(jan) {
   try {
-    const res = await fetch(`/api/search?jan=${jan}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.name) {
-        return { name: data.name, photoUrl: data.photoUrl || "", price: data.price || "", series: guessSeriesFromName(data.name), scale: guessScaleFromName(data.name) };
-      }
+    // 商品情報 + 希望小売価格を並行取得
+    const [searchRes, priceRes] = await Promise.all([
+      fetch(`/api/search?jan=${jan}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/price?jan=${jan}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+
+    const retailPrice = priceRes?.price ? String(priceRes.price) : "";
+
+    if (searchRes?.name) {
+      return {
+        name: searchRes.name,
+        photoUrl: searchRes.photoUrl || "",
+        price: retailPrice || searchRes.price || "", // 希望小売価格優先
+        series: searchRes.series || guessSeriesFromName(searchRes.name),
+        scale: searchRes.scale || guessScaleFromName(searchRes.name),
+        _priceSource: priceRes?.source || "",
+      };
     }
   } catch (_) {}
   return null;
@@ -1115,6 +1126,70 @@ function HelpModal({ onClose }) {
         <span style={hs.title}>❓ ヘルプ・使い方</span>
         <button style={hs.closeBtn} onClick={onClose}>✕</button>
       </div>
+
+      {/* バージョン履歴 */}
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>📋 バージョン履歴</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "2px 8px" }}>NEW</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.4.0</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/19</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+              ・スケール・シリーズフィルターに「未設定」を追加<br/>
+              ・マスタDB 5,900件超に拡充（タミヤ/ハセガワ/コトブキヤ等）<br/>
+              ・商品名クリーニング強化（爆買・中古・発送日等を除去）
+            </div>
+          </div>
+          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.3.0</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/18</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+              ・マスタDB 3,000件超に拡充<br/>
+              ・バーコードスキャン精度向上（ZBar WASM対応）<br/>
+              ・グレード別一括登録（☰ボタン）追加
+            </div>
+          </div>
+          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.2.0</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/13</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+              ・タグ機能追加<br/>
+              ・一括編集モード追加<br/>
+              ・Xシェア画像生成機能追加
+            </div>
+          </div>
+          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.1.0</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/11</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+              ・バックアップ（エクスポート/インポート）機能追加<br/>
+              ・グリッド表示モード追加<br/>
+              ・状態・評価フィルター追加
+            </div>
+          </div>
+          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.0.0</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/10</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+              ・TSUMI TSUMI リリース 🎉<br/>
+              ・バーコードスキャン登録<br/>
+              ・積みプラ一覧管理の基本機能
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div style={hs.section}>
         <div style={hs.sectionTitle}>📱 基本的な使い方</div>
         <div style={hs.item}><span style={hs.num}>1</span>右下の📷ボタンでバーコードをスキャン登録</div>
@@ -1645,6 +1720,8 @@ export default function App() {
   const [filterTags, setFilterTags] = useState([]); // 選択中のタグ
   const [filterScale, setFilterScale] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
+  const [continuousScan, setContinuousScan] = useState(false);
+  const [continuousQueue, setContinuousQueue] = useState([]); // 連続スキャンキュー
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
   const [viewMode, setViewMode] = useState("list");
@@ -1690,6 +1767,18 @@ export default function App() {
   };
 
   const handleJanDetected = async (jan) => {
+    if (continuousScan) {
+      // 連続スキャンモード：スキャナーを閉じずにキューに追加
+      setScanLoading(true);
+      const data = await fetchProductByJAN(jan);
+      setScanLoading(false);
+      const newKit = data?.name
+        ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl, id: Date.now() + Math.random() }
+        : { ...emptyForm, jan, id: Date.now() + Math.random() };
+      setContinuousQueue(q => [...q, newKit]);
+      // スキャナーはそのまま継続
+      return;
+    }
     setShowScanner(false);
     setScanLoading(true);
     const data = await fetchProductByJAN(jan);
@@ -1697,6 +1786,14 @@ export default function App() {
     setForm(data?.name ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl } : { ...emptyForm, jan });
     setEditId(null);
     setShowForm(true);
+  };
+
+  // 連続スキャンキューを一括登録
+  const handleBulkScanRegister = () => {
+    if (continuousQueue.length === 0) return;
+    setKits(prev => [...prev, ...continuousQueue.map(k => ({ ...k, id: Date.now() + Math.random() }))]);
+    setContinuousQueue([]);
+    setShowScanner(false);
   };
 
   const handleBulkAdd = (newKits) => {
@@ -1785,6 +1882,15 @@ export default function App() {
   const rank = getRank(totalKits);
   const pending = kits.filter((k) => !k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
   const done = kits.filter((k) => k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
+  // 購入金額合計（price入力済みのもの）
+  const totalPrice = kits.reduce((sum, k) => {
+    const p = parseInt((k.price || "").toString().replace(/[^0-9]/g, ""), 10);
+    return sum + (isNaN(p) ? 0 : p * (k.count || 1));
+  }, 0);
+  const pendingPrice = kits.filter(k => !k.completed).reduce((sum, k) => {
+    const p = parseInt((k.price || "").toString().replace(/[^0-9]/g, ""), 10);
+    return sum + (isNaN(p) ? 0 : p * (k.count || 1));
+  }, 0);
 
   let filtered = kits.filter((k) =>
     filter === "pending" ? !k.completed : filter === "done" ? k.completed : true
@@ -1867,6 +1973,16 @@ export default function App() {
           </div>
         ))}
       </div>
+      {totalPrice > 0 && !bulkMode && (
+        <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "6px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>💴 積みプラ総額</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>¥{pendingPrice.toLocaleString()}</span>
+            {done > 0 && <span style={{ fontSize: 10, color: "#9ca3af" }}>（完成含む計 ¥{totalPrice.toLocaleString()}）</span>}
+          </div>
+          <span style={{ fontSize: 10, color: "#d1d5db" }}>価格入力分のみ</span>
+        </div>
+      )}
 
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", display: bulkMode ? "none" : undefined }}>
         <div style={{ padding: "8px 16px 4px" }}>
@@ -2115,7 +2231,14 @@ export default function App() {
 
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>スキャン登録</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+            <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>スキャン登録</span>
+            <button
+              style={{ background: "rgba(0,0,0,0.5)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", fontSize: 10, padding: "2px 8px", borderRadius: 20, cursor: "pointer" }}
+              onClick={() => { setContinuousScan(v => !v); }}>
+              {continuousScan ? "🔁 連続ON" : "1回のみ"}
+            </button>
+          </div>
           <button style={{ ...s.fab, background: "#000", padding: 0, overflow: "hidden" }} onClick={() => setShowScanner(true)}>
             <img src="/camera-icon.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="スキャン" />
           </button>
@@ -2172,7 +2295,28 @@ export default function App() {
       {showScanner && (
         <div style={{ ...s.overlay, alignItems: "flex-start" }} onClick={() => setShowScanner(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <BarcodeScanner onDetected={handleJanDetected} onClose={() => setShowScanner(false)} />
+            <BarcodeScanner onDetected={handleJanDetected} onClose={() => { setShowScanner(false); if (continuousScan && continuousQueue.length > 0) handleBulkScanRegister(); }} />
+            {continuousScan && continuousQueue.length > 0 && (
+              <div style={{ background: "#fff", padding: "12px 16px", borderTop: "1px solid #f0f0f0" }}>
+                <div style={{ fontSize: 12, color: "#374151", marginBottom: 8, fontWeight: 700 }}>
+                  📦 スキャン済み {continuousQueue.length}件
+                </div>
+                <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
+                  {continuousQueue.map((k, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
+                      {k.photoUrl && <img src={k.photoUrl} style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} alt="" />}
+                      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{k.name || k.jan}</span>
+                      <button style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14 }}
+                        onClick={() => setContinuousQueue(q => q.filter((_, j) => j !== i))}>✕</button>
+                    </div>
+                  ))}
+                </div>
+                <button style={{ width: "100%", padding: "10px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: "pointer" }}
+                  onClick={handleBulkScanRegister}>
+                  ✓ {continuousQueue.length}件をまとめて登録
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
