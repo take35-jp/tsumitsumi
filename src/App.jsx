@@ -1119,75 +1119,46 @@ function TagInput({ tags, onChange, allTags = [] }) {
   );
 }
 
+// ---- 全バージョン履歴モーダル ----
+function AllVersionsModal({ onClose }) {
+  const versions = [
+    { ver: "v1.5.0", date: "2026/04/19", isNew: true, items: ["税込希望小売価格の自動取得（バーコードスキャン時）", "積みプラ総額の表示（税込希望小売価格×個数）・表示/非表示切替", "連続スキャンモード追加", "月1自動マスタ更新（Cron Job）", "更新履歴ページ追加"] },
+    { ver: "v1.4.0", date: "2026/04/19", items: ["スケール・シリーズフィルターに「未設定」を追加", "マスタDB 5,900件超に拡充（タミヤ/ハセガワ/コトブキヤ等）", "商品名クリーニング強化（爆買・中古・発送日等を除去）"] },
+    { ver: "v1.3.0", date: "2026/04/18", items: ["マスタDB 3,000件超に拡充", "バーコードスキャン精度向上（ZBar WASM対応）", "グレード別一括登録（☰ボタン）追加"] },
+    { ver: "v1.2.0", date: "2026/04/13", items: ["タグ機能追加", "一括編集モード追加", "Xシェア画像生成機能追加"] },
+    { ver: "v1.1.0", date: "2026/04/11", items: ["バックアップ（エクスポート/インポート）機能追加", "グリッド表示モード追加", "状態・評価フィルター追加"] },
+    { ver: "v1.0.0", date: "2026/04/10", items: ["TSUMI TSUMI リリース 🎉", "バーコードスキャン登録", "積みプラ一覧管理の基本機能"] },
+  ];
+  return (
+    <div style={hs.wrap}>
+      <div style={hs.header}>
+        <span style={hs.title}>📋 すべての更新履歴</span>
+        <button style={hs.closeBtn} onClick={onClose}>✕</button>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {versions.map((v, i) => (
+          <div key={v.ver} style={{ background: v.isNew ? "#f0fdf4" : "#fafafa", border: `1px solid ${v.isNew ? "#bbf7d0" : "#e5e7eb"}`, borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              {v.isNew && <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>}
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{v.ver}</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>{v.date}</span>
+            </div>
+            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+              {v.items.map((item, j) => <div key={j}>・{item}</div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HelpModal({ onClose }) {
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
         <span style={hs.title}>❓ ヘルプ・使い方</span>
         <button style={hs.closeBtn} onClick={onClose}>✕</button>
-      </div>
-
-      {/* バージョン履歴 */}
-      <div style={hs.section}>
-        <div style={hs.sectionTitle}>📋 バージョン履歴</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "2px 8px" }}>NEW</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.4.0</span>
-              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/19</span>
-            </div>
-            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-              ・スケール・シリーズフィルターに「未設定」を追加<br/>
-              ・マスタDB 5,900件超に拡充（タミヤ/ハセガワ/コトブキヤ等）<br/>
-              ・商品名クリーニング強化（爆買・中古・発送日等を除去）
-            </div>
-          </div>
-          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.3.0</span>
-              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/18</span>
-            </div>
-            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-              ・マスタDB 3,000件超に拡充<br/>
-              ・バーコードスキャン精度向上（ZBar WASM対応）<br/>
-              ・グレード別一括登録（☰ボタン）追加
-            </div>
-          </div>
-          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.2.0</span>
-              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/13</span>
-            </div>
-            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-              ・タグ機能追加<br/>
-              ・一括編集モード追加<br/>
-              ・Xシェア画像生成機能追加
-            </div>
-          </div>
-          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.1.0</span>
-              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/11</span>
-            </div>
-            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-              ・バックアップ（エクスポート/インポート）機能追加<br/>
-              ・グリッド表示モード追加<br/>
-              ・状態・評価フィルター追加
-            </div>
-          </div>
-          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>v1.0.0</span>
-              <span style={{ fontSize: 11, color: "#9ca3af" }}>2026/04/10</span>
-            </div>
-            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
-              ・TSUMI TSUMI リリース 🎉<br/>
-              ・バーコードスキャン登録<br/>
-              ・積みプラ一覧管理の基本機能
-            </div>
-          </div>
-        </div>
       </div>
 
       <div style={hs.section}>
@@ -1241,6 +1212,58 @@ function HelpModal({ onClose }) {
           style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 20, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
           𝕏 @tsumitsumi_pla にDM
         </a>
+      </div>
+
+      {/* バージョン履歴（最下部・直近3件） */}
+      <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>📋 更新履歴</span>
+          <button
+            style={{ fontSize: 11, color: "#4f8ef7", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+            onClick={() => window.__showAllVersions && window.__showAllVersions()}>
+            すべて見る
+          </button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* v1.5.0 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.5.0</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/19</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・税込希望小売価格の自動取得（バーコードスキャン時）<br/>
+              ・積みプラ総額の表示（税込希望小売価格×個数）<br/>
+              ・連続スキャンモード追加<br/>
+              ・月1自動マスタ更新（Cron Job）
+            </div>
+          </div>
+          {/* v1.4.0 */}
+          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.4.0</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/19</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・スケール・シリーズフィルターに「未設定」を追加<br/>
+              ・マスタDB 5,900件超に拡充（タミヤ/ハセガワ/コトブキヤ等）<br/>
+              ・商品名クリーニング強化
+            </div>
+          </div>
+          {/* v1.3.0 */}
+          <div style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.3.0</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/18</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・マスタDB 3,000件超に拡充<br/>
+              ・バーコードスキャン精度向上（ZBar WASM対応）<br/>
+              ・グレード別一括登録（☰ボタン）追加
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1717,6 +1740,12 @@ export default function App() {
   }, []); // 初回マウント時のみ
 
   useEffect(() => {
+    // HelpModal内の「すべて見る」ボタンから呼ばれる
+    window.__showAllVersions = () => setShowAllVersions(true);
+    return () => { delete window.__showAllVersions; };
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const jan = params.get("jan");
     if (jan && jan.length >= 8) {
@@ -1745,6 +1774,7 @@ export default function App() {
   const [filterTags, setFilterTags] = useState([]); // 選択中のタグ
   const [filterScale, setFilterScale] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
+  const [showAllVersions, setShowAllVersions] = useState(false);
   const [continuousScan, setContinuousScan] = useState(false);
   const [showPriceTotal, setShowPriceTotal] = useState(() => {
     try { return localStorage.getItem("tsumitsumi_showPrice") !== "false"; } catch { return true; }
@@ -2385,6 +2415,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowHelp(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <HelpModal onClose={() => setShowHelp(false)} />
+          </div>
+        </div>
+      )}
+
+      {showAllVersions && (
+        <div style={s.overlay} onClick={() => setShowAllVersions(false)}>
+          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <AllVersionsModal onClose={() => setShowAllVersions(false)} />
           </div>
         </div>
       )}
