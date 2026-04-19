@@ -1158,7 +1158,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.5.0", date: "2026/04/19", isNew: true, items: ["税込希望小売価格の自動取得（バーコードスキャン時）", "積みプラ総額の表示（税込希望小売価格×個数）・表示/非表示切替", "連続スキャンモード追加", "月1自動マスタ更新（Cron Job）", "更新履歴ページ追加"] },
+    { ver: "v1.5.1", date: "2026/04/19", isNew: true, items: ["希望小売価格をマスタDB格納方式に変更（正確な定価を保持）", "JAN編集フォームにマスタ照合機能追加", "一括定価取得の進捗インジケーター改善"] },
+    { ver: "v1.5.0", date: "2026/04/19", isNew: false, items: ["税込希望小売価格の自動取得（バーコードスキャン時）", "積みプラ総額の表示（税込希望小売価格×個数）・表示/非表示切替", "連続スキャンモード追加", "月1自動マスタ更新（Cron Job）", "更新履歴ページ追加"] },
     { ver: "v1.4.0", date: "2026/04/19", items: ["スケール・シリーズフィルターに「未設定」を追加", "マスタDB 5,900件超に拡充（タミヤ/ハセガワ/コトブキヤ等）", "商品名クリーニング強化（爆買・中古・発送日等を除去）"] },
     { ver: "v1.3.0", date: "2026/04/18", items: ["マスタDB 3,000件超に拡充", "バーコードスキャン精度向上（ZBar WASM対応）", "グレード別一括登録（☰ボタン）追加"] },
     { ver: "v1.2.0", date: "2026/04/13", items: ["タグ機能追加", "一括編集モード追加", "Xシェア画像生成機能追加"] },
@@ -1265,7 +1266,7 @@ function HelpModal({ onClose }) {
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.5.0</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.5.1</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/19</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
