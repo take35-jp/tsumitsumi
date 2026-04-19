@@ -1,67 +1,67 @@
 // api/price.js
-// JANコードから「税込メーカー希望小売価格」を取得する専用API
-// GET /api/price?jan=4573102616098
+// JANコードからメーカー希望小売価格（税込）を取得
 //
-// 取得ソース（信頼できるものだけ使用）:
-//   1. Yahoo! V3 → priceLabel.fixedPrice  ← バンダイ等が明示的に設定した定価
-//   2. 楽天市場  → listPrice              ← メーカー参考価格として登録された定価
+// 取得ソース優先順:
+//   1. あみあみ API → c_price_taxed（参考価格 = メーカー希望小売価格）
+//   2. Yahoo! V3   → priceLabel.fixedPrice（メーカーが設定した定価）
 //
-// ※ 販売価格・最安値・最頻値は使用しない（プレ値・セール価格が混入するため）
-// ※ 取得できない場合は price: null を返す（ユーザーに手入力させる）
+// ※ 販売価格・最安値・プレ値は絶対に返さない
+// ※ 取得できない場合は price: null を返す
 
 const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUUwTkdabE4yTTJNdw";
-const RAKUTEN_APP_ID = process.env.RAKUTEN_APP_ID || "";
-
 const SKIP_WORDS = /中古|即納|訳あり|ジャンク|used|二次流通|転売|プレ値|高額/i;
 
-// ---------- Yahoo! Shopping API V3 ----------
-async function fetchYahooFixedPrice(jan) {
+// ---------- あみあみ API ----------
+// c_price_taxed = 参考価格（税込）= メーカー希望小売価格
+async function fetchAmiami(jan) {
   try {
-    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&jan_code=${encodeURIComponent(jan)}&results=20&output=json`;
-    const r = await fetch(url);
+    const url = `https://api.amiami.jp/api/v1.0/items?s_jan_code=${encodeURIComponent(jan)}&lang=ja&pagemax=3`;
+    const r = await fetch(url, {
+      headers: {
+        "X-User-Key": "amiami_dev",
+        "Accept": "application/json",
+      }
+    });
     if (!r.ok) return null;
     const data = await r.json();
-    const hits = data?.hits || [];
+    const items = data?.items || [];
 
-    // 新品のみ
-    const newItems = hits.filter(h => !SKIP_WORDS.test(h.name || ""));
-    const items = newItems.length > 0 ? newItems : hits;
+    // 新品・通常商品のみ（中古・プレ値除外）
+    const newItems = items.filter(item =>
+      !SKIP_WORDS.test(item.sname || "") &&
+      item.condition === "0" // 0 = 新品
+    );
+    const targets = newItems.length > 0 ? newItems : items;
 
-    // priceLabel.fixedPrice のみ使用（これがメーカー希望小売価格）
-    for (const item of items) {
-      const fixed = item.priceLabel?.fixedPrice;
-      if (fixed && fixed > 0) {
-        return { price: fixed, source: "yahoo_fixed" };
+    for (const item of targets) {
+      // c_price_taxed = 参考価格（メーカー希望小売価格・税込）
+      const ref = item.c_price_taxed;
+      if (ref && ref > 0) {
+        return { price: ref, source: "amiami_ref" };
       }
     }
-
-    // fixedPrice が取れない場合は null（販売価格は使わない）
     return null;
   } catch (e) {
     return null;
   }
 }
 
-// ---------- 楽天市場API ----------
-async function fetchRakutenListPrice(jan) {
-  if (!RAKUTEN_APP_ID) return null;
+// ---------- Yahoo! Shopping API V3 ----------
+// fixedPrice のみ使用（メーカーが明示的に設定した定価）
+async function fetchYahooFixed(jan) {
   try {
-    const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?applicationId=${RAKUTEN_APP_ID}&keyword=${encodeURIComponent(jan)}&hits=10&format=json`;
+    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&jan_code=${encodeURIComponent(jan)}&results=20&output=json`;
     const r = await fetch(url);
     if (!r.ok) return null;
     const data = await r.json();
-    const items = (data?.Items || [])
-      .map(i => i.Item)
-      .filter(i => i && !SKIP_WORDS.test(i.itemName || ""));
+    const hits = (data?.hits || []).filter(h => !SKIP_WORDS.test(h.name || ""));
 
-    // listPrice のみ使用（メーカー希望小売価格として楽天に登録された値）
-    for (const item of items) {
-      if (item.listPrice && item.listPrice > 0) {
-        return { price: item.listPrice, source: "rakuten_list" };
+    for (const item of hits) {
+      const fixed = item.priceLabel?.fixedPrice;
+      if (fixed && fixed > 0) {
+        return { price: fixed, source: "yahoo_fixed" };
       }
     }
-
-    // listPrice が取れない場合は null（販売価格は使わない）
     return null;
   } catch (e) {
     return null;
@@ -76,23 +76,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Yahoo と 楽天 を並行取得
-    const [yahooResult, rakutenResult] = await Promise.all([
-      fetchYahooFixedPrice(jan),
-      fetchRakutenListPrice(jan),
+    // あみあみ と Yahoo を並行取得
+    const [amiamiResult, yahooResult] = await Promise.all([
+      fetchAmiami(jan),
+      fetchYahooFixed(jan),
     ]);
 
-    // Yahoo fixedPrice → 楽天 listPrice の順で優先
-    const best = yahooResult || rakutenResult;
+    // あみあみ参考価格 → Yahoo fixedPrice の順で優先
+    const best = amiamiResult || yahooResult;
 
     if (!best) {
-      // 取得できなかった場合は null を返す（プレ値・販売価格は返さない）
       return res.status(200).json({
-        jan,
-        price: null,
-        priceStr: null,
-        source: null,
-        message: "not_found",
+        jan, price: null, priceStr: null, source: null, message: "not_found",
       });
     }
 
@@ -101,9 +96,8 @@ export default async function handler(req, res) {
       price: best.price,
       priceStr: `¥${best.price.toLocaleString("ja-JP")}`,
       source: best.source,
-      // デバッグ用
+      amiami: amiamiResult,
       yahoo: yahooResult,
-      rakuten: rakutenResult,
     });
 
   } catch (e) {
