@@ -1797,10 +1797,12 @@ export default function App() {
       (k.scale || "").toLowerCase().includes(q)
     );
   }
-  if (filterSeries) filtered = filtered.filter(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim() === filterSeries);
+  if (filterSeries === "__unset__") filtered = filtered.filter(k => !(k.series || "").trim());
+  else if (filterSeries) filtered = filtered.filter(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim() === filterSeries);
   if (filterRating) filtered = filtered.filter(k => (k.rating || 0) === Number(filterRating));
   if (filterCondition) filtered = filtered.filter(k => (k.condition || "") === filterCondition);
-  if (filterScale) filtered = filtered.filter(k => (k.scale || "") === filterScale);
+  if (filterScale === "__unset__") filtered = filtered.filter(k => !(k.scale || "").trim());
+  else if (filterScale) filtered = filtered.filter(k => (k.scale || "") === filterScale);
   if (filterTags.length > 0) filtered = filtered.filter(k => filterTags.every(tag => (k.tags || []).includes(tag)));
 
   // ソート（手動並び替えモード以外）
@@ -1872,6 +1874,7 @@ export default function App() {
             <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
               value={filterScale} onChange={(e) => setFilterScale(e.target.value)}>
               <option value="">スケール</option>
+              <option value="__unset__">未設定</option>
               {[...new Set(kits.map(k => k.scale).filter(Boolean))].sort().map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
@@ -1879,6 +1882,7 @@ export default function App() {
             <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
               value={filterSeries} onChange={(e) => setFilterSeries(e.target.value)}>
               <option value="">シリーズ</option>
+              <option value="__unset__">未設定</option>
               {[...new Set(kits.map(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim()).filter(Boolean))].sort().map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
