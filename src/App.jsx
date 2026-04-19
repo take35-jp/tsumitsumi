@@ -2405,8 +2405,7 @@ export default function App() {
                       setDetail(prev => ({ ...prev, retailPrice: String(d.price) }));
                       alert(`希望小売価格を更新しました：¥${d.price.toLocaleString()}`);
                     } else {
-                      alert("希望小売価格を取得できませんでした。
-手動で入力してください。");
+                      alert("希望小売価格を取得できませんでした。手動で入力してください。");
                     }
                   }}>
                   🔄 希望小売価格を再取得
