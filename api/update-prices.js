@@ -48,19 +48,38 @@ async function fetchPrice(keyword) {
 }
 
 function makeKeyword(name, scale, maker) {
+  // 商品名からノイズを除去
   const clean = (name || "")
     .replace(/BANDAI SPIRITS|バンダイスピリッツ|バンダイ|BANDAI/gi, "")
     .replace(/色分け済み|再販|新品|在庫|プラモデル|ガンプラ/gi, "")
     .replace(/\s+/g, " ").trim();
+
+  // 括弧より前の部分を使う（商品名の本体）
+  const bracketIdx = clean.search(/[（(]/);
+  const mainName = bracketIdx > 5 ? clean.slice(0, bracketIdx).trim() : clean;
+
+  // 商品名にスケール/グレードが既に含まれているか確認
+  const scaleAlreadyInName = scale && mainName.includes(scale);
+
   const gradeScale = /^(HG|MG|RG|PG|SD|EG|RE|HGUC|HGCE|MGEX|MGSD)$/.test(scale||'');
-  if (gradeScale) {
-    const bracketIdx = clean.search(/[（(]/);
-    const short = bracketIdx > 5 ? clean.slice(0, bracketIdx).trim() : clean.slice(0, 25);
-    return `${scale} ${short} プラモデル`.slice(0, 60);
+
+  if (gradeScale && !scaleAlreadyInName) {
+    // スケールが商品名に含まれていない場合のみ先頭に付ける
+    return `${scale} ${mainName.slice(0, 22)} プラモデル`.slice(0, 60);
   }
+
+  if (gradeScale && scaleAlreadyInName) {
+    // スケールが既に商品名に含まれている → そのまま使う
+    return `${mainName.slice(0, 30)} プラモデル`.slice(0, 60);
+  }
+
+  // メーカー名付き（タミヤ・ハセガワ等）
   const makerMap = { タミヤ:'タミヤ', ハセガワ:'ハセガワ', コトブキヤ:'コトブキヤ', アオシマ:'アオシマ', フジミ:'フジミ' };
-  if (maker && makerMap[maker]) return `${makerMap[maker]} ${clean.slice(0, 20)} プラモデル`.slice(0, 60);
-  return `${clean.slice(0, 30)} プラモデル`.slice(0, 60);
+  if (maker && makerMap[maker]) {
+    return `${makerMap[maker]} ${mainName.slice(0, 20)} プラモデル`.slice(0, 60);
+  }
+
+  return `${mainName.slice(0, 30)} プラモデル`.slice(0, 60);
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
