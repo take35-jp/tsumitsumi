@@ -1753,6 +1753,7 @@ export default function App() {
 
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
   useEffect(() => {
+    if (priceLoading) return; // 一括取得中はバックグラウンド取得しない
     const kitsWithoutPrice = kits.filter(k => k.jan && !k.retailPrice);
     if (kitsWithoutPrice.length === 0) return;
     // 5件ずつ順次取得（API負荷軽減）
@@ -1813,6 +1814,8 @@ export default function App() {
   const [showAppShare, setShowAppShare] = useState(false);
   const [showAllVersions, setShowAllVersions] = useState(false);
   const [continuousScan, setContinuousScan] = useState(false);
+  const [priceLoading, setPriceLoading] = useState(false); // 一括取得中フラグ
+  const [priceProgress, setPriceProgress] = useState({ current: 0, total: 0 }); // 進捗
   const [showPriceTotal, setShowPriceTotal] = useState(() => {
     try { return localStorage.getItem("tsumitsumi_showPrice") !== "false"; } catch { return true; }
   });
@@ -2054,31 +2057,50 @@ export default function App() {
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
         {kits.some(k => k.jan) && (
-          <button
-            style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 20, cursor: "pointer" }}
-            onClick={async () => {
-              const targets = kits.filter(k => k.jan);
-              const alreadyHave = targets.filter(k => k.retailPrice).length;
-              const msg = alreadyHave > 0
-                ? `登録中の全${targets.length}件のキットの希望小売価格を上書き取得します。\n（うち${alreadyHave}件はすでに価格が設定されています）\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`
-                : `登録中の全${targets.length}件のキットの希望小売価格を取得します。\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`;
-              if (!window.confirm(msg)) return;
-              let updated = 0;
-              for (const kit of targets) {
-                try {
-                  const r = await fetch(`/api/price?jan=${kit.jan}`);
-                  const d = await r.json();
-                  if (d.price) {
-                    setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
-                    updated++;
-                  }
-                  await new Promise(r => setTimeout(r, 300));
-                } catch {}
-              }
-              alert(`希望小売価格を更新しました：${updated}/${targets.length}件\n（取得できなかった${targets.length - updated}件は変更されていません）`);
-            }}>
-            💴 定価を一括取得（全{kits.filter(k => k.jan).length}件）
-          </button>
+          priceLoading ? (
+            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                </path>
+              </svg>
+              <span style={{ fontSize: 10, color: "#1d4ed8" }}>
+                取得中 {priceProgress.current}/{priceProgress.total}件...
+              </span>
+            </div>
+          ) : (
+            <button
+              style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 20, cursor: "pointer" }}
+              onClick={async () => {
+                const targets = kits.filter(k => k.jan);
+                const alreadyHave = targets.filter(k => k.retailPrice).length;
+                const msg = alreadyHave > 0
+                  ? `登録中の全${targets.length}件のキットの希望小売価格を上書き取得します。\n（うち${alreadyHave}件はすでに価格が設定されています）\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`
+                  : `登録中の全${targets.length}件のキットの希望小売価格を取得します。\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`;
+                if (!window.confirm(msg)) return;
+                setPriceLoading(true);
+                setPriceProgress({ current: 0, total: targets.length });
+                let updated = 0;
+                for (let i = 0; i < targets.length; i++) {
+                  const kit = targets[i];
+                  setPriceProgress({ current: i + 1, total: targets.length });
+                  try {
+                    const r = await fetch(`/api/price?jan=${kit.jan}`);
+                    const d = await r.json();
+                    if (d.price) {
+                      setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
+                      updated++;
+                    }
+                  } catch {}
+                  await new Promise(r => setTimeout(r, 350));
+                }
+                setPriceLoading(false);
+                setPriceProgress({ current: 0, total: 0 });
+                alert(`希望小売価格を更新しました：${updated}/${targets.length}件\n（取得できなかった${targets.length - updated}件は変更されていません）`);
+              }}>
+              💴 定価を一括取得（全{kits.filter(k => k.jan).length}件）
+            </button>
+          )
         )}
       </div>
 
