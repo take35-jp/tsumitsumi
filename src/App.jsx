@@ -1272,7 +1272,8 @@ function HelpModal({ onClose }) {
               ・税込希望小売価格の自動取得（バーコードスキャン時）<br/>
               ・積みプラ総額の表示（税込希望小売価格×個数）<br/>
               ・連続スキャンモード追加<br/>
-              ・月1自動マスタ更新（Cron Job）
+              ・月1自動マスタ更新（Cron Job）<br/>
+              ・希望小売価格をあみあみ参考価格から取得（プレ値除去）
             </div>
           </div>
           {/* v1.4.0 */}
@@ -2059,8 +2060,8 @@ export default function App() {
               const targets = kits.filter(k => k.jan);
               const alreadyHave = targets.filter(k => k.retailPrice).length;
               const msg = alreadyHave > 0
-                ? `登録中の全${targets.length}件のキットの希望小売価格を上書き取得します。\n（うち${alreadyHave}件はすでに価格が設定されています）\n\nよろしいですか？`
-                : `登録中の全${targets.length}件のキットの希望小売価格を取得します。\n\nよろしいですか？`;
+                ? `登録中の全${targets.length}件のキットの希望小売価格を上書き取得します。\n（うち${alreadyHave}件はすでに価格が設定されています）\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`
+                : `登録中の全${targets.length}件のキットの希望小売価格を取得します。\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`;
               if (!window.confirm(msg)) return;
               let updated = 0;
               for (const kit of targets) {
