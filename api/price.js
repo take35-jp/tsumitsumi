@@ -83,6 +83,22 @@ function makeKeywords(name, scale, maker) {
   return [...new Set(kws.map(k => k.trim().slice(0, 60)))];
 }
 
+// JAN直接検索はfixedPriceのみ（listPriceは古い定価の可能性があるため使わない）
+async function yahooSearchFixedOnly(params) {
+  try {
+    const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&results=30&output=json&${params}`;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const hits = ((await r.json())?.hits || [])
+      .filter(h => !SKIP_WORDS.test(h.name || ""));
+    for (const h of hits) {
+      const f = h.priceLabel?.fixedPrice;
+      if (f && f > 0) return { price: f, source: "fixed" };
+    }
+    return null; // fixedPriceがなければnull（listPrice・販売価格は使わない）
+  } catch { return null; }
+}
+
 export default async function handler(req, res) {
   const jan = (req.query.jan || "").trim();
   if (!jan || jan.length < 8) return res.status(400).json({ error: "jan required" });
@@ -105,13 +121,13 @@ export default async function handler(req, res) {
     }
   }
 
-  // Step3: JANで直接検索（商品名取れない・名前検索で取れない場合のみ）
-  const janResult = await yahooSearch(`jan_code=${encodeURIComponent(jan)}`);
+  // Step3: JANで直接検索（fixedPriceのみ - listPriceは古い可能性があるため使わない）
+  const janResult = await yahooSearchFixedOnly(`jan_code=${encodeURIComponent(jan)}`);
   if (janResult) {
     return res.status(200).json({
       jan, price: janResult.price,
       priceStr: `¥${janResult.price.toLocaleString("ja-JP")}`,
-      source: `yahoo_${janResult.source}_jan`,
+      source: `yahoo_fixed_jan`,
     });
   }
 
