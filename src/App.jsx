@@ -2085,11 +2085,17 @@ export default function App() {
                   const kit = targets[i];
                   setPriceProgress({ current: i + 1, total: targets.length });
                   try {
-                    const r = await fetch(`/api/price?jan=${kit.jan}`);
+                    // JANがあればJANで、なければ商品名で検索
+                    const url = kit.jan
+                      ? `/api/price?jan=${kit.jan}`
+                      : `/api/price?jan=00000000&name=${encodeURIComponent(kit.name?.slice(0,30)||"")}`;
+                    const r = await fetch(url);
                     const d = await r.json();
                     if (d.price) {
                       setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
                       updated++;
+                    } else {
+                      // 取得できなかった場合：既存のretailPriceは消さない（手動入力値を守る）
                     }
                   } catch {}
                   await new Promise(r => setTimeout(r, 350));
@@ -2694,6 +2700,45 @@ export default function App() {
               )}
             </div>
             <input ref={completedFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleCompletedPhoto} />
+
+            <label style={s.label}>JANコード</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                style={{ ...s.input, flex: 1, fontFamily: "monospace" }}
+                placeholder="例: 4573102631992"
+                inputMode="numeric"
+                value={form.jan || ""}
+                onChange={(e) => setForm((f) => ({ ...f, jan: e.target.value.replace(/[^0-9]/g, "").slice(0, 13) }))}
+              />
+              <button
+                style={{ padding: "8px 10px", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (!form.name) return;
+                  // マスタDBから商品名で照合
+                  const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
+                  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
+                  try {
+                    const q = form.name.slice(0, 30).replace(/[()（）]/g, "");
+                    const r = await fetch(
+                      `${SUPABASE_URL}/rest/v1/products?name=ilike.*${encodeURIComponent(q)}*&select=jan,name&limit=5`,
+                      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+                    );
+                    const data = await r.json();
+                    if (data?.length === 1) {
+                      setForm(f => ({ ...f, jan: data[0].jan }));
+                      alert(`JANを更新しました: ${data[0].jan}`);
+                    } else if (data?.length > 1) {
+                      const choice = data.map((d, i) => `${i+1}: ${d.jan} ${d.name.slice(0,30)}`).join(", ");
+                      alert(`複数候補が見つかりました。JANを手動で確認してください: ${choice}`);
+                    } else {
+                      alert("マスタDBに該当商品が見つかりませんでした");
+                    }
+                  } catch { alert("照合に失敗しました"); }
+                }}>
+                🔍 マスタ照合
+              </button>
+            </div>
 
             <label style={s.label}>メモ</label>
             <textarea style={{ ...s.input, minHeight: 60, resize: "vertical" }} placeholder="自由にメモを残そう" value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
