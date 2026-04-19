@@ -82,7 +82,7 @@ function formatDate(str) {
 const CONDITION_OPTIONS = ["未開封", "素組状態", "欠品有り", "制作途中"];
 
 const emptyForm = {
-  name: "", series: "", scale: "", purchaseDate: "", price: "",
+  name: "", series: "", scale: "", purchaseDate: "", price: "", retailPrice: "",
   count: 1, rating: 0, photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "",
   condition: "", conditionNote: "", tags: [],
 };
@@ -1691,6 +1691,31 @@ export default function App() {
   });
   useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch {} }, [kits]);
 
+  // 希望小売価格が未取得のキットにバックグラウンドで自動取得
+  useEffect(() => {
+    const kitsWithoutPrice = kits.filter(k => k.jan && !k.retailPrice);
+    if (kitsWithoutPrice.length === 0) return;
+    // 5件ずつ順次取得（API負荷軽減）
+    let cancelled = false;
+    const fetchPrices = async () => {
+      for (const kit of kitsWithoutPrice.slice(0, 30)) { // 一度に最大30件
+        if (cancelled) break;
+        try {
+          const r = await fetch(`/api/price?jan=${kit.jan}`);
+          const d = await r.json();
+          if (d.price && !cancelled) {
+            setKits(prev => prev.map(k =>
+              k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k
+            ));
+          }
+        } catch {}
+        await new Promise(r => setTimeout(r, 300)); // 0.3秒間隔
+      }
+    };
+    fetchPrices();
+    return () => { cancelled = true; };
+  }, []); // 初回マウント時のみ
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const jan = params.get("jan");
@@ -1721,6 +1746,13 @@ export default function App() {
   const [filterScale, setFilterScale] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
   const [continuousScan, setContinuousScan] = useState(false);
+  const [showPriceTotal, setShowPriceTotal] = useState(() => {
+    try { return localStorage.getItem("tsumitsumi_showPrice") !== "false"; } catch { return true; }
+  });
+  // 設定変更時にlocalStorageへ保存
+  useEffect(() => {
+    try { localStorage.setItem("tsumitsumi_showPrice", showPriceTotal ? "true" : "false"); } catch {}
+  }, [showPriceTotal]);
   const [continuousQueue, setContinuousQueue] = useState([]); // 連続スキャンキュー
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
@@ -1783,7 +1815,7 @@ export default function App() {
     setScanLoading(true);
     const data = await fetchProductByJAN(jan);
     setScanLoading(false);
-    setForm(data?.name ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl } : { ...emptyForm, jan });
+    setForm(data?.name ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, retailPrice: data.retailPrice || data.price || "", photoUrl: data.photoUrl } : { ...emptyForm, jan });
     setEditId(null);
     setShowForm(true);
   };
@@ -1882,15 +1914,15 @@ export default function App() {
   const rank = getRank(totalKits);
   const pending = kits.filter((k) => !k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
   const done = kits.filter((k) => k.completed).reduce((sum, k) => sum + (k.count || 1), 0);
-  // 購入金額合計（price入力済みのもの）
-  const totalPrice = kits.reduce((sum, k) => {
+  // 合計価格：retailPrice（税込希望小売価格）優先、なければprice
+  const getEffectivePrice = (k) => {
+    const rp = parseInt((k.retailPrice || "").toString().replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(rp) && rp > 0) return rp;
     const p = parseInt((k.price || "").toString().replace(/[^0-9]/g, ""), 10);
-    return sum + (isNaN(p) ? 0 : p * (k.count || 1));
-  }, 0);
-  const pendingPrice = kits.filter(k => !k.completed).reduce((sum, k) => {
-    const p = parseInt((k.price || "").toString().replace(/[^0-9]/g, ""), 10);
-    return sum + (isNaN(p) ? 0 : p * (k.count || 1));
-  }, 0);
+    return isNaN(p) ? 0 : p;
+  };
+  const totalPrice = kits.reduce((sum, k) => sum + getEffectivePrice(k) * (k.count || 1), 0);
+  const pendingPrice = kits.filter(k => !k.completed).reduce((sum, k) => sum + getEffectivePrice(k) * (k.count || 1), 0);
 
   let filtered = kits.filter((k) =>
     filter === "pending" ? !k.completed : filter === "done" ? k.completed : true
@@ -1973,14 +2005,33 @@ export default function App() {
           </div>
         ))}
       </div>
-      {totalPrice > 0 && !bulkMode && (
-        <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "6px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 11, color: "#9ca3af" }}>💴 積みプラ総額</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>¥{pendingPrice.toLocaleString()}</span>
-            {done > 0 && <span style={{ fontSize: 10, color: "#9ca3af" }}>（完成含む計 ¥{totalPrice.toLocaleString()}）</span>}
+      {/* 積みプラ総額バー（表示/非表示切替可） */}
+      {!bulkMode && (
+        <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "6px 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>💴 積みプラ総額</span>
+              {showPriceTotal && totalPrice > 0 && (
+                <>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>¥{pendingPrice.toLocaleString()}</span>
+                  {done > 0 && <span style={{ fontSize: 10, color: "#9ca3af" }}>（完成含む ¥{totalPrice.toLocaleString()}）</span>}
+                </>
+              )}
+              {showPriceTotal && totalPrice === 0 && (
+                <span style={{ fontSize: 11, color: "#d1d5db" }}>希望小売価格を取得中...</span>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {showPriceTotal && totalPrice > 0 && (
+                <span style={{ fontSize: 9, color: "#d1d5db" }}>税込希望小売価格×個数</span>
+              )}
+              <button
+                style={{ fontSize: 10, padding: "2px 8px", border: "1px solid #e5e7eb", borderRadius: 20, background: showPriceTotal ? "#f0fdf4" : "#f3f4f6", color: showPriceTotal ? "#16a34a" : "#9ca3af", cursor: "pointer" }}
+                onClick={() => setShowPriceTotal(v => !v)}>
+                {showPriceTotal ? "表示中" : "非表示"}
+              </button>
+            </div>
           </div>
-          <span style={{ fontSize: 10, color: "#d1d5db" }}>価格入力分のみ</span>
         </div>
       )}
 
@@ -2213,6 +2264,15 @@ export default function App() {
                 {kit.rating > 0 && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
                 {kit.count > 1 && <span style={s.countBadge}>{kit.count}個</span>}
                 {kit.condition && <span style={{ ...s.condBadge, ...getCondStyle(kit.condition) }}>{kit.condition}</span>}
+                {(() => {
+                  const ep = getEffectivePrice(kit);
+                  if (ep <= 0) return null;
+                  return (
+                    <span style={{ fontSize: 10, color: "#9ca3af", marginLeft: "auto" }}>
+                      ¥{ep.toLocaleString()}{kit.count > 1 ? `×${kit.count}` : ""}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
             <button style={{ ...s.checkBtn, background: kit.completed ? "#22c55e" : "#e5e7eb", color: kit.completed ? "#fff" : "#9ca3af" }}
@@ -2263,7 +2323,7 @@ export default function App() {
               <div style={s.modalTitle}>{detail.name}</div>
               {detail.completed && <div style={s.doneBadge}>✓ 完成済み</div>}
               <table style={s.table}><tbody>
-                {[["シリーズ", detail.series], ["スケール", detail.scale], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
+                {[["シリーズ", detail.series], ["スケール", detail.scale], ["希望小売価格", (() => { const ep = getEffectivePrice(detail); return ep > 0 ? `¥${ep.toLocaleString()}（税込）` : null; })()], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["合計金額", (() => { const ep = getEffectivePrice(detail); const cnt = detail.count || 1; return ep > 0 && cnt > 1 ? `¥${(ep*cnt).toLocaleString()}（${cnt}個×¥${ep.toLocaleString()}）` : null; })()], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
                   .filter(([, v]) => v && v !== "—")
                   .map(([k, v]) => <tr key={k}><td style={s.td1}>{k}</td><td style={s.td2}>{v}</td></tr>)}
               </tbody></table>
