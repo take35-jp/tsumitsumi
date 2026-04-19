@@ -13,25 +13,69 @@ const YAHOO_CLIENT_ID = "dmVyPTIwMjUwNyZpZD1QaXVLMXc2cDVjJmhhc2g9TXpFMU16VTRabUU
 
 // 毎月チェックするクエリリスト（新作が出やすいカテゴリを中心に）
 const MONTHLY_QUERIES = [
-  // ガンプラ最新
-  { maker: "バンダイ", query: "HG 1/144 ガンプラ 新作 プラモデル", pages: 3 },
-  { maker: "バンダイ", query: "MG 1/100 ガンプラ 新作 プラモデル", pages: 2 },
-  { maker: "バンダイ", query: "RG 1/144 ガンプラ 新作 プラモデル", pages: 2 },
-  { maker: "バンダイ", query: "HG 水星の魔女 プラモデル", pages: 2 },
-  { maker: "バンダイ", query: "HGUC 機動戦士ガンダム プラモデル", pages: 2 },
-  { maker: "バンダイ", query: "30MM バンダイ プラモデル 新作", pages: 2 },
-  { maker: "バンダイ", query: "30MS バンダイ プラモデル 新作", pages: 2 },
-  // コトブキヤ最新
-  { maker: "コトブキヤ", query: "コトブキヤ フレームアームズ 新作 プラモデル", pages: 2 },
-  { maker: "コトブキヤ", query: "コトブキヤ メガミデバイス 新作 プラモデル", pages: 2 },
-  { maker: "コトブキヤ", query: "コトブキヤ ヘキサギア 新作 プラモデル", pages: 2 },
-  // タミヤ最新
-  { maker: "タミヤ", query: "タミヤ 1/35 新作 プラモデル", pages: 2 },
-  { maker: "タミヤ", query: "タミヤ 1/700 新作 艦船 プラモデル", pages: 2 },
-  // ハセガワ最新
-  { maker: "ハセガワ", query: "ハセガワ 1/72 新作 プラモデル", pages: 2 },
-  // MODEROID最新
-  { maker: "グッドスマイル", query: "MODEROID 新作 プラモデル", pages: 2 },
+  // ─── バンダイ ガンプラ 新作 ───
+  { maker: "バンダイ", query: "HG 1/144 ガンプラ 新作 プラモデル", pages: 5 },
+  { maker: "バンダイ", query: "MG 1/100 ガンプラ 新作 プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "RG 1/144 ガンプラ 新作 プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HGCE HGTWFM ガンプラ 新作 プラモデル", pages: 3 },
+  // ─── HGUC 宇宙世紀 ───
+  { maker: "バンダイ", query: "HGUC 1/144 機動戦士ガンダム プラモデル", pages: 5 },
+  { maker: "バンダイ", query: "HGUC 1/144 機動戦士Zガンダム プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HGUC 1/144 機動戦士ZZガンダム プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HGUC 1/144 逆襲のシャア プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HGUC 1/144 機動戦士ガンダムUC プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HGUC 1/144 機動戦士ガンダム0083 プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "HGUC 1/144 08MS小隊 0080 プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "HGUC 1/144 Vガンダム F91 プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "HGUC 1/144 閃光のハサウェイ ナラティブ プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "HGUC 1/144 ターンエー クロスボーン プラモデル", pages: 2 },
+  // ─── HG 非宇宙世紀 ───
+  { maker: "バンダイ", query: "HG 1/144 ガンダムSEED DESTINY FREEDOM プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HG 1/144 ガンダム00 ダブルオー プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HG 1/144 ガンダムAGE ビルドファイターズ プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HG 1/144 鉄血のオルフェンズ 水星の魔女 プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HG 1/144 ガンダムW G Xガンダム プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "HG 1/144 ガンダムORIGIN サンダーボルト プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "EG エントリーグレード ガンプラ プラモデル", pages: 2 },
+  // ─── MG 全系統 ───
+  { maker: "バンダイ", query: "MG 1/100 機動戦士ガンダム 宇宙世紀 プラモデル", pages: 5 },
+  { maker: "バンダイ", query: "MG 1/100 ガンダムSEED DESTINY 00 プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "MG 1/100 ガンダムW 00 プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "MG 1/100 閃光のハサウェイ 鉄血 プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "MGEX MGSD ガンプラ プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "FULL MECHANICS フルメカニクス RE/100 プラモデル", pages: 2 },
+  // ─── PG・RG・SD ───
+  { maker: "バンダイ", query: "PG 1/60 パーフェクトグレード ガンプラ プラモデル", pages: 2 },
+  { maker: "バンダイ", query: "RG 1/144 リアルグレード ガンプラ プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "SDガンダム BB戦士 SDW HEROES プラモデル", pages: 3 },
+  // ─── 30MM/30MS/30MF ───
+  { maker: "バンダイ", query: "30MM 30MS 30MF バンダイ プラモデル", pages: 3 },
+  // ─── バンダイ キャラクター ───
+  { maker: "バンダイ", query: "Figure-rise Standard フィギュアライズ プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "ポケプラ ポケモン バンダイ プラモデル", pages: 3 },
+  { maker: "バンダイ", query: "ゾイド ZOIDS バンダイ プラモデル", pages: 2 },
+  // ─── コトブキヤ ───
+  { maker: "コトブキヤ", query: "コトブキヤ フレームアームズ フレームアームズガール プラモデル", pages: 3 },
+  { maker: "コトブキヤ", query: "コトブキヤ メガミデバイス ヘキサギア プラモデル", pages: 3 },
+  { maker: "コトブキヤ", query: "コトブキヤ 創彩少女庭園 アーマードコア プラモデル", pages: 2 },
+  // ─── タミヤ ───
+  { maker: "タミヤ", query: "タミヤ 1/35 ミリタリーミニチュア 戦車 AFV プラモデル", pages: 5 },
+  { maker: "タミヤ", query: "タミヤ 1/700 ウォーターライン 艦船 プラモデル", pages: 3 },
+  { maker: "タミヤ", query: "タミヤ 1/48 1/72 飛行機 航空機 プラモデル", pages: 3 },
+  { maker: "タミヤ", query: "タミヤ 1/24 スポーツカー 自動車 プラモデル", pages: 3 },
+  { maker: "タミヤ", query: "タミヤ 1/12 バイク ミニ四駆 プラモデル", pages: 2 },
+  // ─── ハセガワ ───
+  { maker: "ハセガワ", query: "ハセガワ 1/72 飛行機 戦闘機 プラモデル", pages: 5 },
+  { maker: "ハセガワ", query: "ハセガワ 1/48 飛行機 プラモデル", pages: 3 },
+  { maker: "ハセガワ", query: "ハセガワ マクロス バルキリー キャラクター プラモデル", pages: 3 },
+  { maker: "ハセガワ", query: "ハセガワ 1/700 艦船 自動車 プラモデル", pages: 2 },
+  // ─── アオシマ・フジミ ───
+  { maker: "アオシマ", query: "アオシマ 艦船 自動車 キャラクター プラモデル", pages: 3 },
+  { maker: "フジミ", query: "フジミ 艦船 自動車 飛行機 城 プラモデル", pages: 3 },
+  // ─── MODEROID・ウェーブ・ピットロード ───
+  { maker: "グッドスマイル", query: "MODEROID プラモデル ロボット キャラクター", pages: 3 },
+  { maker: "ウェーブ", query: "ウェーブ マシーネンクリーガー PLAMAX プラモデル", pages: 2 },
+  { maker: "ピットロード", query: "ピットロード 1/700 艦船 護衛艦 プラモデル", pages: 2 },
 ];
 
 function guessSeriesForMaker(name, maker) {
@@ -62,6 +106,42 @@ function guessSeriesForMaker(name, maker) {
     default:
       return "ガンプラ";
   }
+}
+
+// ノイズ除去（clean-master.jsと同じロジック）
+function removeNoise(name) {
+  let n = name || "";
+  n = n.replace(/^H-[\dA-Z]{8,}\s*/i, "");
+  n = n.replace(/【[^】]*】/g, "");
+  n = n.replace(/『中古[^』]*』/g, "");
+  n = n.replace(/《[^》]*》/g, "");
+  n = n.replace(/\[[^\]]*在庫[^\]]*\]/g, "").replace(/\[[^\]]*発売済[^\]]*\]/g, "").replace(/\[[^\]]*BANDAI[^\]]*\]/gi, "");
+  n = n.replace(/（[^)]*中古[^)]*）/g, "");
+  n = n.replace(/{[A-Z]+}/g, "");
+  n = n.replace(/『([^』]*)』/g, "$1");
+  n = n.replace(/「([^」]*)」/g, "$1").replace(/「[^」]*$/g, "");
+  n = n.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ");
+  n = n.replace(/\s*中古[即納]?\s*/g, " ");
+  n = n.replace(/使用感[あ有]り|傷あり|汚れあり|訳あり|ジャンク/g, "");
+  n = n.replace(/[0-9０-９]+[週日時間]+以内発送/g, "");
+  n = n.replace(/[0-9０-９]+月[0-9０-９]+日[^\s]*発送/g, "");
+  n = n.replace(/がんだむ|アニメ\s*ロボット/gi, "");
+  n = n.replace(/BANDAI SPIRITS/gi, "").replace(/バンダイスピリッツ/g, "").replace(/バンダイ\s*スピリッツ/g, "").replace(/スピリッツ/g, "");
+  n = n.replace(/BSP\(\d+\)/g, "");
+  n = n.replace(/爆買[いい]?\s*/g, "");
+  n = n.replace(/同梱不可|同梱可|※キャンセル不可/g, "");
+  n = n.replace(/特別販売商品|ホビーオンラインショップ限定/g, "");
+  n = n.replace(/プレミアムバンダイ限定|プレバン限定|イベント限定|返品種別[A-Z]|限定品/g, "");
+  n = n.replace(/\(金属砲身付\)|（金属砲身付）/g, "");
+  n = n.replace(/BANDAI/gi, "").replace(/バンダイ/g, "");
+  n = n.replace(/送料無料|即納|在庫あり|新品[・\s]?未開封|新品|未開封|再販|再生産|メール便可|代引き?不可/g, "");
+  n = n.replace(/\s+プラモデル\s*$/, "").replace(/\s+ガンプラ\s*$/, "").replace(/^ガンプラ\s+/, "");
+  n = n.replace(/\s*\[\d+\]\s*/g, " ").replace(/\s*No\.\d+\s*/g, " ");
+  n = n.replace(/\b\d{7,}\b/g, "");
+  n = n.replace(/\[\s*\]|\(\s*\)/g, "");
+  n = n.replace(/\s{2,}/g, " ").trim();
+  n = n.replace(/^[\s\-・\/]+|[\s\-・\/]+$/g, "").trim();
+  return n;
 }
 
 function guessScale(name) {
@@ -167,7 +247,8 @@ export default async function handler(req, res) {
             return true;
           })
           .map(item => {
-            const name = item.name || "";
+            const rawName = item.name || "";
+            const name = removeNoise(rawName); // ノイズ除去
             return {
               jan: item.janCode,
               name,
