@@ -195,7 +195,7 @@ async function fetchProductByJAN(jan) {
 }
 
 // ---- Barcode Scanner ----
-function BarcodeScanner({ onDetected, onClose }) {
+function BarcodeScanner({ onDetected, onClose, continuous = false }) {
   const isIPhone = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const [error, setError] = useState("");
   const [debugInfo, setDebugInfo] = useState("起動中...");
@@ -383,7 +383,21 @@ function BarcodeScanner({ onDetected, onClose }) {
           if (code === lastCode) {
             sameCount++;
             setDebugInfo(`Quagga: ${code} (${sameCount}/2)`);
-            if (sameCount >= 2) resolve(code);
+            if (sameCount >= 2) {
+              if (continuous) {
+                // 連続モード：2秒クールダウン後にリセット
+                detectedRef.current = true;
+                resolve(code);
+                setTimeout(() => {
+                  detectedRef.current = false;
+                  lastCode = null;
+                  sameCount = 0;
+                  setDebugInfo("次のバーコードをスキャン...");
+                }, 2000);
+              } else {
+                resolve(code);
+              }
+            }
           } else {
             lastCode = code; sameCount = 1;
             setDebugInfo(`Quagga: ${code} (1/2)`);
@@ -413,10 +427,26 @@ function BarcodeScanner({ onDetected, onClose }) {
             try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
 
             const code = await runZBar(video);
-            if (!cancelled && !detectedRef.current) {
-              detectedRef.current = true;
-              stream.getTracks().forEach(t => t.stop());
+            if (!cancelled) {
               onDetected(code);
+              if (continuous) {
+                // 連続モード：カメラを止めずに再スキャン開始
+                setDebugInfo("次のバーコードをスキャン...");
+                // detectedRefは既に2秒後リセット予定 → runZBarを再帰的に呼ぶ
+                const loopZBar = async () => {
+                  while (!cancelled) {
+                    try {
+                      const nextCode = await runZBar(video);
+                      if (!cancelled) onDetected(nextCode);
+                      setDebugInfo("次のバーコードをスキャン...");
+                    } catch { break; }
+                  }
+                };
+                loopZBar();
+              } else {
+                detectedRef.current = true;
+                stream.getTracks().forEach(t => t.stop());
+              }
             }
             return;
           } catch (e) {
@@ -429,10 +459,16 @@ function BarcodeScanner({ onDetected, onClose }) {
 
         // Quaggaフォールバック
         const code = await runQuagga();
-        if (!cancelled && !detectedRef.current) {
-          detectedRef.current = true;
-          if (quaggaStarted) { try { window.Quagga.stop(); } catch (_) {} }
+        if (!cancelled) {
           onDetected(code);
+          if (continuous) {
+            // 連続モード：Quaggaを止めずに継続
+            setDebugInfo("次のバーコードをスキャン...");
+            // Quaggaはそのまま動き続けるのでonDetectedハンドラで対応
+          } else {
+            detectedRef.current = true;
+            if (quaggaStarted) { try { window.Quagga.stop(); } catch (_) {} }
+          }
         }
 
       } catch (e) {
@@ -2016,11 +2052,16 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
-        {kits.some(k => k.jan && !k.retailPrice) && (
+        {kits.some(k => k.jan) && (
           <button
             style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 20, cursor: "pointer" }}
             onClick={async () => {
-              const targets = kits.filter(k => k.jan && !k.retailPrice);
+              const targets = kits.filter(k => k.jan);
+              const alreadyHave = targets.filter(k => k.retailPrice).length;
+              const msg = alreadyHave > 0
+                ? `登録中の全${targets.length}件のキットの希望小売価格を上書き取得します。\n（うち${alreadyHave}件はすでに価格が設定されています）\n\nよろしいですか？`
+                : `登録中の全${targets.length}件のキットの希望小売価格を取得します。\n\nよろしいですか？`;
+              if (!window.confirm(msg)) return;
               let updated = 0;
               for (const kit of targets) {
                 try {
@@ -2033,9 +2074,9 @@ export default function App() {
                   await new Promise(r => setTimeout(r, 300));
                 } catch {}
               }
-              alert(`定価を更新しました：${updated}/${targets.length}件`);
+              alert(`希望小売価格を更新しました：${updated}/${targets.length}件\n（取得できなかった${targets.length - updated}件は変更されていません）`);
             }}>
-            💴 定価を一括取得（{kits.filter(k => k.jan && !k.retailPrice).length}件）
+            💴 定価を一括取得（全{kits.filter(k => k.jan).length}件）
           </button>
         )}
       </div>
@@ -2424,7 +2465,7 @@ export default function App() {
       {showScanner && (
         <div style={{ ...s.overlay, alignItems: "flex-start" }} onClick={() => setShowScanner(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <BarcodeScanner onDetected={handleJanDetected} onClose={() => { setShowScanner(false); if (continuousScan && continuousQueue.length > 0) handleBulkScanRegister(); }} />
+            <BarcodeScanner onDetected={handleJanDetected} onClose={() => { setShowScanner(false); if (continuousScan && continuousQueue.length > 0) handleBulkScanRegister(); }} continuous={continuousScan} />
             {continuousScan && continuousQueue.length > 0 && (
               <div style={{ background: "#fff", padding: "12px 16px", borderTop: "1px solid #f0f0f0" }}>
                 <div style={{ fontSize: 12, color: "#374151", marginBottom: 8, fontWeight: 700 }}>
