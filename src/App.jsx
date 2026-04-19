@@ -2016,6 +2016,28 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
+        {kits.some(k => k.jan && !k.retailPrice) && (
+          <button
+            style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 20, cursor: "pointer" }}
+            onClick={async () => {
+              const targets = kits.filter(k => k.jan && !k.retailPrice);
+              let updated = 0;
+              for (const kit of targets) {
+                try {
+                  const r = await fetch(`/api/price?jan=${kit.jan}`);
+                  const d = await r.json();
+                  if (d.price) {
+                    setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
+                    updated++;
+                  }
+                  await new Promise(r => setTimeout(r, 300));
+                } catch {}
+              }
+              alert(`定価を更新しました：${updated}/${targets.length}件`);
+            }}>
+            💴 定価を一括取得（{kits.filter(k => k.jan && !k.retailPrice).length}件）
+          </button>
+        )}
       </div>
 
       {showSearch && !bulkMode && (
@@ -2372,6 +2394,24 @@ export default function App() {
                   🙋 これを作ってくれる人に譲りたい！とポストする
                 </button>
               )}
+              {detail.jan && (
+                <button
+                  style={{ width: "100%", marginTop: 8, padding: "8px 0", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                  onClick={async () => {
+                    const r = await fetch(`/api/price?jan=${detail.jan}`);
+                    const d = await r.json();
+                    if (d.price) {
+                      setKits(prev => prev.map(k => k.id === detail.id ? { ...k, retailPrice: String(d.price) } : k));
+                      setDetail(prev => ({ ...prev, retailPrice: String(d.price) }));
+                      alert(`希望小売価格を更新しました：¥${d.price.toLocaleString()}`);
+                    } else {
+                      alert("希望小売価格を取得できませんでした。
+手動で入力してください。");
+                    }
+                  }}>
+                  🔄 希望小売価格を再取得
+                </button>
+              )}
               <div style={s.modalBtns}>
                 <button style={s.editBtn} onClick={() => handleEdit(detail)}>編集</button>
                 <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
@@ -2503,6 +2543,38 @@ export default function App() {
             {!SERIES_OPTIONS.includes(form.series) && (
               <input style={{ ...s.input, marginTop: 6 }} placeholder="シリーズ名を自由に入力" value={form.series}
                 onChange={(e) => setForm((f) => ({ ...f, series: e.target.value }))} />
+            )}
+
+            <label style={s.label}>希望小売価格（税込）</label>
+            <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
+              <input
+                style={{ ...s.input, flex: 1 }}
+                placeholder="例: 7700"
+                inputMode="numeric"
+                value={form.retailPrice || ""}
+                onChange={(e) => setForm((f) => ({ ...f, retailPrice: e.target.value.replace(/[^0-9]/g, "") }))}
+              />
+              {form.jan && (
+                <button
+                  style={{ padding: "8px 12px", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    const r = await fetch(`/api/price?jan=${form.jan}`);
+                    const d = await r.json();
+                    if (d.price) {
+                      setForm((f) => ({ ...f, retailPrice: String(d.price) }));
+                    } else {
+                      alert("取得できませんでした。手動で入力してください。");
+                    }
+                  }}>
+                  🔄 自動取得
+                </button>
+              )}
+            </div>
+            {form.retailPrice && (
+              <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 4 }}>
+                ¥{parseInt(form.retailPrice).toLocaleString()} × {form.count || 1}個 = ¥{(parseInt(form.retailPrice) * (form.count || 1)).toLocaleString()}
+              </div>
             )}
 
             <label style={s.label}>スケール</label>
