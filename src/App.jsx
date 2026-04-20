@@ -2057,7 +2057,7 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
-        {kits.some(k => k.jan) && (
+        {false && kits.some(k => k.jan) && (
           priceLoading ? (
             <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round">
@@ -2465,7 +2465,7 @@ export default function App() {
                   🙋 これを作ってくれる人に譲りたい！とポストする
                 </button>
               )}
-              {detail.jan && (
+              {false && detail.jan && (
                 <button
                   style={{ width: "100%", marginTop: 8, padding: "8px 0", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
                   onClick={async () => {
