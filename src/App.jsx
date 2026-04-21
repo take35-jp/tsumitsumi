@@ -761,7 +761,7 @@ const suggS = {
 // ---- Help Modal ----
 // ---- Browse Modal（グレード別一覧から一括登録）----
 function BrowseModal({ onBulkAdd, onClose }) {
-  const GRADES = ["HG", "RG", "MG", "MGSD", "PG", "SD", "30MM", "30MS", "30MF", "30MP"];
+  const GRADES = ["HG", "HGUC", "HGBF", "HGCE", "HGAC", "RG", "MG", "MGEX", "MGSD", "PG", "EG", "SD", "FM", "RE"];
   const [grade, setGrade] = useState("HG");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -2584,7 +2584,7 @@ export default function App() {
 
             <label style={s.label}>キット名 *</label>
             <KitNameInput value={form.name} onChange={(name) => setForm((f) => ({ ...f, name }))}
-              onSelect={(item) => setForm((f) => ({ ...f, name: item.name, photoUrl: item.photoUrl || f.photoUrl, series: item.series || f.series, scale: item.scale || f.scale }))} />
+              onSelect={(item) => setForm((f) => ({ ...f, name: item.name, jan: item.jan || f.jan, retailPrice: item.retailPrice || item.retail_price || f.retailPrice, photoUrl: item.photoUrl || f.photoUrl, series: item.series || f.series, scale: item.scale || f.scale }))} />
 
             <label style={s.label}>状態</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
