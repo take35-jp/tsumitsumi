@@ -1,133 +1,103 @@
-const YAHOO_CLIENT_ID = process.env.YAHOO_CLIENT_ID;
+// ガンプラ一覧API - Supabase DBから直接検索（Yahoo API不使用）
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-function cleanName(name) {
-    name = name.replace(/『[^』]*』/g, "");
-    name = name.replace(/【[^】]*】/g, "");
-    name = name.replace(/［[^］]*］/g, "");
-    name = name.replace(/〔[^〕]*〕/g, "");
-
-  const noiseWords = [
-        /爆買/g, /再販/g, /再生産/g, /新品/g, /送料無料/g, /即納/g, /即日/g,
-        /在庫品/g, /発売済/g, /BANDAI SPIRITS/g, /バンダイスピリッツ/g,
-        /色分け済みプラモデル/g, /色分け済み/g, /《[^》]*》/g,
-        /在庫あり/g, /お得/g, /限定/g, /セール/g, /SALE/gi,
-        /プレミアムバンダイ限定/g, /プレバン限定/g,
-        /代引き不可/g, /〈プラモデル〉/g, /＜プラモデル＞/g,
-        /<プラモデル>/g, /（プラモデル）/g, /\(プラモデル\)/g,
-        /バンダイホビー/g, /バンダイスピリッツ/g,
-      ];
-    for (const w of noiseWords) name = name.replace(w, "");
-
-  name = name.replace(/[（(][0-9]{4,}[）)]/g, "");
-
-  const startKeywords = [
-        /\bMGSD\b/, /\bPG\b/, /\bRG\b/, /\bHG[A-Z\s]*\b/, /\bEG\b/, /\bSD\b/, /\bMG\b/,
-        /1\/144/, /1\/100/, /1\/60/, /1\/72/, /1\/48/, /1\/35/, /1\/24/, /1\/12/,
-      ];
-    for (const kw of startKeywords) {
-          const match = name.match(kw);
-          if (match) {
-                  name = name.slice(name.indexOf(match[0]));
-                  break;
-          }
-    }
-
-  const stopKeywords = [
-        /\s+プラモデル/, /\s+バンダイ(?!ホビー)/, /\s+BANDAI/i,
-        /\s+機動戦士ガンダム(?!X|W|F91|V|00|SEED)/, /\s+機動新世紀/, /\s+新機動/,
-        /\s+鉄血のオルフェンズ/, /\s+水星の魔女/, /\s+宇宙世紀/,
-        /\s+ガンダムSEED(?!DESTINY)/, /\s+ガンダムWing/, /\s+ガンダム00/,
-        /\s+爆買/, /\s+再販/,
-      ];
-    for (const kw of stopKeywords) {
-          const match = name.match(kw);
-          if (match) name = name.slice(0, name.indexOf(match[0]));
-    }
-
-  name = name.replace(/&amp;/g, "&");
-    name = name.replace(/\s+/g, " ").trim();
-    return name;
-}
-
-function guessScale(name) {
-    if (/\bMGSD\b/i.test(name)) return "MGSD";
-    if (/\bPG\b/i.test(name)) return "PG";
-    if (/\bRG\b/i.test(name)) return "RG";
-    if (/\bHG\b/i.test(name)) return "HG";
-    if (/\bSD\b/i.test(name)) return "SD";
-    if (/\bMG\b/i.test(name)) return "MG";
-    if (/1\/100/i.test(name)) return "1/100";
-    if (/1\/144/i.test(name)) return "1/144";
-    if (/1\/72/i.test(name)) return "1/72";
-    if (/1\/60/i.test(name)) return "1/60";
-    if (/1\/48/i.test(name)) return "1/48";
-    if (/1\/35/i.test(name)) return "1/35";
-    return "";
-}
+// ガンプラのグレード判定キーワード（商品名に含まれることを期待）
+const GRADE_PATTERNS = {
+      "PG": /\bPG\b/i,
+      "MGEX": /\bMGEX\b/i,
+      "MGSD": /\bMGSD\b/i,
+      "MG": /\bMG\b/i,
+      "RG": /\bRG\b/i,
+      "HG": /\bHG\b/i,
+      "EG": /\bEG\b|ENTRY\s*GRADE/i,
+      "SD": /\bSD\b|SDW|SDCS|SDEX|BB\s*戦士/i,
+      "FM": /\bFM\b|フルメカニクス/i,
+      "RE": /\bRE\/100\b|\bRE\b/i,
+};
 
 export default async function handler(req, res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Origin", "*");
 
   const { grade, page = "1", q = "" } = req.query;
-    if (!grade) return res.status(400).json({ error: "grade required" });
+      if (!grade) return res.status(400).json({ error: "grade required" });
+      if (!GRADE_PATTERNS[grade]) return res.status(400).json({ error: "invalid grade" });
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+              return res.status(500).json({ error: "Supabase not configured" });
+      }
 
-  const gradeKeywords = {
-        MG:   "MG ガンダム プラモデル バンダイ",
-        HG:   "HG ガンダム プラモデル バンダイ",
-        RG:   "RG ガンダム プラモデル バンダイ",
-        PG:   "PG ガンダム プラモデル バンダイ",
-        SD:   "SD ガンダム BB戦士 バンダイ",
-        MGSD: "MGSD ガンダム バンダイ",
-        "30MM":  "30MM 30 MINUTES MISSIONS プラモデル バンダイ",
-        "30MS":  "30MS 30 MINUTES SISTERS プラモデル バンダイ",
-        "30MF":  "30MF 30 MINUTES FANTASY プラモデル バンダイ",
-        "30MP":  "30MP 30 MINUTES PREFERENCE プラモデル バンダイ",
-  };
-
-  const baseKeyword = gradeKeywords[grade];
-    if (!baseKeyword) return res.status(400).json({ error: "invalid grade" });
-
-  const is30min = ["30MM", "30MS", "30MF", "30MP"].includes(grade);
-    const keyword = q.trim()
-      ? is30min
-            ? `${grade} ${q.trim()} プラモデル`
-            : `${grade} ${q.trim()} ガンダム プラモデル`
-          : baseKeyword;
-    const start = (Number(page) - 1) * 30 + 1;
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const pageSize = 20;
+      const offset = (pageNum - 1) * pageSize;
 
   try {
-        const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&query=${encodeURIComponent(keyword)}&results=30&start=${start}&output=json`;
-        const r = await fetch(url);
-        const data = await r.json();
+          // バンダイ商品のみ取得（ガンプラに限定）
+        const headers = {
+                  apikey: SUPABASE_ANON_KEY,
+                  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                  Prefer: "count=exact",
+        };
 
-      if (data.Error) return res.status(400).json({ error: data.Error.Message });
+        // パラメータ作成: バンダイメーカー + 名前にqueryを含む
+        const params = new URLSearchParams();
+          params.append("select", "id,name,jan,retail_price,series,scale,image_url");
+          params.append("maker", "eq.バンダイ");
+          if (q && q.trim()) {
+                    params.append("name", `ilike.*${encodeURIComponent(q.trim())}*`);
+          }
+          params.append("order", "name.asc");
 
-      const seen = new Set();
-        const items = (data?.hits || [])
-          .map(item => ({
-                    name: cleanName(item.name || ""),
-                    scale: guessScale(item.name || ""),
-                    photoUrl: item.image?.medium || item.image?.small || "",
-                    jan: item.janCode || "",
-                    price: item.price ? String(item.price) : "",
-          }))
-          .filter(item => item.name.length > 2)
-          .filter(item => {
-                    if (grade === 'HG' && /\bMG\b/.test(item.name) && !/\bHG\b/.test(item.name)) return false;
-                    if (grade === 'MG' && /\bHG\b/.test(item.name) && !/\bMG\b/.test(item.name)) return false;
-                    if (grade === 'RG' && !/\bRG\b/.test(item.name)) return false;
-                    if (grade === 'PG' && !/\bPG\b/.test(item.name)) return false;
-                    return true;
-          })
-          .filter(item => {
-                    const key = item.jan || item.name;
-                    if (seen.has(key)) return false;
-                    seen.add(key);
-                    return true;
+        const url = `${SUPABASE_URL}/rest/v1/products?${params.toString()}`;
+          const response = await fetch(url, { headers });
+          if (!response.ok) {
+                    return res.status(500).json({ error: "Supabase query failed", status: response.status });
+          }
+
+        const all = await response.json();
+
+        // グレード判定（他のグレードにマッチするものは除外して厳密化）
+        const gradePattern = GRADE_PATTERNS[grade];
+          const filtered = all.filter(item => {
+                    if (!item.name) return false;
+                    // HGはHGUC, HGBF等の下位マッチを除外
+                                            if (grade === "HG") {
+                                                        const name = item.name;
+                                                        // HGUC等にマッチするものはHG単体では除外
+                      if (/HGUC|HGBF|HGBC|HGBD|HGCE|HGAC|HGTB|HGIBO|HGBM|HGBG/i.test(name)) return false;
+                                                        return /\bHG\b/i.test(name);
+                                            }
+                    // MGはMGEX, MGSDを除外
+                                            if (grade === "MG") {
+                                                        const name = item.name;
+                                                        if (/MGEX|MGSD/i.test(name)) return false;
+                                                        return /\bMG\b/i.test(name);
+                                            }
+                    // その他は単純マッチ
+                                            return gradePattern.test(item.name);
           });
 
-      return res.json({ items, total: data?.totalResultsAvailable || 0, page: Number(page) });
+        const total = filtered.length;
+          const paged = filtered.slice(offset, offset + pageSize);
+
+        const items = paged.map(item => ({
+                  id: item.id,
+                  name: item.name,
+                  jan: item.jan,
+                  retailPrice: item.retail_price || 0,
+                  series: item.series || "",
+                  scale: item.scale || "",
+                  imageUrl: item.image_url || "",
+                  grade: grade,
+        }));
+
+        return res.status(200).json({
+                  items,
+                  total,
+                  page: pageNum,
+                  pageSize,
+                  totalPages: Math.ceil(total / pageSize),
+        });
   } catch (e) {
-        return res.status(500).json({ error: String(e) });
+          return res.status(500).json({ error: e.message });
   }
 }
