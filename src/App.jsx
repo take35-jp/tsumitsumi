@@ -761,7 +761,7 @@ const suggS = {
 // ---- Help Modal ----
 // ---- Browse Modal（グレード別一覧から一括登録）----
 function BrowseModal({ onBulkAdd, onClose }) {
-  const GRADES = ["HG", "HGUC", "HGBF", "HGCE", "HGAC", "RG", "MG", "MGEX", "MGSD", "PG", "EG", "SD", "FM", "RE"];
+  const GRADES = ["HG", "RG", "MG", "MGEX", "MGSD", "PG", "EG", "SD", "FM", "RE"];
   const [grade, setGrade] = useState("HG");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
