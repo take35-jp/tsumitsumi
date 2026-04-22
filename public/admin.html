@@ -983,7 +983,7 @@ async function fetchAllMaster() {
 async function exportCSV() {
   showMsg('excel-msg', '読み込み中...', 'ok');
   const data = await fetchAllMaster();
-  const header = ['jan','name','maker','series','scale','image_url'];
+  const header = ['jan','name','maker','series','scale','image_url','retail_price'];
   const rows = [header, ...data.map(d => header.map(k => (d[k] || '').toString().replace(/,/g, '、')))];
   const csv = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -999,7 +999,7 @@ async function exportCSV() {
 async function exportExcel() {
   showMsg('excel-msg', 'Excel生成中...', 'ok');
   const data = await fetchAllMaster();
-  const header = ['jan','name','maker','series','scale','image_url'];
+  const header = ['jan','name','maker','series','scale','image_url','retail_price'];
 
   // SheetJSを動的ロード
   if (!window.XLSX) {
@@ -1015,7 +1015,7 @@ async function exportExcel() {
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   // 列幅設定
   ws['!cols'] = [
-    {wch:16},{wch:50},{wch:16},{wch:16},{wch:10},{wch:60}
+    {wch:16},{wch:50},{wch:16},{wch:16},{wch:10},{wch:60},{wch:12}
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'マスタ');
