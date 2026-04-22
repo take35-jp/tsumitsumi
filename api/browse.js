@@ -9,7 +9,7 @@ const GRADE_PATTERNS = {
       "MGSD": /\bMGSD\b/i,
       "MG": /\bMG\b/i,
       "RG": /\bRG\b/i,
-      "HG": /\bHG\b/i,
+      "HG": /\bHG(UC|BF|BC|BD|CE|AC|TB|IBO|BM|BG)?\b/i,
       "EG": /\bEG\b|ENTRY\s*GRADE/i,
       "SD": /\bSD\b|SDW|SDCS|SDEX|BB\s*戦士/i,
       "FM": /\bFM\b|フルメカニクス/i,
@@ -59,13 +59,6 @@ export default async function handler(req, res) {
         const gradePattern = GRADE_PATTERNS[grade];
           const filtered = all.filter(item => {
                     if (!item.name) return false;
-                    // HGはHGUC, HGBF等の下位マッチを除外
-                                            if (grade === "HG") {
-                                                        const name = item.name;
-                                                        // HGUC等にマッチするものはHG単体では除外
-                      if (/HGUC|HGBF|HGBC|HGBD|HGCE|HGAC|HGTB|HGIBO|HGBM|HGBG/i.test(name)) return false;
-                                                        return /\bHG\b/i.test(name);
-                                            }
                     // MGはMGEX, MGSDを除外
                                             if (grade === "MG") {
                                                         const name = item.name;
