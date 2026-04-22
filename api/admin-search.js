@@ -9,7 +9,7 @@ export default async function handler(req, res) {
             const { q, start = "1" } = req.query;
                 if (!q) return res.status(400).json({ error: "q required" });
                     const url = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=" + YAHOO_CLIENT_ID + "&query=" + encodeURIComponent(q) + "&results=20&start=" + start;
-                        const r = await fetch(url);
+                        if (q === "__raw") { const rr = await fetch(url); const tt = await rr.text(); return res.json({ sta: rr.status, ylen: YAHOO_CLIENT_ID ? YAHOO_CLIENT_ID.length : 0, txt: tt.slice(0, 800) }); } const r = await fetch(url);
                             const data = await r.json();
                                 const items = (data && data.hits ? data.hits : []).map(function(item) {
                                       return {
