@@ -32,7 +32,7 @@ export default async function handler(req, res) {
                                                                                                                       }
                                                                                                                       }
 
-                                                                                                                      async function fixImages(req, res) {
+                                                                                                                      async function fixImages(req, res) { if (req.query.debug === "env") return res.json({ url: !!SUPABASE_URL, urlLen: SUPABASE_URL?.length, key: !!SUPABASE_SERVICE_ROLE_KEY, keyLen: SUPABASE_SERVICE_ROLE_KEY?.length, yahoo: !!YAHOO_CLIENT_ID });
                                                                                                                         if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !YAHOO_CLIENT_ID) {
                                                                                                                             return res.status(500).json({ error: "env missing" });
                                                                                                                               }
