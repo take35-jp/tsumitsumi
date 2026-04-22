@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
 
   const { q, start = "1" } = req.query;
-    if (!q) return res.status(400).json({ error: "q required" });
+    if (req.query.action === "fix-images") { return await fixImages(req, res); } if (!q) return res.status(400).json({ error: "q required" });
 
   try {
         const url = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&query=${encodeURIComponent(q)}&results=20&start=${start}&output=json`;
@@ -29,6 +29,33 @@ export default async function handler(req, res) {
   } catch (e) {
         return res.status(500).json({ error: String(e) });
   }
+}
+
+async function fixImages(req, res) {
+    const URL = process.env.SUPABASE_URL;
+      const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!URL || !KEY || !YAHOO_CLIENT_ID) return res.status(500).json({ error: "env missing" });
+          const batchSize = Math.min(parseInt(req.query.batchSize || "20", 10), 50);
+            const h = { apikey: KEY, Authorization: `Bearer ${KEY}` };
+              const sel = `${URL}/rest/v1/products?select=id,jan&image_url=is.null&jan=not.like.PB-*&limit=${batchSize}&order=id.asc`;
+                const targets = await (await fetch(sel, { headers: h })).json();
+                  if (!Array.isArray(targets) || !targets.length) return res.json({ done: true, updated: 0 });
+                    const log = { total: targets.length, updated: 0, notFound: 0 };
+                      for (const p of targets) {
+                          const yUrl = `https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=${YAHOO_CLIENT_ID}&jan_code=${p.jan}&results=5`;
+                              try {
+                                    const yr = await fetch(yUrl);
+                                          const yd = await yr.json();
+                                                const img = yd?.hits?.find(x => x?.image?.medium)?.image?.medium;
+                                                      if (img) {
+                                                              const up = await fetch(`${URL}/rest/v1/products?id=eq.${p.id}`, { method: "PATCH", headers: { ...h, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify({ image_url: img }) });
+                                                                      if (up.ok) log.updated++;
+                                                                            } else log.notFound++;
+                                                                                } catch(e){}
+                                                                                    await new Promise(r => setTimeout(r, 400));
+                                                                                      }
+                                                                                        return res.json(log);
+                                                                                        }
 }
 
 function guessScale(name) {
