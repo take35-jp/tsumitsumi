@@ -53,7 +53,7 @@ export default async function handler(req, res) {
                     return res.status(500).json({ error: "Supabase query failed", status: response.status });
           }
 
-        const all = await response.json();
+        let all = await response.json(); let fetchOffset = 1000; while (all.length === fetchOffset) { const r2 = await fetch(url + `&offset=${fetchOffset}&limit=1000`, { headers }); if (!r2.ok) break; const batch = await r2.json(); if (!batch.length) break; all = all.concat(batch); fetchOffset += 1000; if (fetchOffset > 10000) break; }
 
         // グレード判定（他のグレードにマッチするものは除外して厳密化）
         const gradePattern = GRADE_PATTERNS[grade];
