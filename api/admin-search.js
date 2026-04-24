@@ -5,7 +5,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
     try {
-        if (req.query.action === "fix-images") return await fixImages(req, res);
+        if (req.query.action === "fix-images") return await fixImages(req, res); if (req.query.action === "price-check") return await priceCheck(req, res); if (req.query.action === "price-check") return await priceCheck(req, res);
             const { q, start = "1" } = req.query;
                 if (!q) return res.status(400).json({ error: "q required" });
                     const url = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=" + YAHOO_CLIENT_ID + "&query=" + encodeURIComponent(q) + "&results=20&start=" + start;
@@ -87,3 +87,5 @@ export default async function handler(req, res) {
                                                                                                                                                                                                                                                                                                                                     return "";
                                                                                                                                                                                                                                                                                                                                     }
                                                                                                                                                                                                                                                                                                                                     
+
+                                                                                                                                                                                                                                                                                                                                    async function priceCheck(req, res) { const jan = req.query.jan; if (!jan) return res.status(400).json({ error: "jan required" }); if (!YAHOO_CLIENT_ID) return res.status(500).json({ error: "env missing" }); const url = "https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?appid=" + YAHOO_CLIENT_ID + "&jan_code=" + encodeURIComponent(jan) + "&results=20"; const r = await fetch(url); const data = await r.json(); const hits = (data && data.hits) ? data.hits : []; const items = hits.map(function(h) { return { name: h.name || "", price: h.price || 0, description: h.description || "", storeName: (h.seller && h.seller.name) || "", url: h.url || "" }; }); return res.json({ total: (data && data.totalResultsAvailable) || 0, items: items }); }
