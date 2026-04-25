@@ -689,7 +689,7 @@ async function saveItem(idx) {
 
   try {
     // JANがあればupsert、なければinsert
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?on_conflict=jan`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -738,7 +738,7 @@ async function directSave() {
   };
 
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?on_conflict=jan`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -897,7 +897,7 @@ async function autoRegister() {
           updated_at: new Date().toISOString(),
         };
         try {
-          const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/products?on_conflict=jan`, {
             method: 'POST',
             headers: {
               'apikey': SUPABASE_KEY,
@@ -1077,7 +1077,7 @@ async function importFile() {
         let success = false;
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?on_conflict=jan`, {
               method: 'POST',
               headers: {
                 'apikey': SUPABASE_KEY,
