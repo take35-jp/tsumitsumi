@@ -159,6 +159,12 @@ export default async function handler(req, res) {
         }
   } catch (e) {}
 
+  const rBooks = await rakutenBooksSearch(jan);
+    if (rBooks?.name) return res.json(rBooks);
+
+  const rIchiba = await rakutenIchibaSearch(jan);
+    if (rIchiba?.name) return res.json(rIchiba);
+    
   try {
         const item = await yahooSearch(`jan_code=${jan}`);
         if (item?.name) return res.json(formatYahooResult(item));
@@ -168,12 +174,6 @@ export default async function handler(req, res) {
         const item = await yahooSearch(`keyword=${jan}`);
         if (item?.name) return res.json(formatYahooResult(item));
   } catch (e) {}
-
-  const rBooks = await rakutenBooksSearch(jan);
-    if (rBooks?.name) return res.json(rBooks);
-
-  const rIchiba = await rakutenIchibaSearch(jan);
-    if (rIchiba?.name) return res.json(rIchiba);
 
   return res.status(404).json({ error: "not found" });
 }
