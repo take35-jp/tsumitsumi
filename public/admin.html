@@ -662,7 +662,7 @@ function renderResults(maker, seriesVal = 'ガンプラ') {
       <div class="product-card ${isReg ? 'registered' : ''}" id="card-${idx}">
         ${item.photoUrl ? `<img class="product-img" src="${item.photoUrl}" onerror="this.style.display='none'" alt="">` : `<div class="product-img-ph">📦</div>`}
         <div class="product-info">
-          <input class="product-name-input" id="name-${idx}" value="${item.name.replace(/"/g, '&quot;')}">
+          <input class="product-name-input" id="name-${idx}" value="${cleanName(item.name).replace(/"/g, '&quot;')}">
           <div class="product-meta">
             <select class="meta-select" id="scale-${idx}">
               ${['','HG','MG','RG','PG','MGSD','SD','1/144','1/100','1/72','1/60','1/48','1/35','1/24'].map(s => `<option value="${s}" ${item.scale===s?'selected':''}>${s||'スケール'}</option>`).join('')}
