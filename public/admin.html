@@ -514,38 +514,42 @@ function switchTab(name) {
 // ---- CLEAN NAME ----
 function cleanName(name) {
     if (!name) return '';
-      let s = String(name);
-        s = s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
-          s = s.replace(/[\[［][^\]］]*予約[^\]］]*[\]］]/g,'');
-            s = s.replace(/[\[［][^\]］]*予定[^\]］]*[\]］]/g,'');
-              s = s.replace(/[\[［][^\]］]*発送[^\]］]*[\]］]/g,'');
-                s = s.replace(/[\[［](BANDAI SPIRITS|BANDAI|コトブキヤ|KOTOBUKIYA|タミヤ|TAMIYA|ハセガワ|HASEGAWA|フジミ|FUJIMI|アオシマ|AOSHIMA|ファインモールド|ドラゴン|トランペッター|グッドスマイルカンパニー|グッスマ|ウェーブ|ボークス|壽屋)[\]］]/g,'');
-                  s = s.replace(/[（(][\d０-９]+次?[再生産販]+[）)]/g,'');
-                    s = s.replace(/[（(][再生産販]+[）)]/g,'');
-                      s = s.replace(/[（(][^）)]*同梱[^）)]*[）)]/g,'');
-                        s = s.replace(/[（(][^）)]*キャンセル[^）)]*[）)]/g,'');
-                          s = s.replace(/[（(][^）)]*予約[^）)]*[）)]/g,'');
-                            s = s.replace(/[（(][A-Za-z][A-Za-z0-9\-_]{3,}[）)]/g,'');
-                              s = s.replace(/[（(]\d{4,}[）)]/g,'');
-                                const noise = ['爆買','再生産','送料無料','送料込み','送料込','即納','即日','新品','中古','未組立','未組み立て','未組','未開封','プレミアムバンダイ限定','プレバン限定','プレバン＆','プレバン','代引き不可','同梱不可','最安値','特価','クーポン','セール','組み立て式プラモデル','組立式プラモデル','組み立て式プラスチックモデル','組立式プラスチックモデル','プラスチックモデルキット','プラスチックモデル','組み立てキット','組立キット','プラモデル組立キット','スケールプラモデル','プラモデル'];
-                                  for (const w of noise) s = s.split(w).join('');
-                                    const makers = ['グッドスマイルカンパニー','グッスマ','ファインモールド','トランペッター','バンダイ','BANDAI','コトブキヤ','KOTOBUKIYA','タミヤ','TAMIYA','ハセガワ','HASEGAWA','フジミ','FUJIMI','アオシマ','AOSHIMA','ドラゴン','ウェーブ','ボークス','壽屋'];
-                                      makers.sort((a,b)=>b.length-a.length);
-                                        for (const m of makers) {
-                                            const me = m.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-                                                s = s.replace(new RegExp('(?:^|\\s)'+me+'(?=\\s|$)','g'),' ');
-                                                  }
-                                                    s = s.replace(/より\s*$/,'');
-                                                      s = s.replace(/\s+[A-Z][A-Z0-9\-_]{4,}\s*$/,'');
-                                                        s = s.replace(/\s+\d{5,}\s*$/,'');
-                                                          s = s.replace(/[／\/]全高[約\d.\-cmm]+(\s+[A-Z0-9\-]+)?\s*$/,'');
-                                                            s = s.replace(/[（(]\s*[）)]/g,'');
-                                                              s = s.replace(/[\[［]\s*[\]］]/g,'');
-                                                                s = s.replace(/\s+/g,' ').trim();
-                                                                  s = s.replace(/[\s,、。.\-_／\/]+$/,'').trim();
-                                                                    return s;
-                                                                    }
-}
+      let s = String(name).replace(/\u3000/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        s = s.replace(/(1)\s*\/\s*(\d{2,3})/g, '$1/$2');
+          s = s.replace(/プレ(?:バン|ミアムバンダイ)\s*限定/g, ' ');
+            s = s.replace(/プレ(?:バン|ミアムバンダイ)\s*[＆&]\s*/g, ' ');
+              s = s.replace(/プレ(?:バン|ミアムバンダイ)/g, ' ');
+                const tailPats = [/[\[【［]\s*予約[^】］\]]*?[\]】］]/g, /[\[【［]\s*\d{4}年\s*\d{1,2}月[^】］\]]*?[\]】］]/g, /予約\s*\d{4}年\s*\d{1,2}月[^\s]*?(?:発送|出荷|発売)?\s*予定/g, /\d{4}年\s*\d{1,2}月\s*(?:発送|出荷|発売)\s*予定/g, /予約販売/g, /予約商品/g];
+                  for (const p of tailPats) s = s.replace(p, ' ');
+                    s = s.replace(/[（(][A-Z]{1,5}\d{4,}[）)]/g, ' ');
+                      s = s.replace(/[（(]\d{4,}[）)]/g, ' ');
+                        s = s.replace(/[（(][^）)]*?(?:再販|再生産|新品|中古|限定|予約|送料|セール|クーポン|特価)[^）)]*?[）)]/g, ' ');
+                          const noiseKWs = ['再販','再生産','新品','中古','未使用','未組立','未開封','送料無料','送料込','即納','即日','プレバン','プレミアムバンダイ','代引','クーポン','セール','特価','最安','予約'];
+                            function isDirty(c) { for (const w of noiseKWs) if (c.includes(w)) return true; if (/\d{4}年/.test(c)) return true; return false; }
+                              function procBrackets(str, ob, cb) { let out=''; let i=0; while(i<str.length){ if(str[i]===ob){ const end=str.indexOf(cb,i+1); if(end===-1){out+=str[i];i++;continue;} const ct=str.substring(i+1,end); out+=isDirty(ct)?' ':str.substring(i,end+1); i=end+1; } else {out+=str[i];i++;} } return out; }
+                                for (const [ob,cb] of [['『','』'],['【','】'],['［','］'],['[',']']]) s = procBrackets(s, ob, cb);
+                                  const NOISE = ['爆買','再販','再生産','新品','中古','未使用','未組立','未組み立て','未開封','送料無料','送料込み','送料込','即納','即日発送','即日','代引き不可','代引不可','クーポン','セール','特価','最安値','最安','プラスチックモデルキット','スケールプラモデル','プラモデル組立キット','組み立て式','組立式','プラモデル','株式会社'];
+                                    for (const w of NOISE) s = s.split(w).join(' ');
+                                      s = s.replace(/^\s*壽屋\s*[（(]\s*コトブキヤ\s*[）)]\s*/, '');
+                                        s = s.replace(/^\s*壽屋\s+/, '');
+                                          const trailMakers = ['BANDAI SPIRITS','バンダイスピリッツ','バンダイ','BANDAI','コトブキヤ','KOTOBUKIYA','タミヤ','TAMIYA','ハセガワ','HASEGAWA','フジミ','FUJIMI','アオシマ','AOSHIMA','ファインモールド','グッドスマイルカンパニー','ウェーブ','WAVE','ボークス','VOLKS','壽屋'];
+                                            trailMakers.sort((a,b)=>b.length-a.length);
+                                              for (const m of trailMakers) { const esc = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); s = s.replace(new RegExp('\\s+'+esc+'\\s*$'), ''); s = s.replace(new RegExp('\\s+'+esc+'\\s+[A-Z][A-Za-z]+\\s*$'), ''); }
+                                                s = s.replace(/\/?全高約?\d+(?:\.\d+)?\s*(?:mm|cm|ｍｍ|ｃｍ)/g, '');
+                                                  s = s.replace(/\/?\d+(?:\.\d+)?\s*(?:mm|cm)スケール/g, '');
+                                                    s = s.replace(/(1\/\d{2,3})スケール/g, '$1');
+                                                      s = s.replace(/1\/1スケール\s*\/?/g, ' ');
+                                                        s = s.replace(/\s+[A-Z]{1,5}\d{2,5}[A-Z]?\s*$/, '');
+                                                          s = s.replace(/\s+[＆&]\s+/g, ' ');
+                                                            s = s.replace(/\s*[＆&]\s*$/, '');
+                                                              s = s.replace(/^\s*[＆&]\s*/, '');
+                                                                s = s.replace(/^\s*[／/・]\s*/, '');
+                                                                  s = s.replace(/\s*[／/]\s*$/, '');
+                                                                    s = s.replace(/\s*[\(\[（［]\s*[\)\]）］]\s*/g, ' ');
+                                                                      s = s.replace(/\s+/g, ' ');
+                                                                        s = s.replace(/^[\s　・/／\-—–]+|[\s　・/／\-—–]+$/g, '');
+                                                                          return s;
+                                                                          }
 
 function guessScale(name) {
   if (/\bMGSD\b/i.test(name)) return 'MGSD';
