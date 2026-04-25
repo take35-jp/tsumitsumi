@@ -1128,5 +1128,192 @@ function showMsg(id, text, type) {
   setTimeout(() => { el.innerHTML = ''; }, 4000);
 }
 </script>
+<!-- ========== 商品マスタ編集機能 (2026-04-25 追加) ========== -->
+    <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;">
+      <div style="background:#1a1d2e;color:#e8eaf0;border-radius:12px;padding:24px;max-width:600px;width:92%;max-height:90vh;overflow-y:auto;border:1px solid #353a55;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="margin:0;color:#ffd166;font-size:18px;">✏️ 商品編集</h2>
+          <button onclick="closeEditModal()" style="background:none;border:none;color:#a0a4b8;font-size:24px;cursor:pointer;">×</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <div style="font-size:11px;color:#a0a4b8;margin-bottom:4px;font-weight:600;">ID / JAN (編集不可)</div>
+            <div id="edit-jan-display" style="background:#181b2c;padding:8px 12px;border-radius:6px;font-family:monospace;font-size:13px;color:#a0a4b8;"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#a0a4b8;margin-bottom:4px;font-weight:600;">商品名</div>
+            <textarea id="edit-name" style="width:100%;background:#181b2c;color:#e8eaf0;border:1.5px solid #4a5070;border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit;min-height:60px;resize:vertical;"></textarea>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#a0a4b8;margin-bottom:4px;font-weight:600;">シリーズ</div>
+            <input id="edit-series" type="text" style="width:100%;background:#181b2c;color:#e8eaf0;border:1.5px solid #4a5070;border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#a0a4b8;margin-bottom:4px;font-weight:600;">グレード/スケール</div>
+            <input id="edit-scale" type="text" style="width:100%;background:#181b2c;color:#e8eaf0;border:1.5px solid #4a5070;border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit;" placeholder="HG / MG / RG / 1/144 など">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#a0a4b8;margin-bottom:4px;font-weight:600;">希望小売価格 (円・税込)</div>
+            <input id="edit-price" type="number" min="0" step="10" style="width:100%;background:#181b2c;color:#e8eaf0;border:1.5px solid #4a5070;border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit;">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#a0a4b8;margin-bottom:4px;font-weight:600;">画像URL</div>
+            <input id="edit-image-url" type="text" style="width:100%;background:#181b2c;color:#e8eaf0;border:1.5px solid #4a5070;border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit;">
+          </div>
+        </div>
+        <div id="edit-msg" style="margin-top:12px;font-size:13px;"></div>
+        <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end;">
+          <button onclick="closeEditModal()" style="background:#4a5070;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:14px;">キャンセル</button>
+          <button onclick="confirmEditSave()" style="background:#ffd166;color:#1a1d2e;border:none;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">変更内容を確認 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="edit-confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;align-items:center;justify-content:center;">
+      <div style="background:#1a1d2e;color:#e8eaf0;border-radius:12px;padding:24px;max-width:560px;width:92%;max-height:90vh;overflow-y:auto;border:1px solid #353a55;">
+        <h2 style="margin:0 0 14px;color:#ffd166;font-size:18px;">⚠️ 以下の内容で更新しますか?</h2>
+        <div id="edit-diff-list" style="background:#181b2c;border-radius:6px;padding:12px;font-size:13px;line-height:1.7;"></div>
+        <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end;">
+          <button onclick="closeConfirmModal()" style="background:#4a5070;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:14px;">取消</button>
+          <button id="edit-confirm-save-btn" onclick="executeEditSave()" style="background:#6fce9f;color:#1a1d2e;border:none;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">この内容で保存</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // ====== 商品マスタ編集機能 ======
+    window.__editingProduct = null;
+
+    async function editProduct(id) {
+      try {
+        const r = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + id + '&select=id,jan,name,series,scale,retail_price,image_url', {
+          headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+        });
+        const arr = await r.json();
+        if (!Array.isArray(arr) || arr.length === 0) {
+          alert('商品が見つかりません (id=' + id + ')');
+          return;
+        }
+        const p = arr[0];
+        window.__editingProduct = p;
+        document.getElementById('edit-jan-display').textContent = 'id=' + p.id + ' / JAN=' + (p.jan || '(なし)');
+        document.getElementById('edit-name').value = p.name || '';
+        document.getElementById('edit-series').value = p.series || '';
+        document.getElementById('edit-scale').value = p.scale || '';
+        document.getElementById('edit-price').value = (p.retail_price !== null && p.retail_price !== undefined) ? p.retail_price : '';
+        document.getElementById('edit-image-url').value = p.image_url || '';
+        document.getElementById('edit-msg').textContent = '';
+        document.getElementById('edit-modal').style.display = 'flex';
+      } catch (e) {
+        alert('エラー: ' + e);
+      }
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+      window.__editingProduct = null;
+    }
+
+    function confirmEditSave() {
+      const p = window.__editingProduct;
+      if (!p) return;
+      const newName = document.getElementById('edit-name').value.trim();
+      const newSeries = document.getElementById('edit-series').value.trim();
+      const newScale = document.getElementById('edit-scale').value.trim();
+      const newPriceStr = document.getElementById('edit-price').value.trim();
+      const newImage = document.getElementById('edit-image-url').value.trim();
+
+      let newPrice = null;
+      if (newPriceStr !== '') {
+        const n = parseInt(newPriceStr, 10);
+        if (isNaN(n) || n < 0) {
+          document.getElementById('edit-msg').innerHTML = '<span style="color:#ff8080;">価格は有効な数値を入力してください</span>';
+          return;
+        }
+        newPrice = n;
+      }
+
+      const changes = [];
+      if (newName !== (p.name || '')) changes.push({ field: '商品名', old: p.name || '(空)', new: newName || '(空)' });
+      if (newSeries !== (p.series || '')) changes.push({ field: 'シリーズ', old: p.series || '(空)', new: newSeries || '(空)' });
+      if (newScale !== (p.scale || '')) changes.push({ field: 'グレード', old: p.scale || '(空)', new: newScale || '(空)' });
+      const oldPrice = (p.retail_price === null || p.retail_price === undefined) ? null : p.retail_price;
+      if (newPrice !== oldPrice) changes.push({ field: '価格', old: oldPrice === null ? '(空)' : '¥' + oldPrice.toLocaleString(), new: newPrice === null ? '(空)' : '¥' + newPrice.toLocaleString() });
+      if (newImage !== (p.image_url || '')) changes.push({ field: '画像URL', old: (p.image_url || '(空)').slice(0, 60), new: (newImage || '(空)').slice(0, 60) });
+
+      if (changes.length === 0) {
+        document.getElementById('edit-msg').innerHTML = '<span style="color:#a0a4b8;">変更がありません</span>';
+        return;
+      }
+
+      window.__pendingEdit = { id: p.id, newName, newSeries, newScale, newPrice, newImage, changes };
+      const html = changes.map(c =>
+        '<div style="margin-bottom:10px;"><div style="color:#ffd166;font-weight:600;">' + escEdit(c.field) + '</div>' +
+        '<div style="color:#ff8080;text-decoration:line-through;font-size:12px;">' + escEdit(c.old) + '</div>' +
+        '<div style="color:#6fce9f;font-size:13px;">' + escEdit(c.new) + '</div></div>'
+      ).join('');
+      document.getElementById('edit-diff-list').innerHTML = html;
+      document.getElementById('edit-confirm-modal').style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('edit-confirm-modal').style.display = 'none';
+    }
+
+    async function executeEditSave() {
+      const e = window.__pendingEdit;
+      if (!e) return;
+      const btn = document.getElementById('edit-confirm-save-btn');
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+
+      const update = {
+        name: e.newName,
+        series: e.newSeries,
+        scale: e.newScale,
+        retail_price: e.newPrice,
+        image_url: e.newImage
+      };
+      for (const k of ['name','series','scale','image_url']) {
+        if (update[k] === '') update[k] = null;
+      }
+
+      try {
+        const r = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + e.id, {
+          method: 'PATCH',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify(update)
+        });
+        if (r.ok) {
+          closeConfirmModal();
+          closeEditModal();
+          if (typeof loadMaster === 'function') loadMaster();
+          const msg = document.getElementById('master-msg');
+          if (msg) {
+            msg.innerHTML = '<span style="color:#6fce9f;">✓ 商品 id=' + e.id + ' を更新しました</span>';
+            setTimeout(() => { msg.textContent = ''; }, 5000);
+          }
+        } else {
+          const txt = await r.text();
+          alert('保存失敗: status=' + r.status + ' body=' + txt.slice(0, 300));
+          btn.disabled = false;
+          btn.textContent = 'この内容で保存';
+        }
+      } catch (err) {
+        alert('保存中にエラー: ' + err);
+        btn.disabled = false;
+        btn.textContent = 'この内容で保存';
+      }
+    }
+
+    function escEdit(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+    </script>
 </body>
 </html>
