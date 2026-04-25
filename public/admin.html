@@ -797,7 +797,7 @@ function filterMaster() {
           <div style="font-size:11px; color:#6b7280;">${[d.maker, d.series, d.scale].filter(Boolean).join(' · ')}</div>
           <div style="font-size:11px; color:#9ca3af; margin-top:2px;">JAN: ${d.jan || '不明'}</div>
         </div>
-        <button class="btn btn-danger" style="font-size:11px; padding:6px 10px;" onclick="deleteItem(${d.id}, '${d.name.replace(/'/g,"\\'")}')">削除</button>
+        <button class="btn btn-danger" style="font-size:11px; padding:6px 10px;" onclick="deleteItem(${d.id}, '${d.name.replace(/'/g,"\\'")}')">削除</button> <button class="btn btn-primary" style="font-size:11px; padding:6px 10px;" onclick="editProduct(${d.id})">編集</button>
       </div>`).join('');
 }
 
