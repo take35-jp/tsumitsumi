@@ -1268,10 +1268,22 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.6.0 */}
+          {/* v1.6.1 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.6.1</span>
+          <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/26</span>
+          </div>
+          <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+          ・ヘルプページと更新履歴を最新化<br/>
+          ・ヘッダーアイコンの中央揃えを本番に適用<br/>
+          ・連続編集時の「保存中...」ハング修正（管理画面）
+          </div>
+          </div>
+          {/* v1.6.0 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.6.0</span>
           <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/26</span>
           </div>
