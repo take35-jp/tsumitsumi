@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<title>TSUMITSUMI 取扱説明書｜積みプラ管理ツール</title>
+<meta name="description" content="TSUMITSUMI（ツミツミ）の使い方を完全網羅した取扱説明書。キット登録、バーコードスキャン、検索、バックアップまで。" />
+<meta property="og:title" content="TSUMITSUMI 取扱説明書" />
+<meta property="og:description" content="積みプラ管理ツール TSUMITSUMI の機能・使い方を全部まとめた完全版マニュアル。" />
+<meta property="og:type" content="website" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --text: #111827;
+    --text-sub: #4b5563;
+    --text-mute: #6b7280;
+    --accent: #22c55e;
+    --accent-soft: #f0fdf4;
+    --accent-border: #bbf7d0;
+    --accent-strong: #15803d;
+    --warn-bg: #fef3c7;
+    --warn-border: #fde68a;
+    --warn-text: #92400e;
+    --info-bg: #eff6ff;
+    --info-border: #bfdbfe;
+    --info-text: #1e40af;
+    --code-bg: #f3f4f6;
+    --shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.75;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ヘッダー */
+  header.site {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(1.6) blur(8px);
+    -webkit-backdrop-filter: saturate(1.6) blur(8px);
+  }
+  .site-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px;
+  }
+  .logo {
+    font-size: 16px; font-weight: 800; color: var(--text);
+    letter-spacing: 0.02em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 999px; background: var(--accent);
+  }
+  .back-link {
+    font-size: 13px; color: var(--text-sub);
+    text-decoration: none; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: var(--surface);
+    transition: all .15s;
+  }
+  .back-link:hover { color: var(--text); border-color: var(--border-strong); }
+
+  /* レイアウト */
+  .layout {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 240px 1fr;
+    gap: 36px;
+    padding: 28px 20px 80px;
+  }
+  /* サイドバー */
+  aside.toc {
+    position: sticky; top: 70px; align-self: start;
+    max-height: calc(100vh - 90px); overflow-y: auto;
+    padding-right: 4px;
+  }
+  .toc-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-mute); letter-spacing: 0.12em;
+    text-transform: uppercase; margin-bottom: 12px;
+    padding-left: 12px;
+  }
+  .toc nav { display: flex; flex-direction: column; gap: 2px; }
+  .toc a {
+    display: block; padding: 7px 12px;
+    color: var(--text-sub); font-size: 13.5px;
+    text-decoration: none; border-radius: 6px;
+    border-left: 2px solid transparent;
+    transition: all .12s;
+  }
+  .toc a:hover {
+    color: var(--text); background: var(--accent-soft);
+  }
+  .toc a.active {
+    color: var(--accent-strong); background: var(--accent-soft);
+    border-left-color: var(--accent); font-weight: 600;
+  }
+
+  /* メインコンテンツ */
+  main { min-width: 0; }
+  .hero {
+    margin-bottom: 36px;
+    padding: 28px 24px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid var(--accent-border);
+    border-radius: 16px;
+  }
+  .hero h1 {
+    margin: 0 0 8px; font-size: 26px; font-weight: 800;
+    color: var(--text); line-height: 1.3;
+  }
+  .hero p {
+    margin: 0; color: var(--text-sub); font-size: 14.5px;
+  }
+  .hero .badge {
+    display: inline-block; padding: 3px 10px;
+    background: #fff; border: 1px solid var(--accent-border);
+    color: var(--accent-strong); font-size: 11px; font-weight: 700;
+    border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.05em;
+  }
+
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    scroll-margin-top: 80px;
+  }
+  section h2 {
+    margin: 0 0 14px; font-size: 20px; font-weight: 800;
+    color: var(--text); letter-spacing: 0.01em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  section h2::before {
+    content: ""; display: inline-block;
+    width: 4px; height: 22px; background: var(--accent);
+    border-radius: 2px;
+  }
+  section h3 {
+    margin: 22px 0 10px; font-size: 16px; font-weight: 700;
+    color: var(--text);
+  }
+  section p { margin: 0 0 12px; color: var(--text-sub); }
+  section ul, section ol { margin: 0 0 12px; padding-left: 22px; color: var(--text-sub); }
+  section ul li, section ol li { margin-bottom: 6px; }
+  section strong { color: var(--text); font-weight: 700; }
+
+  /* 手順ステップ */
+  .steps { counter-reset: step; padding: 0; list-style: none; margin: 12px 0; }
+  .steps > li {
+    counter-increment: step;
+    position: relative;
+    padding: 12px 14px 12px 48px;
+    margin-bottom: 8px;
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+  }
+  .steps > li::before {
+    content: counter(step);
+    position: absolute; left: 14px; top: 12px;
+    width: 24px; height: 24px;
+    background: var(--accent); color: #fff;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* 注意・情報ボックス */
+  .callout {
+    padding: 12px 16px; border-radius: 10px;
+    margin: 14px 0; font-size: 14px;
+    border: 1px solid; display: flex; gap: 10px;
+  }
+  .callout .ico { flex-shrink: 0; font-size: 18px; line-height: 1.4; }
+  .callout.info { background: var(--info-bg); border-color: var(--info-border); color: var(--info-text); }
+  .callout.warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+  .callout.tip  { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent-strong); }
+  .callout p { margin: 0; color: inherit; }
+  .callout strong { color: inherit; }
+
+  /* キーボードキー風 */
+  kbd {
+    display: inline-block;
+    padding: 1px 8px; margin: 0 2px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-bottom-width: 2px; border-radius: 5px;
+    font-family: -apple-system, sans-serif; font-size: 12px;
+    color: var(--text); font-weight: 600;
+  }
+
+  /* テーブル */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 14px 0; font-size: 14px;
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  th, td { padding: 10px 14px; text-align: left; }
+  th { background: #f9fafb; font-weight: 700; font-size: 13px; color: var(--text); }
+  td { color: var(--text-sub); border-top: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* ボタン例 */
+  .btn-example {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 12px; background: var(--text);
+    color: #fff; border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    margin: 0 2px;
+  }
+  .btn-example.outline {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-example.accent {
+    background: var(--accent); color: #fff;
+  }
+
+  /* フッター */
+  footer.site {
+    text-align: center; padding: 28px 20px;
+    color: var(--text-mute); font-size: 12px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  footer.site a { color: var(--text-sub); text-decoration: none; }
+  footer.site a:hover { color: var(--text); }
+
+  /* モバイル */
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; gap: 18px; padding: 18px 14px 60px; }
+    aside.toc {
+      position: static; max-height: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px;
+    }
+    .toc-title { padding-left: 0; margin-bottom: 8px; }
+    .toc nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+    .toc a {
+      font-size: 12.5px; padding: 5px 10px;
+      border-left: none; border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+    .toc a.active {
+      border-color: var(--accent); background: var(--accent-soft);
+    }
+    .hero { padding: 22px 18px; }
+    .hero h1 { font-size: 22px; }
+    section { padding: 20px 18px; }
+    section h2 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <div class="logo">
+      <span class="logo-dot"></span>
+      TSUMITSUMI 取扱説明書
+    </div>
+    <a href="https://tsumitsumi.vercel.app/" class="back-link">アプリへ戻る →</a>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- 目次 -->
+  <aside class="toc">
+    <div class="toc-title">目次</div>
+    <nav>
+      <a href="#intro">はじめに</a>
+      <a href="#first-step">最初のステップ</a>
+      <a href="#register">キットを登録する</a>
+      <a href="#scan">バーコードスキャン</a>
+      <a href="#continuous">連続スキャンモード</a>
+      <a href="#search">検索・絞り込み</a>
+      <a href="#detail">キットの詳細・編集</a>
+      <a href="#complete">完成マークをつける</a>
+      <a href="#tags">タグ機能</a>
+      <a href="#bulk">一括検索</a>
+      <a href="#stats">合計金額・統計</a>
+      <a href="#share">SNSシェア</a>
+      <a href="#backup">バックアップと機種変更</a>
+      <a href="#storage">保存容量について</a>
+      <a href="#tips">困ったときは</a>
+      <a href="#updates">更新履歴の見かた</a>
+    </nav>
+  </aside>
+
+  <!-- 本文 -->
+  <main>
+
+    <!-- ヒーロー -->
+    <div class="hero">
+      <span class="badge">USER MANUAL</span>
+      <h1>TSUMITSUMI 完全マニュアル</h1>
+      <p>積みプラを楽しく管理するための機能と使い方を、全部このページにまとめました。<br>気になるところから読んでください。</p>
+    </div>
+
+    <!-- はじめに -->
+    <section id="intro">
+      <h2>はじめに</h2>
+      <p><strong>TSUMITSUMI（ツミツミ）</strong>は、積みプラの管理に特化した無料のWebアプリです。<br>
+      「いま家に何があるか」「いくらぶん積んでるのか」「どれを完成させたか」を、サッと記録・確認できます。</p>
+
+      <h3>こんな人に向いています</h3>
+      <ul>
+        <li>気がつくと積みプラが増えていて、何を持っているか把握しきれない</li>
+        <li>同じキットを買ってしまった経験がある</li>
+        <li>積みプラの総額をなんとなく知っておきたい（あるいは知りたくない）</li>
+        <li>完成したキットを記録して達成感を味わいたい</li>
+      </ul>
+
+      <h3>主な特徴</h3>
+      <ul>
+        <li>📷 バーコードスキャンで一瞬登録</li>
+        <li>🔍 名前・スケール・タグで自由に検索</li>
+        <li>✓ 完成マークでビフォーアフターを記録</li>
+        <li>💾 ブラウザに保存。アカウント登録不要</li>
+        <li>📤 バックアップ書き出し / 別端末への引き継ぎ対応</li>
+      </ul>
+    </section>
+
+    <!-- 最初のステップ -->
+    <section id="first-step">
+      <h2>最初のステップ</h2>
+      <p>使い始めはとてもシンプルです。アカウント登録もインストールも不要です。</p>
+      <ol class="steps">
+        <li><strong>TSUMITSUMI を開く</strong><br>ブラウザで <code>tsumitsumi.vercel.app</code> にアクセスします。</li>
+        <li><strong>ホーム画面に追加（推奨）</strong><br>スマホのブラウザの共有メニューから「ホーム画面に追加」を選ぶと、アプリのように起動できます。</li>
+        <li><strong>最初のキットを登録</strong><br>右上の <span class="btn-example accent">＋ 追加</span> ボタンから登録できます。</li>
+      </ol>
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <p><strong>データはお使いのブラウザに保存されます。</strong>別の端末や別のブラウザで使うときは、後述の<a href="#backup" style="color:inherit;text-decoration:underline;">バックアップ機能</a>で引き継いでください。</p>
+      </div>
+    </section>
+
+    <!-- キット登録 -->
+    <section id="register">
+      <h2>キットを登録する</h2>
+      <p>キットの登録方法は3つあります。状況に応じて使い分けてください。</p>
+
+      <h3>① バーコードスキャン（一番ラク）</h3>
+      <p>新品で箱があるなら、これが最速です。<a href="#scan">バーコードスキャン</a>の章で詳しく説明します。</p>
+
+      <h3>② 商品名で検索して登録</h3>
+      <p>箱がもう手元にない／中古品でバーコードが読めない場合に便利。</p>
+      <ol class="steps">
+        <li><span class="btn-example accent">＋ 追加</span> をタップ</li>
+        <li>「商品名で検索」欄にキット名を入力（例：「RG νガンダム」）</li>
+        <li>候補から正しい商品をタップ</li>
+        <li>必要に応じて個数や購入金額を編集して保存</li>
+      </ol>
+
+      <h3>③ 手入力で登録</h3>
+      <p>ガレージキット、ジャンク扱いの福袋、自分で改造したキットなど、検索に出てこないものはこちら。</p>
+      <ol class="steps">
+        <li><span class="btn-example accent">＋ 追加</span> をタップ</li>
+        <li>「手入力」を選択</li>
+        <li>商品名・スケール・価格・購入店などを入力</li>
+        <li>必要なら写真を追加して保存</li>
+      </ol>
+
+      <h3>登録できる項目</h3>
+      <table>
+        <thead><tr><th>項目</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td>商品名</td><td>キット名。検索時のキーになります</td></tr>
+          <tr><td>シリーズ</td><td>例：機動戦士ガンダム / フレームアームズ・ガール</td></tr>
+          <tr><td>スケール / グレード</td><td>1/144、HG、MG、PG、デカール などから選択</td></tr>
+          <tr><td>価格</td><td>購入金額（税込）</td></tr>
+          <tr><td>個数</td><td>同じキットを複数持っている場合</td></tr>
+          <tr><td>JANコード</td><td>バーコード番号。スキャンで自動入力</td></tr>
+          <tr><td>写真</td><td>箱や本体の写真（端末から選択 or その場で撮影）</td></tr>
+          <tr><td>メモ</td><td>購入日・購入店・改造プランなど自由記述</td></tr>
+          <tr><td>タグ</td><td>「制作待ち」「塗装中」など自分で決めたラベル</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- スキャン -->
+    <section id="scan">
+      <h2>バーコードスキャン</h2>
+      <p>箱の裏のバーコードをカメラで読み取って一発登録します。プラモデル管理アプリでも一番使う機能です。</p>
+
+      <h3>使い方</h3>
+      <ol class="steps">
+        <li><span class="btn-example accent">＋ 追加</span> をタップ</li>
+        <li>「バーコードスキャン」をタップ（初回はカメラ使用許可を出してください）</li>
+        <li>箱のバーコードに枠を合わせる</li>
+        <li>読み取れると自動的に商品情報が表示されます</li>
+        <li>個数・購入価格などを調整して保存</li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ico">📷</span>
+        <p><strong>うまく読めないときのコツ</strong><br>
+        ・バーコードと10〜15cmぐらい離す<br>
+        ・明るい場所で読み取る<br>
+        ・斜めではなく真正面から<br>
+        ・反射するときは少し角度をずらす</p>
+      </div>
+
+      <h3>商品情報が出てこなかったら？</h3>
+      <p>JANコードはツミツミのデータベースに登録されている必要があります。<br>
+      未登録の商品でも、バーコード番号は自動で入りますので、商品名などを手入力で補完して保存してください。<br>
+      <strong>あなたが登録した情報は、他のユーザーには共有されません。</strong></p>
+    </section>
+
+    <!-- 連続スキャン -->
+    <section id="continuous">
+      <h2>連続スキャンモード</h2>
+      <p>大量のキットをまとめて登録したいときに便利な機能です。<br>
+      箱を1つずつ取り出してスキャンするのではなく、ベルトコンベアのように<strong>カメラを開いたまま連続でバーコードを読み込めます</strong>。</p>
+
+      <h3>使い方</h3>
+      <ol class="steps">
+        <li>バーコードスキャン画面で <span class="btn-example outline">🔄 連続ON</span> をタップ</li>
+        <li>1個目のバーコードを読み取る → キューに自動追加（カメラは閉じない）</li>
+        <li>「次のバーコードをスキャン...」と表示されるので、続けて2個目を読み取る</li>
+        <li>必要な数を読み込んだら、画面下の <span class="btn-example outline">完了</span> をタップ</li>
+        <li>キューに溜まったキットを一覧で確認 → 一括で保存</li>
+      </ol>
+
+      <div class="callout info">
+        <span class="ico">ℹ️</span>
+        <p>連続モードはOFFにすると<strong>1回ずつ確実に</strong>登録できるモードに戻ります。<br>状況によって切り替えてお使いください。</p>
+      </div>
+
+      <h3>こんな場面で便利</h3>
+      <ul>
+        <li>引っ越しや整理で、押入れの積みプラをまとめて棚卸し</li>
+        <li>イベントやセールで複数買いした帰り道</li>
+        <li>友達や家族のコレクションを一気に登録したいとき</li>
+      </ul>
+    </section>
+
+    <!-- 検索 -->
+    <section id="search">
+      <h2>検索・絞り込み</h2>
+      <p>登録したキットが増えてくると、目的のキットを探す機能が役に立ちます。</p>
+
+      <h3>キーワード検索</h3>
+      <p>画面上部の検索ボックスに、商品名やシリーズ名の一部を入力すると、ヒットしたキットだけが表示されます。</p>
+
+      <h3>スケール・グレードでフィルター</h3>
+      <p>スケール選択ドロップダウンから絞り込めます。</p>
+      <ul>
+        <li>1/144、1/100、1/72、1/60、1/48、1/32、1/24</li>
+        <li>HG、RG、MG、RE/100、MGSD、MGEX、PG、SD</li>
+        <li>フルメカニクス、UNLEASHED</li>
+        <li>その他</li>
+        <li>デカール（水転写デカール等の補助パーツ管理用）</li>
+      </ul>
+
+      <h3>タグでフィルター</h3>
+      <p>自分で付けたタグでも絞り込めます。<br>
+      例：「塗装中」「制作待ち」「子どもと作る」「コンペ用」など。</p>
+
+      <h3>表示モードの切り替え</h3>
+      <p>キット一覧は<strong>グリッドビュー</strong>（写真メイン）と<strong>リストビュー</strong>（情報メイン）を切り替えられます。<br>
+      気分やシチュエーションに合わせてお選びください。</p>
+    </section>
+
+    <!-- 詳細・編集 -->
+    <section id="detail">
+      <h2>キットの詳細・編集</h2>
+
+      <h3>詳細画面の開き方</h3>
+      <p>一覧でキットをタップすると詳細画面が開きます。<br>
+      写真、商品情報、メモ、タグなどを確認できます。</p>
+
+      <h3>編集する</h3>
+      <p>詳細画面の <span class="btn-example outline">編集</span> ボタンから、内容を書き換えて保存できます。</p>
+
+      <h3>削除する</h3>
+      <p>詳細画面の <span class="btn-example outline">削除</span> ボタンで、そのキットを一覧から削除します。<br>
+      <strong>削除すると元に戻せません</strong>のでご注意ください。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <p>誤って削除してしまった場合、最近のバックアップがあれば復元できます。<a href="#backup" style="color:inherit;text-decoration:underline;">バックアップの章</a>を参照してください。</p>
+      </div>
+    </section>
+
+    <!-- 完成マーク -->
+    <section id="complete">
+      <h2>完成マークをつける</h2>
+      <p>キットを完成させたら、忘れずに完成マークをつけましょう。<br>
+      積みから「作った」になる瞬間です。</p>
+
+      <h3>つけ方</h3>
+      <ol class="steps">
+        <li>キットの詳細画面を開く</li>
+        <li><span class="btn-example accent">完成</span> ボタンをタップ</li>
+        <li>一覧の該当キットに <strong>✓ 完成済み</strong> バッジが表示されます</li>
+      </ol>
+
+      <h3>完成マークでできること</h3>
+      <ul>
+        <li>一覧で完成したキットがひと目で分かる</li>
+        <li>「達成感」がたまっていくモチベーションに</li>
+        <li>未完成だけ表示する絞り込みもいずれ拡充予定</li>
+      </ul>
+    </section>
+
+    <!-- タグ -->
+    <section id="tags">
+      <h2>タグ機能</h2>
+      <p>タグは<strong>自分で自由に決められる分類ラベル</strong>です。<br>
+      シリーズやスケールでは表現しきれない「自分なりのカテゴリ」を作るのに使います。</p>
+
+      <h3>タグの使い方の例</h3>
+      <ul>
+        <li><strong>制作ステータス</strong>：「塗装中」「素組み完成」「ディテールアップ中」</li>
+        <li><strong>用途</strong>：「子どもと作る」「コンペ提出予定」「練習用」</li>
+        <li><strong>場所</strong>：「クローゼット」「実家」「会社の机の中」</li>
+        <li><strong>気分</strong>：「いつか作る」「すぐ作りたい」「永久保存」</li>
+      </ul>
+
+      <h3>タグの追加・削除</h3>
+      <p>キット編集画面でタグ欄に文字を入力 →「追加」ボタンで登録できます。<br>
+      不要になったタグはタグ表示の <strong>×</strong> で削除できます。</p>
+    </section>
+
+    <!-- 一括検索 -->
+    <section id="bulk">
+      <h2>一括検索</h2>
+      <p>持っているキットの一覧を、一度に検索ボックスに入れて、まとめて登録する機能です。<br>
+      Excelや紙のメモから移行するときに便利です。</p>
+
+      <h3>使い方</h3>
+      <ol class="steps">
+        <li>追加メニューから「一括検索」を選択</li>
+        <li>検索ボックスに、商品名を1行ずつ貼り付け</li>
+        <li>「検索」ボタンで全件まとめて検索が走ります</li>
+        <li>ヒットした商品にチェックを入れて、まとめて登録</li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <p>検索結果のヒット率を上げたいときは、<strong>商品名はなるべく正式名称に近づけて</strong>入力してください。<br>
+        例：「ガンダム」より「HG ガンダム RX-78-2」の方が正確に検索されます。</p>
+      </div>
+    </section>
+
+    <!-- 統計 -->
+    <section id="stats">
+      <h2>合計金額・統計</h2>
+      <p>登録した全キットの合計金額・総個数を、ホーム画面で確認できます。</p>
+      <ul>
+        <li><strong>合計金額</strong>：購入価格の合計（手入力した価格があればそれが優先）</li>
+        <li><strong>総個数</strong>：登録した全キットの個数を合計</li>
+        <li><strong>完成数</strong>：完成マークがついているキットの数</li>
+      </ul>
+
+      <div class="callout warn">
+        <span class="ico">😱</span>
+        <p>合計金額の数字を見て震えるかどうかは、あなた次第です。<br>怖くなったら、表示を非表示に切り替える機能もあります。</p>
+      </div>
+    </section>
+
+    <!-- SNSシェア -->
+    <section id="share">
+      <h2>SNSシェア</h2>
+      <p>登録した数や合計金額、完成キットなどを、X（旧Twitter）でシェアできます。<br>
+      積み師仲間と語るネタとしてどうぞ。</p>
+
+      <h3>シェアの仕方</h3>
+      <ol class="steps">
+        <li>ホーム画面のシェアアイコン <span class="btn-example outline">𝕏</span> をタップ</li>
+        <li>シェアしたい内容（合計金額・個数・完成数など）を選択</li>
+        <li>X が起動して投稿画面に切り替わるので、そのままポスト</li>
+      </ol>
+
+      <h3>シェアされる情報</h3>
+      <p>個別のキット情報や購入店などのプライベートな情報は<strong>シェアされません</strong>。<br>
+      合計値・個数・完成数など、集計された情報のみが含まれます。</p>
+    </section>
+
+    <!-- バックアップ -->
+    <section id="backup">
+      <h2>バックアップと機種変更</h2>
+      <p>TSUMITSUMI のデータは<strong>あなたの端末のブラウザに保存</strong>されます。<br>
+      機種変更・ブラウザの引っ越し・万が一のデータ消失に備えて、定期的なバックアップをおすすめします。</p>
+
+      <h3>バックアップを書き出す</h3>
+      <ol class="steps">
+        <li>メニューから「バックアップ」を選択</li>
+        <li><span class="btn-example accent">バックアップを書き出す</span> をタップ</li>
+        <li>JSON形式のファイルがダウンロードされます</li>
+        <li>このファイルをクラウドストレージや自分宛メールなど、安全な場所に保存</li>
+      </ol>
+
+      <h3>バックアップから復元する</h3>
+      <ol class="steps">
+        <li>新しい端末／ブラウザで TSUMITSUMI を開く</li>
+        <li>メニューから「バックアップ」を選択</li>
+        <li><span class="btn-example outline">バックアップから復元</span> をタップ</li>
+        <li>保存しておいた JSON ファイルを選ぶ</li>
+        <li>確認画面で「復元」を実行 → データが移行されます</li>
+      </ol>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <p><strong>復元すると現在のデータは上書きされます。</strong><br>
+        「いまの端末のデータ」と「復元するデータ」を混ぜることはできません。<br>
+        必要に応じて、復元前にいまのデータを書き出しておきましょう。</p>
+      </div>
+
+      <h3>こんなタイミングで取っておきたい</h3>
+      <ul>
+        <li>ある程度キットを登録できたとき（区切りごとに）</li>
+        <li>機種変更やブラウザ移行の前</li>
+        <li>OSアップデート前</li>
+        <li>大事なデータを編集する前</li>
+      </ul>
+    </section>
+
+    <!-- 保存容量 -->
+    <section id="storage">
+      <h2>保存容量について</h2>
+      <p>TSUMITSUMI はブラウザの保存領域を使っています。<br>
+      多くのキットを写真付きで登録すると、容量が増えていきます。</p>
+
+      <h3>容量の確認</h3>
+      <p>ヘルプ画面の「保存容量」セクションに、現在の使用量と上限の目安が表示されます。</p>
+
+      <h3>容量を圧迫しないコツ</h3>
+      <ul>
+        <li>写真は<strong>1キットにつき1枚</strong>を目安に</li>
+        <li>解像度の高すぎる写真はリサイズしてから登録</li>
+        <li>不要になったキット情報は削除</li>
+        <li>定期的にバックアップを書き出して、本体データはスッキリ保つ</li>
+      </ul>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <p>容量の上限に近づくと、警告が表示されます。<br>
+        上限を超えると新しいキットの登録ができなくなりますので、早めに対処してください。</p>
+      </div>
+    </section>
+
+    <!-- 困ったとき -->
+    <section id="tips">
+      <h2>困ったときは</h2>
+
+      <h3>カメラが起動しない</h3>
+      <ul>
+        <li>ブラウザのカメラ使用許可を確認してください</li>
+        <li>iPhone の場合：設定 → Safari → カメラ → 「許可」</li>
+        <li>Android の場合：設定 → アプリ → ブラウザ → 権限 → カメラ</li>
+        <li>HTTPS でアクセスしている必要があります（<code>tsumitsumi.vercel.app</code>はOK）</li>
+      </ul>
+
+      <h3>バーコードが読み取れない</h3>
+      <ul>
+        <li>明るい場所で、10〜15cm離して、真正面から</li>
+        <li>反射する場合は少し角度をずらす</li>
+        <li>古い本やシール越しのバーコードは認識率が落ちます</li>
+        <li>どうしても読めなければ、バーコード番号を直接入力する手もあります</li>
+      </ul>
+
+      <h3>データが消えてしまった</h3>
+      <ul>
+        <li>ブラウザのキャッシュ／履歴クリアでデータが消えることがあります</li>
+        <li>バックアップを保存していれば、そこから復元できます</li>
+        <li>定期的なバックアップ書き出しを習慣にしてください</li>
+      </ul>
+
+      <h3>同じキットを2回登録してしまった</h3>
+      <ul>
+        <li>不要なほうを詳細画面から削除してください</li>
+        <li>個数管理として残すなら、片方の個数を増やして片方を削除</li>
+      </ul>
+
+      <h3>商品検索でヒットしない</h3>
+      <ul>
+        <li>検索キーワードを変えてみる（型番・カタカナ・ローマ字など）</li>
+        <li>マスタDBに未登録の場合は、手入力で登録できます</li>
+        <li>ガレージキットや中古福袋などは手入力が基本です</li>
+      </ul>
+    </section>
+
+    <!-- 更新履歴 -->
+    <section id="updates">
+      <h2>更新履歴の見かた</h2>
+      <p>TSUMITSUMI は継続的にアップデートされています。新機能や改善点はヘルプ画面の「更新履歴」で確認できます。</p>
+
+      <h3>確認方法</h3>
+      <ol class="steps">
+        <li>アプリのヘルプ画面（❓アイコン）を開く</li>
+        <li>「更新履歴」セクションに最新3件のアップデートが表示されます</li>
+        <li>「すべて見る」をタップすると、これまでの全アップデートが確認できます</li>
+      </ol>
+
+      <h3>新機能の通知について</h3>
+      <p>最新版には <strong>NEW</strong> バッジが付きます。<br>
+      アプリを開いたタイミングで自動的に最新版に更新されますので、特別な操作は不要です。</p>
+    </section>
+
+    <!-- フッター予告 -->
+    <section id="end" style="background:var(--accent-soft); border-color:var(--accent-border); text-align:center;">
+      <h2 style="justify-content:center;">それでは、よい積みプラライフを！</h2>
+      <p>分からないことがあれば、ヘルプ画面のフィードバックボタンからお問い合わせください。<br>
+      みなさんのコレクションが、いつか積みから「作った」に変わる日まで、TSUMITSUMI が估走します。</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="site">
+  <p>© TSUMITSUMI / TAKE35 — 積みプラ管理ツール<br>
+  <a href="https://tsumitsumi.vercel.app/">tsumitsumi.vercel.app</a></p>
+</footer>
+
+<!-- 目次のアクティブ化（簡易スクロールスパイ） -->
+<script>
+  (function () {
+    const links = document.querySelectorAll('.toc a');
+    const sections = Array.from(links).map(a => {
+      const id = a.getAttribute('href').slice(1);
+      return { link: a, section: document.getElementById(id) };
+    }).filter(x => x.section);
+
+    function update() {
+      const y = window.scrollY + 120;
+      let active = sections[0];
+      for (const item of sections) {
+        if (item.section.offsetTop <= y) active = item;
+      }
+      links.forEach(a => a.classList.remove('active'));
+      if (active) active.link.classList.add('active');
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+</script>
+
+</body>
+</html>
