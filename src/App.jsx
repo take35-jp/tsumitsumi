@@ -1268,10 +1268,25 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* v1.6.0 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.6.0</span>
+          <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/26</span>
+          </div>
+          <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+            ・キット一覧に完成マーク（✓ 完成済み）を表示<br/>
+            ・キット詳細のボタン配置を改善（編集/完成/削除/閉じる）<br/>
+            ・保存容量の表示・警告を追加<br/>
+            ・ヘッダーアイコンの中心揃え修正<br/>
+            ・マスタDB 6,100件超に拡充・商品名クリーニング強化
+            </div>
+            </div>
           {/* v1.5.0 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}padding: 0, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.5.1</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/19</span>
             </div>
@@ -2755,7 +2770,7 @@ const s = {
   headerTitle: { fontSize: 15, fontWeight: 700, color: "#111", letterSpacing: 1 },
   headerSub: { fontSize: 8, color: "#aaa", letterSpacing: 2, marginTop: 1 },
   shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
-  searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 16, cursor: "pointer" },
+  searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: 0, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 },
   stats: { display: "flex", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   statBox: { flex: 1, padding: "9px 0", textAlign: "center", cursor: "pointer" },
   statNum: { fontSize: 16, fontWeight: 700 },
