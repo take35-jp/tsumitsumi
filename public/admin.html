@@ -1228,6 +1228,7 @@ function showMsg(id, text, type) {
     function closeEditModal() {
       document.getElementById('edit-modal').style.display = 'none';
       window.__editingProduct = null;
+      window.__pendingEdit = null;
     }
 
     function confirmEditSave() {
