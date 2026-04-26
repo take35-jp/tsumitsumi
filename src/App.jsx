@@ -389,7 +389,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
               if (continuous) {
                 // 連続モード：2秒クールダウン後にリセット
                 detectedRef.current = true;
-                resolve(code);
+                onDetected(code);
                 setTimeout(() => {
                   detectedRef.current = false;
                   lastCode = null;
