@@ -1309,6 +1309,7 @@ function showMsg(id, text, type) {
         if (r.ok) {
           closeConfirmModal();
           closeEditModal();
+                    btn.disabled = false; btn.textContent = 'この内容で保存';
           if (typeof loadMaster === 'function') loadMaster();
           const msg = document.getElementById('master-msg');
           if (msg) {
