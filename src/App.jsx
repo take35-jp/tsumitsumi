@@ -1307,6 +1307,10 @@ function HelpModal({ onClose }) {
               ・グレード別一括登録（☰ボタン）追加
             </div>
           </div>
+          <div style={hs.section}>
+          <div style={hs.sectionTitle}>保存容量</div>
+          <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -2273,6 +2277,7 @@ export default function App() {
                 <div style={{ padding: "6px 6px 8px" }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: "#111", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.3 }}>{kit.name}</div>
                   {kit.scale && <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{kit.scale}</div>}
+                  {kit.completed && <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700, marginTop: 2 }}>✓ 完成済み</div>}
                 </div>
               </div>
             ))}
