@@ -690,7 +690,7 @@ function renderResults(maker, seriesVal = 'ガンプラ') {
 // ---- SAVE ----
 async function saveItem(idx) {
   const item = currentItems[idx];
-  const name = document.getElementById(`name-${idx}`).value.trim();
+  const name = cleanName(document.getElementById(`name-${idx}`).value.trim());
   const scale = document.getElementById(`scale-${idx}`).value;
   const maker = document.getElementById(`maker-${idx}`).value.trim();
   const series = document.getElementById(`series-${idx}`).value.trim();
@@ -743,7 +743,7 @@ async function saveAll() {
 
 // ---- DIRECT INPUT ----
 async function directSave() {
-  const name = document.getElementById('d-name').value.trim();
+  const name = cleanName(document.getElementById('d-name').value.trim());
   if (!name) return showMsg('direct-msg', '商品名は必須です', 'err');
 
   const payload = {
@@ -1076,7 +1076,7 @@ async function importFile() {
       // 全データを配列に変換
       const allPayloads = dataRows.map(row => ({
         jan: janIdx >= 0 ? (row[janIdx]?.toString().trim() || null) : null,
-        name: row[nameIdx]?.toString().trim() || '',
+        name: cleanName(row[nameIdx]?.toString().trim() || ''),
         maker: makerIdx >= 0 ? (row[makerIdx]?.toString().trim() || '') : '',
         series: seriesIdx >= 0 ? (row[seriesIdx]?.toString().trim() || '') : '',
         scale: scaleIdx >= 0 ? (row[scaleIdx]?.toString().trim() || '') : '',
