@@ -57,7 +57,7 @@ const SERIES_OPTIONS = [
   // ── その他 ──
   "その他",
 ];
-const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "HG", "RG", "MG", "RE/100", "MGSD", "MGEX", "PG", "SD", "フルメカニクス", "UNLEASHED", "その他"];
+const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "HG", "RG", "MG", "RE/100", "MGSD", "MGEX", "PG", "SD", "フルメカニクス", "UNLEASHED", "その他", "デカール"];
 
 const RANKS = [
   { min: 500, label: "模型屋", color: "#7c3aed" },
