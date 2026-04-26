@@ -2470,7 +2470,7 @@ export default function App() {
               )}
               <div style={s.modalBtns}>
                 <button style={s.editBtn} onClick={() => handleEdit(detail)}>編集</button>
-              <button style={{ ...s.editBtn, background: '#10b981' }} onClick={() => { handleComplete(detail.id); setDetail(null); }}>完成</button>
+              <button style={{ ...s.editBtn, background: '#10b981' }} onClick={() => { toggleComplete(detail.id); setDetail(null); }}>完成</button>
                               <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
                 <button style={s.closeBtn} onClick={() => setDetail(null)}>閉じる</button>
               </div>
