@@ -2400,8 +2400,6 @@ export default function App() {
                 })()}
               </div>
             </div>
-            <button style={{ ...s.checkBtn, background: kit.completed ? "#22c55e" : "#e5e7eb", color: kit.completed ? "#fff" : "#9ca3af" }}
-              onClick={(e) => { e.stopPropagation(); toggleComplete(kit.id); }}>✓</button>
           </div>
         ))}
       </div>
@@ -2467,26 +2465,10 @@ export default function App() {
                   🙋 これを作ってくれる人に譲りたい！とポストする
                 </button>
               )}
-              {detail.jan && (
-                <button
-                  style={{ width: "100%", marginTop: 8, padding: "8px 0", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                  onClick={async () => {
-                    const r = await fetch(`/api/price?jan=${detail.jan}`);
-                    const d = await r.json();
-                    if (d.price) {
-                      setKits(prev => prev.map(k => k.id === detail.id ? { ...k, retailPrice: String(d.price) } : k));
-                      setDetail(prev => ({ ...prev, retailPrice: String(d.price) }));
-                      alert(`希望小売価格を更新しました：¥${d.price.toLocaleString()}`);
-                    } else {
-                      alert("希望小売価格を取得できませんでした。手動で入力してください。");
-                    }
-                  }}>
-                  🔄 希望小売価格を再取得
-                </button>
-              )}
               <div style={s.modalBtns}>
                 <button style={s.editBtn} onClick={() => handleEdit(detail)}>編集</button>
-                <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
+              <button style={{ ...s.editBtn, background: '#10b981' }} onClick={() => { handleComplete(detail.id); setDetail(null); }}>完成</button>
+                              <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
                 <button style={s.closeBtn} onClick={() => setDetail(null)}>閉じる</button>
               </div>
             </div>
