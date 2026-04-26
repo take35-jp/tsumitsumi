@@ -1298,7 +1298,7 @@ function HelpModal({ onClose }) {
           {/* v1.5.0 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}padding: 0, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.5.1</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/19</span>
             </div>
