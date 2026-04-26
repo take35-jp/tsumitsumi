@@ -2389,6 +2389,7 @@ export default function App() {
               <div style={s.cardMeta}>
                 {kit.series && <span>{kit.series}</span>}
                 {kit.scale && <span style={s.badge}>{kit.scale}</span>}
+                {kit.completed && <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700, marginLeft: 6 }}>✓ 完成済み</span>}
                 {kit.tags?.length > 0 && kit.tags.map(tag => (
                   <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
                 ))}
