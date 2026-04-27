@@ -763,8 +763,6 @@ const suggS = {
 // ---- Help Modal ----
 // ---- Browse Modal（グレード別一覧から一括登録）----
 function BrowseModal({ onBulkAdd, onClose }) {
-  const GRADES = ["HG", "RG", "MG", "MGEX", "MGSD", "PG", "EG", "SD", "FM", "RE"];
-  const [grade, setGrade] = useState("HG");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -775,152 +773,125 @@ function BrowseModal({ onBulkAdd, onClose }) {
 
   const getKey = (item) => `${item.name}_${item.jan}`;
 
-  const search = async (g, p, q) => {
+  const search = async (p, q) => {
     setLoading(true);
     setSearched(true);
     try {
       const query = q !== undefined ? q : browseQuery;
       const url = query.trim()
-        ? `/api/browse?grade=${g}&page=${p}&q=${encodeURIComponent(query.trim())}`
-        : `/api/browse?grade=${g}&page=${p}`;
+        ? `/api/browse?page=${p}&q=${encodeURIComponent(query.trim())}`
+        : `/api/browse?page=${p}`;
       const res = await fetch(url);
       const data = await res.json();
       setItems(data.items || []);
       setTotal(data.total || 0);
-    } catch (e) {}
-    setLoading(false);
+    } catch (e) {
+      setItems([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleSelect = (item) => {
     const key = getKey(item);
     setSelectedItems(prev => {
       const next = { ...prev };
-      next[key] ? delete next[key] : next[key] = item;
+      if (next[key]) delete next[key];
+      else next[key] = item;
       return next;
     });
   };
 
-  const isSelected = (item) => !!selectedItems[getKey(item)];
-  const selectedCount = Object.keys(selectedItems).length;
-
   const handleBulkAdd = () => {
-    const toAdd = Object.values(selectedItems).map((item, idx) => ({
-      ...{ name: "", series: "", scale: "", purchaseDate: "", price: "", count: 1, rating: 0,
-           photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "", condition: "", conditionNote: "", tags: [] },
-      ...item,
-      id: Date.now() + idx,
-      priority: "中",
-    }));
-    onBulkAdd(toAdd);
+    const list = Object.values(selectedItems);
+    if (list.length === 0) return;
+    onBulkAdd(list);
     onClose();
   };
 
+  const selectedCount = Object.keys(selectedItems).length;
+
   return (
-    <div style={{ background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box", padding: "20px 20px 32px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <span style={{ fontSize: 17, fontWeight: 700, color: "#111" }}>📋 リストから一括登録</span>
-        <button style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" }} onClick={onClose}>✕</button>
-      </div>
-
-      {/* グレード選択 */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-        {GRADES.map(g => (
-          <button key={g} style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 700, cursor: "pointer",
-            background: grade === g ? "#111" : "#f3f4f6", color: grade === g ? "#fff" : "#374151", borderColor: grade === g ? "#111" : "#e5e7eb" }}
-            onClick={() => { setGrade(g); setItems([]); setPage(1); setSearched(false); }}>
-            {g}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
-        <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
-          ⚠️ <strong>注意：</strong>登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: "#111" }}>📋 リストから一括登録</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#9ca3af" }}>×</button>
         </div>
+
+        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+          <input
+            type="text"
+            value={browseQuery}
+            onChange={(e) => setBrowseQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); search(1, browseQuery); } }}
+            placeholder="例: バンダイ HG ガンダム（スペース区切りでAND検索）"
+            style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1.5px solid #d1d5db", fontSize: 14 }}
+          />
+          <button
+            onClick={() => { setPage(1); search(1, browseQuery); }}
+            style={{ padding: "10px 16px", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+            🔍 検索
+          </button>
+        </div>
+
+        <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
+            ⚠ 注意：登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
+          </div>
+        </div>
+
+        {loading && <div style={{ textAlign: "center", padding: 20, color: "#6b7280" }}>読み込み中...</div>}
+
+        {!loading && searched && items.length === 0 && (
+          <div style={{ textAlign: "center", padding: 20, color: "#6b7280" }}>該当する商品が見つかりません</div>
+        )}
+
+        {!loading && items.length > 0 && (
+          <>
+            <div style={{ marginBottom: 12 }}>
+              {items.map((item) => {
+                const key = getKey(item);
+                const isSelected = !!selectedItems[key];
+                return (
+                  <div key={key} onClick={() => toggleSelect(item)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: isSelected ? "#dcfce7" : "#fff", border: "1.5px solid", borderColor: isSelected ? "#22c55e" : "#e5e7eb", borderRadius: 10, marginBottom: 6, cursor: "pointer" }}>
+                    {item.image_url && <img src={item.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 6 }} />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                      {item.scale && <div style={{ fontSize: 11, color: "#6b7280" }}>{item.scale}</div>}
+                    </div>
+                    {isSelected && <span style={{ color: "#22c55e", fontSize: 18, fontWeight: 700 }}>✓</span>}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 8 }}>
+              <button
+                disabled={page <= 1}
+                style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: page <= 1 ? "#f3f4f6" : "#fff", borderRadius: 8, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1 }}
+                onClick={() => { const p = page - 1; setPage(p); search(p); }}>← 前へ</button>
+              <span style={{ fontSize: 12, color: "#9ca3af" }}>{page} / {Math.ceil(total / 20) || 1} ページ ({total}件)</span>
+              {page * 30 < total && (
+                <button style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: "#fff", borderRadius: 8, fontSize: 13, cursor: "pointer" }}
+                  onClick={() => { const p = page + 1; setPage(p); search(p); }}>次へ →</button>
+              )}
+            </div>
+
+            {/* 一括登録ボタン */}
+            {selectedCount > 0 && (
+              <button style={{ width: "100%", padding: "14px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+                onClick={handleBulkAdd}>
+                ✓ {selectedCount}件をまとめて登録
+              </button>
+            )}
+          </>
+        )}
       </div>
-
-      <button style={{ width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}
-        onClick={() => { setPage(1); search(grade, 1); }}>
-        🔍 {grade} の一覧を表示
-      </button>
-
-      {loading && <div style={{ textAlign: "center", padding: "20px 0", color: "#9ca3af", fontSize: 13 }}>読み込み中...</div>}
-
-      {!loading && searched && items.length === 0 && (
-        <div style={{ textAlign: "center", padding: "20px 0", color: "#9ca3af", fontSize: 13 }}>見つかりませんでした</div>
-      )}
-
-      {/* キット一覧 */}
-      {items.length > 0 && (
-        <>
-          <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
-            約{total.toLocaleString()}件中 {(page-1)*30+1}〜{Math.min(page*30, total)}件表示
-            　{selectedCount > 0 && <span style={{ color: "#22c55e", fontWeight: 700 }}>{selectedCount}件選択中（ページをまたいで保持）</span>}
-          </div>
-
-          {/* 全選択 */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
-            <button style={{ fontSize: 12, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151", flexShrink: 0 }}
-              onClick={() => setSelectedItems(prev => { const next = {...prev}; filteredItems.forEach(item => next[getKey(item)] = item); return next; })}>全選択</button>
-            <button style={{ fontSize: 12, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#f3f4f6", cursor: "pointer", color: "#374151", flexShrink: 0 }}
-              onClick={() => setSelectedItems({})}>全解除</button>
-            <input
-              style={{ flex: 1, padding: "4px 10px", border: "1.5px solid #e5e7eb", borderRadius: 20, fontSize: 12, outline: "none", background: "#fafafa", minWidth: 0 }}
-              placeholder="例：ザク シャア（スペースでAND検索）"
-              value={browseQuery}
-              onChange={(e) => setBrowseQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); search(grade, 1, browseQuery); } }}
-            />
-            <button style={{ fontSize: 11, padding: "4px 10px", border: "1.5px solid #111", borderRadius: 20, background: "#111", color: "#fff", cursor: "pointer", flexShrink: 0 }}
-              onClick={() => { setPage(1); search(grade, 1, browseQuery); }}>検索</button>
-          </div>
-
-          {(() => { const filteredItems = items; return (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-            {filteredItems.map((item, idx) => (
-              <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, cursor: "pointer",
-                background: isSelected(item) ? "#f0fdf4" : "#fafafa", border: `1.5px solid ${isSelected(item) ? "#22c55e" : "#e5e7eb"}` }}
-                onClick={() => toggleSelect(item)}>
-                <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${isSelected(item) ? "#22c55e" : "#d1d5db"}`,
-                  background: isSelected(item) ? "#22c55e" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {isSelected(item) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
-                </div>
-                {item.photoUrl && <img src={item.photoUrl} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} alt="" />}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111", wordBreak: "break-word" }}>{item.name}</div>
-                  <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>{item.scale}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          ); })()}
-
-          {/* ページネーション */}
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
-            {page > 1 && (
-              <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page - 1; setPage(p); search(grade, p); }}>← 前へ</button>
-            )}
-            <span style={{ fontSize: 12, color: "#9ca3af", alignSelf: "center" }}>{page}ページ</span>
-            {page * 30 < total && (
-              <button style={{ padding: "6px 16px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", fontSize: 13, cursor: "pointer" }}
-                onClick={() => { const p = page + 1; setPage(p); search(grade, p); }}>次へ →</button>
-            )}
-          </div>
-
-          {/* 一括登録ボタン */}
-          {selectedCount > 0 && (
-            <button style={{ width: "100%", padding: "14px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
-              onClick={handleBulkAdd}>
-              ✓ {selectedCount}件をまとめて登録
-            </button>
-          )}
-        </>
-      )}
     </div>
   );
 }
-
 // ---- Backup Modal ----
 function BackupModal({ kits, onImport, onClose }) {
   const fileRef = useRef();
