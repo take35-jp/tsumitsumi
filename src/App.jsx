@@ -1177,39 +1177,17 @@ function HelpModal({ onClose }) {
         <button style={hs.closeBtn} onClick={onClose}>✕</button>
       </div>
 
-      <div style={hs.section}>
-        <div style={hs.sectionTitle}>📱 基本的な使い方</div>
-        <div style={hs.item}><span style={hs.num}>1</span>右下の📷ボタンでバーコードをスキャン登録</div>
-        <div style={hs.item}><span style={hs.num}>2</span>右下の＋ボタンでキット名を直接入力して登録</div>
-        <div style={hs.item}><span style={hs.num}>3</span>キットをタップして詳細・編集・削除</div>
-        <div style={hs.item}><span style={hs.num}>4</span>✓ボタンで完成済みに変更</div>
-      </div>
-      <div style={hs.section}>
-        <div style={hs.sectionTitle}>📷 バーコードスキャン（iPhone）</div>
-        <div style={hs.desc}>ライブカメラでスキャンします。読み取れない場合はタップでフォーカス調整してください。</div>
-        <div style={hs.tip}>💡 精度向上のヒント：「設定」→「Safari」→「詳細」→「機能フラグ」→「Shape Detection API」をオン</div>
-      </div>
-      <div style={hs.section}>
-        <div style={hs.sectionTitle}>📷 バーコードスキャン（Android）</div>
-        <div style={hs.item}><span style={hs.num}>1</span>📷ボタンをタップしてカメラを起動</div>
-        <div style={hs.item}><span style={hs.num}>2</span>バーコード部分だけをアップで撮影</div>
-        <div style={hs.item}><span style={hs.num}>3</span>自動でJANコードを読み取って登録画面へ</div>
-        <div style={hs.tip}>💡 明るい場所でバーコードに近づいて撮影すると精度が上がります</div>
-      </div>
-      <div style={hs.section}>
-        <div style={hs.sectionTitle}>🔍 キット名で検索して登録</div>
-        <div style={hs.desc}>手動登録時にキット名を2文字以上入力すると候補が表示されます。候補をタップすると画像・名前が自動入力されます。</div>
-      </div>
+        <div style={hs.section}>
+          <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "14px 16px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14 }}>
+            📖 使い方はコチラ →
+          </a>
+        </div>
       <div style={hs.section}>
         <div style={hs.sectionTitle}>⚠ データについての注意</div>
         <div style={hs.item}><span style={hs.warn}>!</span>データはブラウザ内に保存されます</div>
         <div style={hs.item}><span style={hs.warn}>!</span>Safariの「履歴とデータを消去」でデータが消えます</div>
         <div style={hs.item}><span style={hs.warn}>!</span>SafariとChromeなど別ブラウザ間でデータは共有されません</div>
         <div style={hs.item}><span style={hs.warn}>!</span>機種変更・初期化の際はデータが引き継がれません</div>
-      </div>
-      <div style={hs.section}>
-        <div style={hs.sectionTitle}>↕ 並び替え</div>
-        <div style={hs.desc}>リスト右上の「↕ 並び替え」ボタンをタップすると▲▼ボタンが表示され、1つずつ順番を変えられます。</div>
       </div>
       <div style={hs.section}>
         <div style={hs.sectionTitle}>💾 データのバックアップ・機種変更</div>
