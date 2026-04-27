@@ -5,7 +5,7 @@
 const RAKUTEN_APP_ID = process.env.RAKUTEN_APP_ID;
 const ENDPOINT = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601";
 
-// 信頼できる店舗(定価ベースで売っている率が高い順)
+// 信頼できる店舗(定価ベースで売っている率が高い順) (rebuild)
 // shopCode はそのまま rakuten のショップコード(URLに含まれる)
 const TRUSTED_SHOPS = [
   "book",          // 楽天ブックス本体
