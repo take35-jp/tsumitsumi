@@ -1864,7 +1864,11 @@ export default function App() {
   };
 
   const handleBulkAdd = (newKits) => {
-    setKits(prev => [...prev, ...newKits]);
+    const mapped = newKits.map(item => ({
+      ...item,
+      photoUrl: item.image_url || item.photoUrl,
+    }));
+    setKits(prev => [...prev, ...mapped]);
   };
 
   const handleImport = (importedKits) => {
