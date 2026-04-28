@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
     });
 
     const response = await fetch(`${ENDPOINT}?${params.toString()}`, {
-      headers: { Referer: REFERER },
+      referrer: REFERER, referrerPolicy: 'unsafe-url', headers: { Referer: REFERER },
     });
 
     if (!response.ok) {
