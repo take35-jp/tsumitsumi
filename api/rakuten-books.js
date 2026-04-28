@@ -1,4 +1,4 @@
-// /api/rakuten-books.js (v2 - 新API対応) (force redeploy)
+// /api/rakuten-books.js (v3 - https module版)
 // 楽天市場API(IchibaItem)を使ってJANコードから希望小売価格を取得する
 // 「楽天ブックス」「あみあみ」「駿河屋」などの定価ベース店舗を優先する
 //
@@ -6,6 +6,11 @@
 //   旧: app.rakuten.co.jp + applicationId のみ
 //   新: openapi.rakuten.co.jp + applicationId + accessKey + Refererヘッダー
 //   旧APIは2026/5/13に完全停止予定
+//
+// v3変更: fetch (undici) では Referer ヘッダーが forbidden header name として
+//        除外されるため、 native https モジュールに切り替え
+
+const https = require('https');
 
 const RAKUTEN_APP_ID = process.env.RAKUTEN_APP_ID;
 const RAKUTEN_ACCESS_KEY = process.env.RAKUTEN_ACCESS_KEY;
@@ -13,16 +18,46 @@ const ENDPOINT = "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/2
 const REFERER = "https://tsumitsumi.vercel.app";
 
 // 信頼できる店舗(定価ベースで売っている率が高い順)
-// shopCode はそのまま rakuten のショップコード(URLに含まれる)
 const TRUSTED_SHOPS = [
-  "book",          // 楽天ブックス本体
+  "book",            // 楽天ブックス本体
   "rakutenkobo",
-  "amiami",        // あみあみ
-  "surugaya-a-too",// 駿河屋
-  "yodobashi",     // ヨドバシ
-  "joshin",        // ジョーシン
-  "biccamera",     // ビックカメラ
+  "amiami",          // あみあみ
+  "surugaya-a-too",  // 駿河屋
+  "yodobashi",       // ヨドバシ
+  "joshin",          // ジョーシン
+  "biccamera",       // ビックカメラ
 ];
+
+// native https.request で Referer ヘッダーを確実に送る
+function httpsGet(targetUrl) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(targetUrl);
+    const options = {
+      hostname: u.hostname,
+      port: 443,
+      path: u.pathname + u.search,
+      method: 'GET',
+      headers: {
+        'Referer': REFERER,
+        'User-Agent': 'tsumitsumi/1.0 (+https://tsumitsumi.vercel.app)',
+        'Accept': 'application/json',
+      },
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        resolve({
+          status: res.statusCode,
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          body: data,
+        });
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -49,29 +84,21 @@ module.exports = async function handler(req, res) {
       format: "json",
     });
 
-    const response = await fetch(`${ENDPOINT}?${params.toString()}`, {
-      referrer: REFERER, referrerPolicy: 'unsafe-url', headers: { Referer: REFERER },
+    const httpsRes = await httpsGet(`${ENDPOINT}?${params.toString()}`);
+    if (!httpsRes.ok) {
+      return res.status(502).json({ error: "Rakuten API error", status: httpsRes.status, body: httpsRes.body });
+    }
+    const data = JSON.parse(httpsRes.body);
+
+    const rawItems = (data.Items || []).map(w => w.Item || w).filter(Boolean);
+
+    // JAN完全一致(itemCaption や itemName に jan が含まれるもの)
+    const exactMatches = rawItems.filter(it => {
+      const haystack = `${it.itemName || ""}${it.itemCaption || ""}${it.itemCode || ""}`;
+      return haystack.includes(jan);
     });
 
-    if (!response.ok) {
-      const body = await response.text();
-      return res.status(502).json({
-        error: "Rakuten API error",
-        status: response.status,
-        body: body.substring(0, 500),
-      });
-    }
-
-    const data = await response.json();
-    const rawItems = (data.Items || []).map(w => w.Item).filter(Boolean);
-
-    // JAN完全一致(itemCaption や janCode に含まれる)を優先
-    const exactMatches = rawItems.filter(it =>
-      (it.itemCaption || "").includes(jan) ||
-      (it.itemName || "").includes(jan)
-    );
-
-    // 信頼できる店舗のものを抽出
+    // 信頼ショップのもの
     const trustedItems = rawItems.filter(it => TRUSTED_SHOPS.includes(it.shopCode));
 
     // 価格推定: 信頼店舗の価格中央値を希望小売価格と見なす
