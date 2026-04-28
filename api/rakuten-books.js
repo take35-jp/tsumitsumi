@@ -1,4 +1,4 @@
-// /api/rakuten-books.js (v2 - 新API対応)
+// /api/rakuten-books.js (v2 - 新API対応) (force redeploy)
 // 楽天市場API(IchibaItem)を使ってJANコードから希望小売価格を取得する
 // 「楽天ブックス」「あみあみ」「駿河屋」などの定価ベース店舗を優先する
 //
