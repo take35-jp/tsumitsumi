@@ -7,7 +7,7 @@ const https = require('https');
 const RAKUTEN_APP_ID = process.env.RAKUTEN_APP_ID;
 const RAKUTEN_ACCESS_KEY = process.env.RAKUTEN_ACCESS_KEY;
 const ENDPOINT = "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601";
-const REFERER = "https://tsumitsumi.vercel.app";
+const REFERER = "https://tsumitsumi.vercel.app/";
 
 const TRUSTED_SHOPS = [
   "book", "rakutenkobo", "amiami", "surugaya-a-too",
