@@ -597,6 +597,9 @@ function cleanName(name) {
   const tailPats = [
     /[\[【［]\s*予約[^】］\]]*?[\]】］]/g,
     /[\[【［]\s*\d{4}年\s*\d{1,2}月[^】］\]]*?[\]】］]/g,
+    /[《〈]\s*\d{1,2}月\s*予約\s*[》〉]/g,
+    /[《〈]\s*予約\s*[》〉]/g,
+    /[《〈][^》〉]*?(?:予約|発売|出荷|発送)[^》〉]*?[》〉]/g,
     /予約\s*\d{4}年\s*\d{1,2}月[^\s]*?(?:発送|出荷|発売)?\s*予定/g,
     /\d{4}年\s*\d{1,2}月\s*(?:発送|出荷|発売)\s*予定/g,
     /予約販売/g,
@@ -675,10 +678,22 @@ function cleanName(name) {
   // 12-2. 単独「SPIRITS」が末尾に残ったケース(BANDAI が消えた残骸)
   s = s.replace(/\s+SPIRITS\s*$/i, '');
 
+  // 12-3. 冒頭の SPIRITS 残骸(SPIRITS(...) のようにカッコ直結ケース)
+  s = s.replace(/^SPIRITS\s*[\(\[（［]/, '(');
+  s = s.replace(/^SPIRITS\s+/, '');
+  s = s.replace(/^BANDAI\s+/, '');
+  // 文中の単独 BANDAI / SPIRITS(英字に隣接しない場合のみ)
+  s = s.replace(/(^|[\s\(\)\[\]【】［］『』（）/])BANDAI(?![A-Za-z])/g, '$1');
+  s = s.replace(/(^|[\s\(\)\[\]【】［］『』（）/])SPIRITS(?![A-Za-z])/g, '$1');
+
   // 13. 単独13桁数字(JAN混入)
   s = s.replace(/\s+\d{13}\s*$/, '');
   s = s.replace(/^\s*\d{13}\s+/, '');
   s = s.replace(/\s+\d{13}\s+/g, ' ');
+  // H-付き13桁数字(冒頭/中間/末尾)
+  s = s.replace(/^[A-Z]-\d{13}\s+/, '');
+  s = s.replace(/\s+[A-Z]-\d{13}\s+/g, ' ');
+  s = s.replace(/\s+[A-Z]-\d{13}\s*$/, '');
 
   // 14. スケール・サイズ表記の整理
   s = s.replace(/\/?全高約?\d+(?:\.\d+)?\s*(?:mm|cm|ｍｍ|ｃｍ)/g, '');
