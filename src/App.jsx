@@ -1834,7 +1834,13 @@ export default function App() {
   };
 
   const handleJanDetected = async (jan) => {
+    const existingKit = kits.find(k => k.jan === jan);
     if (continuousScan) {
+      const inQueue = continuousQueue.find(k => k.jan === jan);
+      if (existingKit || inQueue) {
+        const where = existingKit ? "登録済み" : "今回スキャン済み";
+        if (!window.confirm(`⚠️ このJANは既に${where}です\n\n「${(existingKit || inQueue).name || jan}」\n\nそれでも追加しますか？`)) return;
+      }
       // 連続スキャンモード：スキャナーを閉じずにキューに追加
       setScanLoading(true);
       const data = await fetchProductByJAN(jan);
@@ -1845,6 +1851,11 @@ export default function App() {
       setContinuousQueue(q => [...q, newKit]);
       // スキャナーはそのまま継続
       return;
+    }
+    if (existingKit) {
+      if (!window.confirm(`⚠️ このJANは既に登録済みです\n\n「${existingKit.name}」\n\nそれでも新しく追加しますか？`)) {
+        setShowScanner(false); setDetail(existingKit); return;
+      }
     }
     setShowScanner(false);
     setScanLoading(true);
