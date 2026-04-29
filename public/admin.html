@@ -315,6 +315,52 @@
           </div>
         </div>
 
+        <!-- メーカー別 自動一括登録 -->
+        <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:14px; margin-bottom:16px;">
+          <div style="font-size:13px; font-weight:700; color:#1e40af; margin-bottom:8px;">🏭 メーカー別 自動一括登録</div>
+          <div style="font-size:12px; color:#1e40af; margin-bottom:12px;">選択したメーカーの未登録キットをYahoo!ショッピングから一括取得します。検索クエリ: <code style="background:#dbeafe; padding:1px 6px; border-radius:3px;">[メーカー名] プラモ</code></div>
+          <div class="row" style="align-items:flex-end; gap:8px; flex-wrap:wrap;">
+            <div class="field">
+              <span class="label">メーカー</span>
+              <select class="select" id="maker-auto-select" onchange="checkMakerTotal()">
+                <option value="バンダイ">バンダイ</option>
+                <option value="グッスマ">グッスマ</option>
+                <option value="コトブキヤ">コトブキヤ</option>
+                <option value="ボークス">ボークス</option>
+                <option value="ハセガワ">ハセガワ</option>
+                <option value="ウェーブ">ウェーブ</option>
+                <option value="マックスファクトリー">マックスファクトリー</option>
+                <option value="アオシマ">アオシマ</option>
+                <option value="タミヤ">タミヤ</option>
+                <option value="フジミ">フジミ</option>
+                <option value="童友社">童友社</option>
+                <option value="ピットロード">ピットロード</option>
+                <option value="プラッツ">プラッツ</option>
+              </select>
+              <div id="maker-total" style="font-size:11px; color:#1e40af; margin-top:4px;"></div>
+            </div>
+            <div class="field">
+              <span class="label">開始ページ</span>
+              <input class="select" type="number" id="maker-start-page" value="1" min="1" style="width:80px;">
+            </div>
+            <div class="field">
+              <span class="label">終了ページ</span>
+              <input class="select" type="number" id="maker-end-page" value="9999" min="1" style="width:80px;" placeholder="9999=全件">
+            </div>
+            <button class="btn btn-primary" id="maker-auto-btn" onclick="autoRegisterByMaker()">▶ メーカー一括登録</button>
+            <button class="btn btn-danger" id="maker-stop-btn" onclick="stopMakerAuto()" style="display:none;">⏹ 停止</button>
+          </div>
+          <div style="font-size:11px; color:#92400e; background:#fef3c7; border-radius:4px; padding:6px 10px; margin-top:8px;">
+            ⚠️ 注意: 価格(retail_price)は登録されません。情報源がYahoo出品(転売価格混入リスク)のため、後から手動またはExcel経由で補完してください。
+          </div>
+          <div id="maker-progress" style="margin-top:10px; display:none;">
+            <div style="background:#dbeafe; border-radius:6px; height:8px; margin-bottom:6px; overflow:hidden;">
+              <div id="maker-bar" style="background:#3b82f6; height:100%; width:0%; transition:width 0.3s;"></div>
+            </div>
+            <div id="maker-status" style="font-size:12px; color:#1e40af;"></div>
+          </div>
+        </div>
+
         <div class="row">
           <div class="field">
             <span class="label">メーカー</span>
@@ -443,7 +489,7 @@
       <div class="search-box">
         <div style="font-size:15px; font-weight:700; margin-bottom:8px;">📥 インポート（Excel/CSV）</div>
         <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">編集したCSVまたはExcelファイルをアップロードします。JANコードが一致するものは上書き、新規は追加されます。</div>
-        <div style="font-size:11px; color:#ef4444; margin-bottom:16px;">⚠️ 列の順番：jan, name, maker, series, scale, image_url</div>
+        <div style="font-size:11px; color:#ef4444; margin-bottom:16px;">⚠️ 列の順番：jan, name, maker, series, scale, image_url, retail_price</div>
         <div class="row" style="align-items:center; gap:12px;">
           <input type="file" id="import-file" accept=".csv,.xlsx,.xls" style="font-size:13px;">
           <button class="btn btn-primary" onclick="importFile()">アップロード・登録</button>
@@ -513,43 +559,129 @@ function switchTab(name) {
 
 // ---- CLEAN NAME ----
 function cleanName(name) {
-    if (!name) return '';
-      let s = String(name).replace(/\u3000/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-        s = s.replace(/(1)\s*\/\s*(\d{2,3})/g, '$1/$2');
-          s = s.replace(/プレ(?:バン|ミアムバンダイ)\s*限定/g, ' ');
-            s = s.replace(/プレ(?:バン|ミアムバンダイ)\s*[＆&]\s*/g, ' ');
-              s = s.replace(/プレ(?:バン|ミアムバンダイ)/g, ' ');
-                const tailPats = [/[\[【［]\s*予約[^】］\]]*?[\]】］]/g, /[\[【［]\s*\d{4}年\s*\d{1,2}月[^】］\]]*?[\]】］]/g, /予約\s*\d{4}年\s*\d{1,2}月[^\s]*?(?:発送|出荷|発売)?\s*予定/g, /\d{4}年\s*\d{1,2}月\s*(?:発送|出荷|発売)\s*予定/g, /予約販売/g, /予約商品/g];
-                  for (const p of tailPats) s = s.replace(p, ' ');
-                    s = s.replace(/[（(][A-Z]{1,5}\d{4,}[）)]/g, ' ');
-                      s = s.replace(/[（(]\d{4,}[）)]/g, ' ');
-                        s = s.replace(/[（(][^）)]*?(?:再販|再生産|新品|中古|限定|予約|送料|セール|クーポン|特価)[^）)]*?[）)]/g, ' ');
-                          const noiseKWs = ['再販','再生産','新品','中古','未使用','未組立','未開封','送料無料','送料込','即納','即日','プレバン','プレミアムバンダイ','代引','クーポン','セール','特価','最安','予約'];
-                            function isDirty(c) { for (const w of noiseKWs) if (c.includes(w)) return true; if (/\d{4}年/.test(c)) return true; return false; }
-                              function procBrackets(str, ob, cb) { let out=''; let i=0; while(i<str.length){ if(str[i]===ob){ const end=str.indexOf(cb,i+1); if(end===-1){out+=str[i];i++;continue;} const ct=str.substring(i+1,end); out+=isDirty(ct)?' ':str.substring(i,end+1); i=end+1; } else {out+=str[i];i++;} } return out; }
-                                for (const [ob,cb] of [['『','』'],['【','】'],['［','］'],['[',']']]) s = procBrackets(s, ob, cb);
-                                  const NOISE = ['爆買','再販','再生産','新品','中古','未使用','未組立','未組み立て','未開封','送料無料','送料込み','送料込','即納','即日発送','即日','代引き不可','代引不可','クーポン','セール','特価','最安値','最安','プラスチックモデルキット','スケールプラモデル','プラモデル組立キット','組み立て式','組立式','プラモデル','株式会社'];
-                                    for (const w of NOISE) s = s.split(w).join(' ');
-                                      s = s.replace(/^\s*壽屋\s*[（(]\s*コトブキヤ\s*[）)]\s*/, '');
-                                        s = s.replace(/^\s*壽屋\s+/, '');
-                                          const trailMakers = ['BANDAI SPIRITS','バンダイスピリッツ','バンダイ','BANDAI','コトブキヤ','KOTOBUKIYA','タミヤ','TAMIYA','ハセガワ','HASEGAWA','フジミ','FUJIMI','アオシマ','AOSHIMA','ファインモールド','グッドスマイルカンパニー','ウェーブ','WAVE','ボークス','VOLKS','壽屋'];
-                                            trailMakers.sort((a,b)=>b.length-a.length);
-                                              for (const m of trailMakers) { const esc = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); s = s.replace(new RegExp('\\s+'+esc+'\\s*$'), ''); s = s.replace(new RegExp('\\s+'+esc+'\\s+[A-Z][A-Za-z]+\\s*$'), ''); }
-                                                s = s.replace(/\/?全高約?\d+(?:\.\d+)?\s*(?:mm|cm|ｍｍ|ｃｍ)/g, '');
-                                                  s = s.replace(/\/?\d+(?:\.\d+)?\s*(?:mm|cm)スケール/g, '');
-                                                    s = s.replace(/(1\/\d{2,3})スケール/g, '$1');
-                                                      s = s.replace(/1\/1スケール\s*\/?/g, ' ');
-                                                        s = s.replace(/\s+[A-Z]{1,5}\d{2,5}[A-Z]?\s*$/, '');
-                                                          s = s.replace(/\s+[＆&]\s+/g, ' ');
-                                                            s = s.replace(/\s*[＆&]\s*$/, '');
-                                                              s = s.replace(/^\s*[＆&]\s*/, '');
-                                                                s = s.replace(/^\s*[／/・]\s*/, '');
-                                                                  s = s.replace(/\s*[／/]\s*$/, '');
-                                                                    s = s.replace(/\s*[\(\[（［]\s*[\)\]）］]\s*/g, ' ');
-                                                                      s = s.replace(/\s+/g, ' ');
-                                                                        s = s.replace(/^[\s　・/／\-—–]+|[\s　・/／\-—–]+$/g, '');
-                                                                          return s;
-                                                                          }
+  if (!name) return '';
+  let s = String(name);
+
+  // 0. HTML entities & 全角空白
+  s = s.replace(/\u3000/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"');
+
+  // 1. スケール表記の正規化 "1 / 144" → "1/144"
+  s = s.replace(/(1)\s*\/\s*(\d{2,3})/g, '$1/$2');
+
+  // 2. 全角英数→半角
+  s = s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+
+  // 3. 装飾記号の除去
+  s = s.replace(/[★☆♪♡♥◆◇●○◎■□▼▽▲△※〇♦♣♠❤❥]/g, ' ');
+
+  // 4. プレバン関連の除去
+  s = s.replace(/プレ(?:バン|ミアムバンダイ)\s*限定/g, ' ');
+  s = s.replace(/プレ(?:バン|ミアムバンダイ)\s*[＆&]\s*/g, ' ');
+  s = s.replace(/プレ(?:バン|ミアムバンダイ)/g, ' ');
+  s = s.replace(/プレミアム\s*バンダイ/g, ' ');
+
+  // 5. 予約・発売予定日の除去
+  const tailPats = [
+    /[\[【［]\s*予約[^】］\]]*?[\]】］]/g,
+    /[\[【［]\s*\d{4}年\s*\d{1,2}月[^】］\]]*?[\]】］]/g,
+    /予約\s*\d{4}年\s*\d{1,2}月[^\s]*?(?:発送|出荷|発売)?\s*予定/g,
+    /\d{4}年\s*\d{1,2}月\s*(?:発送|出荷|発売)\s*予定/g,
+    /予約販売/g,
+    /予約商品/g,
+    /\d{4}\/\d{1,2}\/\d{1,2}\s*(?:発売|出荷|発送)/g,
+    /\d{1,2}月\s*(?:発売|出荷|発送)\s*予定/g,
+  ];
+  for (const p of tailPats) s = s.replace(p, ' ');
+
+  // 6. メーカー型番カッコ
+  s = s.replace(/[（(][A-Z]{1,5}\d{4,}[）)]/g, ' ');
+  s = s.replace(/[（(]\d{4,}[）)]/g, ' ');
+
+  // 7. 販売店名(汚染判定キーワードに含めて括弧内ごと除去)
+  const shopNames = ['駿河屋','スルガヤ','トイザらス','ヨドバシ','ヨドバシカメラ','ホビコレ','ジョーシン','あみあみ','ビックカメラ','楽天ブックス','Amazon','アマゾン','ハピネット','ホビーオンライン','ホビーストック','ハーミットグリーンキャブ','メーカー特典','店舗特典','特典','TSUTAYA','HMV','ジョーシンwebショップ'];
+
+  // 8. 汚いコンテンツを含むカッコ全体を消す(丸括弧も対象)
+  const noiseKWs = ['再販','再生産','新品','中古','未使用','未組立','未開封','送料無料','送料込','即納','即日','プレバン','プレミアムバンダイ','代引','クーポン','セール','特価','最安','予約','ポイント','アウトレット','訳あり','箱痛み','店舗限定','数量限定','一人','人気','在庫', ...shopNames];
+  function isDirty(c) {
+    for (const w of noiseKWs) if (c.includes(w)) return true;
+    if (/\d{4}年/.test(c)) return true;
+    return false;
+  }
+  function procBrackets(str, ob, cb) {
+    let out = ''; let i = 0;
+    while (i < str.length) {
+      if (str[i] === ob) {
+        const end = str.indexOf(cb, i + 1);
+        if (end === -1) { out += str[i]; i++; continue; }
+        const ct = str.substring(i + 1, end);
+        out += isDirty(ct) ? ' ' : str.substring(i, end + 1);
+        i = end + 1;
+      } else { out += str[i]; i++; }
+    }
+    return out;
+  }
+  for (const [ob, cb] of [['『', '』'], ['【', '】'], ['［', '］'], ['[', ']'], ['（', '）'], ['(', ')']]) {
+    s = procBrackets(s, ob, cb);
+  }
+
+  // 9. 販売店名が単独で入ってる場合(カッコなし)を除去
+  for (const sp of shopNames) {
+    const esc = sp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    s = s.replace(new RegExp(`(^|\\s)${esc}(\\s|$)`, 'g'), ' ');
+  }
+
+  // 10. ノイズキーワードの直接除去
+  const NOISE = ['爆買','再販','再生産','新品','中古','未使用','未組立','未組み立て','未開封','送料無料','送料込み','送料込','即納','即日発送','即日','代引き不可','代引不可','クーポン','セール','特価','最安値','最安','プラスチックモデルキット','スケールプラモデル','プラモデル組立キット','組み立て式','組立式','プラモデル','株式会社','お一人様1点限り','お一人様1点','お一人様限定','1点限り','1人1点','数量限定','店舗限定','人気商品','在庫あり','即出荷','メーカー在庫品','正規品','日本正規品','ポイント10倍','ポイント還元','ポイントUP','アウトレット','訳あり','箱痛み','箱ダメージ','輸入品','並行輸入'];
+  for (const w of NOISE) s = s.split(w).join(' ');
+
+  // 11. 壽屋/コトブキヤ表記の正規化
+  s = s.replace(/^\s*壽屋\s*[（(]\s*コトブキヤ\s*[）)]\s*/, '');
+  s = s.replace(/^\s*壽屋\s+/, '');
+
+  // 12. メーカー名(末尾と先頭)の除去
+  const trailMakers = ['BANDAI SPIRITS','バンダイスピリッツ','バンダイ','BANDAI','コトブキヤ','KOTOBUKIYA','タミヤ','TAMIYA','ハセガワ','HASEGAWA','フジミ','FUJIMI','アオシマ','AOSHIMA','ファインモールド','グッドスマイルカンパニー','グッスマ','ウェーブ','WAVE','ボークス','VOLKS','壽屋','マックスファクトリー','MAX FACTORY','ピットロード','プラッツ','童友社'];
+  trailMakers.sort((a, b) => b.length - a.length);
+  for (const m of trailMakers) {
+    const esc = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    s = s.replace(new RegExp('\\s+' + esc + '\\s*$'), '');
+    s = s.replace(new RegExp('\\s+' + esc + '\\s+[A-Z][A-Za-z]+\\s*$'), '');
+  }
+  for (const m of trailMakers) {
+    const esc = m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    s = s.replace(new RegExp('^\\s*' + esc + '\\s+'), '');
+  }
+
+  // 13. 単独13桁数字(JAN混入)
+  s = s.replace(/\s+\d{13}\s*$/, '');
+  s = s.replace(/^\s*\d{13}\s+/, '');
+  s = s.replace(/\s+\d{13}\s+/g, ' ');
+
+  // 14. スケール・サイズ表記の整理
+  s = s.replace(/\/?全高約?\d+(?:\.\d+)?\s*(?:mm|cm|ｍｍ|ｃｍ)/g, '');
+  s = s.replace(/\/?\d+(?:\.\d+)?\s*(?:mm|cm)スケール/g, '');
+  s = s.replace(/(1\/\d{2,3})スケール/g, '$1');
+  s = s.replace(/1\/1スケール\s*\/?/g, ' ');
+
+  // 15. 末尾の型番
+  s = s.replace(/\s+[A-Z]{1,5}\d{2,5}[A-Z]?\s*$/, '');
+
+  // 16. & の整理
+  s = s.replace(/\s+[＆&]\s+/g, ' ');
+  s = s.replace(/\s*[＆&]\s*$/, '');
+  s = s.replace(/^\s*[＆&]\s*/, '');
+  s = s.replace(/^\s*[／/・]\s*/, '');
+  s = s.replace(/\s*[／/]\s*$/, '');
+
+  // 17. 空括弧消去
+  s = s.replace(/\s*[\(\[（［]\s*[\)\]）］]\s*/g, ' ');
+  s = s.replace(/[\(\[（［]\s+[\)\]）］]/g, ' ');
+
+  // 18. 連続スペース・前後トリム
+  s = s.replace(/\s+/g, ' ');
+  s = s.replace(/^[\s　・/／\-—–]+|[\s　・/／\-—–]+$/g, '');
+
+  return s;
+}
 
 function guessScale(name) {
   if (/\bMGSD\b/i.test(name)) return 'MGSD';
@@ -973,6 +1105,152 @@ function stopAuto() {
   document.getElementById('auto-status').textContent += '（停止しました）';
 }
 
+// ---- MAKER-BASED AUTO REGISTER ----
+let makerAutoRunning = false;
+
+function buildMakerQuery(maker) {
+  return `${maker} プラモ`;
+}
+
+async function checkMakerTotal() {
+  const maker = document.getElementById('maker-auto-select').value;
+  const query = buildMakerQuery(maker);
+  document.getElementById('maker-total').textContent = '確認中...';
+  try {
+    const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=1`);
+    const data = await r.json();
+    if (data.total) {
+      const pages = Math.ceil(data.total / 20);
+      document.getElementById('maker-total').textContent = `約${data.total.toLocaleString()}件（${pages}ページ）`;
+    } else {
+      document.getElementById('maker-total').textContent = data.error || '取得失敗';
+    }
+  } catch (e) {
+    document.getElementById('maker-total').textContent = 'エラー';
+  }
+}
+
+async function autoRegisterByMaker() {
+  if (makerAutoRunning) return;
+  makerAutoRunning = true;
+  document.getElementById('maker-auto-btn').style.display = 'none';
+  document.getElementById('maker-stop-btn').style.display = 'inline-block';
+  document.getElementById('maker-progress').style.display = 'block';
+
+  const maker = document.getElementById('maker-auto-select').value;
+  const query = buildMakerQuery(maker);
+  const startPage = parseInt(document.getElementById('maker-start-page').value) || 1;
+  const endPage = parseInt(document.getElementById('maker-end-page').value) || 9999;
+
+  // ① 登録済みJANをSupabaseから取得
+  document.getElementById('maker-status').textContent = '登録済みデータを確認中...';
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?select=jan&limit=100000`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const data = await r.json();
+    registeredJans = new Set(data.filter(d => d.jan).map(d => d.jan));
+  } catch (e) {}
+
+  // ② 全ページ数を取得
+  let totalYahooPages = endPage;
+  document.getElementById('maker-status').textContent = '全件数を確認中...';
+  try {
+    const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=1`);
+    const data = await r.json();
+    const totalItems = data.total || 0;
+    totalYahooPages = Math.min(endPage, Math.ceil(totalItems / 20));
+    document.getElementById('maker-status').textContent =
+      `${maker}: 全${totalItems.toLocaleString()}件（約${totalYahooPages}ページ）を登録します...`;
+    await new Promise(r => setTimeout(r, 1000));
+  } catch (e) {}
+
+  let totalSaved = 0;
+  let totalSkipped = 0;
+  let page = startPage;
+
+  while (makerAutoRunning && page <= totalYahooPages) {
+    const pagesTotal = totalYahooPages >= 9999 ? '?' : totalYahooPages;
+    document.getElementById('maker-status').textContent =
+      `[${maker}] ${page}/${pagesTotal}ページ処理中... 新規登録: ${totalSaved}件 / スキップ: ${totalSkipped}件`;
+    if (totalYahooPages < 9999) {
+      document.getElementById('maker-bar').style.width =
+        `${((page - startPage) / (totalYahooPages - startPage + 1) * 100).toFixed(0)}%`;
+    }
+
+    const start = (page - 1) * 20 + 1;
+    try {
+      const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=${start}`);
+      const data = await r.json();
+      const items = data.items || [];
+      if (!items.length) break;
+
+      for (const item of items) {
+        if (!makerAutoRunning) break;
+        if (!item.name || item.name.length < 3) continue;
+
+        // 登録済みJANはスキップ
+        if (item.jan && registeredJans.has(item.jan)) {
+          totalSkipped++;
+          continue;
+        }
+
+        const name = cleanName(item.name);
+        if (!name || name.length < 3) continue;
+
+        const payload = {
+          jan: item.jan || null,
+          name,
+          maker: maker,           // 選択メーカー名で固定
+          series: '',             // メーカー横串では作品特定できないため空
+          scale: item.scale || guessScale(item.name),
+          image_url: item.photoUrl || '',
+          updated_at: new Date().toISOString(),
+        };
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/products?on_conflict=jan`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates',
+            },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok || res.status === 201) {
+            totalSaved++;
+            if (item.jan) registeredJans.add(item.jan);
+          }
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 50));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    page++;
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  makerAutoRunning = false;
+  document.getElementById('maker-auto-btn').style.display = 'inline-block';
+  document.getElementById('maker-stop-btn').style.display = 'none';
+  document.getElementById('maker-bar').style.width = '100%';
+  const isAllDone = page > totalYahooPages;
+  // 完了後は開始ページを1に戻す
+  document.getElementById('maker-start-page').value = 1;
+  document.getElementById('maker-status').textContent =
+    `✅ [${maker}] 完了！新規: ${totalSaved}件登録 / スキップ: ${totalSkipped}件（登録済み）　${isAllDone ? '全件完了！' : `${page}ページで停止`}`;
+}
+
+function stopMakerAuto() {
+  makerAutoRunning = false;
+  document.getElementById('maker-auto-btn').style.display = 'inline-block';
+  document.getElementById('maker-stop-btn').style.display = 'none';
+  document.getElementById('maker-status').textContent += '（停止しました）';
+}
+
 // ---- EXCEL / CSV ----
 async function fetchAllMaster() {
   let allData = [];
@@ -1000,7 +1278,12 @@ async function exportCSV() {
   showMsg('excel-msg', '読み込み中...', 'ok');
   const data = await fetchAllMaster();
   const header = ['jan','name','maker','series','scale','image_url','retail_price'];
-  const rows = [header, ...data.map(d => header.map(k => (d[k] || '').toString().replace(/,/g, '、')))];
+  const rows = [header, ...data.map(d => header.map(k => {
+    const v = d[k];
+    if (v === null || v === undefined) return '';
+    if (k === 'retail_price') return String(v);
+    return v.toString().replace(/,/g, '、');
+  }))];
   const csv = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1027,7 +1310,12 @@ async function exportExcel() {
     });
   }
 
-  const wsData = [header, ...data.map(d => header.map(k => d[k] || ''))];
+  const wsData = [header, ...data.map(d => header.map(k => {
+    const v = d[k];
+    if (v === null || v === undefined) return '';
+    if (k === 'retail_price') return Number(v);
+    return v;
+  }))];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   // 列幅設定
   ws['!cols'] = [
@@ -1067,6 +1355,7 @@ async function importFile() {
       const seriesIdx = header.indexOf('series');
       const scaleIdx = header.indexOf('scale');
       const imageIdx = header.indexOf('image_url');
+      const priceIdx = header.indexOf('retail_price');
 
       if (nameIdx === -1) return showMsg('excel-msg', 'name列が見つかりません', 'err');
 
@@ -1081,6 +1370,15 @@ async function importFile() {
         series: seriesIdx >= 0 ? (row[seriesIdx]?.toString().trim() || '') : '',
         scale: scaleIdx >= 0 ? (row[scaleIdx]?.toString().trim() || '') : '',
         image_url: imageIdx >= 0 ? (row[imageIdx]?.toString().trim() || '') : '',
+        retail_price: (() => {
+          if (priceIdx < 0) return null;
+          const raw = row[priceIdx];
+          if (raw === null || raw === undefined || raw === '') return null;
+          const s = raw.toString().trim().replace(/[,，\s¥￥円]/g, '');
+          if (!s) return null;
+          const n = parseInt(s, 10);
+          return Number.isFinite(n) ? n : null;
+        })(),
         updated_at: new Date().toISOString(),
       })).filter(p => p.name);
 
