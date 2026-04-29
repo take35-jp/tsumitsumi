@@ -290,6 +290,43 @@
   }
   .grade-tag:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* FOR WHO */
+  .forwho-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 32px;
+  }
+  .forwho-item {
+    background: var(--bg2);
+    padding: 32px 32px;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+  }
+  .forwho-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--accent);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .forwho-text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    font-weight: 700;
+  }
+  .forwho-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 6px;
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
   /* HOW TO */
   .howto-list { display: flex; flex-direction: column; gap: 0; }
   .howto-item {
@@ -425,7 +462,7 @@
   <p class="hero-sub">
     「積んでるやつ、何個あるっけ」<br>
     <strong>バーコードをスキャンするだけ。</strong><br>
-    ガンプラからスケールモデルまで、すべての積みプラを一元管理。
+    プラモ全般に対応。総額まで、ぜんぶ見える。
   </p>
   <div class="hero-actions">
     <a href="https://tsumitsumi.vercel.app" class="btn-primary">無料で始める</a>
@@ -483,6 +520,7 @@
         <li>バーコードスキャンで即時登録</li>
         <li>キット名入力でマスタ候補を表示（グレード・スケール・キット名）</li>
         <li>グレード別リストからの一括登録</li>
+        <li>希望小売価格を自動取得・表示</li>
         <li>箱の写真・完成品の写真を保存</li>
         <li>個数・購入日・評価・状態・メモを記録</li>
       </ul>
@@ -519,6 +557,7 @@
         <li>詳細リスト表示・サムネイルグリッド表示の切り替え</li>
         <li>カードにシリーズ・スケール・タグを表示</li>
         <li>積みプラ数・完成数・総数を個数合計で表示</li>
+        <li>積みプラの総額を見て、現実と向き合う</li>
         <li>登録数に応じた称号システム</li>
       </ul>
     </div>
@@ -536,6 +575,47 @@
   </div>
 </section>
 </div>
+
+<!-- FOR WHO -->
+<section>
+  <div class="section-label">For Who</div>
+  <h2 class="section-title">こんな人に<br>おすすめ</h2>
+  <div class="forwho-list">
+
+    <div class="forwho-item">
+      <div class="forwho-mark">01</div>
+      <div>
+        <div class="forwho-text">積みプラを把握しきれていない人</div>
+        <div class="forwho-sub">「同じやつ、もう買ったかもしれない」がなくなる。</div>
+      </div>
+    </div>
+
+    <div class="forwho-item">
+      <div class="forwho-mark">02</div>
+      <div>
+        <div class="forwho-text">どれだけ使ったか、知りたい人</div>
+        <div class="forwho-sub">総額が出る。覚悟を決める材料になる。</div>
+      </div>
+    </div>
+
+    <div class="forwho-item">
+      <div class="forwho-mark">03</div>
+      <div>
+        <div class="forwho-text">SNSで積みを見せたい人</div>
+        <div class="forwho-sub">ワンタップで X にシェア。譲りたいキットの告知も。</div>
+      </div>
+    </div>
+
+    <div class="forwho-item">
+      <div class="forwho-mark">04</div>
+      <div>
+        <div class="forwho-text">ガンプラ以外も積んでる人</div>
+        <div class="forwho-sub">スケールモデル、キャラプラ、美少女プラモも一元管理。</div>
+      </div>
+    </div>
+
+  </div>
+</section>
 
 <!-- HOW TO -->
 <div style="background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
