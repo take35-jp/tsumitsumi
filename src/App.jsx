@@ -57,7 +57,7 @@ const SERIES_OPTIONS = [
   // ── その他 ──
   "その他",
 ];
-const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "HG", "RG", "MG", "RE/100", "MGSD", "MGEX", "PG", "SD", "フルメカニクス", "UNLEASHED", "その他", "デカール"];
+const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "EG", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "SD", "フルメカニクス", "その他", "デカール"];
 
 const RANKS = [
   { min: 500, label: "模型屋", color: "#7c3aed" },
@@ -688,7 +688,7 @@ function KitNameInput({ value, onChange, onSelect }) {
       const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
       const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/products?name=ilike.*${encodeURIComponent(q)}*&select=name,scale,image_url,jan,series&limit=5&order=name.asc`,
+        `${SUPABASE_URL}/rest/v1/products?and=(${q.trim().split(/\s+/).filter(Boolean).map(w=>'name.ilike.*'+encodeURIComponent(w)+'*').join(',')})&select=name,scale,image_url,jan,series&limit=10&order=name.asc`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       if (res.ok) {
@@ -1820,7 +1820,7 @@ export default function App() {
       setKits((ks) => ks.map((k) => (k.id === editId ? { ...form, id: editId } : k)));
       setEditId(null);
     } else {
-      setKits((ks) => [...ks, { ...form, id: Date.now() }]);
+      setKits((ks) => [{ ...form, id: Date.now() }, ...ks]);
     }
     setForm(emptyForm);
     setShowForm(false);
@@ -1858,7 +1858,7 @@ export default function App() {
   // 連続スキャンキューを一括登録
   const handleBulkScanRegister = () => {
     if (continuousQueue.length === 0) return;
-    setKits(prev => [...prev, ...continuousQueue.map(k => ({ ...k, id: Date.now() + Math.random() }))]);
+    setKits(prev => [...continuousQueue.map(k => ({ ...k, id: Date.now() + Math.random() })), ...prev]);
     setContinuousQueue([]);
     setShowScanner(false);
   };
@@ -1868,7 +1868,7 @@ export default function App() {
       ...item,
       photoUrl: item.image_url || item.photoUrl,
     }));
-    setKits(prev => [...prev, ...mapped]);
+    setKits(prev => [...mapped, ...prev]);
   };
 
   const handleImport = (importedKits) => {
