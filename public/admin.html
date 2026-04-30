@@ -395,7 +395,7 @@
         <!-- メーカー別 自動一括登録 -->
         <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:14px; margin-bottom:16px;">
           <div style="font-size:13px; font-weight:700; color:#1e40af; margin-bottom:8px;">🏭 メーカー別 自動一括登録</div>
-          <div style="font-size:12px; color:#1e40af; margin-bottom:12px;">選択したメーカーの未登録キットをYahoo!ショッピングから一括取得します。検索クエリ: <code style="background:#dbeafe; padding:1px 6px; border-radius:3px;">[メーカー名] プラモ</code></div>
+          <div style="font-size:12px; color:#1e40af; margin-bottom:12px;">選択したメーカーの未登録キットをYahoo!ショッピングから一括取得します。検索クエリ: <code id="maker-query-display" style="background:#dbeafe; padding:1px 6px; border-radius:3px;">バンダイ プラモデル</code></div>
           <div class="row" style="align-items:flex-end; gap:8px; flex-wrap:wrap;">
             <div class="field">
               <span class="label">メーカー</span>
@@ -629,6 +629,14 @@
           📋 すべて
         </label>
         <span class="stats" id="reports-stats"></span>
+      </div>
+      <div id="reports-bulk-actions" style="margin-bottom:12px; display:none;">
+        <button class="btn btn-primary" onclick="bulkAddUnmasteredReports()" style="background:#fbbf24; color:#78350f; border:none;">
+          🆕 未登録の報告をマスタに一括登録 <span id="bulk-unmastered-count">(0件)</span>
+        </button>
+        <span style="font-size:11px; color:#92400e; margin-left:8px;">
+          ※ JANまたは商品名のみで登録(価格は登録されません)
+        </span>
       </div>
       <div id="reports-msg"></div>
       <div id="reports-list"></div>
@@ -1376,10 +1384,11 @@ function stopAuto() {
 let makerAutoRunning = false;
 
 function buildMakerQuery(maker) {
-  // メーカーごとに最適なキーワードを返す(プラモデル+メーカー名)
+  // メーカーごとに、Yahoo!ショッピングで実際にヒットしやすいキーワードを返す
+  // 短すぎ/長すぎ両方NG。プラモ + メーカーらしい固有ワードがコツ
   const makerKeywords = {
-    'バンダイ': 'BANDAI プラモデル',
-    'グッスマ': 'グッドスマイルカンパニー プラモデル',
+    'バンダイ': 'バンダイ プラモデル',
+    'グッスマ': 'グッドスマイル プラモデル',
     'コトブキヤ': 'コトブキヤ プラモデル',
     'ボークス': 'ボークス プラモデル',
     'ハセガワ': 'ハセガワ プラモデル',
@@ -1398,6 +1407,9 @@ function buildMakerQuery(maker) {
 async function checkMakerTotal() {
   const maker = document.getElementById('maker-auto-select').value;
   const query = buildMakerQuery(maker);
+  // クエリ表示を更新
+  const queryDisplay = document.getElementById('maker-query-display');
+  if (queryDisplay) queryDisplay.textContent = query;
   document.getElementById('maker-total').textContent = '確認中...';
   try {
     const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=1`);
@@ -2001,6 +2013,21 @@ function showMsg(id, text, type) {
         statsEl.textContent = '全' + total + '件 / ⏳' + pending + ' / ✅' + resolved + ' / ✗' + rejected + ' ・ 表示中:' + filtered.length + '件';
       }
 
+      // 未対応+未登録(マスタになし)の件数 → 一括登録ボタンの表示制御
+      const unmasteredPending = reportsData.filter(r =>
+        r.status === 'pending' && (!r.product_id || !r.products) && (r.jan || r.product_name)
+      );
+      const bulkActionsEl = document.getElementById('reports-bulk-actions');
+      const bulkCountEl = document.getElementById('bulk-unmastered-count');
+      if (bulkActionsEl && bulkCountEl) {
+        if (unmasteredPending.length > 0 && (statusFilter === 'pending' || statusFilter === 'all')) {
+          bulkActionsEl.style.display = 'block';
+          bulkCountEl.textContent = '(' + unmasteredPending.length + '件)';
+        } else {
+          bulkActionsEl.style.display = 'none';
+        }
+      }
+
       const el = document.getElementById('reports-list');
       if (!filtered.length) {
         el.innerHTML = '<div class="loading">' + (statusFilter === 'pending' ? '未対応の報告はありません 🎉' : '該当する報告がありません') + '</div>';
@@ -2218,6 +2245,108 @@ function showMsg(id, text, type) {
       } catch (e) {
         // 静かに失敗(初回はテーブルがまだ空でもOK)
       }
+    }
+
+    // 未対応+未登録の報告を一括でマスタに新規登録する
+    async function bulkAddUnmasteredReports() {
+      const unmastered = reportsData.filter(r =>
+        r.status === 'pending' && (!r.product_id || !r.products) && (r.jan || r.product_name)
+      );
+      if (unmastered.length === 0) {
+        alert('未登録の未対応報告がありません');
+        return;
+      }
+
+      const ok = confirm(
+        `未対応かつマスタ未登録の報告 ${unmastered.length} 件を、マスタに一括登録します。\n\n` +
+        `※ 価格(retail_price)は登録されません(報告経由のため信頼性検証が必要)\n` +
+        `※ JANのある報告は upsert(JANで重複除去)、JANなしは商品名のみで新規追加されます\n\n` +
+        `続行しますか？`
+      );
+      if (!ok) return;
+
+      const msgEl = document.getElementById('reports-msg');
+      msgEl.innerHTML = '<div class="msg msg-info">マスタへ登録中... (0/' + unmastered.length + ')</div>';
+
+      let added = 0;
+      let skipped = 0;
+      let failed = 0;
+      const failedList = [];
+
+      for (let i = 0; i < unmastered.length; i++) {
+        const rep = unmastered[i];
+        msgEl.innerHTML = '<div class="msg msg-info">マスタへ登録中... (' + (i + 1) + '/' + unmastered.length + ')</div>';
+
+        const cleanedName = (rep.product_name || '').trim();
+        if (!cleanedName || cleanedName.length < 3) {
+          skipped++;
+          continue;
+        }
+
+        // JANがある場合は重複チェック(同JANがマスタにあれば skip)
+        if (rep.jan) {
+          try {
+            const r = await fetch(SUPABASE_URL + '/rest/v1/products?select=id&jan=eq.' + encodeURIComponent(rep.jan) + '&limit=1', {
+              headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+            });
+            if (r.ok) {
+              const arr = await r.json();
+              if (Array.isArray(arr) && arr.length > 0) {
+                skipped++;
+                continue;
+              }
+            }
+          } catch (e) {}
+        }
+
+        const payload = {
+          jan: rep.jan || null,
+          name: cleanedName,
+          maker: '',
+          series: '',
+          scale: '',
+          image_url: '',
+          updated_at: new Date().toISOString(),
+        };
+
+        try {
+          const headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+          };
+          if (rep.jan) headers['Prefer'] = 'resolution=merge-duplicates';
+
+          const url = rep.jan
+            ? (SUPABASE_URL + '/rest/v1/products?on_conflict=jan')
+            : (SUPABASE_URL + '/rest/v1/products');
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok || res.status === 201) {
+            added++;
+          } else {
+            failed++;
+            failedList.push(cleanedName);
+          }
+        } catch (e) {
+          failed++;
+          failedList.push(cleanedName);
+        }
+        await new Promise(r => setTimeout(r, 100));
+      }
+
+      let summary = '✅ 一括登録完了:新規追加 ' + added + '件 / 既存スキップ ' + skipped + '件';
+      if (failed > 0) summary += ' / 失敗 ' + failed + '件';
+      msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
+
+      // マスタとレポートを再読み込み
+      await loadMaster();
+      await loadReports();
     }
 
     // 報告された商品をYahoo検索タブで検索 → ヒットしたものを登録できるようにする
