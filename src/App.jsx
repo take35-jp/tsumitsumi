@@ -1135,7 +1135,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.00", date: "2026/05/01", isNew: true, items: ["TSUMITSUMI 正式リリース 🎉", "JANバーコードスキャン登録", "積みプラ一覧管理（タグ・状態・評価・購入日）", "希望小売価格・総額表示", "連続スキャン＆一括登録", "X（Twitter）シェア画像生成", "情報の誤りを報告フォーム", "バックアップ（エクスポート/インポート）", "グリッド/リスト表示切替"] },
+    { ver: "v1.01", date: "2026/05/01", isNew: true, items: ["マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加"] },
+    { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース 🎉", "JANバーコードスキャン登録", "積みプラ一覧管理（タグ・状態・評価・購入日）", "希望小売価格・総額表示", "連続スキャン＆一括登録", "X（Twitter）シェア画像生成", "情報の誤りを報告フォーム", "バックアップ（エクスポート/インポート）", "グリッド/リスト表示切替"] },
   ];
   return (
     <div style={hs.wrap}>
@@ -1211,10 +1212,20 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.00 - リリース版 */}
+          {/* v1.01 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.01</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加
+            </div>
+          </div>
+          {/* v1.00 - リリース版 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.00</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
             </div>
@@ -1692,12 +1703,24 @@ export default function App() {
       for (const kit of kitsWithoutPrice.slice(0, 30)) { // 一度に最大30件
         if (cancelled) break;
         try {
+          // (1) まずマスタDBから希望小売価格を取得
           const r = await fetch(`/api/price?jan=${kit.jan}`);
           const d = await r.json();
           if (d.price && !cancelled) {
             setKits(prev => prev.map(k =>
               k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k
             ));
+          } else if (!cancelled) {
+            // (2) マスタに価格なし → /api/search にフォールバック(Yahoo参考価格)
+            try {
+              const r2 = await fetch(`/api/search?jan=${kit.jan}`);
+              const d2 = r2.ok ? await r2.json() : null;
+              if (d2?.price && !cancelled) {
+                setKits(prev => prev.map(k =>
+                  k.id === kit.id ? { ...k, retailPrice: String(d2.price) } : k
+                ));
+              }
+            } catch {}
           }
         } catch {}
         await new Promise(r => setTimeout(r, 300)); // 0.3秒間隔
@@ -2042,8 +2065,16 @@ export default function App() {
                     if (d.price) {
                       setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
                       updated++;
-                    } else {
-                      // 取得できなかった場合：既存のretailPriceは消さない（手動入力値を守る）
+                    } else if (kit.jan) {
+                      // フォールバック: /api/search で Yahoo参考価格を取得
+                      try {
+                        const r2 = await fetch(`/api/search?jan=${kit.jan}`);
+                        const d2 = r2.ok ? await r2.json() : null;
+                        if (d2?.price) {
+                          setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d2.price) } : k));
+                          updated++;
+                        }
+                      } catch {}
                     }
                   } catch {}
                   await new Promise(r => setTimeout(r, 350));
