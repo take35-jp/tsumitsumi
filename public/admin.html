@@ -638,6 +638,14 @@
           ※ JANまたは商品名のみで登録(価格は登録されません)
         </span>
       </div>
+      <div id="reports-bulk-adopt" style="margin-bottom:12px; display:none;">
+        <button class="btn btn-success" onclick="bulkAdoptReports()">
+          ✅ 報告された価格をマスタに一括反映 <span id="bulk-adoptable-count">(0件)</span>
+        </button>
+        <span style="font-size:11px; color:#065f46; margin-left:8px;">
+          ※ JAN紐付け済みかつ価格報告ありの未対応のみ対象。一気にretail_priceを更新します
+        </span>
+      </div>
       <div id="reports-msg"></div>
       <div id="reports-list"></div>
     </div>
@@ -2028,6 +2036,21 @@ function showMsg(id, text, type) {
         }
       }
 
+      // 未対応+マスタ紐付け済み+価格報告あり → 一括採用ボタンの表示制御
+      const adoptablePending = reportsData.filter(r =>
+        r.status === 'pending' && r.product_id && r.reported_price != null && r.reported_price > 0
+      );
+      const bulkAdoptEl = document.getElementById('reports-bulk-adopt');
+      const bulkAdoptCountEl = document.getElementById('bulk-adoptable-count');
+      if (bulkAdoptEl && bulkAdoptCountEl) {
+        if (adoptablePending.length > 0 && (statusFilter === 'pending' || statusFilter === 'all')) {
+          bulkAdoptEl.style.display = 'block';
+          bulkAdoptCountEl.textContent = '(' + adoptablePending.length + '件)';
+        } else {
+          bulkAdoptEl.style.display = 'none';
+        }
+      }
+
       const el = document.getElementById('reports-list');
       if (!filtered.length) {
         el.innerHTML = '<div class="loading">' + (statusFilter === 'pending' ? '未対応の報告はありません 🎉' : '該当する報告がありません') + '</div>';
@@ -2293,6 +2316,20 @@ function showMsg(id, text, type) {
               const arr = await r.json();
               if (Array.isArray(arr) && arr.length > 0) {
                 skipped++;
+                // 既存マスタのIDを取得 → このJANのpending報告に紐付け
+                const existingId = arr[0].id;
+                try {
+                  await fetch(SUPABASE_URL + '/rest/v1/price_reports?jan=eq.' + encodeURIComponent(rep.jan) + '&product_id=is.null', {
+                    method: 'PATCH',
+                    headers: {
+                      'apikey': SUPABASE_KEY,
+                      'Authorization': 'Bearer ' + SUPABASE_KEY,
+                      'Content-Type': 'application/json',
+                      'Prefer': 'return=minimal',
+                    },
+                    body: JSON.stringify({ product_id: existingId }),
+                  });
+                } catch (e) {}
                 continue;
               }
             }
@@ -2314,8 +2351,8 @@ function showMsg(id, text, type) {
             'apikey': SUPABASE_KEY,
             'Authorization': 'Bearer ' + SUPABASE_KEY,
             'Content-Type': 'application/json',
+            'Prefer': 'return=representation' + (rep.jan ? ',resolution=merge-duplicates' : ''),
           };
-          if (rep.jan) headers['Prefer'] = 'resolution=merge-duplicates';
 
           const url = rep.jan
             ? (SUPABASE_URL + '/rest/v1/products?on_conflict=jan')
@@ -2329,6 +2366,39 @@ function showMsg(id, text, type) {
 
           if (res.ok || res.status === 201) {
             added++;
+            // 挿入された商品のIDを取得
+            let newProductId = null;
+            try {
+              const insertedArr = await res.json();
+              if (Array.isArray(insertedArr) && insertedArr.length > 0) {
+                newProductId = insertedArr[0].id;
+              }
+            } catch (e) {}
+
+            // 対応する price_reports を product_id で紐付け
+            if (newProductId) {
+              try {
+                // 同JAN または同商品名(JAN無しの場合)のpending報告を全部紐付け
+                let updateUrl;
+                if (rep.jan) {
+                  updateUrl = SUPABASE_URL + '/rest/v1/price_reports?jan=eq.' + encodeURIComponent(rep.jan) + '&product_id=is.null';
+                } else {
+                  updateUrl = SUPABASE_URL + '/rest/v1/price_reports?product_name=eq.' + encodeURIComponent(cleanedName) + '&product_id=is.null';
+                }
+                await fetch(updateUrl, {
+                  method: 'PATCH',
+                  headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal',
+                  },
+                  body: JSON.stringify({ product_id: newProductId }),
+                });
+              } catch (e) {
+                console.warn('product_id紐付け失敗:', e);
+              }
+            }
           } else {
             failed++;
             failedList.push(cleanedName);
@@ -2341,6 +2411,90 @@ function showMsg(id, text, type) {
       }
 
       let summary = '✅ 一括登録完了:新規追加 ' + added + '件 / 既存スキップ ' + skipped + '件';
+      if (failed > 0) summary += ' / 失敗 ' + failed + '件';
+      msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
+
+      // マスタとレポートを再読み込み
+      await loadMaster();
+      await loadReports();
+    }
+
+    // 報告された価格をマスタに一括反映する(JAN紐付け済み・価格報告ありのみ)
+    async function bulkAdoptReports() {
+      const adoptable = reportsData.filter(r =>
+        r.status === 'pending' && r.product_id && r.reported_price != null && r.reported_price > 0
+      );
+      if (adoptable.length === 0) {
+        alert('一括採用できる報告がありません(JAN紐付け済み&価格報告ありの未対応のみ対象)');
+        return;
+      }
+
+      const ok = confirm(
+        `未対応の報告 ${adoptable.length} 件を一括採用します。\n\n` +
+        `各商品のretail_price(マスタ)を、報告された価格で上書き更新します。\n` +
+        `また、各報告のステータスを「採用済み」に変更します。\n\n` +
+        `※ 同JANの他の未対応報告(価格報告なしのコメントのみ等)もまとめて採用済みになります\n` +
+        `※ この操作は取り消せません(個別に「未対応に戻す」ボタンで戻すことはできます)\n\n` +
+        `続行しますか？`
+      );
+      if (!ok) return;
+
+      const msgEl = document.getElementById('reports-msg');
+      msgEl.innerHTML = '<div class="msg msg-info">一括採用中... (0/' + adoptable.length + ')</div>';
+
+      let updated = 0;
+      let failed = 0;
+      const processedReportIds = new Set();
+
+      for (let i = 0; i < adoptable.length; i++) {
+        const rep = adoptable[i];
+        if (processedReportIds.has(rep.id)) continue;
+        msgEl.innerHTML = '<div class="msg msg-info">一括採用中... (' + (i + 1) + '/' + adoptable.length + ')</div>';
+
+        try {
+          // 1. マスタの retail_price を更新
+          const updateRes = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + rep.product_id, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({
+              retail_price: rep.reported_price,
+              updated_at: new Date().toISOString(),
+            }),
+          });
+          if (!updateRes.ok) {
+            failed++;
+            console.error('マスタ更新失敗 reportId=' + rep.id, updateRes.status);
+            continue;
+          }
+
+          // 2. この報告と同JANの他のpending報告を全部 resolved に
+          const idsToResolve = [rep.id];
+          if (rep.jan) {
+            const sameJan = reportsData.filter(r =>
+              r.id !== rep.id && r.status === 'pending' && r.jan === rep.jan
+            );
+            sameJan.forEach(r => idsToResolve.push(r.id));
+          }
+
+          await Promise.all(idsToResolve.map(id => updateReportStatus(id, 'resolved').catch(() => {})));
+          idsToResolve.forEach(id => processedReportIds.add(id));
+          updated++;
+        } catch (e) {
+          failed++;
+          console.error('一括採用エラー reportId=' + rep.id, e);
+        }
+        await new Promise(r => setTimeout(r, 100));
+      }
+
+      let summary = '✅ 一括採用完了:' + updated + '件のマスタを更新';
+      if (processedReportIds.size > updated) {
+        summary += ' / 同JAN含めて ' + processedReportIds.size + '件の報告を採用済みに';
+      }
       if (failed > 0) summary += ' / 失敗 ' + failed + '件';
       msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
 
