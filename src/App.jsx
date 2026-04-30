@@ -1135,7 +1135,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.02", date: "2026/05/01", isNew: true, items: ["価格訂正報告画面に「Webで検索」ショートカットを追加（JAN＋希望小売価格でGoogle検索）"] },
+    { ver: "v1.03", date: "2026/05/01", isNew: true, items: ["価格訂正報告で「現在の価格と同じ」かつコメントなしの場合は報告できないようにバリデーション追加"] },
+    { ver: "v1.02", date: "2026/05/01", isNew: false, items: ["価格訂正報告画面に「Webで検索」ショートカットを追加（JAN＋希望小売価格でGoogle検索）"] },
     { ver: "v1.01", date: "2026/05/01", isNew: false, items: ["マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加"] },
     { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース 🎉", "JANバーコードスキャン登録", "積みプラ一覧管理（タグ・状態・評価・購入日）", "希望小売価格・総額表示", "連続スキャン＆一括登録", "X（Twitter）シェア画像生成", "情報の誤りを報告フォーム", "バックアップ（エクスポート/インポート）", "グリッド/リスト表示切替"] },
   ];
@@ -1213,10 +1214,20 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.02 */}
+          {/* v1.03 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.03</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・価格訂正報告で「現在の価格と同じ」かつコメントなしの場合のバリデーション追加
+            </div>
+          </div>
+          {/* v1.02 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.02</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
             </div>
@@ -1754,6 +1765,12 @@ function PriceReportModal({ target, onClose }) {
     }
     if (commentTrimmed.length > 200) {
       setErrMsg("コメントは200文字以内にしてください。");
+      return;
+    }
+    // 「変更がないと報告できない」バリデーション:
+    // 報告された価格が現在の価格と同じ&コメントなしの場合はNG
+    if (priceNum != null && currentPrice != null && priceNum === currentPrice && !commentTrimmed) {
+      setErrMsg("現在の価格と同じです。価格を変更するか、コメントで補足情報を入力してください。");
       return;
     }
 
