@@ -1376,7 +1376,23 @@ function stopAuto() {
 let makerAutoRunning = false;
 
 function buildMakerQuery(maker) {
-  return `${maker} プラモ`;
+  // メーカーごとに最適なキーワードを返す(プラモデル+メーカー名)
+  const makerKeywords = {
+    'バンダイ': 'BANDAI プラモデル',
+    'グッスマ': 'グッドスマイルカンパニー プラモデル',
+    'コトブキヤ': 'コトブキヤ プラモデル',
+    'ボークス': 'ボークス プラモデル',
+    'ハセガワ': 'ハセガワ プラモデル',
+    'ウェーブ': 'ウェーブ プラモデル',
+    'マックスファクトリー': 'マックスファクトリー プラモデル',
+    'アオシマ': 'アオシマ プラモデル',
+    'タミヤ': 'タミヤ プラモデル',
+    'フジミ': 'フジミ プラモデル',
+    '童友社': '童友社 プラモデル',
+    'ピットロード': 'ピットロード プラモデル',
+    'プラッツ': 'プラッツ プラモデル',
+  };
+  return makerKeywords[maker] || `${maker} プラモデル`;
 }
 
 async function checkMakerTotal() {
@@ -1386,14 +1402,19 @@ async function checkMakerTotal() {
   try {
     const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=1`);
     const data = await r.json();
-    if (data.total) {
+    if (data.total && data.total > 0) {
       const pages = Math.ceil(data.total / 20);
       document.getElementById('maker-total').textContent = `約${data.total.toLocaleString()}件（${pages}ページ）`;
+    } else if (data.items && data.items.length > 0) {
+      // total が無くても items が取れていれば検索可能
+      document.getElementById('maker-total').textContent = `検索可能（最初のページに${data.items.length}件、全件数は不明）`;
     } else {
-      document.getElementById('maker-total').textContent = data.error || '取得失敗';
+      console.log('admin-search response:', data);
+      document.getElementById('maker-total').textContent = data.error || `0件 (q=${query})`;
     }
   } catch (e) {
-    document.getElementById('maker-total').textContent = 'エラー';
+    console.error('checkMakerTotal error:', e);
+    document.getElementById('maker-total').textContent = 'エラー: ' + e.message;
   }
 }
 
@@ -1419,18 +1440,26 @@ async function autoRegisterByMaker() {
     registeredJans = new Set(data.filter(d => d.jan).map(d => d.jan));
   } catch (e) {}
 
-  // ② 全ページ数を取得
+  // ② 全ページ数を取得(取れなければループでitems空判定で抜ける)
   let totalYahooPages = endPage;
   document.getElementById('maker-status').textContent = '全件数を確認中...';
   try {
     const r = await fetch(`/api/admin-search?q=${encodeURIComponent(query)}&start=1`);
     const data = await r.json();
     const totalItems = data.total || 0;
-    totalYahooPages = Math.min(endPage, Math.ceil(totalItems / 20));
-    document.getElementById('maker-status').textContent =
-      `${maker}: 全${totalItems.toLocaleString()}件（約${totalYahooPages}ページ）を登録します...`;
+    if (totalItems > 0) {
+      totalYahooPages = Math.min(endPage, Math.ceil(totalItems / 20));
+      document.getElementById('maker-status').textContent =
+        `${maker}: 全${totalItems.toLocaleString()}件（約${totalYahooPages}ページ）を登録します...`;
+    } else {
+      // totalが取れない場合はendPageまでループ（items空で自動停止）
+      document.getElementById('maker-status').textContent =
+        `${maker}: 件数不明、${endPage}ページまで順次処理します(items空で自動停止)...`;
+    }
     await new Promise(r => setTimeout(r, 1000));
-  } catch (e) {}
+  } catch (e) {
+    console.error('total取得エラー:', e);
+  }
 
   let totalSaved = 0;
   let totalSkipped = 0;
@@ -2000,7 +2029,10 @@ function showMsg(id, text, type) {
           }
         }
 
+        const isUnmastered = !rep.product_id || !rep.products;
+
         const actions = rep.status === 'pending' ? `
+          ${(rep.jan || rep.product_name) ? `<button class="btn" style="background:#fbbf24; color:#78350f;" onclick="addReportToMaster(${rep.id})">🔍 検索してマスタ更新</button>` : ''}
           <button class="btn btn-success" onclick="adoptReport(${rep.id})">📝 編集して採用</button>
           <button class="btn btn-danger" onclick="rejectReport(${rep.id})">✗ 却下</button>
         ` : `
@@ -2185,6 +2217,47 @@ function showMsg(id, text, type) {
         }
       } catch (e) {
         // 静かに失敗(初回はテーブルがまだ空でもOK)
+      }
+    }
+
+    // 報告された商品をYahoo検索タブで検索 → ヒットしたものを登録できるようにする
+    async function addReportToMaster(reportId) {
+      const rep = reportsData.find(r => r.id === reportId);
+      if (!rep) return;
+      const searchKey = rep.jan || rep.product_name || '';
+      if (!searchKey) {
+        alert('JANも商品名もないため検索できません');
+        return;
+      }
+      // 「Yahoo検索から登録」タブへ遷移
+      switchTab('search');
+      // キーワード入力欄にセット → 検索実行
+      const kwInput = document.getElementById('kw-input');
+      if (kwInput) {
+        kwInput.value = searchKey;
+        // 「未登録のみ表示」をオフに(マスタになくても出すため)
+        const hideReg = document.getElementById('hide-registered');
+        if (hideReg) hideReg.checked = false;
+        // メーカーとスケールは「指定なし」にしておく(JAN単独検索の精度を上げる)
+        const makerSel = document.getElementById('maker-select');
+        if (makerSel) {
+          // "指定なし" 相当のオプションがあれば選ぶ
+          const opt = Array.from(makerSel.options).find(o => o.value === 'プラモデル');
+          if (opt) makerSel.value = 'プラモデル';
+        }
+        const scaleSel = document.getElementById('scale-select');
+        if (scaleSel) scaleSel.value = '';
+        // 検索実行
+        if (typeof searchYahoo === 'function') {
+          searchYahoo();
+          // 元の報告の参照情報をメッセージで表示
+          setTimeout(() => {
+            const msgEl = document.getElementById('search-msg');
+            if (msgEl) {
+              msgEl.innerHTML = `<div class="msg msg-info" style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d;">📨 報告キューから検索中: <b>${escEdit(rep.product_name || '')}</b> (JAN: ${rep.jan || 'なし'})<br/>該当する商品をリストから「登録」ボタンで追加してください。</div>`;
+            }
+          }, 300);
+        }
       }
     }
     </script>
