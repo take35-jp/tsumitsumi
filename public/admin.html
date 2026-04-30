@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ツミツミ 管理ツール</title>
   <style>
@@ -143,8 +143,36 @@
     .master-card {
       background: #fff; border-radius: 10px; padding: 12px 16px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      display: grid; grid-template-columns: 60px 1fr auto;
+      display: grid; grid-template-columns: 60px 1fr auto auto;
       gap: 12px; align-items: center; margin-bottom: 8px;
+    }
+    .master-card .price-cell {
+      display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+      min-width: 110px;
+    }
+    .master-card .price-input {
+      width: 90px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 12px; text-align: right; background: #fff;
+    }
+    .master-card .price-input.unset { background: #fef3c7; border-color: #fbbf24; }
+    .master-card .price-input:focus { outline: none; border-color: #3b82f6; background: #fff; }
+    .master-card .price-search-btn {
+      font-size: 11px; padding: 2px 8px; background: #f3f4f6;
+      border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; color: #4b5563;
+      text-decoration: none; display: inline-block;
+    }
+    .master-card .price-search-btn:hover { background: #e5e7eb; }
+    .master-filter-bar {
+      display: flex; gap: 12px; align-items: center; padding: 8px 12px;
+      background: #f9fafb; border-radius: 8px; margin-bottom: 12px;
+      font-size: 13px; flex-wrap: wrap;
+    }
+    .master-filter-bar label {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      user-select: none;
+    }
+    .master-filter-bar .stats {
+      color: #6b7280; font-size: 12px; margin-left: auto;
     }
 
     /* ---- MSG ---- */
@@ -505,11 +533,22 @@
 
     <!-- TAB: マスタ一覧 -->
     <div class="tab-panel" id="tab-master">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <div class="field" style="flex:1; max-width:300px;">
           <input class="input" id="master-search" placeholder="商品名・JANで検索..." oninput="filterMaster()">
         </div>
         <button class="btn btn-primary" onclick="loadMaster()">🔄 更新</button>
+      </div>
+      <div class="master-filter-bar">
+        <label>
+          <input type="checkbox" id="filter-no-price" onchange="filterMaster()">
+          💰 価格未設定のみ表示
+        </label>
+        <label>
+          <input type="checkbox" id="filter-exclude-lottery" onchange="filterMaster()">
+          🎲 一番くじ景品を除外
+        </label>
+        <span class="stats" id="master-stats"></span>
       </div>
       <div id="master-msg"></div>
       <div id="master-list"></div>
@@ -970,22 +1009,129 @@ async function loadMaster() {
 
 function filterMaster() {
   const q = document.getElementById('master-search').value.toLowerCase();
-  const filtered = q ? masterData.filter(d => d.name.toLowerCase().includes(q) || (d.jan||'').includes(q)) : masterData;
+  const noPriceOnly = document.getElementById('filter-no-price')?.checked || false;
+  const excludeLottery = document.getElementById('filter-exclude-lottery')?.checked || false;
+
+  let filtered = masterData;
+
+  // テキスト検索
+  if (q) {
+    filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || (d.jan||'').includes(q));
+  }
+  // 価格未設定フィルタ
+  if (noPriceOnly) {
+    filtered = filtered.filter(d => d.retail_price == null || d.retail_price === '');
+  }
+  // 一番くじ景品除外
+  if (excludeLottery) {
+    filtered = filtered.filter(d => !/一番くじ|ラストワン|ラスト ワン/i.test(d.name || ''));
+  }
+
+  // 統計を更新
+  const total = masterData.length;
+  const withPrice = masterData.filter(d => d.retail_price != null && d.retail_price !== '').length;
+  const noPrice = total - withPrice;
+  const statsEl = document.getElementById('master-stats');
+  if (statsEl) {
+    statsEl.textContent = `全${total}件 / 価格設定済${withPrice}件 / 未設定${noPrice}件 ・ 表示中: ${filtered.length}件`;
+  }
 
   const el = document.getElementById('master-list');
-  if (!filtered.length) { el.innerHTML = '<div class="loading">データがありません</div>'; return; }
+  if (!filtered.length) { el.innerHTML = '<div class="loading">該当データがありません</div>'; return; }
 
-  el.innerHTML = `<div style="font-size:12px; color:#6b7280; margin-bottom:12px;">${filtered.length}件</div>` +
-    filtered.map(d => `
+  el.innerHTML = filtered.map(d => {
+    const priceVal = (d.retail_price != null && d.retail_price !== '') ? d.retail_price : '';
+    const isUnset = priceVal === '';
+    // Google検索クエリ: メーカー + 商品名 + 定価
+    const searchQuery = encodeURIComponent(`${d.maker || ''} ${d.name} 定価`.trim());
+    const searchUrl = `https://www.google.com/search?q=${searchQuery}`;
+    return `
       <div class="master-card">
         ${d.image_url ? `<img class="product-img" src="${d.image_url}" onerror="this.style.display='none'" alt="">` : `<div class="product-img-ph">📦</div>`}
         <div>
-          <div style="font-size:13px; font-weight:700; margin-bottom:4px;">${d.name}</div>
-          <div style="font-size:11px; color:#6b7280;">${[d.maker, d.series, d.scale].filter(Boolean).join(' · ')}</div>
+          <div style="font-size:13px; font-weight:700; margin-bottom:4px;">${escapeHtml(d.name)}</div>
+          <div style="font-size:11px; color:#6b7280;">${[d.maker, d.series, d.scale].filter(Boolean).map(escapeHtml).join(' · ')}</div>
           <div style="font-size:11px; color:#9ca3af; margin-top:2px;">JAN: ${d.jan || '不明'}</div>
         </div>
-        <button class="btn btn-danger" style="font-size:11px; padding:6px 10px;" onclick="deleteItem(${d.id}, '${d.name.replace(/'/g,"\\'")}')">削除</button> <button class="btn btn-primary" style="font-size:11px; padding:6px 10px;" onclick="editProduct(${d.id})">編集</button>
-      </div>`).join('');
+        <div class="price-cell">
+          <input type="number" class="price-input ${isUnset ? 'unset' : ''}" value="${priceVal}"
+                 placeholder="未設定" min="0" step="1"
+                 onchange="savePriceInline(${d.id}, this.value, this)"
+                 onkeydown="if(event.key==='Enter'){this.blur();}">
+          <a class="price-search-btn" href="${searchUrl}" target="_blank" rel="noopener" title="Googleで価格を検索">🔍 検索</a>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <button class="btn btn-primary" style="font-size:11px; padding:6px 10px;" onclick="editProduct(${d.id})">編集</button>
+          <button class="btn btn-danger" style="font-size:11px; padding:6px 10px;" onclick="deleteItem(${d.id}, '${(d.name||'').replace(/'/g,"\\'")}')">削除</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// HTML エスケープ(検索結果に <script> などが入っていた場合の保険)
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// 価格インライン保存
+async function savePriceInline(id, newVal, inputEl) {
+  const trimmed = (newVal || '').trim();
+  const newPrice = trimmed === '' ? null : Number(trimmed);
+  if (trimmed !== '' && (isNaN(newPrice) || newPrice < 0)) {
+    showMsg('master-msg', `不正な価格: ${newVal}`, 'err');
+    return;
+  }
+  // 元のデータ取得
+  const item = masterData.find(d => d.id === id);
+  if (!item) return;
+  const oldPrice = item.retail_price;
+  if (oldPrice === newPrice || (oldPrice == null && newPrice == null)) return; // 変化なし
+
+  // 視覚フィードバック (保存中)
+  inputEl.style.opacity = '0.5';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ retail_price: newPrice })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // ローカルデータも更新(再fetch回避で快適に)
+    item.retail_price = newPrice;
+    // 視覚クラス更新
+    if (newPrice == null) {
+      inputEl.classList.add('unset');
+    } else {
+      inputEl.classList.remove('unset');
+    }
+    // 統計だけ再計算(全リスト再描画は重いので避ける)
+    updateMasterStats();
+    inputEl.style.opacity = '1';
+    inputEl.style.background = '#dcfce7';
+    setTimeout(() => { inputEl.style.background = ''; }, 600);
+  } catch (e) {
+    inputEl.style.opacity = '1';
+    inputEl.value = oldPrice ?? '';
+    showMsg('master-msg', `保存失敗: ${e.message}`, 'err');
+  }
+}
+
+// 統計のみ再計算(価格保存後の軽量更新用)
+function updateMasterStats() {
+  const total = masterData.length;
+  const withPrice = masterData.filter(d => d.retail_price != null && d.retail_price !== '').length;
+  const noPrice = total - withPrice;
+  const visibleCount = document.querySelectorAll('#master-list .master-card').length;
+  const statsEl = document.getElementById('master-stats');
+  if (statsEl) {
+    statsEl.textContent = `全${total}件 / 価格設定済${withPrice}件 / 未設定${noPrice}件 ・ 表示中: ${visibleCount}件`;
+  }
 }
 
 async function deleteItem(id, name) {
