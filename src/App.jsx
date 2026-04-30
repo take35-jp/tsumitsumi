@@ -1135,15 +1135,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-        { ver: "v1.6.1", date: "2026/04/26", isNew: true, items: ["ヘルプページと更新履歴を最新化", "ヘッダーアイコンの中央揃えを本番に適用", "連続編集時の「保存中...」ハング修正（管理画面）"] },
-            { ver: "v1.6.0", date: "2026/04/26", isNew: false, items: ["キット一覧に完成マーク（✓ 完成済み）を表示", "キット詳細のボタン配置を改善（編集/完成/削除/閉じる）", "保存容量の表示・警告を追加", "ヘッダーアイコンの中心揃え修正", "マスタDB 6,100件超に拡充・商品名クリーニング強化"] },
-            { ver: "v1.5.1", date: "2026/04/19", isNew: false, items: ["希望小売価格をマスタDB格納方式に変更（正確な定価を保持）", "JAN編集フォームにマスタ照合機能追加", "一括定価取得の進捗インジケーター改善"] },
-    { ver: "v1.5.0", date: "2026/04/19", isNew: false, items: ["税込希望小売価格の自動取得（バーコードスキャン時）", "積みプラ総額の表示（税込希望小売価格×個数）・表示/非表示切替", "連続スキャンモード追加", "月1自動マスタ更新（Cron Job）", "更新履歴ページ追加"] },
-    { ver: "v1.4.0", date: "2026/04/19", items: ["スケール・シリーズフィルターに「未設定」を追加", "マスタDB 5,900件超に拡充（タミヤ/ハセガワ/コトブキヤ等）", "商品名クリーニング強化（爆買・中古・発送日等を除去）"] },
-    { ver: "v1.3.0", date: "2026/04/18", items: ["マスタDB 3,000件超に拡充", "バーコードスキャン精度向上（ZBar WASM対応）", "グレード別一括登録（☰ボタン）追加"] },
-    { ver: "v1.2.0", date: "2026/04/13", items: ["タグ機能追加", "一括編集モード追加", "Xシェア画像生成機能追加"] },
-    { ver: "v1.1.0", date: "2026/04/11", items: ["バックアップ（エクスポート/インポート）機能追加", "グリッド表示モード追加", "状態・評価フィルター追加"] },
-    { ver: "v1.0.0", date: "2026/04/10", items: ["TSUMI TSUMI リリース 🎉", "バーコードスキャン登録", "積みプラ一覧管理の基本機能"] },
+    { ver: "v1.00", date: "2026/05/01", isNew: true, items: ["TSUMITSUMI 正式リリース 🎉", "JANバーコードスキャン登録", "積みプラ一覧管理（タグ・状態・評価・購入日）", "希望小売価格・総額表示", "連続スキャン＆一括登録", "X（Twitter）シェア画像生成", "情報の誤りを報告フォーム", "バックアップ（エクスポート/インポート）", "グリッド/リスト表示切替"] },
   ];
   return (
     <div style={hs.wrap}>
@@ -1219,46 +1211,19 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.6.1 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.6.1</span>
-          <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/26</span>
-          </div>
-          <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-          ・ヘルプページと更新履歴を最新化<br/>
-          ・ヘッダーアイコンの中央揃えを本番に適用<br/>
-          ・連続編集時の「保存中...」ハング修正（管理画面）
-          </div>
-          </div>
-          {/* v1.6.0 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.6.0</span>
-          <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/26</span>
-          </div>
-          <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-            ・キット一覧に完成マーク（✓ 完成済み）を表示<br/>
-            ・キット詳細のボタン配置を改善（編集/完成/削除/閉じる）<br/>
-            ・保存容量の表示・警告を追加<br/>
-            ・ヘッダーアイコンの中心揃え修正<br/>
-            ・マスタDB 6,100件超に拡充・商品名クリーニング強化
-            </div>
-            </div>
-          {/* v1.5.0 */}
+          {/* v1.00 - リリース版 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.5.1</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/04/19</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.00</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・税込希望小売価格の自動取得（バーコードスキャン時）<br/>
-              ・積みプラ総額の表示（税込希望小売価格×個数）<br/>
-              ・連続スキャンモード追加<br/>
-              ・月1自動マスタ更新（Cron Job）<br/>
-              ・希望小売価格をあみあみ参考価格から取得（プレ値除去）
+              ・TSUMITSUMI 正式リリース 🎉<br/>
+              ・JANバーコードスキャン登録<br/>
+              ・積みプラ一覧管理（タグ・状態・評価・購入日）<br/>
+              ・希望小売価格・総額表示<br/>
+              ・情報の誤りを報告フォーム
             </div>
           </div>
           <div style={hs.section}>
