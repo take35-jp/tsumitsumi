@@ -1869,15 +1869,18 @@ export default function App() {
   // 連続スキャンキューを一括登録
   const handleBulkScanRegister = () => {
     if (continuousQueue.length === 0) return;
-    setKits(prev => [...continuousQueue.map(k => ({ ...k, id: Date.now() + Math.random() })), ...prev]);
+    const baseTime = Date.now();
+    setKits(prev => [...continuousQueue.map((k, i) => ({ ...k, id: baseTime + i })), ...prev]);
     setContinuousQueue([]);
     setShowScanner(false);
   };
 
   const handleBulkAdd = (newKits) => {
-    const mapped = newKits.map(item => ({
+    const baseTime = Date.now();
+    const mapped = newKits.map((item, i) => ({
       ...item,
       photoUrl: item.image_url || item.photoUrl,
+      id: baseTime + i,  // 確実に連番のidを振る
     }));
     setKits(prev => [...mapped, ...prev]);
   };
