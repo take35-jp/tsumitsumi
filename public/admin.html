@@ -1884,9 +1884,26 @@ function showMsg(id, text, type) {
           // 報告キュー経由で開いていた場合は、その報告を resolved に更新
           if (window.__pendingReportId) {
             const reportId = window.__pendingReportId;
+            const bulkIds = window.__bulkResolveReportIds || [];
             window.__pendingReportId = null;
+            window.__bulkResolveReportIds = null;
             try {
+              // メインの報告を採用
               await updateReportStatus(reportId, 'resolved');
+              // 同JANの他の報告もまとめて採用(指定があれば)
+              if (bulkIds.length > 0) {
+                const results = await Promise.allSettled(
+                  bulkIds.map(id => updateReportStatus(id, 'resolved'))
+                );
+                const successCount = results.filter(r => r.status === 'fulfilled').length;
+                const failCount = results.length - successCount;
+                if (msg) {
+                  let extra = ' + 同JAN' + successCount + '件もまとめて採用';
+                  if (failCount > 0) extra += '(' + failCount + '件失敗)';
+                  msg.innerHTML = '<span style="color:#6fce9f;">✓ 商品 id=' + e.id + ' を更新しました' + extra + '</span>';
+                  setTimeout(() => { msg.textContent = ''; }, 7000);
+                }
+              }
               if (typeof loadReports === 'function') loadReports();
             } catch (err2) {
               console.warn('Report status update failed:', err2);
@@ -1972,6 +1989,17 @@ function showMsg(id, text, type) {
         const fromPrice = (rep.current_price != null) ? '¥' + rep.current_price.toLocaleString() : '(未設定)';
         const toPrice = (rep.reported_price != null) ? '¥' + rep.reported_price.toLocaleString() : '';
 
+        // 同JANの他の未対応報告数(自分以外、pendingのみ)
+        let sameJanBadge = '';
+        if (rep.status === 'pending' && rep.jan) {
+          const sameJanCount = reportsData.filter(r =>
+            r.id !== rep.id && r.jan === rep.jan && r.status === 'pending'
+          ).length;
+          if (sameJanCount > 0) {
+            sameJanBadge = '<span class="report-status-tag" style="background:#dbeafe; color:#1e40af;">📎 同JAN他' + sameJanCount + '件</span>';
+          }
+        }
+
         const actions = rep.status === 'pending' ? `
           <button class="btn btn-success" onclick="adoptReport(${rep.id})">📝 編集して採用</button>
           <button class="btn btn-danger" onclick="rejectReport(${rep.id})">✗ 却下</button>
@@ -1986,6 +2014,7 @@ function showMsg(id, text, type) {
               <div style="font-size:13px; font-weight:700;">
                 ${escEdit(rep.product_name || '(商品名不明)')}
                 ${statusTag}
+                ${sameJanBadge}
               </div>
               <div class="report-meta">
                 JAN: ${rep.jan || '不明'} ${product.maker ? ' · ' + escEdit(product.maker) : ''}${product.scale ? ' · ' + escEdit(product.scale) : ''}
@@ -2014,6 +2043,59 @@ function showMsg(id, text, type) {
         alert('該当の商品が削除されているため編集できません。却下にしてください。');
         return;
       }
+
+      // 同JANの他の未対応報告をチェック(必ずDBから最新を取得)
+      window.__bulkResolveReportIds = null; // 初期化
+      console.log('[adoptReport] 開始 reportId=' + reportId + ' jan=' + (rep.jan || '(なし)'));
+
+      if (rep.jan) {
+        try {
+          // 同JANで pending な、自分以外の報告をDBから直接取得
+          const url = SUPABASE_URL +
+            '/rest/v1/price_reports?select=id,jan,product_name,reported_price,comment' +
+            '&jan=eq.' + encodeURIComponent(rep.jan) +
+            '&status=eq.pending' +
+            '&id=neq.' + reportId;
+          const r = await fetch(url, {
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+          });
+          if (r.ok) {
+            const sameJanPending = await r.json();
+            console.log('[adoptReport] 同JANのpending他件数: ' + sameJanPending.length);
+            console.log('[adoptReport] 詳細:', sameJanPending);
+
+            if (sameJanPending.length > 0) {
+              const detail = sameJanPending.map(s =>
+                '  ・ id=' + s.id +
+                (s.reported_price != null ? ' / ¥' + s.reported_price : ' / 価格指定なし') +
+                (s.comment ? ' / ' + s.comment.slice(0, 30) : '')
+              ).join('\n');
+
+              const choice = confirm(
+                '同じJAN(' + rep.jan + ')に他に ' + sameJanPending.length + ' 件の未対応報告があります。\n\n' +
+                detail + '\n\n' +
+                '【OK】 → まとめて採用にする(計 ' + (sameJanPending.length + 1) + ' 件処理)\n' +
+                '【キャンセル】 → この1件だけ採用'
+              );
+              if (choice) {
+                window.__bulkResolveReportIds = sameJanPending.map(r => r.id);
+                console.log('[adoptReport] まとめ処理対象IDs:', window.__bulkResolveReportIds);
+              } else {
+                console.log('[adoptReport] ユーザーが「この1件だけ」を選択');
+              }
+            } else {
+              console.log('[adoptReport] 同JANに他のpending報告なし、通常採用へ');
+            }
+          } else {
+            console.warn('[adoptReport] 同JAN取得失敗: HTTP ' + r.status);
+          }
+        } catch (e) {
+          console.warn('[adoptReport] 同JAN取得エラー:', e);
+        }
+      } else {
+        console.log('[adoptReport] JANなし → 一括処理スキップ');
+      }
+
       // 編集ダイアログを開く
       window.__pendingReportId = reportId;
       await editProduct(rep.product_id);
