@@ -1135,7 +1135,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.01", date: "2026/05/01", isNew: true, items: ["マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加"] },
+    { ver: "v1.02", date: "2026/05/01", isNew: true, items: ["価格訂正報告画面に「Webで検索」ショートカットを追加（JAN＋希望小売価格でGoogle検索）"] },
+    { ver: "v1.01", date: "2026/05/01", isNew: false, items: ["マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加"] },
     { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース 🎉", "JANバーコードスキャン登録", "積みプラ一覧管理（タグ・状態・評価・購入日）", "希望小売価格・総額表示", "連続スキャン＆一括登録", "X（Twitter）シェア画像生成", "情報の誤りを報告フォーム", "バックアップ（エクスポート/インポート）", "グリッド/リスト表示切替"] },
   ];
   return (
@@ -1212,10 +1213,20 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.01 */}
+          {/* v1.02 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.02</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・価格訂正報告画面に「Webで検索」ショートカットを追加
+            </div>
+          </div>
+          {/* v1.01 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.01</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
             </div>
@@ -1814,6 +1825,17 @@ function PriceReportModal({ target, onClose }) {
                 </div>
               </div>
             </div>
+            {(target.jan || target.name) && (
+              <button
+                type="button"
+                style={{ width: "100%", padding: "10px 0", marginBottom: 14, background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                onClick={() => {
+                  const q = `${target.jan || target.name || ""} 希望小売価格`.trim();
+                  window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank", "noopener,noreferrer");
+                }}>
+                🔍 Webで検索（JAN＋希望小売価格）
+              </button>
+            )}
             <label style={s.label}>正しい価格(税込)<span style={{ fontWeight: 400, color: "#9ca3af", marginLeft: 6 }}>※どちらか必須</span></label>
             <input style={s.input} placeholder="例: 7700" inputMode="numeric" value={reportedPrice} onChange={(e) => setReportedPrice(e.target.value.replace(/[^0-9]/g, ""))} />
             <label style={s.label}>コメント(任意・200文字以内)</label>
