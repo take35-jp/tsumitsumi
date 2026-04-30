@@ -1200,11 +1200,11 @@ function HelpModal({ onClose }) {
       <div style={{ textAlign: "center", paddingTop: 8 }}>
         <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 12 }}>お問い合わせ・バグ報告はこちら</div>
         <a
-          href="https://twitter.com/messages/compose?recipient_id=tsumitsumi_pla"
+          href="https://x.com/tsumitsumi_pla"
           target="_blank"
           rel="noopener noreferrer"
           style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 20, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
-          𝕏 @tsumitsumi_pla にDM
+          𝕏 @tsumitsumi_pla
         </a>
       </div>
 
@@ -1709,202 +1709,6 @@ const xs = {
   tweetBtn: { width: "100%", padding: "14px 0", background: "#000", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" },
 };
 
-// ---- Price Report Modal ----
-// レートリミット: localStorage で直近1分間のINSERT回数を管理
-const REPORT_RATE_LIMIT_KEY = "tsumitsumi_report_history";
-const REPORT_RATE_LIMIT_MAX = 5; // 1分間に5件まで
-const REPORT_RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1分
-
-function checkReportRateLimit() {
-  try {
-    const raw = localStorage.getItem(REPORT_RATE_LIMIT_KEY);
-    const history = raw ? JSON.parse(raw) : [];
-    const now = Date.now();
-    const recent = history.filter(t => (now - t) < REPORT_RATE_LIMIT_WINDOW_MS);
-    return { allowed: recent.length < REPORT_RATE_LIMIT_MAX, recentCount: recent.length, recent };
-  } catch {
-    return { allowed: true, recentCount: 0, recent: [] };
-  }
-}
-
-function recordReportSent() {
-  try {
-    const { recent } = checkReportRateLimit();
-    const now = Date.now();
-    const updated = [...recent, now];
-    localStorage.setItem(REPORT_RATE_LIMIT_KEY, JSON.stringify(updated));
-  } catch {}
-}
-
-function PriceReportModal({ target, onClose }) {
-  const [reportedPrice, setReportedPrice] = useState("");
-  const [comment, setComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
-  const [errMsg, setErrMsg] = useState("");
-
-  if (!target) return null;
-
-  // 表示用の現在価格(retailPrice or price)
-  const currentPrice = target.retailPrice
-    ? parseInt(target.retailPrice)
-    : (target.price ? parseInt(target.price) : null);
-
-  const handleSubmit = async () => {
-    setErrMsg("");
-
-    // レートリミットチェック
-    const { allowed, recentCount } = checkReportRateLimit();
-    if (!allowed) {
-      setErrMsg(`報告が多すぎます。少し時間を置いてからお試しください(直近1分間に${recentCount}件)。`);
-      return;
-    }
-
-    // 入力チェック(両方空はNG)
-    const priceTrimmed = (reportedPrice || "").toString().trim();
-    const commentTrimmed = (comment || "").trim();
-    if (!priceTrimmed && !commentTrimmed) {
-      setErrMsg("正しい価格またはコメントのどちらかを入力してください。");
-      return;
-    }
-
-    let priceNum = null;
-    if (priceTrimmed) {
-      priceNum = parseInt(priceTrimmed.replace(/[^0-9]/g, ""), 10);
-      if (isNaN(priceNum) || priceNum < 0 || priceNum > 9999999) {
-        setErrMsg("価格は0〜9,999,999の数値で入力してください。");
-        return;
-      }
-    }
-
-    if (commentTrimmed.length > 200) {
-      setErrMsg("コメントは200文字以内にしてください。");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
-
-      // products.id は分からないこともあるので JAN ベースで検索 → product_id を埋める
-      let productId = null;
-      if (target.jan) {
-        try {
-          const r = await fetch(
-            `${SUPABASE_URL}/rest/v1/products?jan=eq.${encodeURIComponent(target.jan)}&select=id&limit=1`,
-            { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-          );
-          if (r.ok) {
-            const arr = await r.json();
-            if (Array.isArray(arr) && arr.length > 0) productId = arr[0].id;
-          }
-        } catch {}
-      }
-
-      const body = {
-        product_id: productId,
-        jan: target.jan || null,
-        product_name: target.name || null,
-        current_price: currentPrice,
-        reported_price: priceNum,
-        comment: commentTrimmed || null,
-        status: "pending"
-      };
-
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/price_reports`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal"
-        },
-        body: JSON.stringify(body)
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
-      }
-
-      recordReportSent();
-      setDone(true);
-      setTimeout(() => { onClose(); }, 2000);
-    } catch (e) {
-      setErrMsg("送信に失敗しました: " + (e.message || e));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div style={s.overlay} onClick={onClose}>
-      <div style={s.formModal} onClick={(e) => e.stopPropagation()}>
-        <div style={s.formTitle}>⚠️ 情報の誤りを報告</div>
-
-        {done ? (
-          <div style={{ textAlign: "center", padding: "30px 0" }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: "#111" }}>ご報告ありがとうございました</div>
-            <div style={{ fontSize: 12, color: "#6b7280" }}>運営にて確認いたします</div>
-          </div>
-        ) : (
-          <>
-            {/* 商品情報のサマリ */}
-            <div style={{ background: "#f8f9fa", borderRadius: 10, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 12, alignItems: "center" }}>
-              {target.photoUrl ? (
-                <img src={target.photoUrl} alt="" style={{ width: 50, height: 50, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-              ) : (
-                <div style={{ width: 50, height: 50, borderRadius: 6, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}>📦</div>
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#111", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{target.name || "(商品名不明)"}</div>
-                <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 3 }}>
-                  {target.jan ? `JAN: ${target.jan}` : "JANなし"}
-                  {currentPrice ? ` ・ 現在の価格: ¥${currentPrice.toLocaleString()}` : " ・ 価格未設定"}
-                </div>
-              </div>
-            </div>
-
-            <label style={s.label}>正しい価格(税込)<span style={{ fontWeight: 400, color: "#9ca3af", marginLeft: 6 }}>※どちらか必須</span></label>
-            <input
-              style={s.input}
-              placeholder="例: 7700"
-              inputMode="numeric"
-              value={reportedPrice}
-              onChange={(e) => setReportedPrice(e.target.value.replace(/[^0-9]/g, ""))}
-            />
-
-            <label style={s.label}>コメント(任意・200文字以内)</label>
-            <textarea
-              style={{ ...s.input, minHeight: 70, fontFamily: "inherit", resize: "vertical" }}
-              placeholder="情報源(公式サイト等)・補足情報など"
-              value={comment}
-              maxLength={200}
-              onChange={(e) => setComment(e.target.value)}
-            />
-            <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "right", marginTop: 2 }}>{comment.length}/200</div>
-
-            {errMsg && (
-              <div style={{ marginTop: 10, padding: "8px 12px", background: "#fee2e2", color: "#b91c1c", borderRadius: 8, fontSize: 12 }}>
-                {errMsg}
-              </div>
-            )}
-
-            <div style={s.formBtns}>
-              <button style={s.cancelBtn} onClick={onClose} disabled={submitting}>キャンセル</button>
-              <button style={s.saveBtn} onClick={handleSubmit} disabled={submitting}>
-                {submitting ? "送信中..." : "📤 報告を送信"}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ---- Main App ----
 export default function App() {
   const [kits, setKits] = useState(() => {
@@ -1974,7 +1778,6 @@ export default function App() {
   const [filterScale, setFilterScale] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
   const [showAllVersions, setShowAllVersions] = useState(false);
-  const [reportTarget, setReportTarget] = useState(null); // 価格訂正報告モーダルの対象
   const [continuousScan, setContinuousScan] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false); // 一括取得中フラグ
   const [priceProgress, setPriceProgress] = useState({ current: 0, total: 0 }); // 進捗
@@ -1989,8 +1792,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
   const [viewMode, setViewMode] = useState("list");
-  const [sortKey, setSortKey] = useState("custom"); // custom | name | date | purchaseDate
-  const [sortDir, setSortDir] = useState("asc");
+  const [sortKey, setSortKey] = useState("date"); // custom | name | date | purchaseDate
+  const [sortDir, setSortDir] = useState("desc");
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
   const [bulkTagInput, setBulkTagInput] = useState("");
@@ -2625,21 +2428,6 @@ export default function App() {
                   .filter(([, v]) => v && v !== "—")
                   .map(([k, v]) => <tr key={k}><td style={s.td1}>{k}</td><td style={s.td2}>{v}</td></tr>)}
               </tbody></table>
-              {/* ⚠️ 情報の誤りを報告 */}
-              <div style={{ marginTop: 8, textAlign: "right" }}>
-                <button
-                  style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: "4px 0" }}
-                  onClick={() => setReportTarget({
-                    name: detail.name,
-                    jan: detail.jan,
-                    retailPrice: detail.retailPrice,
-                    price: detail.price,
-                    photoUrl: detail.photoUrl
-                  })}
-                >
-                  ⚠️ 情報の誤りを報告
-                </button>
-              </div>
               {detail.tags?.length > 0 && (
                 <div style={{ marginTop: 10 }}>
                   <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 6 }}>タグ</div>
@@ -2820,23 +2608,6 @@ export default function App() {
                 ¥{parseInt(form.retailPrice).toLocaleString()} × {form.count || 1}個 = ¥{(parseInt(form.retailPrice) * (form.count || 1)).toLocaleString()}
               </div>
             )}
-            {form.jan && (
-              <div style={{ marginTop: 2, marginBottom: 4, textAlign: "right" }}>
-                <button
-                  type="button"
-                  style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: "2px 0" }}
-                  onClick={() => setReportTarget({
-                    name: form.name,
-                    jan: form.jan,
-                    retailPrice: form.retailPrice,
-                    price: form.price,
-                    photoUrl: form.photoUrl
-                  })}
-                >
-                  ⚠️ この価格・情報の誤りを報告
-                </button>
-              </div>
-            )}
 
             <label style={s.label}>スケール</label>
             <select style={s.input} value={form.scale} onChange={(e) => setForm((f) => ({ ...f, scale: e.target.value }))}>
@@ -2942,10 +2713,6 @@ export default function App() {
             </div>
           </div>
         </div>
-      )}
-
-      {reportTarget && (
-        <PriceReportModal target={reportTarget} onClose={() => setReportTarget(null)} />
       )}
     </div>
   );
