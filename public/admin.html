@@ -183,6 +183,54 @@
     .msg-err { background: #fee2e2; color: #b91c1c; }
 
     .loading { text-align: center; padding: 40px; color: #9ca3af; font-size: 14px; }
+
+    /* ---- REPORTS QUEUE ---- */
+    .reports-badge {
+      display: inline-block; background: #ef4444; color: #fff;
+      border-radius: 999px; padding: 1px 7px; font-size: 10px;
+      font-weight: 700; margin-left: 4px; vertical-align: middle;
+    }
+    .report-card {
+      background: #fff; border-radius: 10px; padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: grid; grid-template-columns: 60px 1fr auto;
+      gap: 14px; align-items: start; margin-bottom: 10px;
+      border-left: 4px solid #fbbf24;
+    }
+    .report-card.resolved { border-left-color: #10b981; opacity: 0.6; }
+    .report-card.rejected { border-left-color: #ef4444; opacity: 0.5; }
+    .report-card .product-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+    .report-card .product-img-ph {
+      width: 60px; height: 60px; background: #f3f4f6; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .report-meta {
+      font-size: 11px; color: #9ca3af; margin-top: 4px;
+    }
+    .report-prices {
+      display: flex; gap: 12px; align-items: center; font-size: 13px;
+      margin-top: 6px; flex-wrap: wrap;
+    }
+    .report-prices .arrow { color: #9ca3af; }
+    .report-prices .from { color: #6b7280; text-decoration: line-through; }
+    .report-prices .to { color: #059669; font-weight: 700; }
+    .report-prices .to.empty { color: #9ca3af; font-style: italic; font-weight: 400; text-decoration: none; }
+    .report-comment {
+      font-size: 12px; color: #4b5563; margin-top: 6px;
+      background: #f9fafb; padding: 6px 10px; border-radius: 6px;
+      border-left: 2px solid #d1d5db;
+    }
+    .report-actions {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .report-actions .btn { font-size: 11px; padding: 6px 10px; white-space: nowrap; }
+    .report-status-tag {
+      display: inline-block; font-size: 10px; padding: 2px 6px;
+      border-radius: 4px; margin-left: 6px; vertical-align: middle;
+    }
+    .report-status-tag.pending { background: #fef3c7; color: #92400e; }
+    .report-status-tag.resolved { background: #d1fae5; color: #065f46; }
+    .report-status-tag.rejected { background: #fee2e2; color: #991b1b; }
   </style>
 </head>
 <body>
@@ -214,6 +262,7 @@
       <button class="tab-btn" onclick="switchTab('direct')">✏️ 直接入力</button>
       <button class="tab-btn" onclick="switchTab('master')">📋 マスタ一覧</button>
       <button class="tab-btn" onclick="switchTab('excel')">📊 Excel入出力</button>
+      <button class="tab-btn" onclick="switchTab('reports')">📨 報告キュー <span id="reports-badge" class="reports-badge" style="display:none;">0</span></button>
     </div>
 
     <!-- TAB: Yahoo検索 -->
@@ -553,6 +602,37 @@
       <div id="master-msg"></div>
       <div id="master-list"></div>
     </div>
+
+    <!-- TAB: 報告キュー -->
+    <div class="tab-panel" id="tab-reports">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="font-size:14px; color:#374151;">
+          ユーザーから寄せられた価格訂正報告を管理します
+        </div>
+        <button class="btn btn-primary" onclick="loadReports()">🔄 更新</button>
+      </div>
+      <div class="master-filter-bar">
+        <label>
+          <input type="radio" name="report-status-filter" value="pending" checked onchange="filterReports()">
+          ⏳ 未対応
+        </label>
+        <label>
+          <input type="radio" name="report-status-filter" value="resolved" onchange="filterReports()">
+          ✅ 採用済み
+        </label>
+        <label>
+          <input type="radio" name="report-status-filter" value="rejected" onchange="filterReports()">
+          ✗ 却下
+        </label>
+        <label>
+          <input type="radio" name="report-status-filter" value="all" onchange="filterReports()">
+          📋 すべて
+        </label>
+        <span class="stats" id="reports-stats"></span>
+      </div>
+      <div id="reports-msg"></div>
+      <div id="reports-list"></div>
+    </div>
   </div>
 </div>
 
@@ -575,6 +655,7 @@ function login() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-screen').style.display = 'block';
     loadMaster();
+    if (typeof refreshReportsBadge === 'function') refreshReportsBadge();
   } else {
     document.getElementById('login-error').textContent = 'パスワードが違います';
   }
@@ -588,12 +669,13 @@ function logout() {
 // ---- TABS ----
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['search','direct','master','excel'][i] === name);
+    b.classList.toggle('active', ['search','direct','master','excel','reports'][i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach((p, i) => {
-    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master'][i] === `tab-${name}`);
+    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports'][i] === `tab-${name}`);
   });
   if (name === 'master') loadMaster();
+  if (name === 'reports') loadReports();
 }
 
 // ---- CLEAN NAME ----
@@ -1799,6 +1881,17 @@ function showMsg(id, text, type) {
             msg.innerHTML = '<span style="color:#6fce9f;">✓ 商品 id=' + e.id + ' を更新しました</span>';
             setTimeout(() => { msg.textContent = ''; }, 5000);
           }
+          // 報告キュー経由で開いていた場合は、その報告を resolved に更新
+          if (window.__pendingReportId) {
+            const reportId = window.__pendingReportId;
+            window.__pendingReportId = null;
+            try {
+              await updateReportStatus(reportId, 'resolved');
+              if (typeof loadReports === 'function') loadReports();
+            } catch (err2) {
+              console.warn('Report status update failed:', err2);
+            }
+          }
         } else {
           const txt = await r.text();
           alert('保存失敗: status=' + r.status + ' body=' + txt.slice(0, 300));
@@ -1814,6 +1907,203 @@ function showMsg(id, text, type) {
 
     function escEdit(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+
+    // ============================================================
+    // 報告キュー(price_reports)
+    // ============================================================
+    let reportsData = [];
+
+    async function loadReports() {
+      const listEl = document.getElementById('reports-list');
+      if (!listEl) return;
+      listEl.innerHTML = '<div class="loading">読み込み中...</div>';
+      try {
+        // products と JOIN して画像URL等を取得
+        const url = SUPABASE_URL +
+          '/rest/v1/price_reports?select=*,products(image_url,maker,series,scale,retail_price)' +
+          '&order=created_at.desc&limit=500';
+        const r = await fetch(url, {
+          headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        reportsData = await r.json();
+        updateReportsBadge();
+        filterReports();
+      } catch (e) {
+        listEl.innerHTML = '<div class="msg msg-err">読み込みエラー: ' + escEdit(e.message) + '</div>';
+      }
+    }
+
+    function filterReports() {
+      const radios = document.getElementsByName('report-status-filter');
+      let statusFilter = 'pending';
+      for (const r of radios) { if (r.checked) { statusFilter = r.value; break; } }
+
+      let filtered = reportsData;
+      if (statusFilter !== 'all') {
+        filtered = reportsData.filter(r => r.status === statusFilter);
+      }
+
+      // 統計
+      const total = reportsData.length;
+      const pending = reportsData.filter(r => r.status === 'pending').length;
+      const resolved = reportsData.filter(r => r.status === 'resolved').length;
+      const rejected = reportsData.filter(r => r.status === 'rejected').length;
+      const statsEl = document.getElementById('reports-stats');
+      if (statsEl) {
+        statsEl.textContent = '全' + total + '件 / ⏳' + pending + ' / ✅' + resolved + ' / ✗' + rejected + ' ・ 表示中:' + filtered.length + '件';
+      }
+
+      const el = document.getElementById('reports-list');
+      if (!filtered.length) {
+        el.innerHTML = '<div class="loading">' + (statusFilter === 'pending' ? '未対応の報告はありません 🎉' : '該当する報告がありません') + '</div>';
+        return;
+      }
+
+      el.innerHTML = filtered.map(rep => {
+        const product = rep.products || {};
+        const imgUrl = product.image_url || '';
+        const cardClass = 'report-card ' + (rep.status === 'resolved' ? 'resolved' : (rep.status === 'rejected' ? 'rejected' : ''));
+        const statusTag = '<span class="report-status-tag ' + rep.status + '">' +
+          (rep.status === 'pending' ? '⏳ 未対応' : (rep.status === 'resolved' ? '✅ 採用済み' : '✗ 却下')) +
+          '</span>';
+        const date = new Date(rep.created_at).toLocaleString('ja-JP', { dateStyle: 'short', timeStyle: 'short' });
+        const fromPrice = (rep.current_price != null) ? '¥' + rep.current_price.toLocaleString() : '(未設定)';
+        const toPrice = (rep.reported_price != null) ? '¥' + rep.reported_price.toLocaleString() : '';
+
+        const actions = rep.status === 'pending' ? `
+          <button class="btn btn-success" onclick="adoptReport(${rep.id})">📝 編集して採用</button>
+          <button class="btn btn-danger" onclick="rejectReport(${rep.id})">✗ 却下</button>
+        ` : `
+          <button class="btn btn-primary" onclick="reopenReport(${rep.id})">↺ 未対応に戻す</button>
+        `;
+
+        return `
+          <div class="${cardClass}">
+            ${imgUrl ? `<img class="product-img" src="${escEdit(imgUrl)}" onerror="this.style.display='none'" alt="">` : `<div class="product-img-ph">📦</div>`}
+            <div>
+              <div style="font-size:13px; font-weight:700;">
+                ${escEdit(rep.product_name || '(商品名不明)')}
+                ${statusTag}
+              </div>
+              <div class="report-meta">
+                JAN: ${rep.jan || '不明'} ${product.maker ? ' · ' + escEdit(product.maker) : ''}${product.scale ? ' · ' + escEdit(product.scale) : ''}
+              </div>
+              <div class="report-prices">
+                <span class="from">${fromPrice}</span>
+                <span class="arrow">→</span>
+                ${toPrice ? `<span class="to">${toPrice}</span>` : `<span class="to empty">(価格指定なし)</span>`}
+              </div>
+              ${rep.comment ? `<div class="report-comment">${escEdit(rep.comment)}</div>` : ''}
+              <div class="report-meta">報告日時: ${date}${rep.admin_note ? ' · 📌' + escEdit(rep.admin_note) : ''}</div>
+            </div>
+            <div class="report-actions">
+              ${actions}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 採用: 既存の編集ダイアログを開いて、報告された価格をプリセット
+    async function adoptReport(reportId) {
+      const rep = reportsData.find(r => r.id === reportId);
+      if (!rep) return;
+      if (!rep.product_id) {
+        alert('該当の商品が削除されているため編集できません。却下にしてください。');
+        return;
+      }
+      // 編集ダイアログを開く
+      window.__pendingReportId = reportId;
+      await editProduct(rep.product_id);
+      // 報告された価格をプリセット(任意)
+      if (rep.reported_price != null) {
+        const priceInput = document.getElementById('edit-price');
+        if (priceInput) priceInput.value = rep.reported_price;
+      }
+    }
+
+    // 却下: status を rejected に
+    async function rejectReport(reportId) {
+      if (!confirm('この報告を却下しますか?')) return;
+      try {
+        await updateReportStatus(reportId, 'rejected');
+        loadReports();
+      } catch (e) {
+        alert('却下に失敗しました: ' + e.message);
+      }
+    }
+
+    // 未対応に戻す
+    async function reopenReport(reportId) {
+      if (!confirm('この報告を未対応に戻しますか?')) return;
+      try {
+        await updateReportStatus(reportId, 'pending');
+        loadReports();
+      } catch (e) {
+        alert('更新に失敗しました: ' + e.message);
+      }
+    }
+
+    // status 更新の共通関数
+    async function updateReportStatus(reportId, newStatus) {
+      const body = { status: newStatus };
+      if (newStatus === 'resolved' || newStatus === 'rejected') {
+        body.resolved_at = new Date().toISOString();
+      } else {
+        body.resolved_at = null;
+      }
+      const r = await fetch(SUPABASE_URL + '/rest/v1/price_reports?id=eq.' + reportId, {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }
+
+    // タブのバッジ更新
+    function updateReportsBadge() {
+      const pending = reportsData.filter(r => r.status === 'pending').length;
+      const badge = document.getElementById('reports-badge');
+      if (!badge) return;
+      if (pending > 0) {
+        badge.textContent = pending;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // ログイン後にバックグラウンドで未対応件数を取得しバッジ表示
+    async function refreshReportsBadge() {
+      try {
+        const r = await fetch(SUPABASE_URL + '/rest/v1/price_reports?select=id&status=eq.pending', {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: 'Bearer ' + SUPABASE_KEY,
+            Prefer: 'count=exact'
+          }
+        });
+        if (!r.ok) return;
+        const arr = await r.json();
+        const count = arr.length;
+        const badge = document.getElementById('reports-badge');
+        if (!badge) return;
+        if (count > 0) {
+          badge.textContent = count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch (e) {
+        // 静かに失敗(初回はテーブルがまだ空でもOK)
+      }
     }
     </script>
 </body>
