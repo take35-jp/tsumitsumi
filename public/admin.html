@@ -586,7 +586,10 @@
         <div class="field" style="flex:1; max-width:300px;">
           <input class="input" id="master-search" placeholder="商品名・JANで検索..." oninput="filterMaster()">
         </div>
-        <button class="btn btn-primary" onclick="loadMaster()">🔄 更新</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" onclick="bulkCleanAllNames()" style="background:#fbbf24; color:#78350f;">🧹 商品名を一括クリーニング</button>
+          <button class="btn btn-primary" onclick="loadMaster()">🔄 更新</button>
+        </div>
       </div>
       <div class="master-filter-bar">
         <label>
@@ -2501,6 +2504,105 @@ function showMsg(id, text, type) {
       // マスタとレポートを再読み込み
       await loadMaster();
       await loadReports();
+    }
+
+    // マスタ全件の商品名にcleanNameをかけて変化があるものだけ更新する
+    async function bulkCleanAllNames() {
+      const msgEl = document.getElementById('master-msg');
+      if (!msgEl) {
+        alert('メッセージ表示領域が見つかりません');
+        return;
+      }
+
+      // まず変化対象を計算(全件取得)
+      msgEl.innerHTML = '<div class="msg msg-info">マスタ全件を取得中...</div>';
+      let allProducts = [];
+      try {
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const r = await fetch(SUPABASE_URL + '/rest/v1/products?select=id,name&order=id.asc&limit=' + pageSize + '&offset=' + from, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+          });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const batch = await r.json();
+          allProducts = allProducts.concat(batch);
+          if (batch.length < pageSize) break;
+          from += pageSize;
+        }
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg msg-err">取得エラー: ' + escEdit(e.message) + '</div>';
+        return;
+      }
+
+      // クリーニング後と比較して、変化があるものだけリストアップ
+      const targets = [];
+      for (const p of allProducts) {
+        const cleaned = cleanName(p.name || '');
+        if (cleaned && cleaned !== p.name) {
+          targets.push({ id: p.id, oldName: p.name, newName: cleaned });
+        }
+      }
+
+      if (targets.length === 0) {
+        msgEl.innerHTML = '<div class="msg msg-ok">✅ クリーニングが必要な商品はありませんでした(全' + allProducts.length + '件チェック済み)</div>';
+        return;
+      }
+
+      // プレビュー(最初の10件)
+      const previewLines = targets.slice(0, 10).map(t =>
+        '・「' + (t.oldName || '').slice(0, 50) + '」\n  → 「' + t.newName.slice(0, 50) + '」'
+      ).join('\n');
+      const morePreview = targets.length > 10 ? '\n... ほか ' + (targets.length - 10) + '件' : '';
+
+      const ok = confirm(
+        '商品名のクリーニングで ' + targets.length + ' 件の変更があります(全' + allProducts.length + '件中)。\n\n' +
+        '【変更プレビュー(先頭10件)】\n' + previewLines + morePreview + '\n\n' +
+        '実行すると元には戻せません(個別にExcel経由で復旧は可能)。続行しますか？'
+      );
+      if (!ok) {
+        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+        return;
+      }
+
+      // 実行
+      msgEl.innerHTML = '<div class="msg msg-info">更新中... (0/' + targets.length + ')</div>';
+      let updated = 0;
+      let failed = 0;
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        if (i % 20 === 0 || i === targets.length - 1) {
+          msgEl.innerHTML = '<div class="msg msg-info">更新中... (' + (i + 1) + '/' + targets.length + ')</div>';
+        }
+        try {
+          const r = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + t.id, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({
+              name: t.newName,
+              updated_at: new Date().toISOString(),
+            }),
+          });
+          if (r.ok) updated++;
+          else failed++;
+        } catch (e) {
+          failed++;
+        }
+        await new Promise(r => setTimeout(r, 30));
+      }
+
+      let summary = '✅ クリーニング完了:更新 ' + updated + '件';
+      if (failed > 0) summary += ' / 失敗 ' + failed + '件';
+      summary += ' / 全' + allProducts.length + '件中';
+      msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
+
+      // 一覧を再読み込み
+      await loadMaster();
     }
 
     // 報告された商品をYahoo検索タブで検索 → ヒットしたものを登録できるようにする
