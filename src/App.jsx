@@ -1088,13 +1088,13 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.07", date: "2026/05/02", isNew: true, items: ["フッターを刷新（プライバシーポリシーを独立ページに分離）", "アフィリエイト広告に関する表記を追加", "ヘルプ画面にプライバシーポリシーへの導線を追加"] },
-    { ver: "v1.05", date: "2026/05/02", isNew: false, items: ["商品マスタに画像が無い場合、Yahoo!ショッピングから商品画像を補完取得"] },
-    { ver: "v1.04", date: "2026/05/01", isNew: false, items: ["価格欄を空にした後にYahoo参考価格で勝手に埋まる不具合を修正", "新規登録時に前回タグが残る不具合を修正", "タグ削除ボタンを大きく見やすく(常時表示)"] },
-    { ver: "v1.03", date: "2026/05/01", isNew: false, items: ["価格訂正報告で「現在の価格と同じ」かつコメントなしの場合は報告できないようにバリデーション追加"] },
-    { ver: "v1.02", date: "2026/05/01", isNew: false, items: ["価格訂正報告画面に「Webで検索」ショートカットを追加（JAN＋希望小売価格でGoogle検索）"] },
-    { ver: "v1.01", date: "2026/05/01", isNew: false, items: ["マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加"] },
-    { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース 🎉", "JANバーコードスキャン登録", "積みプラ一覧管理（タグ・状態・評価・購入日）", "希望小売価格・総額表示", "連続スキャン＆一括登録", "X（Twitter）シェア画像生成", "情報の誤りを報告フォーム", "バックアップ（エクスポート/インポート）", "グリッド/リスト表示切替"] },
+    { ver: "v1.07", date: "2026/05/02", isNew: true, items: ["プライバシーポリシーを独立ページに分離", "アフィリエイト広告表記を追加"] },
+    { ver: "v1.05", date: "2026/05/02", isNew: false, items: ["商品画像の補完取得機能を追加"] },
+    { ver: "v1.04", date: "2026/05/01", isNew: false, items: ["価格欄が勝手に埋まる不具合を修正", "新規登録時に前回タグが残る不具合を修正", "タグ削除ボタンを改善"] },
+    { ver: "v1.03", date: "2026/05/01", isNew: false, items: ["価格訂正報告のバリデーションを強化"] },
+    { ver: "v1.02", date: "2026/05/01", isNew: false, items: ["価格訂正報告画面にWeb検索ショートカットを追加"] },
+    { ver: "v1.01", date: "2026/05/01", isNew: false, items: ["参考価格の自動取得機能を追加"] },
+    { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース 🎉", "バーコードスキャン登録", "キット一覧管理機能", "総額表示機能", "一括登録機能", "Xシェア画像生成", "情報誤り報告機能", "バックアップ機能", "グリッド・リスト表示"] },
   ];
   return (
     <div style={hs.wrap}>
@@ -1914,6 +1914,28 @@ export default function App() {
   const [tagMasterList, setTagMasterList] = useState(() => []);
   const fileRef = useRef();
   const completedFileRef = useRef();
+
+  // 表示設定（並び順・昇降・表示モード）の永続化
+  // マウント時に1度だけlocalStorageから読み込み
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
+      if (["list", "grid"].includes(saved.viewMode)) setViewMode(saved.viewMode);
+      if (["custom", "name", "date", "purchaseDate"].includes(saved.sortKey)) setSortKey(saved.sortKey);
+      if (["asc", "desc"].includes(saved.sortDir)) setSortDir(saved.sortDir);
+    } catch { /* ignore */ }
+  }, []);
+  // 値が変わったらlocalStorageに保存（初回マウント時はスキップ）
+  const isViewSettingsInitial = useRef(true);
+  useEffect(() => {
+    if (isViewSettingsInitial.current) {
+      isViewSettingsInitial.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem("tsumitsumi_view_settings", JSON.stringify({ viewMode, sortKey, sortDir }));
+    } catch { /* ignore */ }
+  }, [viewMode, sortKey, sortDir]);
 
   const handlePhoto = async (e) => {
     const file = e.target.files[0];
