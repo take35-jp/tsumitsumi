@@ -555,7 +555,21 @@
       <!-- エクスポート -->
       <div class="search-box" style="margin-bottom:16px;">
         <div style="font-size:15px; font-weight:700; margin-bottom:8px;">📤 エクスポート（Excel/CSV）</div>
-        <div style="font-size:12px; color:#6b7280; margin-bottom:16px;">Supabaseのマスタデータをダウンロードします。Excelで編集後にインポートできます。</div>
+        <div style="font-size:12px; color:#6b7280; margin-bottom:12px;">Supabaseのマスタデータをダウンロードします。Excelで編集後にインポートできます。</div>
+        <div class="row" style="align-items:flex-end; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
+          <div class="field" style="max-width:200px;">
+            <span class="label">件数(空欄=全件)</span>
+            <input class="input" id="export-limit" type="number" min="0" placeholder="例: 500" style="width:100%;">
+          </div>
+          <div class="field">
+            <span class="label">並び順</span>
+            <select class="select" id="export-order">
+              <option value="created_desc">直近追加順(新→古)</option>
+              <option value="updated_desc">直近更新順(新→古)</option>
+              <option value="id_asc">ID昇順(古→新)</option>
+            </select>
+          </div>
+        </div>
         <div class="row">
           <button class="btn btn-primary" onclick="exportCSV()">📥 CSVダウンロード</button>
           <button class="btn btn-success" onclick="exportExcel()">📗 Excelダウンロード</button>
@@ -1571,31 +1585,53 @@ function stopMakerAuto() {
 }
 
 // ---- EXCEL / CSV ----
-async function fetchAllMaster() {
+async function fetchAllMaster(options) {
+  options = options || {};
+  const limit = options.limit || 0; // 0 = 全件
+  const order = options.order || 'id_asc'; // 'created_desc' | 'updated_desc' | 'id_asc'
+
+  // 並び順をSupabaseクエリ形式に変換
+  let orderQuery = 'order=id.asc';
+  if (order === 'created_desc') orderQuery = 'order=created_at.desc';
+  else if (order === 'updated_desc') orderQuery = 'order=updated_at.desc';
+  else if (order === 'id_asc') orderQuery = 'order=id.asc';
+
   let allData = [];
   let from = 0;
   const pageSize = 1000;
   while (true) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?order=id.asc&limit=${pageSize}&offset=${from}`, {
+    // 件数指定がある場合、残り件数だけ取得
+    let take = pageSize;
+    if (limit > 0) {
+      const remaining = limit - allData.length;
+      if (remaining <= 0) break;
+      take = Math.min(pageSize, remaining);
+    }
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/products?${orderQuery}&limit=${take}&offset=${from}`, {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Range-Unit': 'items',
-        'Range': `${from}-${from + pageSize - 1}`,
+        'Range': `${from}-${from + take - 1}`,
       }
     });
     const data = await r.json();
     if (!Array.isArray(data) || data.length === 0) break;
     allData = allData.concat(data);
-    if (data.length < pageSize) break;
-    from += pageSize;
+    if (data.length < take) break;
+    from += take;
+    if (limit > 0 && allData.length >= limit) break;
   }
   return allData;
 }
 
 async function exportCSV() {
   showMsg('excel-msg', '読み込み中...', 'ok');
-  const data = await fetchAllMaster();
+  const limitInput = document.getElementById('export-limit');
+  const orderSelect = document.getElementById('export-order');
+  const limit = limitInput ? parseInt(limitInput.value, 10) || 0 : 0;
+  const order = orderSelect ? orderSelect.value : 'id_asc';
+  const data = await fetchAllMaster({ limit, order });
   const header = ['jan','name','maker','series','scale','image_url','retail_price'];
   const rows = [header, ...data.map(d => header.map(k => {
     const v = d[k];
@@ -1608,7 +1644,9 @@ async function exportCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `tsumitsumi_master_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.csv`;
+  const orderLabel = order === 'created_desc' ? 'recent' : (order === 'updated_desc' ? 'updated' : 'all');
+  const limitLabel = limit > 0 ? `_${limit}` : '';
+  a.download = `tsumitsumi_master_${orderLabel}${limitLabel}_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   showMsg('excel-msg', `${data.length}件をCSVダウンロードしました`, 'ok');
@@ -1616,7 +1654,11 @@ async function exportCSV() {
 
 async function exportExcel() {
   showMsg('excel-msg', 'Excel生成中...', 'ok');
-  const data = await fetchAllMaster();
+  const limitInput = document.getElementById('export-limit');
+  const orderSelect = document.getElementById('export-order');
+  const limit = limitInput ? parseInt(limitInput.value, 10) || 0 : 0;
+  const order = orderSelect ? orderSelect.value : 'id_asc';
+  const data = await fetchAllMaster({ limit, order });
   const header = ['jan','name','maker','series','scale','image_url','retail_price'];
 
   // SheetJSを動的ロード
@@ -1642,7 +1684,9 @@ async function exportExcel() {
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'マスタ');
-  XLSX.writeFile(wb, `tsumitsumi_master_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.xlsx`);
+  const orderLabel = order === 'created_desc' ? 'recent' : (order === 'updated_desc' ? 'updated' : 'all');
+  const limitLabel = limit > 0 ? `_${limit}` : '';
+  XLSX.writeFile(wb, `tsumitsumi_master_${orderLabel}${limitLabel}_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.xlsx`);
   showMsg('excel-msg', `${data.length}件をExcelダウンロードしました`, 'ok');
 }
 
