@@ -1201,35 +1201,18 @@ function HelpModal({ onClose }) {
               ・価格訂正報告画面に「Webで検索」ショートカットを追加
             </div>
           </div>
-          {/* v1.01 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.01</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加
-            </div>
-          </div>
-          {/* v1.00 - リリース版 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.00</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・TSUMITSUMI 正式リリース 🎉<br/>
-              ・JANバーコードスキャン登録<br/>
-              ・積みプラ一覧管理（タグ・状態・評価・購入日）<br/>
-              ・希望小売価格・総額表示<br/>
-              ・情報の誤りを報告フォーム
-            </div>
-          </div>
           <div style={hs.section}>
           <div style={hs.sectionTitle}>保存容量</div>
           <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
           </div>
         </div>
+      </div>
+
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>🔒 プライバシーポリシー</div>
+        <div style={hs.desc}>本サービスのプライバシーポリシー、アフィリエイト広告に関する表記、免責事項は別ページにまとめています。</div>
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>プライバシーポリシーを開く →</a>
+        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, textAlign: "center" }}>当サイトはアフィリエイト広告を利用しています</div>
       </div>
     </div>
   );
