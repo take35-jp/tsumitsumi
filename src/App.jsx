@@ -1821,6 +1821,13 @@ export default function App() {
   });
   useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) { if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) alert('⚠️ 保存容量がいっぱいです\n古いキットや画像を削除してください\n（ブラウザ localStorage 上限 約5MB）'); } }, [kits]);
 
+  // 表示設定（並び順・昇降・表示モード）の永続化
+  useEffect(() => {
+    try {
+      localStorage.setItem("tsumitsumi_view_settings", JSON.stringify({ viewMode, sortKey, sortDir }));
+    } catch { /* ignore */ }
+  }, [viewMode, sortKey, sortDir]);
+
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
   // 注意:マスタDBからのみ取得する。Yahooからの自動取得は転売価格混入のため行わない
   // (ユーザーが意図的に空にした価格を勝手に埋めてしまうのを防ぐ)
@@ -1898,9 +1905,24 @@ export default function App() {
   const [continuousQueue, setContinuousQueue] = useState([]); // 連続スキャンキュー
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
-  const [viewMode, setViewMode] = useState("list");
-  const [sortKey, setSortKey] = useState("date"); // custom | name | date | purchaseDate
-  const [sortDir, setSortDir] = useState("desc");
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
+      return ["list", "grid"].includes(saved.viewMode) ? saved.viewMode : "list";
+    } catch { return "list"; }
+  });
+  const [sortKey, setSortKey] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
+      return ["custom", "name", "date", "purchaseDate"].includes(saved.sortKey) ? saved.sortKey : "date";
+    } catch { return "date"; }
+  }); // custom | name | date | purchaseDate
+  const [sortDir, setSortDir] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
+      return ["asc", "desc"].includes(saved.sortDir) ? saved.sortDir : "desc";
+    } catch { return "desc"; }
+  });
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
   const [bulkTagInput, setBulkTagInput] = useState("");
