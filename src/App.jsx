@@ -1088,7 +1088,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.07", date: "2026/05/02", isNew: true, items: ["プライバシーポリシーを独立ページに分離", "アフィリエイト広告表記を追加"] },
+    { ver: "v1.08", date: "2026/05/02", isNew: true, items: ["並び順・表示モードの永続化機能を追加", "更新履歴の文言を簡潔化"] },
+    { ver: "v1.07", date: "2026/05/02", isNew: false, items: ["プライバシーポリシーを独立ページに分離", "アフィリエイト広告表記を追加"] },
     { ver: "v1.05", date: "2026/05/02", isNew: false, items: ["商品画像の補完取得機能を追加"] },
     { ver: "v1.04", date: "2026/05/01", isNew: false, items: ["価格欄が勝手に埋まる不具合を修正", "新規登録時に前回タグが残る不具合を修正", "タグ削除ボタンを改善"] },
     { ver: "v1.03", date: "2026/05/01", isNew: false, items: ["価格訂正報告のバリデーションを強化"] },
@@ -1134,6 +1135,10 @@ function HelpModal({ onClose }) {
           </a>
         </div>
       <div style={hs.section}>
+        <div style={hs.sectionTitle}>💾 保存容量</div>
+        <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
+      </div>
+      <div style={hs.section}>
         <div style={hs.sectionTitle}>⚠ データについての注意</div>
         <div style={hs.item}><span style={hs.warn}>!</span>データはブラウザ内に保存されます</div>
         <div style={hs.item}><span style={hs.warn}>!</span>Safariの「履歴とデータを消去」でデータが消えます</div>
@@ -1170,42 +1175,38 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.04 */}
+          {/* v1.08 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.04</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.08</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・価格を空にしても勝手に埋まる不具合を修正<br/>
-              ・新規登録時に前回タグが残る不具合を修正<br/>
-              ・タグ削除ボタンを大きく見やすく
+              ・並び順・表示モードの永続化機能を追加<br/>
+              ・更新履歴の文言を簡潔化
             </div>
           </div>
-          {/* v1.03 */}
+          {/* v1.07 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.03</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.07</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・価格訂正報告のバリデーション強化
+              ・プライバシーポリシーを独立ページに分離<br/>
+              ・アフィリエイト広告表記を追加
             </div>
           </div>
-          {/* v1.02 */}
+          {/* v1.05 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.02</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.05</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・価格訂正報告画面に「Webで検索」ショートカットを追加
+              ・商品画像の補完取得機能を追加
             </div>
-          </div>
-          <div style={hs.section}>
-          <div style={hs.sectionTitle}>保存容量</div>
-          <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
           </div>
         </div>
       </div>
