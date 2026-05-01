@@ -1088,10 +1088,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.07", date: "2026/05/02", isNew: true, items: ["フッターを刷新（プライバシーポリシーを独立ページに分離）", "アフィリエイト広告に関する表記を追加"] },
-    { ver: "v1.06", date: "2026/05/02", isNew: false, items: ["並び順設定（並び順・昇降・表示モード）をブラウザに永続化（タスクキル後もリセットされない）"] },
-    { ver: "v1.05", date: "2026/05/02", isNew: false, items: ["商品マスタに画像が無い場合、Yahoo!ショッピングから商品画像を補完取得"] },
-    { ver: "v1.04", date: "2026/05/01", isNew: false, items: ["価格欄を空にした後にYahoo参考価格で勝手に埋まる不具合を修正", "新規登録時に前回タグが残る不具合を修正", "タグ削除ボタンを大きく見やすく(常時表示)"] },
+    { ver: "v1.04", date: "2026/05/01", isNew: true, items: ["価格欄を空にした後にYahoo参考価格で勝手に埋まる不具合を修正", "新規登録時に前回タグが残る不具合を修正", "タグ削除ボタンを大きく見やすく(常時表示)"] },
     { ver: "v1.03", date: "2026/05/01", isNew: false, items: ["価格訂正報告で「現在の価格と同じ」かつコメントなしの場合は報告できないようにバリデーション追加"] },
     { ver: "v1.02", date: "2026/05/01", isNew: false, items: ["価格訂正報告画面に「Webで検索」ショートカットを追加（JAN＋希望小売価格でGoogle検索）"] },
     { ver: "v1.01", date: "2026/05/01", isNew: false, items: ["マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加"] },
@@ -1160,13 +1157,7 @@ function HelpModal({ onClose }) {
         </a>
       </div>
 
-      {/* 保存容量 */}
-      <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
-        <div style={hs.sectionTitle}>💾 保存容量</div>
-        <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
-      </div>
-
-      {/* バージョン履歴（直近3件のみ。残りは「すべて見る」へ） */}
+      {/* バージョン履歴（最下部・直近3件） */}
       <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>📋 更新履歴</span>
@@ -1177,36 +1168,67 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {[
-            { ver: "v1.07", date: "2026/05/02", isNew: true, items: ["フッターを刷新（プライバシーポリシーを独立ページに分離）", "アフィリエイト広告に関する表記を追加"] },
-            { ver: "v1.06", date: "2026/05/02", isNew: false, items: ["並び順設定をブラウザに永続化（タスクキル後もリセットされない）"] },
-            { ver: "v1.05", date: "2026/05/02", isNew: false, items: ["商品マスタに画像が無い場合、Yahoo!ショッピングから商品画像を補完取得"] },
-          ].map((v) => (
-            <div key={v.ver} style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                {v.isNew && <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>}
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>{v.ver}</span>
-                <span style={{ fontSize: 10, color: "#9ca3af" }}>{v.date}</span>
-              </div>
-              <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-                {v.items.map((item, j) => <div key={j}>・{item}</div>)}
-              </div>
+          {/* v1.04 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.04</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* プライバシーポリシー */}
-      <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
-        <div style={hs.sectionTitle}>🔒 プライバシーポリシー</div>
-        <div style={hs.desc}>
-          本サービスのプライバシーポリシー、アフィリエイト広告に関する表記、免責事項は別ページにまとめています。
-        </div>
-        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>
-          プライバシーポリシーを開く →
-        </a>
-        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, textAlign: "center" }}>
-          当サイトはアフィリエイト広告を利用しています
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・価格を空にしても勝手に埋まる不具合を修正<br/>
+              ・新規登録時に前回タグが残る不具合を修正<br/>
+              ・タグ削除ボタンを大きく見やすく
+            </div>
+          </div>
+          {/* v1.03 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.03</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・価格訂正報告のバリデーション強化
+            </div>
+          </div>
+          {/* v1.02 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.02</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・価格訂正報告画面に「Webで検索」ショートカットを追加
+            </div>
+          </div>
+          {/* v1.01 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.01</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加
+            </div>
+          </div>
+          {/* v1.00 - リリース版 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.00</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・TSUMITSUMI 正式リリース 🎉<br/>
+              ・JANバーコードスキャン登録<br/>
+              ・積みプラ一覧管理（タグ・状態・評価・購入日）<br/>
+              ・希望小売価格・総額表示<br/>
+              ・情報の誤りを報告フォーム
+            </div>
+          </div>
+          <div style={hs.section}>
+          <div style={hs.sectionTitle}>保存容量</div>
+          <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1821,13 +1843,6 @@ export default function App() {
   });
   useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) { if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) alert('⚠️ 保存容量がいっぱいです\n古いキットや画像を削除してください\n（ブラウザ localStorage 上限 約5MB）'); } }, [kits]);
 
-  // 表示設定（並び順・昇降・表示モード）の永続化
-  useEffect(() => {
-    try {
-      localStorage.setItem("tsumitsumi_view_settings", JSON.stringify({ viewMode, sortKey, sortDir }));
-    } catch { /* ignore */ }
-  }, [viewMode, sortKey, sortDir]);
-
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
   // 注意:マスタDBからのみ取得する。Yahooからの自動取得は転売価格混入のため行わない
   // (ユーザーが意図的に空にした価格を勝手に埋めてしまうのを防ぐ)
@@ -1905,24 +1920,9 @@ export default function App() {
   const [continuousQueue, setContinuousQueue] = useState([]); // 連続スキャンキュー
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
-  const [viewMode, setViewMode] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
-      return ["list", "grid"].includes(saved.viewMode) ? saved.viewMode : "list";
-    } catch { return "list"; }
-  });
-  const [sortKey, setSortKey] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
-      return ["custom", "name", "date", "purchaseDate"].includes(saved.sortKey) ? saved.sortKey : "date";
-    } catch { return "date"; }
-  }); // custom | name | date | purchaseDate
-  const [sortDir, setSortDir] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
-      return ["asc", "desc"].includes(saved.sortDir) ? saved.sortDir : "desc";
-    } catch { return "desc"; }
-  });
+  const [viewMode, setViewMode] = useState("list");
+  const [sortKey, setSortKey] = useState("date"); // custom | name | date | purchaseDate
+  const [sortDir, setSortDir] = useState("desc");
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
   const [bulkTagInput, setBulkTagInput] = useState("");
