@@ -615,7 +615,9 @@
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn" onclick="bulkFetchMissingImages()" style="background:#3b82f6; color:#fff;">📷 画像なし商品の画像を一括取得</button>
+          <button class="btn" onclick="bulkFillScaleSeries()" style="background:#10b981; color:#fff;">📊 スケール・シリーズ自動補完</button>
           <button class="btn" onclick="bulkCleanAllNames()" style="background:#fbbf24; color:#78350f;">🧹 商品名を一括クリーニング</button>
+          <button class="btn" onclick="bulkReorderNames()" style="background:#a855f7; color:#fff;">🔄 商品名を並び替え(実験的)</button>
           <button class="btn btn-primary" onclick="loadMaster()">🔄 更新</button>
         </div>
       </div>
@@ -725,6 +727,186 @@ function switchTab(name) {
   if (name === 'reports') loadReports();
 }
 
+// ---- REORDER NAME ----
+// 商品名を 「グレード → スケール → キット名 → メーカー → 作品名」の順に並び替える
+// 注意: cleanName を先に通してから使うこと
+
+// グレード辞書(優先順:長い順に並べないと前方一致でミスる)
+const _GRADES = [
+  'FULL MECHANICS','FULLMECHANICS','フルメカニクス',
+  'MGSD','MGEX','HGUC','HGCE','HGAC','HGFC','HGUC',
+  'RE/100','RE100','BB戦士','30MM','30MS','MS-06',
+  'MG','HG','RG','PG','EG','SD','EX',
+  'メガサイズ','メガサイズモデル',
+  'AGE','RE',
+];
+
+// スケール辞書(数値表記)
+const _SCALES = [
+  '1/144','1/100','1/72','1/60','1/48','1/35','1/24','1/20','1/12','1/8','1/6',
+  '1/700','1/350','1/200','1/150',
+];
+
+// メーカー辞書(長い順)
+const _MAKERS = [
+  'BANDAI SPIRITS','バンダイ スピリッツ','バンダイスピリッツ',
+  'バンダイ','BANDAI','SPIRITS',
+  'コトブキヤ','KOTOBUKIYA','寿屋',
+  'タミヤ','TAMIYA',
+  'ハセガワ','HASEGAWA',
+  'フジミ','FUJIMI',
+  'アオシマ','AOSHIMA',
+  'ファインモールド','FINE MOLDS',
+  'グッドスマイルカンパニー','グッスマ','GSC','GOOD SMILE COMPANY',
+  'マックスファクトリー','MAX FACTORY','マックスファクトリー',
+  'ウェーブ','WAVE','ボークス','VOLKS',
+  'ピットロード','PITROAD',
+  'プラッツ','PLATZ',
+  '童友社','DOYUSHA',
+  '海洋堂','ホビージャパン','HOBBYJAPAN',
+];
+
+// 作品名(シリーズ)辞書 - ガンダムシリーズを網羅
+// 注意: 長い名前を先に書く(前方一致対策)。GUNDAM EXIA はキット名なので除外。
+const _SERIES = [
+  // ガンダム作品(長い順 + 略称)
+  '機動戦士ガンダム ククルス・ドアンの島','ククルス・ドアンの島',
+  '機動戦士ガンダム 閃光のハサウェイ','閃光のハサウェイ','ハサウェイ',
+  '機動戦士ガンダム 水星の魔女','水星の魔女',
+  '機動戦士ガンダム 復讐のレクイエム','復讐のレクイエム',
+  '機動戦士ガンダム ジ・オリジン','ジ・オリジン','THE ORIGIN','ORIGIN',
+  '機動戦士ガンダム THE WITCH FROM MERCURY',
+  '機動戦士ガンダムNT','ガンダムNT','GUNDAM NT','機動戦士ガンダム ナラティブ','ナラティブ',
+  '機動戦士ガンダムUC','ガンダムUC','GUNDAM UC','ユニコーン',
+  '機動戦士ガンダムF91','ガンダムF91','F91',
+  '機動戦士ガンダム0080 ポケットの中の戦争','ポケットの中の戦争','0080',
+  '機動戦士ガンダム0083 STARDUST MEMORY','スターダストメモリー','0083',
+  '機動戦士ガンダム MS IGLOO','MS IGLOO','イグルー',
+  '機動戦士Vガンダム','Vガンダム',
+  '機動戦士ガンダムZZ','ZZガンダム','ガンダムZZ','ZZ',
+  '機動戦士Zガンダム','Zガンダム',
+  '機動戦士ガンダム 鉄血のオルフェンズ','鉄血のオルフェンズ','鉄血',
+  '機動戦士ガンダム THE WITCH FROM MERCURY',
+  '機動戦士ガンダムSEED FREEDOM','SEED FREEDOM',
+  '機動戦士ガンダムSEED DESTINY','SEED DESTINY','ガンダムSEED DESTINY',
+  '機動戦士ガンダムSEED','ガンダムSEED','SEED',
+  '機動戦士ガンダム00','ガンダム00','GUNDAM 00','ダブルオー','OO',
+  '機動戦士ガンダムAGE','ガンダムAGE',
+  '機動戦士クロスボーンガンダム','クロスボーンガンダム','クロスボーン',
+  '機動武闘伝Gガンダム','Gガンダム',
+  '新機動戦記ガンダムW','ガンダムW','ガンダムウイング','GUNDAM WING',
+  '機動新世紀ガンダムX','ガンダムX',
+  '∀ガンダム','ターンエー',
+  '逆襲のシャア','シャアの逆襲','CCA',
+  '機動戦士ガンダム THE ORIGIN',
+  '機動戦士ガンダム',
+  // ビルド系
+  'ガンダムビルドメタバース','ビルドメタバース',
+  'ガンダムビルドリアル','ビルドリアル',
+  'ガンダムビルドダイバーズRe:RISE','ビルドダイバーズRe:RISE',
+  'ガンダムビルドダイバーズ','ビルドダイバーズ',
+  'ガンダムビルドファイターズトライ','ビルドファイターズトライ',
+  'ガンダムビルドファイターズ','ビルドファイターズ',
+  // SD系
+  'SDガンダム外伝','SDガンダム ワールドヒーローズ','SDガンダムワールドヒーローズ',
+  'SDガンダム三国伝','SDガンダム 三国伝','三国伝',
+  '武者頑駄無','武者ガンダム',
+  'ナイトガンダム','騎士ガンダム',
+  // その他人気作品(プラモデルジャンル別)
+  'エヴァンゲリオン','EVANGELION',
+  'マクロス',
+  'バーチャロン',
+  'フレームアームズ・ガール','フレームアームズガール','FRAME ARMS GIRL','FA:G',
+  'フレームアームズ','FRAME ARMS','FA:',
+  'メガミデバイス','MEGAMI DEVICE',
+  'ヘキサギア','HEXA GEAR',
+  'ボーダーブレイク',
+  'ファイブスター物語','F.S.S.','FSS',
+  'スパロボ','スーパーロボット大戦',
+  'バトルテック',
+  'ULTRAMAN','ウルトラマン',
+  'ゴジラ',
+  '仮面ライダー',
+  'スター・ウォーズ','スターウォーズ','STAR WARS',
+];
+
+function reorderName(name) {
+  if (!name) return '';
+  const original = String(name).trim();
+  if (!original) return '';
+
+  // 区切り(中点・パイプのみ)を空白に。スラッシュは保持(スケールを壊さないため)
+  let s = original.replace(/[・|｜]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // 各要素を抽出
+  let foundGrade = '';
+  let foundScale = '';
+  let foundMaker = '';
+  let foundSeries = '';
+  let remaining = s;
+
+  // 1. スケール抽出を最初にやる(1/144のような表記を確実に取る)
+  for (const sc of _SCALES) {
+    const esc = sc.replace(/\//g, '\\/');
+    const re = new RegExp('(?:^|\\s)(' + esc + ')(?=\\s|$)');
+    const m = remaining.match(re);
+    if (m) {
+      foundScale = sc;
+      remaining = (remaining.substring(0, m.index) + ' ' + remaining.substring(m.index + m[0].length)).replace(/\s+/g, ' ').trim();
+      break;
+    }
+  }
+
+  // 2. グレード抽出
+  for (const g of _GRADES) {
+    const esc = g.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+    const re = new RegExp('(?:^|\\s)(' + esc + ')(?=\\s|$|[^A-Za-z0-9])', 'i');
+    const m = remaining.match(re);
+    if (m) {
+      foundGrade = g;
+      remaining = (remaining.substring(0, m.index) + ' ' + remaining.substring(m.index + m[0].length)).replace(/\s+/g, ' ').trim();
+      break;
+    }
+  }
+
+  // 3. メーカー抽出
+  for (const mk of _MAKERS) {
+    const esc = mk.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+    const re = new RegExp('(?:^|\\s)(' + esc + ')(?=\\s|$)', 'i');
+    const m = remaining.match(re);
+    if (m) {
+      foundMaker = mk;
+      remaining = (remaining.substring(0, m.index) + ' ' + remaining.substring(m.index + m[0].length)).replace(/\s+/g, ' ').trim();
+      break;
+    }
+  }
+
+  // 4. 作品名(シリーズ)抽出
+  // 注意:辞書は長い順に並べてあるので、より長い作品名から先にマッチする
+  for (const sr of _SERIES) {
+    const esc = sr.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+    const re = new RegExp('(?:^|\\s)(' + esc + ')(?=\\s|$|[^A-Za-z0-9々])', 'i');
+    const m = remaining.match(re);
+    if (m) {
+      foundSeries = sr;
+      remaining = (remaining.substring(0, m.index) + ' ' + remaining.substring(m.index + m[0].length)).replace(/\s+/g, ' ').trim();
+      break;
+    }
+  }
+
+  // 5. 残りがキット名
+  const kitName = remaining.replace(/\s+/g, ' ').trim();
+
+  // 6. 並び替え:グレード → スケール → キット名 → メーカー → 作品名
+  const parts = [foundGrade, foundScale, kitName, foundMaker, foundSeries].filter(p => p && p.trim());
+  const result = parts.join(' ').replace(/\s+/g, ' ').trim();
+
+  // 安全策: 結果が空 or 元の半分以下の長さなら元のまま返す(認識失敗時のフォールバック)
+  if (!result || result.length < original.length * 0.3) return original;
+
+  return result;
+}
+
 // ---- CLEAN NAME ----
 function cleanName(name) {
   if (!name) return '';
@@ -804,7 +986,7 @@ function cleanName(name) {
     }
     return out;
   }
-  for (const [ob, cb] of [['『', '』'], ['【', '】'], ['［', '］'], ['[', ']'], ['（', '）'], ['(', ')']]) {
+  for (const [ob, cb] of [['『', '』'], ['【', '】'], ['［', '］'], ['[', ']'], ['（', '）'], ['(', ')'], ['｛', '｝'], ['{', '}']]) {
     s = procBrackets(s, ob, cb);
   }
 
@@ -819,7 +1001,7 @@ function cleanName(name) {
   s = s.replace(/返品種別[A-Z]?/g, ' ');
 
   // 10. ノイズキーワードの直接除去
-  const NOISE = ['爆買','再販','再生産','新品','中古','未使用','未組立','未組み立て','未開封','送料無料','送料込み','送料込','即納','即日発送','即日','代引き不可','代引不可','クーポン','セール','特価','最安値','最安','プラスチックモデルキット','スケールプラモデル','プラモデル組立キット','組み立て式','組立式','プラモデル','株式会社','お一人様1点限り','お一人様1点','お一人様限定','1点限り','1人1点','数量限定','店舗限定','人気商品','在庫あり','即出荷','メーカー在庫品','正規品','日本正規品','ポイント10倍','ポイント還元','ポイントUP','アウトレット','訳あり','箱痛み','箱ダメージ','輸入品','並行輸入'];
+  const NOISE = ['爆買','再販','再生産','新品','中古','未使用','未組立','未組み立て','未開封','送料無料','送料込み','送料込','即納','即日発送','即日','代引き不可','代引不可','クーポン','セール','特価','最安値','最安','プラスチックモデルキット','スケールプラモデル','プラモデル組立キット','組み立て式','組立式','組立キット','組立てキット','プラモデル','プラモ','株式会社','お一人様1点限り','お一人様1点','お一人様限定','1点限り','1人1点','数量限定','店舗限定','人気商品','在庫あり','即出荷','メーカー在庫品','正規品','日本正規品','ポイント10倍','ポイント還元','ポイントUP','アウトレット','訳あり','箱痛み','箱ダメージ','輸入品','並行輸入','早期予約','予約特典','予約限定','期間限定','限定版','大人気','話題沸騰','話題','定番','人気','おもちゃ','玩具','フィギュア','コレクション玩具','キャラクターグッズ','プラスチック製','プラモデル本体','【中古】','{PTM}','【PTM】','［PTM］','[PTM]','｛PTM｝','エントリーで','MAX10倍','スーパーDEAL','RAKUTENカード','楽天スーパーSALE','スーパーSALE','SALE','sale'];
   for (const w of NOISE) s = s.split(w).join(' ');
 
   // 11. 壽屋/コトブキヤ表記の正規化
@@ -879,9 +1061,12 @@ function cleanName(name) {
   s = s.replace(/^\s*[／/・]\s*/, '');
   s = s.replace(/\s*[／/]\s*$/, '');
 
-  // 17. 空括弧消去
-  s = s.replace(/\s*[\(\[（［]\s*[\)\]）］]\s*/g, ' ');
-  s = s.replace(/[\(\[（［]\s+[\)\]）］]/g, ' ');
+  // 17. {PTM}類のあらゆる表記をまず除去(波括弧・全角・全種)
+  s = s.replace(/[\{｛【\[［]\s*PTM\s*[\}｝】\]］]/gi, ' ');
+
+  // 17-2. 空括弧消去(全種類対応:( [ （ ［ 【 『 ｛ )
+  s = s.replace(/\s*[\(\[（［【『｛]\s*[\)\]）］】』｝]\s*/g, ' ');
+  s = s.replace(/[\(\[（［【『｛]\s+[\)\]）］】』｝]/g, ' ');
 
   // 18. 連続スペース・前後トリム
   s = s.replace(/\s+/g, ' ');
@@ -891,18 +1076,47 @@ function cleanName(name) {
 }
 
 function guessScale(name) {
+  if (!name) return '';
+  // グレード(優先)
   if (/\bMGSD\b/i.test(name)) return 'MGSD';
+  if (/\bMGEX\b/i.test(name)) return 'MGEX';
   if (/\bPG\b/i.test(name)) return 'PG';
   if (/\bRG\b/i.test(name)) return 'RG';
+  if (/\bHGUC\b/i.test(name)) return 'HGUC';
   if (/\bHG\b/i.test(name)) return 'HG';
-  if (/\bSD\b/i.test(name)) return 'SD';
+  if (/BB戦士/.test(name)) return 'BB戦士';
   if (/\bMG\b/i.test(name)) return 'MG';
-  if (/1\/100/i.test(name)) return '1/100';
-  if (/1\/144/i.test(name)) return '1/144';
-  if (/1\/72/i.test(name)) return '1/72';
-  if (/1\/60/i.test(name)) return '1/60';
-  if (/1\/48/i.test(name)) return '1/48';
-  if (/1\/35/i.test(name)) return '1/35';
+  if (/\bEG\b/i.test(name)) return 'EG';
+  if (/\bSD\b/i.test(name)) return 'SD';
+  if (/RE\/100/i.test(name)) return 'RE/100';
+  if (/30MM/i.test(name)) return '30MM';
+  if (/30MS/i.test(name)) return '30MS';
+  if (/FULL\s*MECHANICS|フルメカニクス/i.test(name)) return 'FULL MECHANICS';
+  // 数値スケール
+  if (/1\/12\b/.test(name)) return '1/12';
+  if (/1\/20\b/.test(name)) return '1/20';
+  if (/1\/24\b/.test(name)) return '1/24';
+  if (/1\/35\b/.test(name)) return '1/35';
+  if (/1\/48\b/.test(name)) return '1/48';
+  if (/1\/60\b/.test(name)) return '1/60';
+  if (/1\/72\b/.test(name)) return '1/72';
+  if (/1\/100\b/.test(name)) return '1/100';
+  if (/1\/144\b/.test(name)) return '1/144';
+  if (/1\/350\b/.test(name)) return '1/350';
+  if (/1\/700\b/.test(name)) return '1/700';
+  return '';
+}
+
+// 商品名から作品名(シリーズ)を推測する
+// 注意:reorderName 用の _SERIES 辞書を使う
+function guessSeries(name) {
+  if (!name) return '';
+  // _SERIES は長い順なので、長い作品名から先にマッチする
+  for (const sr of _SERIES) {
+    const esc = sr.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+    const re = new RegExp('(?:^|[\\s/／・|｜])(' + esc + ')(?=\\s|$|[^A-Za-z0-9々])', 'i');
+    if (re.test(name)) return sr;
+  }
   return '';
 }
 
@@ -2660,6 +2874,238 @@ function showMsg(id, text, type) {
       msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
 
       // 一覧を再読み込み
+      await loadMaster();
+    }
+
+    // マスタ全件の商品名を「グレード→スケール→キット名→メーカー→作品名」の順に並び替える
+    // ⚠️ 実験的機能。辞書ベースなので誤判定のリスクあり。
+    async function bulkReorderNames() {
+      const msgEl = document.getElementById('master-msg');
+      if (!msgEl) {
+        alert('メッセージ表示領域が見つかりません');
+        return;
+      }
+
+      // 警告
+      const warnOk = confirm(
+        '⚠️ 実験的機能のため、誤判定が発生する可能性があります\n\n' +
+        '【処理内容】\n' +
+        'マスタの商品名を「グレード→スケール→キット名→メーカー→作品名」の順に並び替えます。\n\n' +
+        '【既知のリスク】\n' +
+        '・キット名に作品名が含まれる場合に分解される可能性\n' +
+        '  例: "ユニコーンガンダム" の "ガンダム" が作品名扱いになる\n' +
+        '・スペースなしの作品名は分解失敗する可能性\n\n' +
+        '実行前に必ずExcelダウンロードでバックアップを取ってください。\n' +
+        '結果を見て不適切なものは個別または一括で元に戻せます。\n\n' +
+        '続行しますか？'
+      );
+      if (!warnOk) return;
+
+      // 全件取得
+      msgEl.innerHTML = '<div class="msg msg-info">マスタ全件を取得中...</div>';
+      let allProducts = [];
+      try {
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const r = await fetch(SUPABASE_URL + '/rest/v1/products?select=id,name&order=id.asc&limit=' + pageSize + '&offset=' + from, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+          });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const batch = await r.json();
+          allProducts = allProducts.concat(batch);
+          if (batch.length < pageSize) break;
+          from += pageSize;
+        }
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg msg-err">取得エラー: ' + escEdit(e.message) + '</div>';
+        return;
+      }
+
+      // 並び替え後と比較して、変化があるものだけリストアップ
+      const targets = [];
+      for (const p of allProducts) {
+        const reordered = reorderName(p.name || '');
+        if (reordered && reordered !== p.name) {
+          targets.push({ id: p.id, oldName: p.name, newName: reordered });
+        }
+      }
+
+      if (targets.length === 0) {
+        msgEl.innerHTML = '<div class="msg msg-ok">✅ 並び替え対象はありませんでした(全' + allProducts.length + '件チェック済み)</div>';
+        return;
+      }
+
+      // プレビュー(先頭20件、長め)
+      const previewLines = targets.slice(0, 20).map(t =>
+        '・「' + (t.oldName || '').slice(0, 60) + '」\n  → 「' + t.newName.slice(0, 60) + '」'
+      ).join('\n');
+      const morePreview = targets.length > 20 ? '\n... ほか ' + (targets.length - 20) + '件' : '';
+
+      const ok = confirm(
+        '並び替えで ' + targets.length + ' 件の変更があります(全' + allProducts.length + '件中)。\n\n' +
+        '【変更プレビュー(先頭20件)】\n' + previewLines + morePreview + '\n\n' +
+        '⚠️ プレビューを必ず確認してください。\n' +
+        '不適切な並び替えがあれば「キャンセル」を選択してください。\n\n' +
+        '実行しますか？'
+      );
+      if (!ok) {
+        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+        return;
+      }
+
+      msgEl.innerHTML = '<div class="msg msg-info">並び替え中... (0/' + targets.length + ')</div>';
+      let updated = 0;
+      let failed = 0;
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        if (i % 20 === 0 || i === targets.length - 1) {
+          msgEl.innerHTML = '<div class="msg msg-info">並び替え中... (' + (i + 1) + '/' + targets.length + ')</div>';
+        }
+        try {
+          const r = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + t.id, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({
+              name: t.newName,
+              updated_at: new Date().toISOString(),
+            }),
+          });
+          if (r.ok) updated++;
+          else failed++;
+        } catch (e) {
+          failed++;
+        }
+        await new Promise(r => setTimeout(r, 30));
+      }
+
+      let summary = '✅ 並び替え完了:更新 ' + updated + '件';
+      if (failed > 0) summary += ' / 失敗 ' + failed + '件';
+      summary += ' / 全' + allProducts.length + '件中';
+      msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
+
+      await loadMaster();
+    }
+
+    // スケール・シリーズが空のマスタを商品名から推測して自動補完する
+    async function bulkFillScaleSeries() {
+      const msgEl = document.getElementById('master-msg');
+      if (!msgEl) {
+        alert('メッセージ表示領域が見つかりません');
+        return;
+      }
+
+      // 全件取得(scale or series が空のもの)
+      msgEl.innerHTML = '<div class="msg msg-info">対象商品を抽出中...</div>';
+      let allProducts = [];
+      try {
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const r = await fetch(
+            SUPABASE_URL + '/rest/v1/products?select=id,name,scale,series' +
+            '&or=(scale.is.null,scale.eq.,series.is.null,series.eq.)' +
+            '&order=id.asc&limit=' + pageSize + '&offset=' + from,
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+          );
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const batch = await r.json();
+          allProducts = allProducts.concat(batch);
+          if (batch.length < pageSize) break;
+          from += pageSize;
+        }
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg msg-err">取得エラー: ' + escEdit(e.message) + '</div>';
+        return;
+      }
+
+      // 推測して、変化があるものだけリストアップ
+      const targets = [];
+      for (const p of allProducts) {
+        const update = {};
+        if ((!p.scale || p.scale === '') ) {
+          const guessed = guessScale(p.name || '');
+          if (guessed) update.scale = guessed;
+        }
+        if ((!p.series || p.series === '')) {
+          const guessed = guessSeries(p.name || '');
+          if (guessed) update.series = guessed;
+        }
+        if (Object.keys(update).length > 0) {
+          targets.push({ id: p.id, name: p.name, update });
+        }
+      }
+
+      if (targets.length === 0) {
+        msgEl.innerHTML = '<div class="msg msg-ok">✅ 自動補完できる商品はありませんでした(全' + allProducts.length + '件チェック済み)</div>';
+        return;
+      }
+
+      // 内訳プレビュー
+      const scaleOnly = targets.filter(t => t.update.scale && !t.update.series).length;
+      const seriesOnly = targets.filter(t => !t.update.scale && t.update.series).length;
+      const both = targets.filter(t => t.update.scale && t.update.series).length;
+
+      const previewLines = targets.slice(0, 15).map(t => {
+        const fields = [];
+        if (t.update.scale) fields.push('スケール: ' + t.update.scale);
+        if (t.update.series) fields.push('シリーズ: ' + t.update.series);
+        return '・' + (t.name || '').slice(0, 40) + '\n  → ' + fields.join(' / ');
+      }).join('\n');
+      const morePreview = targets.length > 15 ? '\n... ほか ' + (targets.length - 15) + '件' : '';
+
+      const ok = confirm(
+        '自動補完で ' + targets.length + ' 件の更新があります(全' + allProducts.length + '件中、空のもののみ対象)。\n\n' +
+        '【内訳】\n' +
+        '・スケールのみ補完: ' + scaleOnly + '件\n' +
+        '・シリーズのみ補完: ' + seriesOnly + '件\n' +
+        '・両方補完: ' + both + '件\n\n' +
+        '【プレビュー(先頭15件)】\n' + previewLines + morePreview + '\n\n' +
+        '※ 既に値があるものは上書きしません(空のもののみ対象)\n\n' +
+        '実行しますか？'
+      );
+      if (!ok) {
+        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+        return;
+      }
+
+      msgEl.innerHTML = '<div class="msg msg-info">自動補完中... (0/' + targets.length + ')</div>';
+      let updated = 0;
+      let failed = 0;
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        if (i % 30 === 0 || i === targets.length - 1) {
+          msgEl.innerHTML = '<div class="msg msg-info">自動補完中... (' + (i + 1) + '/' + targets.length + ')</div>';
+        }
+        try {
+          const body = { ...t.update, updated_at: new Date().toISOString() };
+          const r = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + t.id, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify(body),
+          });
+          if (r.ok) updated++;
+          else failed++;
+        } catch (e) {
+          failed++;
+        }
+        await new Promise(r => setTimeout(r, 30));
+      }
+
+      let summary = '✅ 自動補完完了:更新 ' + updated + '件';
+      if (failed > 0) summary += ' / 失敗 ' + failed + '件';
+      msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
+
       await loadMaster();
     }
 
