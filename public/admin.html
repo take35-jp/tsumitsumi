@@ -383,6 +383,11 @@
                   <option value="FULL MECHANICS ソードカラミティガンダム バンダイ">フルメカニクス｜ソードカラミティ</option>
                   <option value="FULL MECHANICS ブーストレイダーガンダム バンダイ">フルメカニクス｜ブーストレイダー</option>
                 </optgroup>
+                <optgroup label="── ハロプラ ──">
+                  <option value="ハロプラ ハロ バンダイ">ハロプラ｜全般</option>
+                  <option value="HAROPLA バンダイ">HAROPLA｜英字検索</option>
+                  <option value="ハロプラ ガンダム">ハロプラ｜ガンダム検索</option>
+                </optgroup>
               </select>
               <div id="grade-total" style="font-size:11px; color:#166534; margin-top:4px;"></div>
             </div>
@@ -736,6 +741,7 @@ const _GRADES = [
   'FULL MECHANICS','FULLMECHANICS','フルメカニクス',
   'MGSD','MGEX','HGUC','HGCE','HGAC','HGFC','HGUC',
   'RE/100','RE100','BB戦士','30MM','30MS','MS-06',
+  'HAROPLA','ハロプラ',
   'MG','HG','RG','PG','EG','SD','EX',
   'メガサイズ','メガサイズモデル',
   'AGE','RE',
@@ -1085,6 +1091,8 @@ function guessScale(name) {
   if (/\bHGUC\b/i.test(name)) return 'HGUC';
   if (/\bHG\b/i.test(name)) return 'HG';
   if (/BB戦士/.test(name)) return 'BB戦士';
+  // ハロプラ(HG/MGなどより前にチェック - HAROPLA表記もあるため)
+  if (/ハロプラ|HAROPLA/i.test(name)) return 'ハロプラ';
   if (/\bMG\b/i.test(name)) return 'MG';
   if (/\bEG\b/i.test(name)) return 'EG';
   if (/\bSD\b/i.test(name)) return 'SD';
