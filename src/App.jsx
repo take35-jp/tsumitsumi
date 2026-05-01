@@ -88,6 +88,12 @@ const emptyForm = {
   count: 1, rating: 0, photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "",
   condition: "", conditionNote: "", tags: [],
 };
+// 毎回新規オブジェクトを返す(配列・オブジェクトの参照共有を避ける)
+const makeEmptyForm = () => ({
+  name: "", series: "", scale: "", purchaseDate: "", price: "", retailPrice: "",
+  count: 1, rating: 0, photo: null, photoUrl: "", completedPhotoUrl: "", completed: false, memo: "", jan: "",
+  condition: "", conditionNote: "", tags: [],
+});
 
 // 画像をBase64に圧縮変換（最大800px・JPEG品質0.7）
 function compressImageToBase64(file, maxPx = 320, quality = 0.5) {
@@ -1058,19 +1064,16 @@ function BulkTagBadge({ tag, onApply, onRemove, onDeleteMaster }) {
 // ---- Tag Input ----
 function TagInput({ tags, onChange, allTags = [] }) {
   const [input, setInput] = useState("");
-  const [selectedTag, setSelectedTag] = useState(null);
 
   const addTag = (val) => {
     const tag = val.trim();
     if (!tag || tags.includes(tag)) { setInput(""); return; }
     onChange([...tags, tag]);
     setInput("");
-    setSelectedTag(null);
   };
 
   const removeTag = (tag) => {
     onChange(tags.filter(t => t !== tag));
-    setSelectedTag(null);
   };
 
   const suggestions = input.trim()
@@ -1080,31 +1083,33 @@ function TagInput({ tags, onChange, allTags = [] }) {
   return (
     <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", background: "#fafafa" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: tags.length > 0 ? 8 : 0 }}>
-        {tags.map(tag => {
-          const isSelected = selectedTag === tag;
-          return (
-            <span key={tag}
-              onClick={() => setSelectedTag(isSelected ? null : tag)}
+        {tags.map(tag => (
+          <span key={tag}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: "#f0fdf4",
+              color: "#166534",
+              borderRadius: 20, padding: "5px 6px 5px 12px", fontSize: 13, fontWeight: 600,
+              userSelect: "none", WebkitUserSelect: "none",
+            }}
+          >
+            #{tag}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
+              aria-label={`タグ「${tag}」を削除`}
               style={{
-                display: "inline-flex", alignItems: "center", gap: 4,
-                background: isSelected ? "#fee2e2" : "#f0fdf4",
-                color: isSelected ? "#b91c1c" : "#166534",
-                borderRadius: 20, padding: "3px 10px 3px 10px", fontSize: 12, fontWeight: 600,
-                cursor: "pointer", transition: "background 0.15s",
-                userSelect: "none", WebkitUserSelect: "none",
-              }}
-            >
-              #{tag}
-              {isSelected && (
-                <span
-                  onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, background: "#ef4444", borderRadius: "50%", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>
-                  ×
-                </span>
-              )}
-            </span>
-          );
-        })}
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: 24, height: 24, minWidth: 24, minHeight: 24,
+                background: "#ef4444", border: "none", borderRadius: "50%",
+                color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer",
+                flexShrink: 0, lineHeight: 1, padding: 0,
+                touchAction: "manipulation",
+              }}>
+              ×
+            </button>
+          </span>
+        ))}
       </div>
       {suggestions.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
@@ -1135,7 +1140,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.03", date: "2026/05/01", isNew: true, items: ["価格訂正報告で「現在の価格と同じ」かつコメントなしの場合は報告できないようにバリデーション追加"] },
+    { ver: "v1.04", date: "2026/05/01", isNew: true, items: ["価格欄を空にした後にYahoo参考価格で勝手に埋まる不具合を修正", "新規登録時に前回タグが残る不具合を修正", "タグ削除ボタンを大きく見やすく(常時表示)"] },
+    { ver: "v1.03", date: "2026/05/01", isNew: false, items: ["価格訂正報告で「現在の価格と同じ」かつコメントなしの場合は報告できないようにバリデーション追加"] },
     { ver: "v1.02", date: "2026/05/01", isNew: false, items: ["価格訂正報告画面に「Webで検索」ショートカットを追加（JAN＋希望小売価格でGoogle検索）"] },
     { ver: "v1.01", date: "2026/05/01", isNew: false, items: ["マスタDBに価格未設定の場合、Yahoo!ショッピングから参考価格を取得するフォールバック処理を追加"] },
     { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース 🎉", "JANバーコードスキャン登録", "積みプラ一覧管理（タグ・状態・評価・購入日）", "希望小売価格・総額表示", "連続スキャン＆一括登録", "X（Twitter）シェア画像生成", "情報の誤りを報告フォーム", "バックアップ（エクスポート/インポート）", "グリッド/リスト表示切替"] },
@@ -1214,15 +1220,27 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.03 */}
+          {/* v1.04 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.04</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・価格を空にしても勝手に埋まる不具合を修正<br/>
+              ・新規登録時に前回タグが残る不具合を修正<br/>
+              ・タグ削除ボタンを大きく見やすく
+            </div>
+          </div>
+          {/* v1.03 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.03</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/01</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・価格訂正報告で「現在の価格と同じ」かつコメントなしの場合のバリデーション追加
+              ・価格訂正報告のバリデーション強化
             </div>
           </div>
           {/* v1.02 */}
@@ -1878,34 +1896,24 @@ export default function App() {
   useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) { if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) alert('⚠️ 保存容量がいっぱいです\n古いキットや画像を削除してください\n（ブラウザ localStorage 上限 約5MB）'); } }, [kits]);
 
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
+  // 注意:マスタDBからのみ取得する。Yahooからの自動取得は転売価格混入のため行わない
+  // (ユーザーが意図的に空にした価格を勝手に埋めてしまうのを防ぐ)
   useEffect(() => {
     if (priceLoading) return; // 一括取得中はバックグラウンド取得しない
     const kitsWithoutPrice = kits.filter(k => k.jan && !k.retailPrice);
     if (kitsWithoutPrice.length === 0) return;
-    // 5件ずつ順次取得（API負荷軽減）
     let cancelled = false;
     const fetchPrices = async () => {
       for (const kit of kitsWithoutPrice.slice(0, 30)) { // 一度に最大30件
         if (cancelled) break;
         try {
-          // (1) まずマスタDBから希望小売価格を取得
+          // マスタDBから希望小売価格のみを取得(Yahooフォールバックは行わない)
           const r = await fetch(`/api/price?jan=${kit.jan}`);
           const d = await r.json();
           if (d.price && !cancelled) {
             setKits(prev => prev.map(k =>
               k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k
             ));
-          } else if (!cancelled) {
-            // (2) マスタに価格なし → /api/search にフォールバック(Yahoo参考価格)
-            try {
-              const r2 = await fetch(`/api/search?jan=${kit.jan}`);
-              const d2 = r2.ok ? await r2.json() : null;
-              if (d2?.price && !cancelled) {
-                setKits(prev => prev.map(k =>
-                  k.id === kit.id ? { ...k, retailPrice: String(d2.price) } : k
-                ));
-              }
-            } catch {}
           }
         } catch {}
         await new Promise(r => setTimeout(r, 300)); // 0.3秒間隔
@@ -1996,7 +2004,7 @@ export default function App() {
     } else {
       setKits((ks) => [{ ...form, id: Date.now() }, ...ks]);
     }
-    setForm(emptyForm);
+    setForm(makeEmptyForm());
     setShowForm(false);
   };
 
@@ -2020,8 +2028,8 @@ export default function App() {
       const data = await fetchProductByJAN(jan);
       setScanLoading(false);
       const newKit = data?.name
-        ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl, id: Date.now() + Math.random() }
-        : { ...emptyForm, jan, id: Date.now() + Math.random() };
+        ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, photoUrl: data.photoUrl, id: Date.now() + Math.random(), tags: [] }
+        : { ...emptyForm, jan, id: Date.now() + Math.random(), tags: [] };
       setContinuousQueue(q => [...q, newKit]);
       // スキャナーはそのまま継続
       return;
@@ -2035,7 +2043,7 @@ export default function App() {
     setScanLoading(true);
     const data = await fetchProductByJAN(jan);
     setScanLoading(false);
-    setForm(data?.name ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, retailPrice: data.retailPrice || data.price || "", photoUrl: data.photoUrl } : { ...emptyForm, jan });
+    setForm(data?.name ? { ...emptyForm, jan, name: data.name, series: data.series, scale: data.scale, price: data.price, retailPrice: data.retailPrice || "", photoUrl: data.photoUrl, tags: [] } : { ...emptyForm, jan, tags: [] });
     setEditId(null);
     setShowForm(true);
   };
@@ -2595,7 +2603,7 @@ export default function App() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>手動登録</span>
-          <button style={{ ...s.fab, background: "#111" }} onClick={() => { setForm(emptyForm); setEditId(null); setShowForm(true); }}>＋</button>
+          <button style={{ ...s.fab, background: "#111" }} onClick={() => { setForm(makeEmptyForm()); setEditId(null); setShowForm(true); }}>＋</button>
         </div>
       </div>
 
