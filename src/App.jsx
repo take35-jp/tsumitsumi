@@ -982,58 +982,6 @@ function BackupModal({ kits, onImport, onClose }) {
   );
 }
 
-// ---- Legal Modal ----
-function LegalModal({ type, onClose }) {
-  const isPrivacy = type === "privacy";
-  return (
-    <div style={hs.wrap}>
-      <div style={hs.header}>
-        <span style={hs.title}>{isPrivacy ? "🔒 プライバシーポリシー" : "📋 利用規約"}</span>
-        <button style={hs.closeBtn} onClick={onClose}>✕</button>
-      </div>
-      {isPrivacy ? (
-        <>
-          <div style={hs.section}>
-            <div style={hs.sectionTitle}>収集する情報</div>
-            <div style={hs.desc}>本アプリはお客様の個人情報を収集・サーバーへ送信しません。登録されたキット情報はお使いの端末のブラウザ（localStorage）にのみ保存されます。</div>
-          </div>
-          <div style={hs.section}>
-            <div style={hs.sectionTitle}>お問い合わせ</div>
-            <div style={hs.desc}>プライバシーに関するお問い合わせは X（@tsumitsumi_pla）のDMにてご連絡ください。</div>
-          </div>
-          <div style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", paddingTop: 8 }}>最終更新：2025年4月</div>
-        </>
-      ) : (
-        <>
-          <div style={hs.section}>
-            <div style={hs.sectionTitle}>サービスについて</div>
-            <div style={hs.desc}>ツミツミ（以下「本アプリ」）は、プラモデルの積みプラ管理を目的とした個人開発のWebアプリです。</div>
-          </div>
-          <div style={hs.section}>
-            <div style={hs.sectionTitle}>禁止事項</div>
-            <div style={hs.desc}>以下の行為を禁止します。</div>
-            <div style={hs.item}><span style={hs.warn}>!</span>本アプリを利用した詐欺・不正行為</div>
-            <div style={hs.item}><span style={hs.warn}>!</span>他のユーザーへの迷惑行為・嫌がらせ</div>
-            <div style={hs.item}><span style={hs.warn}>!</span>本アプリの無断複製・改変・再配布</div>
-          </div>
-          <div style={hs.section}>
-            <div style={hs.sectionTitle}>免責事項</div>
-            <div style={hs.desc}>本アプリの利用により生じたいかなる損害についても、開発者は責任を負いません。ユーザー間の取引（譲渡・売買等）は当事者間の責任で行ってください。</div>
-          </div>
-          <div style={hs.section}>
-            <div style={hs.sectionTitle}>サービスの変更・終了</div>
-            <div style={hs.desc}>予告なく機能の変更・サービスの終了を行う場合があります。データのバックアップは定期的に行ってください。</div>
-          </div>
-          <div style={hs.section}>
-          <div style={hs.sectionTitle}>保存容量</div>
-          <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
-          </div>
-          <div style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", paddingTop: 8 }}>最終更新：2025年4月</div>
-        </>
-      )}
-    </div>
-  );
-}
 
 // ---- Bulk Tag Badge ----
 function BulkTagBadge({ tag, onApply, onRemove, onDeleteMaster }) {
@@ -1951,7 +1899,6 @@ export default function App() {
   const [filterRating, setFilterRating] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [showLegal, setShowLegal] = useState(null);
   const [showBackup, setShowBackup] = useState(false);
   const [showBrowse, setShowBrowse] = useState(false); // "privacy" | "terms" | null
   const [filterCondition, setFilterCondition] = useState("");
@@ -2576,11 +2523,13 @@ export default function App() {
       </div>
 
       {/* フッター */}
-      <div style={{ textAlign: "center", padding: "16px 20px 100px", borderTop: "1px solid #f0f0f0" }}>
-        <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
-          <button style={{ background: "none", border: "none", fontSize: 11, color: "#9ca3af", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowLegal("privacy")}>プライバシーポリシー</button>
-          <button style={{ background: "none", border: "none", fontSize: 11, color: "#9ca3af", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowLegal("terms")}>利用規約</button>
+      <div style={{ textAlign: "center", padding: "20px 20px 100px", borderTop: "1px solid #f0f0f0" }}>
+        <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 8 }}>当サイトはアフィリエイト広告を利用しています</div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 10 }}>
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プライバシーポリシー</a>
+          <a href="/manual.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>取扱説明書</a>
         </div>
+        <div style={{ fontSize: 10, color: "#cbd5e1" }}>© 2026 TSUMI TSUMI</div>
       </div>
 
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
@@ -2711,14 +2660,6 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowBackup(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <BackupModal kits={kits} onImport={handleImport} onClose={() => setShowBackup(false)} />
-          </div>
-        </div>
-      )}
-
-      {showLegal && (
-        <div style={s.overlay} onClick={() => setShowLegal(null)}>
-          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <LegalModal type={showLegal} onClose={() => setShowLegal(null)} />
           </div>
         </div>
       )}
