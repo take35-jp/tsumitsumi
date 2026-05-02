@@ -635,6 +635,7 @@
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn" onclick="bulkFetchMissingImages()" style="background:#3b82f6; color:#fff;">📷 画像なし商品の画像を一括取得</button>
+          <button class="btn" onclick="bulkFetchMissingPrices()" style="background:#059669; color:#fff;">💴 希望小売価格を一括取得</button>
           <button class="btn" onclick="bulkFillScaleSeries()" style="background:#10b981; color:#fff;">📊 スケール・シリーズ自動補完</button>
           <button class="btn" onclick="bulkCleanAllNames()" style="background:#fbbf24; color:#78350f;">🧹 商品名を一括クリーニング</button>
           <button class="btn" onclick="bulkReorderNames()" style="background:#a855f7; color:#fff;">🔄 商品名を並び替え(実験的)</button>
@@ -3369,6 +3370,166 @@ function showMsg(id, text, type) {
       const totalMin = Math.floor(totalElapsed / 60);
       const totalSec = totalElapsed % 60;
       let summary = '✅ 画像取得完了:更新 ' + updated + '件 / Yahoo不在 ' + notFound + '件';
+      if (failed > 0) summary += ' / 失敗 ' + failed + '件';
+      summary += ' / 経過 ' + totalMin + '分' + totalSec + '秒(処理対象 ' + targets.length + '件)';
+      msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
+
+      await loadMaster();
+    }
+
+    // 希望小売価格未設定 (retail_price が NULL) の商品を /api/admin-search?action=retail-price で取得して埋める
+    // 一括処理ではプレバン経由のヒットを使わない(name を渡さない → ホビーサーチ + Yahoo のみ)
+    async function bulkFetchMissingPrices() {
+      const msgEl = document.getElementById('master-msg');
+      if (!msgEl) {
+        alert('メッセージ表示領域が見つかりません');
+        return;
+      }
+
+      const SLEEP_MS = 1000;
+      const SKIP_KEY = 'tsumitsumi_admin_price_skip';
+      let skipSet;
+      try { skipSet = new Set(JSON.parse(localStorage.getItem(SKIP_KEY) || '[]')); }
+      catch (_) { skipSet = new Set(); }
+
+      // 1. JANあり&価格未設定の商品を全件取得(ページネーション)
+      msgEl.innerHTML = '<div class="msg msg-info">価格未設定の商品を抽出中...</div>';
+      let targets = [];
+      try {
+        let from = 0;
+        const pageSize = 1000;
+        while (true) {
+          const r = await fetch(
+            SUPABASE_URL + '/rest/v1/products?select=id,jan,name,retail_price' +
+            '&jan=not.is.null' +
+            '&retail_price=is.null' +
+            '&order=id.desc' +
+            '&limit=' + pageSize + '&offset=' + from,
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+          );
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const batch = await r.json();
+          if (!Array.isArray(batch) || batch.length === 0) break;
+          targets = targets.concat(batch);
+          if (batch.length < pageSize) break;
+          from += pageSize;
+        }
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg msg-err">対象抽出エラー: ' + escEdit(e.message) + '</div>';
+        return;
+      }
+
+      // 前回までにスキップ済みのJANを除外
+      const beforeFilter = targets.length;
+      targets = targets.filter(t => !skipSet.has(t.jan));
+      const skippedFromSet = beforeFilter - targets.length;
+
+      if (targets.length === 0) {
+        const note = skippedFromSet > 0
+          ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は除外)'
+          : '(JANあり＋価格未設定の商品で抽出)';
+        msgEl.innerHTML = '<div class="msg msg-ok">✅ 価格取得対象はありませんでした ' + note + '</div>';
+        return;
+      }
+
+      // 確認ダイアログ
+      const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
+      const ok = confirm(
+        '希望小売価格未設定の商品 ' + targets.length + ' 件を全件処理します。\n\n' +
+        (skippedFromSet > 0 ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は今回除外)\n\n' : '') +
+        '【取得元】\n' +
+        '・ホビーサーチ (JAN検索＋gtin13照合)\n' +
+        '・Yahoo Shopping (priceLabel.fixedPrice)\n' +
+        '※ プレミアムバンダイは商品名検索のため一括処理では使用しません(誤マッチ防止)\n\n' +
+        '各商品をAPIで照会し、希望小売価格をマスタに登録します。\n' +
+        'API負荷軽減のため1件あたり1秒の間隔で処理します。\n' +
+        '推定処理時間: 約 ' + estMin + ' 分\n\n' +
+        '⚠️ 処理中はadminタブを閉じないでください\n' +
+        '⚠️ 取得失敗のJANは次回からスキップされます\n\n' +
+        '続行しますか？'
+      );
+      if (!ok) {
+        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+        return;
+      }
+
+      // 2. 1件ずつ価格取得 → マスタ更新
+      let updated = 0;
+      let notFound = 0;
+      let failed = 0;
+      const startTime = Date.now();
+
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        // 表示は20件ごとに更新(描画負荷軽減)
+        if (i % 20 === 0 || i === targets.length - 1) {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const remaining = targets.length - i - 1;
+          const remainingMin = Math.ceil(remaining * SLEEP_MS / 60000);
+          msgEl.innerHTML =
+            '<div class="msg msg-info">価格取得中... (' + (i + 1) + '/' + targets.length + ')' +
+            ' ✅' + updated + ' / 不在 ' + notFound + ' / 失敗 ' + failed +
+            ' / 経過 ' + elapsed + '秒 / 残り推定 ' + remainingMin + '分</div>';
+        }
+
+        try {
+          // name を渡さない → プレバン分岐スキップ、ホビーサーチ + Yahoo のみ
+          const r = await fetch('/api/admin-search?action=retail-price&jan=' + encodeURIComponent(t.jan));
+          if (!r.ok) {
+            if (r.status === 404) {
+              notFound++;
+              if (t.jan) {
+                skipSet.add(t.jan);
+                try { localStorage.setItem(SKIP_KEY, JSON.stringify([...skipSet])); } catch (_) {}
+              }
+            } else {
+              failed++;
+            }
+            await new Promise(r => setTimeout(r, SLEEP_MS));
+            continue;
+          }
+          const data = await r.json();
+          if (!data || !data.price) {
+            notFound++;
+            if (t.jan) {
+              skipSet.add(t.jan);
+              try { localStorage.setItem(SKIP_KEY, JSON.stringify([...skipSet])); } catch (_) {}
+            }
+            await new Promise(r => setTimeout(r, SLEEP_MS));
+            continue;
+          }
+
+          // マスタ更新
+          const updateRes = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + t.id, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({
+              retail_price: data.price,
+              updated_at: new Date().toISOString(),
+            }),
+          });
+          if (updateRes.ok) {
+            updated++;
+          } else {
+            failed++;
+          }
+        } catch (e) {
+          failed++;
+          console.error('bulkFetchMissingPrices error:', e);
+        }
+
+        await new Promise(r => setTimeout(r, SLEEP_MS));
+      }
+
+      const totalElapsed = Math.floor((Date.now() - startTime) / 1000);
+      const totalMin = Math.floor(totalElapsed / 60);
+      const totalSec = totalElapsed % 60;
+      let summary = '✅ 価格取得完了:更新 ' + updated + '件 / 不在 ' + notFound + '件';
       if (failed > 0) summary += ' / 失敗 ' + failed + '件';
       summary += ' / 経過 ' + totalMin + '分' + totalSec + '秒(処理対象 ' + targets.length + '件)';
       msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
