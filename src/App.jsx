@@ -989,27 +989,14 @@ function BackupModal({ kits, onImport, onClose }) {
 
 
 // ---- Bulk Tag Badge ----
-function BulkTagBadge({ tag, onApply, onRemove, onDeleteMaster }) {
-  const [showDel, setShowDel] = useState(false);
+function BulkTagBadge({ tag, onApply, onRemove }) {
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: 3, background: showDel ? "#fef2f2" : "#f0fdf4", border: `1px solid ${showDel ? "#fca5a5" : "#bbf7d0"}`, borderRadius: 20, padding: "3px 6px 3px 10px", fontSize: 11, fontWeight: 600, userSelect: "none", WebkitUserSelect: "none", transition: "background 0.15s" }}>
-      <span onClick={onApply} style={{ color: showDel ? "#b91c1c" : "#166534", cursor: "pointer" }}>#{tag}</span>
-      {/* キットから削除 */}
-      <button onClick={onRemove} title="選択キットから削除"
-        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, background: "#f59e0b", borderRadius: "50%", color: "#fff", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
-        −
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 20, padding: "3px 4px 3px 10px", fontSize: 11, fontWeight: 600, userSelect: "none", WebkitUserSelect: "none" }}>
+      <span onClick={onApply} style={{ color: "#166534", cursor: "pointer" }}>#{tag}</span>
+      <button onClick={onRemove} title="選択キットから外す"
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 20, padding: "0 8px", background: "#ef4444", borderRadius: 20, color: "#fff", fontSize: 10, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
+        解除
       </button>
-      {/* 一覧から削除トグル */}
-      <button onClick={() => setShowDel(v => !v)} title="一覧から削除"
-        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, background: showDel ? "#ef4444" : "#e5e7eb", borderRadius: "50%", color: showDel ? "#fff" : "#6b7280", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
-        🗑
-      </button>
-      {showDel && (
-        <button onClick={onDeleteMaster}
-          style={{ fontSize: 10, padding: "2px 8px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontWeight: 700, flexShrink: 0 }}>
-          削除確定
-        </button>
-      )}
     </div>
   );
 }
@@ -2311,10 +2298,6 @@ export default function App() {
     ));
   };
 
-  const handleRemoveFromTagMaster = (tag) => {
-    setTagMasterList(prev => prev.filter(t => t !== tag));
-  };
-
   const handleBulkDelete = () => {
     if (bulkSelected.size === 0) return;
     if (!window.confirm(`選択した${bulkSelected.size}件を削除しますか？`)) return;
@@ -2701,15 +2684,14 @@ export default function App() {
               </div>
               {/* タグ */}
               <div style={{ padding: "10px 16px" }}>
-<div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグ名タップ→選択キットに追加 ／ −→選択キットから削除 ／ 🗑→一覧から削除</div>
+<div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグ名タップ→選択キットに追加 ／ 解除→選択キットから外す</div>
                 {bulkSelected.size === 0 && <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 6 }}>⚠ タグ名タップはキット選択後に有効になります</div>}
                 {allExistingTags.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
                     {allExistingTags.map(t => (
                       <BulkTagBadge key={t} tag={t}
                         onApply={() => handleBulkApplyTag(t)}
-                        onRemove={() => handleBulkRemoveTag(t)}
-                        onDeleteMaster={() => handleRemoveFromTagMaster(t)} />
+                        onRemove={() => handleBulkRemoveTag(t)} />
                     ))}
                   </div>
                 )}
