@@ -1315,6 +1315,133 @@ const as = {
   btn: { width: "100%", padding: "14px 16px", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", textAlign: "left" },
 };
 
+// ---- タグ編集モーダル ----
+function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClose }) {
+  const [newTag, setNewTag] = useState("");
+  const [editingTag, setEditingTag] = useState(null);
+  const [editValue, setEditValue] = useState("");
+
+  // タグの一覧と使用件数（キット使用数 + マスター登録のみのタグは0件）
+  const tagUsage = (() => {
+    const m = new Map();
+    for (const k of kits) {
+      for (const t of (k.tags || [])) {
+        m.set(t, (m.get(t) || 0) + 1);
+      }
+    }
+    for (const t of tagMasterList) {
+      if (!m.has(t)) m.set(t, 0);
+    }
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], "ja"));
+  })();
+
+  const addNewTag = () => {
+    const t = newTag.trim();
+    if (!t) return;
+    if (tagUsage.some(([tag]) => tag === t)) { alert("そのタグは既に存在します"); return; }
+    setTagMasterList(prev => [...prev, t]);
+    setNewTag("");
+  };
+
+  const startEdit = (tag) => { setEditingTag(tag); setEditValue(tag); };
+  const cancelEdit = () => { setEditingTag(null); setEditValue(""); };
+
+  const saveEdit = (oldTag) => {
+    const newName = editValue.trim();
+    if (!newName) { alert("タグ名を入力してください"); return; }
+    if (newName === oldTag) { cancelEdit(); return; }
+    if (tagUsage.some(([t]) => t === newName)) { alert("その名前のタグは既に存在します"); return; }
+    setKits(prev => prev.map(k =>
+      k.tags?.includes(oldTag)
+        ? { ...k, tags: k.tags.map(t => t === oldTag ? newName : t) }
+        : k
+    ));
+    setTagMasterList(prev => prev.map(t => t === oldTag ? newName : t));
+    cancelEdit();
+  };
+
+  const deleteTag = (tag, count) => {
+    const msg = count > 0
+      ? `タグ「${tag}」を削除しますか？\n\n${count}件のキットからも削除されます。`
+      : `タグ「${tag}」を削除しますか？`;
+    if (!window.confirm(msg)) return;
+    setKits(prev => prev.map(k =>
+      k.tags?.includes(tag)
+        ? { ...k, tags: k.tags.filter(t => t !== tag) }
+        : k
+    ));
+    setTagMasterList(prev => prev.filter(t => t !== tag));
+  };
+
+  return (
+    <div style={hs.wrap}>
+      <div style={hs.header}>
+        <span style={hs.title}>🏷️ タグ編集</span>
+        <button style={hs.closeBtn} onClick={onClose}>✕</button>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>新しいタグを作成</div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <input
+            style={{ flex: 1, border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
+            placeholder="タグ名（例：プレバン限定品）"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addNewTag(); } }}
+          />
+          <button
+            style={{ background: "#111", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+            onClick={addNewTag}>＋作成</button>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>登録済みのタグ（{tagUsage.length}件）</div>
+      {tagUsage.length === 0 ? (
+        <div style={{ textAlign: "center", color: "#9ca3af", fontSize: 13, padding: "20px 0" }}>
+          タグはまだありません
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {tagUsage.map(([tag, count]) => (
+            <div key={tag} style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
+              {editingTag === tag ? (
+                <>
+                  <input
+                    style={{ flex: 1, border: "1.5px solid #4f8ef7", borderRadius: 6, padding: "4px 8px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveEdit(tag); } else if (e.key === "Escape") cancelEdit(); }}
+                    autoFocus
+                  />
+                  <button
+                    style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+                    onClick={() => saveEdit(tag)}>保存</button>
+                  <button
+                    style={{ background: "#fff", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", flexShrink: 0 }}
+                    onClick={cancelEdit}>取消</button>
+                </>
+              ) : (
+                <>
+                  <span style={{ flex: 1, fontSize: 13, color: "#111", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
+                    #{tag}<span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{count}件</span>
+                  </span>
+                  <button
+                    style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+                    onClick={() => startEdit(tag)}>編集</button>
+                  <button
+                    style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+                    onClick={() => deleteTag(tag, count)}>削除</button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function getCondStyle(condition) {
   switch(condition) {
     case "未開封":     return { background: "#eff6ff", color: "#1d4ed8" };
@@ -1893,6 +2020,7 @@ export default function App() {
   const [filterScale, setFilterScale] = useState("");
   const [showAppShare, setShowAppShare] = useState(false);
   const [showAllVersions, setShowAllVersions] = useState(false);
+  const [showTagEditor, setShowTagEditor] = useState(false);
   const [reportTarget, setReportTarget] = useState(null);
   const [continuousScan, setContinuousScan] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false); // 一括取得中フラグ
@@ -1938,6 +2066,26 @@ export default function App() {
       localStorage.setItem("tsumitsumi_view_settings", JSON.stringify({ viewMode, sortKey, sortDir }));
     } catch { /* ignore */ }
   }, [viewMode, sortKey, sortDir]);
+
+  // タグマスター（ユーザー定義タグ一覧）の永続化
+  // マウント時に1度だけlocalStorageから読み込み
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tsumitsumi_tag_master") || "[]");
+      if (Array.isArray(saved)) setTagMasterList(saved);
+    } catch { /* ignore */ }
+  }, []);
+  // 値が変わったらlocalStorageに保存（初回マウント時はスキップ）
+  const isTagMasterInitial = useRef(true);
+  useEffect(() => {
+    if (isTagMasterInitial.current) {
+      isTagMasterInitial.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem("tsumitsumi_tag_master", JSON.stringify(tagMasterList));
+    } catch { /* ignore */ }
+  }, [tagMasterList]);
 
   const handlePhoto = async (e) => {
     const file = e.target.files[0];
@@ -2382,6 +2530,10 @@ export default function App() {
               onClick={() => { setBulkMode(true); setBulkSelected(new Set()); }}>
               ☑ 一括
             </button>
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #111", borderRadius: 20, background: "#111", color: "#fff", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+              onClick={() => setShowTagEditor(true)}>
+              🏷️ タグ編集
+            </button>
           </div>
         )}
         {viewMode === "grid" && (
@@ -2653,6 +2805,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowAllVersions(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <AllVersionsModal onClose={() => setShowAllVersions(false)} />
+          </div>
+        </div>
+      )}
+
+      {showTagEditor && (
+        <div style={s.overlay} onClick={() => setShowTagEditor(false)}>
+          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <TagEditorModal kits={kits} setKits={setKits} tagMasterList={tagMasterList} setTagMasterList={setTagMasterList} onClose={() => setShowTagEditor(false)} />
           </div>
         </div>
       )}
