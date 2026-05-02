@@ -1115,7 +1115,7 @@ function AllVersionsModal({ onClose }) {
   );
 }
 
-function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetProgress, resetTargetCount }) {
+function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetProgress, resetTargetCount, theme, onToggleTheme }) {
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
@@ -1124,9 +1124,18 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       </div>
 
         <div style={hs.section}>
-          <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "14px 16px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14 }}>
-            📖 使い方はコチラ →
-          </a>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, padding: "14px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              📖 使い方はコチラ →
+            </a>
+            <button
+              onClick={onToggleTheme}
+              type="button"
+              aria-label={theme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}
+              style={{ flexShrink: 0, padding: "14px 16px", background: "#fef3c7", border: "1.5px solid #fcd34d", borderRadius: 10, color: "#78350f", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>
+              {theme === "dark" ? "☀️ ライト" : "🌙 ダーク"}
+            </button>
+          </div>
         </div>
       <div style={hs.section}>
         <div style={hs.sectionTitle}>💾 保存容量</div>
@@ -2052,6 +2061,7 @@ export default function App() {
   const [showAppShare, setShowAppShare] = useState(false);
   const [showAllVersions, setShowAllVersions] = useState(false);
   const [showTagEditor, setShowTagEditor] = useState(false);
+  const [theme, setTheme] = useState("light");
   const [reportTarget, setReportTarget] = useState(null);
   const [continuousScan, setContinuousScan] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false); // 一括取得中フラグ
@@ -2119,6 +2129,26 @@ export default function App() {
       localStorage.setItem("tsumitsumi_tag_master", JSON.stringify(tagMasterList));
     } catch { /* ignore */ }
   }, [tagMasterList]);
+
+  // ダークモード：マウント時に <html data-theme=...> を読んで state と同期
+  // (index.html の head script が描画前に既に setAttribute しているのでここでは読むだけ)
+  useEffect(() => {
+    const t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark" || t === "light") setTheme(t);
+  }, []);
+  // theme 変更時に <html data-theme=...> を更新（初回マウント時はスキップ：head script が既に適用済み）
+  const isThemeApplyInitial = useRef(true);
+  useEffect(() => {
+    if (isThemeApplyInitial.current) {
+      isThemeApplyInitial.current = false;
+      return;
+    }
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+  const setThemeAndSave = (newTheme) => {
+    setTheme(newTheme);
+    try { localStorage.setItem("tsumitsumi_theme", newTheme); } catch { /* ignore */ }
+  };
 
   const handlePhoto = async (e) => {
     const file = e.target.files[0];
@@ -2900,6 +2930,8 @@ export default function App() {
               imageResetLoading={imageResetLoading}
               imageResetProgress={imageResetProgress}
               resetTargetCount={kits.filter(k => k.jan && k.photoUrl && k.photoUrl.startsWith("data:")).length}
+              theme={theme}
+              onToggleTheme={() => setThemeAndSave(theme === "dark" ? "light" : "dark")}
             />
           </div>
         </div>

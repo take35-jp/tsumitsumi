@@ -10,6 +10,34 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ツミツミ" />
     <meta name="theme-color" content="#1a1a1a" />
+    <!-- ダークモード初期適用（React 描画前に同期実行してフラッシュ防止） -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem("tsumitsumi_theme");
+          var theme;
+          if (saved === "dark" || saved === "light") {
+            theme = saved;
+          } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark";
+          } else {
+            theme = "light";
+          }
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      :root[data-theme="dark"] body {
+        filter: invert(1) hue-rotate(180deg);
+        background: #fafafa;
+      }
+      :root[data-theme="dark"] img,
+      :root[data-theme="dark"] video,
+      :root[data-theme="dark"] iframe {
+        filter: invert(1) hue-rotate(180deg);
+      }
+    </style>
     <!-- ZBar WASM 事前読み込み -->
     <script type="module">
       (async () => {
