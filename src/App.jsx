@@ -1127,7 +1127,7 @@ function AllVersionsModal({ onClose }) {
   );
 }
 
-function HelpModal({ onClose }) {
+function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetProgress, resetTargetCount }) {
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
@@ -1143,6 +1143,31 @@ function HelpModal({ onClose }) {
       <div style={hs.section}>
         <div style={hs.sectionTitle}>💾 保存容量</div>
         <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
+      </div>
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>🗑️ 画像を整理して容量を節約</div>
+        <div style={hs.desc}>
+          JANに紐づくキットの「ユーザー登録画像（端末からアップロードした写真）」を削除し、Yahoo画像URLに置き換えます。<br/>
+          完成写真とJANなしのキットの画像は残ります。
+        </div>
+        <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 10 }}>対象: {resetTargetCount}件のキット</div>
+        <button
+          onClick={onResetUserImages}
+          disabled={imageResetLoading || resetTargetCount === 0}
+          style={{
+            width: "100%", padding: "10px 16px", border: "none", borderRadius: 10,
+            background: imageResetLoading || resetTargetCount === 0 ? "#e5e7eb" : "#111",
+            color: imageResetLoading || resetTargetCount === 0 ? "#9ca3af" : "#fff",
+            fontSize: 13, fontWeight: 700,
+            cursor: imageResetLoading || resetTargetCount === 0 ? "not-allowed" : "pointer",
+          }}
+        >
+          {imageResetLoading
+            ? "処理中... " + imageResetProgress.current + "/" + imageResetProgress.total + "件"
+            : resetTargetCount === 0
+            ? "対象のキットがありません"
+            : "▶ 画像を整理する"}
+        </button>
       </div>
       <div style={hs.section}>
         <div style={hs.sectionTitle}>⚠ データについての注意</div>
@@ -2040,6 +2065,8 @@ export default function App() {
   const [continuousScan, setContinuousScan] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false); // 一括取得中フラグ
   const [priceProgress, setPriceProgress] = useState({ current: 0, total: 0 }); // 進捗
+  const [imageResetLoading, setImageResetLoading] = useState(false);
+  const [imageResetProgress, setImageResetProgress] = useState({ current: 0, total: 0 });
   const [showPriceTotal, setShowPriceTotal] = useState(() => {
     try { return localStorage.getItem("tsumitsumi_showPrice") !== "false"; } catch { return true; }
   });
@@ -2125,6 +2152,57 @@ export default function App() {
     }
     setForm(makeEmptyForm());
     setShowForm(false);
+  };
+
+  // ユーザー登録画像（base64）を Yahoo 画像 URL に置き換えて localStorage 容量を節約
+  const handleResetUserImages = async () => {
+    if (imageResetLoading) return;
+    const targets = kits.filter(k => k.jan && k.photoUrl && k.photoUrl.startsWith("data:"));
+    if (targets.length === 0) {
+      alert("対象のキットはありません。\n（JANあり＋ユーザー登録画像のキットが見つかりませんでした）");
+      return;
+    }
+    const estSec = Math.ceil(targets.length * 1);
+    const ok = window.confirm(
+      "⚠️ 警告\n\n" +
+      targets.length + "件のキットの「ユーザー登録画像」を削除し、JANに紐づくYahoo画像URLに置き換えます。\n\n" +
+      "⛔ 削除した画像は元に戻せません（バックアップからのみ復元可）\n\n" +
+      "【処理内容】\n" +
+      "・JANあり + ユーザー登録画像 → Yahoo画像URLに置換\n" +
+      "・JANなしの画像 / 完成写真 → そのまま残す\n" +
+      "・Yahoo画像が取得できないキット → そのまま残す\n\n" +
+      "処理時間: 約" + estSec + "秒\n\n" +
+      "続行しますか？"
+    );
+    if (!ok) return;
+    setImageResetLoading(true);
+    setImageResetProgress({ current: 0, total: targets.length });
+    let updated = 0, notFound = 0, failed = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const kit = targets[i];
+      try {
+        const r = await fetch("/api/search?jan=" + encodeURIComponent(kit.jan));
+        if (!r.ok) {
+          failed++;
+        } else {
+          const d = await r.json();
+          const newUrl = d?.photoUrl || "";
+          if (!newUrl) {
+            notFound++;
+          } else {
+            setKits(prev => prev.map(k => k.id === kit.id ? { ...k, photoUrl: newUrl } : k));
+            updated++;
+          }
+        }
+      } catch (_) {
+        failed++;
+      }
+      setImageResetProgress({ current: i + 1, total: targets.length });
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    setImageResetLoading(false);
+    setImageResetProgress({ current: 0, total: 0 });
+    alert("✅ 完了\n\n更新: " + updated + "件\nYahoo画像なし: " + notFound + "件\n失敗: " + failed + "件");
   };
 
   const handleEdit = (kit) => { setForm({ ...kit, retailPrice: kit.retailPrice || kit.price || "" }); setEditId(kit.id); setShowForm(true); setDetail(null); };
@@ -2810,7 +2888,13 @@ export default function App() {
       {showHelp && (
         <div style={s.overlay} onClick={() => setShowHelp(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <HelpModal onClose={() => setShowHelp(false)} />
+            <HelpModal
+              onClose={() => setShowHelp(false)}
+              onResetUserImages={handleResetUserImages}
+              imageResetLoading={imageResetLoading}
+              imageResetProgress={imageResetProgress}
+              resetTargetCount={kits.filter(k => k.jan && k.photoUrl && k.photoUrl.startsWith("data:")).length}
+            />
           </div>
         </div>
       )}
