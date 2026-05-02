@@ -2086,7 +2086,10 @@ function showMsg(id, text, type) {
           </div>
           <div>
             <div style="font-size:11px;color:#a0a4b8;margin-bottom:4px;font-weight:600;">画像URL</div>
-            <input id="edit-image-url" type="text" style="width:100%;background:#181b2c;color:#e8eaf0;border:1.5px solid #4a5070;border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit;">
+            <div style="display:flex;gap:6px;align-items:stretch;">
+              <input id="edit-image-url" type="text" style="flex:1;min-width:0;background:#181b2c;color:#e8eaf0;border:1.5px solid #4a5070;border-radius:6px;padding:8px 12px;font-size:14px;font-family:inherit;">
+              <button id="edit-fetch-image-btn" onclick="fetchEditImageUrl()" type="button" style="background:#3b82f6;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;">🔄 画像URLを取得</button>
+            </div>
           </div>
         </div>
         <div id="edit-msg" style="margin-top:12px;font-size:13px;"></div>
@@ -2141,6 +2144,46 @@ function showMsg(id, text, type) {
       document.getElementById('edit-modal').style.display = 'none';
       window.__editingProduct = null;
       window.__pendingEdit = null;
+    }
+
+    async function fetchEditImageUrl() {
+      const p = window.__editingProduct;
+      if (!p) return;
+      if (!p.jan) {
+        alert('JANが登録されていない商品は画像URLの自動取得ができません');
+        return;
+      }
+      const btn = document.getElementById('edit-fetch-image-btn');
+      const msg = document.getElementById('edit-msg');
+      const originalLabel = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '取得中...';
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'wait';
+      msg.innerHTML = '';
+      try {
+        const r = await fetch('/api/admin-search?q=' + encodeURIComponent(p.jan) + '&start=1');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        const items = (data && data.items) || [];
+        let imageUrl = null;
+        if (items.length > 0) {
+          imageUrl = items[0].photoUrl || items[0].image || null;
+        }
+        if (!imageUrl) {
+          msg.innerHTML = '<span style="color:#ff8080;">JANに該当する画像が見つかりませんでした</span>';
+          return;
+        }
+        document.getElementById('edit-image-url').value = imageUrl;
+        msg.innerHTML = '<span style="color:#6fce9f;">画像URLを取得しました（「変更内容を確認」で保存できます）</span>';
+      } catch (e) {
+        msg.innerHTML = '<span style="color:#ff8080;">取得エラー: ' + (e && e.message ? e.message : e) + '</span>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      }
     }
 
     function confirmEditSave() {
