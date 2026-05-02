@@ -1954,7 +1954,7 @@ export default function App() {
   const handleSubmit = () => {
     if (!form.name.trim()) return;
     if (editId !== null) {
-      setKits((ks) => ks.map((k) => (k.id === editId ? { ...form, id: editId } : k)));
+      setKits((ks) => ks.map((k) => (k.id === editId ? { ...form, id: editId, price: form.retailPrice || "" } : k)));
       setEditId(null);
     } else {
       setKits((ks) => [{ ...form, id: Date.now() }, ...ks]);
@@ -1963,7 +1963,7 @@ export default function App() {
     setShowForm(false);
   };
 
-  const handleEdit = (kit) => { setForm({ ...kit }); setEditId(kit.id); setShowForm(true); setDetail(null); };
+  const handleEdit = (kit) => { setForm({ ...kit, retailPrice: kit.retailPrice || kit.price || "" }); setEditId(kit.id); setShowForm(true); setDetail(null); };
   const handleDelete = (id) => { setKits((ks) => ks.filter((k) => k.id !== id)); setDetail(null); };
   const toggleComplete = (id) => {
     setKits((ks) => ks.map((k) => (k.id === id ? { ...k, completed: !k.completed } : k)));
