@@ -28,7 +28,10 @@
       })();
     </script>
     <style>
-      :root[data-theme="dark"] body {
+      /* ダークモード：filter は :root(html) に適用する。body に当てると body が
+         position:fixed 要素の包含ブロックになり、body が viewport より長い場合に
+         モーダルが下端に飛ぶ（html はビューポート基準なので問題なし）。 */
+      :root[data-theme="dark"] {
         filter: invert(1) hue-rotate(180deg);
         background: #fafafa;
       }
