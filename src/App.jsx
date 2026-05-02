@@ -60,7 +60,12 @@ const SERIES_OPTIONS = [
 const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "EG", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "SD", "フルメカニクス", "その他", "デカール"];
 
 const RANKS = [
-  { min: 500, label: "積ミ模型 地獄の一丁目店", color: "#7c3aed" },
+  { min: 1000, label: "天照大積ミ神", color: "#fbbf24" },
+  { min: 900, label: "最早、積み神様", color: "#ec4899" },
+  { min: 800, label: "神界の積み人", color: "#4338ca" },
+  { min: 700, label: "天界の積み人", color: "#0ea5e9" },
+  { min: 600, label: "地獄門の積み人", color: "#831843" },
+  { min: 500, label: "地獄の一丁目の積み人", color: "#7c3aed" },
   { min: 300, label: "ルナティックツミニスト", color: "#dc2626" },
   { min: 200, label: "ヘルモードツミニスト", color: "#ea580c" },
   { min: 150, label: "ハードモードツミニスト", color: "#d97706" },
