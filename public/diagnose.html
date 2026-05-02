@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>積みプラ合計額診断｜TSUMITSUMI</title>
+<meta name="description" content="あなたの積みプラ、いくらになる？ 5問で総額とツミニストランクを診断。SNSシェアで仲間と比べよう。">
+<meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:title" content="積みプラ合計額診断｜TSUMITSUMI">
+<meta property="og:description" content="あなたの積みプラ、いくらになる？ 5問で総額とツミニストランクを診断。">
+<meta property="og:url" content="https://tsumitsumi.vercel.app/diagnose.html">
+<meta property="og:image" content="https://tsumitsumi.vercel.app/LOGO.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="積みプラ合計額診断｜TSUMITSUMI">
+<meta name="twitter:description" content="あなたの積みプラ、いくらになる？">
+<meta name="twitter:image" content="https://tsumitsumi.vercel.app/LOGO.png">
+<link rel="icon" type="image/png" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Reggae+One&family=M+PLUS+1p:wght@400;500;700;900&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050507;
+    --bg-deep: #000000;
+    --ink: #f8f8f0;
+    --ink-soft: #b8b8aa;
+    --neon-cyan: #00f5ff;
+    --neon-magenta: #ff2bd6;
+    --neon-yellow: #fff200;
+    --neon-green: #39ff14;
+    --neon-orange: #ff7700;
+    --neon-purple: #b200ff;
+    --line: #2a2a35;
+    --crt-glow: 0 0 8px currentColor, 0 0 24px currentColor;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-deep);
+    color: var(--ink);
+    font-family: "M PLUS 1p", sans-serif;
+    overflow-x: hidden;
+  }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(178, 0, 255, 0.15), transparent 60%),
+      radial-gradient(ellipse at 0% 100%, rgba(0, 245, 255, 0.10), transparent 50%),
+      radial-gradient(ellipse at 100% 100%, rgba(255, 43, 214, 0.10), transparent 50%),
+      var(--bg);
+    position: relative;
+  }
+  /* CRT scanlines overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.18) 3px,
+      rgba(0, 0, 0, 0.18) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+  /* CRT vignette */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.45) 100%);
+  }
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    7% { opacity: 0.94; }
+    8% { opacity: 1; }
+    33% { opacity: 0.97; }
+    34% { opacity: 1; }
+  }
+  body { animation: flicker 6s infinite; }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+  /* HEADER */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 48px;
+    font-family: "VT323", monospace;
+    font-size: 18px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+  }
+  .nav .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--neon-cyan);
+    text-shadow: var(--crt-glow);
+    text-decoration: none;
+    font-family: "DotGothic16", monospace;
+  }
+  .nav .brand img {
+    width: 28px;
+    height: 28px;
+    image-rendering: pixelated;
+  }
+  .nav a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    padding: 4px 12px;
+  }
+  .nav a:hover { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: heroIn 1s 0.1s both ease-out;
+  }
+  @keyframes heroIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero .preheader {
+    font-family: "VT323", monospace;
+    color: var(--neon-yellow);
+    font-size: 22px;
+    letter-spacing: 0.3em;
+    margin-bottom: 16px;
+    text-shadow: 0 0 8px var(--neon-yellow);
+    animation: blink 1.5s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
+  .hero h1 {
+    font-family: "DotGothic16", monospace;
+    font-size: clamp(40px, 9vw, 72px);
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    color: #fff;
+    text-shadow:
+      4px 4px 0 var(--neon-magenta),
+      8px 8px 0 var(--neon-cyan);
+    margin-bottom: 24px;
+  }
+  .hero .lede {
+    font-family: "M PLUS 1p", sans-serif;
+    font-size: 16px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .hero .lede strong { color: var(--neon-yellow); font-weight: 900; }
+
+  /* CRT FRAME */
+  .crt-frame {
+    border: 3px solid var(--ink-soft);
+    background: rgba(5, 5, 7, 0.85);
+    padding: 32px 24px;
+    position: relative;
+    margin-bottom: 32px;
+    box-shadow:
+      inset 0 0 80px rgba(0, 245, 255, 0.05),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 0 60px rgba(0, 245, 255, 0.10);
+  }
+  .crt-frame::before {
+    content: "";
+    position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+  }
+  .crt-frame .corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 12px var(--neon-cyan);
+  }
+  .crt-frame .corner.tl { top: -7px; left: -7px; }
+  .crt-frame .corner.tr { top: -7px; right: -7px; background: var(--neon-magenta); box-shadow: 0 0 12px var(--neon-magenta); }
+  .crt-frame .corner.bl { bottom: -7px; left: -7px; background: var(--neon-yellow); box-shadow: 0 0 12px var(--neon-yellow); }
+  .crt-frame .corner.br { bottom: -7px; right: -7px; background: var(--neon-green); box-shadow: 0 0 12px var(--neon-green); }
+
+  /* QUIZ */
+  .quiz-progress {
+    font-family: "VT323", monospace;
+    font-size: 16px;
+    color: var(--ink-soft);
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+  .quiz-progress .current { color: var(--neon-cyan); text-shadow: 0 0 6px var(--neon-cyan); }
+  .quiz-bar {
+    height: 6px;
+    background: var(--line);
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .quiz-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.2, 0.9, 0.2, 1);
+    box-shadow: 0 0 12px var(--neon-cyan);
+  }
+  .question {
+    display: none;
+  }
+  .question.active {
+    display: block;
+    animation: qIn 0.4s ease-out;
+  }
+  @keyframes qIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .q-prompt {
+    font-family: "DotGothic16", monospace;
+    font-size: clamp(20px, 4.5vw, 28px);
+    color: #fff;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .q-prompt::before {
+    content: "Q.";
+    color: var(--neon-magenta);
+    margin-right: 8px;
+    text-shadow: var(--crt-glow);
+  }
+  .q-help {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+    font-family: "M PLUS 1p", sans-serif;
+  }
+  .options {
+    display: grid;
+    gap: 10px;
+  }
+  .opt {
+    background: rgba(255, 255, 255, 0.02);
+    border: 2px solid var(--line);
+    color: var(--ink);
+    padding: 14px 18px;
+    text-align: left;
+    cursor: pointer;
+    font-family: "M PLUS 1p", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .opt::before {
+    content: "▶";
+    color: var(--ink-soft);
+    margin-right: 12px;
+    font-size: 12px;
+    transition: color 0.15s;
+  }
+  .opt:hover, .opt:focus-visible {
+    border-color: var(--neon-cyan);
+    color: #fff;
+    background: rgba(0, 245, 255, 0.06);
+    outline: none;
+  }
+  .opt:hover::before, .opt:focus-visible::before {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px var(--neon-cyan);
+  }
+  .opt:active { transform: scale(0.98); }
+
+  /* CALCULATING */
+  .calc {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .calc.active { display: block; }
+  .calc-text {
+    font-family: "VT323", monospace;
+    font-size: 32px;
+    color: var(--neon-cyan);
+    text-shadow: var(--crt-glow);
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+  }
+  .calc-text::after {
+    content: "_";
+    animation: blink 0.6s steps(2) infinite;
+  }
+  .calc-bar {
+    height: 16px;
+    border: 2px solid var(--ink-soft);
+    background: var(--bg-deep);
+    max-width: 360px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  .calc-bar-fill {
+    height: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--neon-magenta) 0px,
+      var(--neon-magenta) 8px,
+      var(--neon-cyan) 8px,
+      var(--neon-cyan) 16px
+    );
+    width: 0%;
+    animation: calcLoad 2.5s 0.2s forwards cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes calcLoad {
+    0% { width: 0%; }
+    20% { width: 40%; }
+    35% { width: 42%; }
+    65% { width: 78%; }
+    80% { width: 80%; }
+    100% { width: 100%; }
+  }
+
+  /* RESULT */
+  .result {
+    display: none;
+  }
+  .result.active { display: block; animation: qIn 0.5s ease-out; }
+  .result-banner {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .result-banner .label {
+    font-family: "VT323", monospace;
+    font-size: 22px;
+    color: var(--neon-yellow);
+    letter-spacing: 0.4em;
+    margin-bottom: 4px;
+    text-shadow: var(--crt-glow);
+  }
+  .result-banner .sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.2em;
+  }
+  .score-row {
+    display: grid;
+    place-items: center;
+    padding: 20px 0 32px;
+    border-bottom: 2px dashed var(--line);
+    margin-bottom: 24px;
+  }
+  .score-row .currency {
+    font-family: "VT323", monospace;
+    font-size: clamp(28px, 6vw, 36px);
+    color: var(--neon-magenta);
+    text-shadow: var(--crt-glow);
+    margin-bottom: -8px;
+  }
+  .score-row .score {
+    font-family: "VT323", monospace;
+    font-size: clamp(72px, 18vw, 128px);
+    line-height: 0.9;
+    color: var(--neon-cyan);
+    text-shadow:
+      0 0 20px var(--neon-cyan),
+      0 0 60px rgba(0, 245, 255, 0.6);
+    font-weight: normal;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-row .ranking-pct {
+    font-family: "M PLUS 1p", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 16px;
+    letter-spacing: 0.05em;
+  }
+  .score-row .ranking-pct b { color: var(--neon-yellow); font-weight: 700; }
+
+  .rank-badge {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .rank-badge .rank-tag {
+    display: inline-block;
+    background: var(--bg-deep);
+    border: 2px solid;
+    padding: 8px 20px 6px;
+    font-family: "VT323", monospace;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    margin-bottom: 12px;
+  }
+  .rank-badge .rank-name {
+    font-family: "DotGothic16", monospace;
+    font-size: clamp(24px, 6vw, 36px);
+    color: #fff;
+    line-height: 1.3;
+  }
+  .rank-badge .rank-name .deco {
+    color: var(--rank-color, var(--neon-cyan));
+    text-shadow: 0 0 16px var(--rank-color, var(--neon-cyan));
+  }
+
+  .vibe {
+    background: rgba(255, 242, 0, 0.05);
+    border-left: 4px solid var(--neon-yellow);
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    font-family: "M PLUS 1p", sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .vibe::before {
+    content: "あなたを表す一言：";
+    display: block;
+    font-size: 11px;
+    color: var(--neon-yellow);
+    letter-spacing: 0.3em;
+    margin-bottom: 6px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .stat {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--line);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat .stat-label {
+    font-family: "VT323", monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+  }
+  .stat .stat-value {
+    font-family: "DotGothic16", monospace;
+    font-size: 22px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px var(--neon-cyan);
+  }
+
+  /* ACTIONS */
+  .actions {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px 20px;
+    text-align: center;
+    font-family: "DotGothic16", monospace;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: transform 0.1s, box-shadow 0.15s;
+    position: relative;
+  }
+  .btn:active { transform: translateY(2px); }
+  .btn-primary {
+    background: var(--neon-cyan);
+    color: var(--bg-deep);
+    box-shadow:
+      0 4px 0 var(--neon-magenta),
+      0 4px 24px rgba(0, 245, 255, 0.5);
+  }
+  .btn-primary:hover {
+    box-shadow:
+      0 4px 0 var(--neon-magenta),
+      0 6px 36px rgba(0, 245, 255, 0.8);
+  }
+  .btn-x {
+    background: #fff;
+    color: #000;
+    box-shadow: 0 4px 0 var(--ink-soft);
+  }
+  .btn-x:hover { background: var(--neon-yellow); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 2px solid var(--line);
+  }
+  .btn-ghost:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+
+  /* CTA section */
+  .cta-block {
+    margin-top: 48px;
+    text-align: center;
+    padding: 32px 20px;
+    border-top: 2px solid var(--line);
+    border-bottom: 2px solid var(--line);
+  }
+  .cta-block h2 {
+    font-family: "DotGothic16", monospace;
+    font-size: clamp(20px, 5vw, 28px);
+    color: #fff;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  .cta-block h2 .hl { color: var(--neon-yellow); text-shadow: 0 0 12px var(--neon-yellow); }
+  .cta-block p {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+  .cta-block .btn { max-width: 360px; margin: 0 auto; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-family: "VT323", monospace;
+    font-size: 14px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+  }
+  footer a { color: var(--ink-soft); text-decoration: none; margin: 0 8px; }
+  footer a:hover { color: var(--neon-cyan); }
+
+  /* Hidden share canvas */
+  #share-canvas { display: none; }
+
+  @media (max-width: 480px) {
+    .crt-frame { padding: 24px 16px; }
+    .stats { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <nav class="nav">
+    <a class="brand" href="/">
+      <img src="/apple-touch-icon.png" alt="">
+      TSUMITSUMI
+    </a>
+    <a href="/">アプリへ →</a>
+  </nav>
+
+  <header class="hero">
+    <div class="preheader">▼ INSERT COIN ▼</div>
+    <h1>積みプラ<br>合計額診断</h1>
+    <p class="lede">
+      その積みプラ、いったい <strong>いくら</strong> になる？<br>
+      5問で総額・ランク・あなたを表す一言まで一気に診断。
+    </p>
+  </header>
+
+  <!-- QUIZ STAGE -->
+  <section id="stage-quiz" class="crt-frame">
+    <span class="corner tl"></span>
+    <span class="corner tr"></span>
+    <span class="corner bl"></span>
+    <span class="corner br"></span>
+
+    <div class="quiz-progress">
+      QUESTION <span class="current" id="q-current">01</span> / <span id="q-total">05</span>
+    </div>
+    <div class="quiz-bar"><div class="quiz-bar-fill" id="q-bar"></div></div>
+
+    <!-- Q1: 個数 -->
+    <div class="question active" data-q="1">
+      <div class="q-prompt">何個積んでいる？</div>
+      <div class="q-help">未開封・組立中すべて含めた、おおよその数</div>
+      <div class="options">
+        <button class="opt" data-v="5">10個未満（積み始めたばかり）</button>
+        <button class="opt" data-v="20">10〜30個</button>
+        <button class="opt" data-v="40">30〜50個</button>
+        <button class="opt" data-v="75">50〜100個</button>
+        <button class="opt" data-v="150">100〜200個</button>
+        <button class="opt" data-v="300">200個以上（聖域）</button>
+      </div>
+    </div>
+
+    <!-- Q2: ジャンル -->
+    <div class="question" data-q="2">
+      <div class="q-prompt">中心になっているのは？</div>
+      <div class="q-help">最も多いカテゴリを選択</div>
+      <div class="options">
+        <button class="opt" data-v="2200">ガンプラ HG / EG（〜3,000円）</button>
+        <button class="opt" data-v="4500">ガンプラ MG / RE/100（〜6,000円）</button>
+        <button class="opt" data-v="7500">ガンプラ RG / MGSD / フルメカ</button>
+        <button class="opt" data-v="20000">ガンプラ PG / MGEX（高級ライン）</button>
+        <button class="opt" data-v="3000">スケールモデル（戦車・車・船・飛行機）</button>
+        <button class="opt" data-v="5000">キャラクター・フィギュアライズ系</button>
+        <button class="opt" data-v="8500">プレバン限定品中心</button>
+        <button class="opt" data-v="15000">ガレージキット・FSS系</button>
+      </div>
+    </div>
+
+    <!-- Q3: 状態 -->
+    <div class="question" data-q="3">
+      <div class="q-prompt">今、何割が「積み」？</div>
+      <div class="q-help">未組立 + 組立中の割合（=積みプラ率）</div>
+      <div class="options">
+        <button class="opt" data-v="0.5">3割くらい（消化が追いついてる）</button>
+        <button class="opt" data-v="0.7">半分くらい（普通の積み師）</button>
+        <button class="opt" data-v="0.85">7〜8割（積みが勝ってる）</button>
+        <button class="opt" data-v="0.95">ほぼ全部積み（買うのが趣味）</button>
+        <button class="opt" data-v="1.0">100%、開封すらしていない</button>
+      </div>
+    </div>
+
+    <!-- Q4: 購入頻度 -->
+    <div class="question" data-q="4">
+      <div class="q-prompt">買うペースは？</div>
+      <div class="q-help">過去1年でだいたい</div>
+      <div class="options">
+        <button class="opt" data-v="0.9">月1個未満（じっくり派）</button>
+        <button class="opt" data-v="1.0">月1〜2個（標準）</button>
+        <button class="opt" data-v="1.1">月3〜5個（火がついてる）</button>
+        <button class="opt" data-v="1.2">月6個以上（手段が目的化）</button>
+        <button class="opt" data-v="1.35">セールで爆買い派（理性なき積み）</button>
+      </div>
+    </div>
+
+    <!-- Q5: 性格 -->
+    <div class="question" data-q="5">
+      <div class="q-prompt">あなたの言い分を選んで</div>
+      <div class="q-help">これがあなたを表す一言になります</div>
+      <div class="options">
+        <button class="opt" data-v="vibe-1">いつか作ろう…と思って早5年</button>
+        <button class="opt" data-v="vibe-2">買って満足、それも積みプラの楽しみ</button>
+        <button class="opt" data-v="vibe-3">作るより買うほうが圧倒的に速い</button>
+        <button class="opt" data-v="vibe-4">これは投資です（自分への）</button>
+        <button class="opt" data-v="vibe-5">老後の楽しみとしてキープしてる</button>
+        <button class="opt" data-v="vibe-6">家族には絶対バレてはいけない</button>
+        <button class="opt" data-v="vibe-7">俺の積みプラを舐めるな</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALCULATING STAGE -->
+  <section id="stage-calc" class="calc">
+    <div class="calc-text">CALCULATING</div>
+    <div class="calc-bar"><div class="calc-bar-fill"></div></div>
+  </section>
+
+  <!-- RESULT STAGE -->
+  <section id="stage-result" class="result">
+    <div class="crt-frame">
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner bl"></span>
+      <span class="corner br"></span>
+
+      <div class="result-banner">
+        <div class="label">YOUR SCORE</div>
+        <div class="sub">あなたの積みプラ総額</div>
+      </div>
+
+      <div class="score-row">
+        <div class="currency">¥</div>
+        <div class="score" id="score">0</div>
+        <div class="ranking-pct" id="ranking-pct">全国の積み師の中で <b>計算中…</b></div>
+      </div>
+
+      <div class="rank-badge">
+        <div class="rank-tag" id="rank-tag" style="border-color: var(--neon-cyan); color: var(--neon-cyan);">RANK</div>
+        <div class="rank-name"><span class="deco" id="rank-name">…</span></div>
+      </div>
+
+      <div class="vibe" id="vibe-text">…</div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">EST. KITS</div>
+          <div class="stat-value" id="stat-kits">…</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">STACK HEIGHT</div>
+          <div class="stat-value" id="stat-height">…</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-x" onclick="shareToX()">𝕏 でシェアする</button>
+        <button class="btn btn-ghost" onclick="downloadShareImage()">結果画像をダウンロード</button>
+        <button class="btn btn-ghost" onclick="restart()">もう一度やる</button>
+      </div>
+    </div>
+
+    <div class="cta-block">
+      <h2>毎月、これを<span class="hl">正確に</span>知りたい？</h2>
+      <p>
+        TSUMITSUMI は、JANバーコードを読むだけで積みプラの総額・ランクを<br>
+        いつでも確認できる積みプラ管理アプリ。<br>
+        登録不要・無料・ブラウザのみで動きます。
+      </p>
+      <a class="btn btn-primary" href="/">▶ TSUMITSUMI を開く</a>
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <a href="/">APP</a>
+      <a href="/manual.html">MANUAL</a>
+      <a href="/privacy.html">PRIVACY</a>
+      <a href="https://x.com/tsumitsumi_pla" target="_blank" rel="noopener noreferrer">@tsumitsumi_pla</a>
+    </div>
+    <div style="margin-top: 12px; opacity: 0.6;">© 2026 TSUMI TSUMI</div>
+  </footer>
+
+</div>
+
+<canvas id="share-canvas" width="1200" height="630"></canvas>
+
+<script>
+  /* ====== STATE ====== */
+  const TOTAL_QUESTIONS = 5;
+  const answers = { 1: null, 2: null, 3: null, 4: null, 5: null };
+  let currentQ = 1;
+  let resultData = null;
+
+  /* ====== VIBES ====== */
+  const VIBES = {
+    "vibe-1": "「いつか作ろう…と思って早5年。」 — でも明日も買うんでしょう。",
+    "vibe-2": "「買って満足、それも積みプラの楽しみ。」 — 完全肯定。あなたは正しい。",
+    "vibe-3": "「作るより買うほうが圧倒的に速い。」 — 物理法則と戦う積み師。",
+    "vibe-4": "「これは投資です（自分への）。」 — 配当はいつか作る楽しみ。",
+    "vibe-5": "「老後の楽しみとしてキープしてる。」 — 100歳まで積みは保つ。",
+    "vibe-6": "「家族には絶対バレてはいけない。」 — 押入れの戦略的配置に祈りを。",
+    "vibe-7": "「俺の積みプラを舐めるな。」 — その総額、確かに舐められない。",
+  };
+
+  /* ====== RANK SYSTEM (App.jsx の RANKS と同じ閾値) ====== */
+  const RANKS = [
+    { min: 1000, label: "天照大積ミ神", color: "#ffd700" },
+    { min: 900,  label: "最早、積み神様", color: "#ff66cc" },
+    { min: 800,  label: "神界の積み人", color: "#a78bfa" },
+    { min: 700,  label: "天界の積み人", color: "#67e8f9" },
+    { min: 600,  label: "地獄門の積み人", color: "#fb7185" },
+    { min: 500,  label: "地獄の一丁目の積み人", color: "#c084fc" },
+    { min: 300,  label: "ルナティックツミニスト", color: "#f87171" },
+    { min: 200,  label: "ヘルモードツミニスト", color: "#fb923c" },
+    { min: 150,  label: "ハードモードツミニスト", color: "#fbbf24" },
+    { min: 100,  label: "特級ツミニスト", color: "#facc15" },
+    { min: 80,   label: "上級ツミニスト", color: "#4ade80" },
+    { min: 50,   label: "中級ツミニスト", color: "#60a5fa" },
+    { min: 20,   label: "ビギナーツミニスト", color: "#9ca3af" },
+    { min: 0,    label: "ツミニスト見習い", color: "#9ca3af" },
+  ];
+  const getRank = (count) => RANKS.find(r => count >= r.min) || RANKS[RANKS.length - 1];
+
+  /* 全国分布の擬似パーセンタイル（ヒューリスティック） */
+  function rankingPct(count) {
+    if (count >= 500) return 0.5;
+    if (count >= 300) return 1.5;
+    if (count >= 200) return 3;
+    if (count >= 150) return 5;
+    if (count >= 100) return 9;
+    if (count >= 80)  return 14;
+    if (count >= 50)  return 22;
+    if (count >= 20)  return 40;
+    return 65;
+  }
+
+  /* ====== HANDLERS ====== */
+  document.querySelectorAll(".opt").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const q = btn.parentElement.parentElement.dataset.q;
+      const v = btn.dataset.v;
+      answers[q] = v;
+      goNext();
+    });
+  });
+
+  function goNext() {
+    if (currentQ < TOTAL_QUESTIONS) {
+      currentQ++;
+      updateQuiz();
+    } else {
+      runCalculation();
+    }
+  }
+
+  function updateQuiz() {
+    document.querySelectorAll(".question").forEach(q => q.classList.remove("active"));
+    document.querySelector(`.question[data-q="${currentQ}"]`).classList.add("active");
+    document.getElementById("q-current").textContent = String(currentQ).padStart(2, "0");
+    document.getElementById("q-total").textContent = String(TOTAL_QUESTIONS).padStart(2, "0");
+    document.getElementById("q-bar").style.width = (currentQ - 1) / TOTAL_QUESTIONS * 100 + "%";
+  }
+  updateQuiz();
+
+  function calculate() {
+    const count = parseInt(answers[1], 10);
+    const avgPrice = parseInt(answers[2], 10);
+    const stockRatio = parseFloat(answers[3]);
+    const paceMul = parseFloat(answers[4]);
+    const rawTotal = count * avgPrice * paceMul;
+    const stockTotal = Math.round(rawTotal * stockRatio / 100) * 100;
+    const stockKits = Math.round(count * stockRatio);
+    const rank = getRank(count);
+    const pct = rankingPct(count);
+    const heightCm = Math.round(stockKits * 8.5);
+    const heightLabel = heightCm >= 100
+      ? (heightCm / 100).toFixed(1) + "m"
+      : heightCm + "cm";
+    const vibe = VIBES[answers[5]] || VIBES["vibe-1"];
+    return { total: stockTotal, count: stockKits, rank, pct, heightLabel, vibe };
+  }
+
+  function runCalculation() {
+    document.getElementById("stage-quiz").style.display = "none";
+    document.getElementById("stage-calc").classList.add("active");
+    setTimeout(() => {
+      resultData = calculate();
+      document.getElementById("stage-calc").classList.remove("active");
+      document.getElementById("stage-result").classList.add("active");
+      revealResult(resultData);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 2700);
+  }
+
+  function revealResult(r) {
+    // Score counter animation
+    const scoreEl = document.getElementById("score");
+    const start = performance.now();
+    const dur = 1800;
+    function tick(now) {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = Math.round(r.total * eased / 100) * 100;
+      scoreEl.textContent = v.toLocaleString();
+      if (t < 1) requestAnimationFrame(tick);
+      else scoreEl.textContent = r.total.toLocaleString();
+    }
+    requestAnimationFrame(tick);
+
+    // Ranking pct
+    document.getElementById("ranking-pct").innerHTML =
+      `全国の積み師の中で 上位 <b>${r.pct}%</b>`;
+
+    // Rank badge
+    const rankNameEl = document.getElementById("rank-name");
+    const rankTagEl = document.getElementById("rank-tag");
+    rankNameEl.textContent = r.rank.label;
+    rankNameEl.style.setProperty("--rank-color", r.rank.color);
+    rankTagEl.style.borderColor = r.rank.color;
+    rankTagEl.style.color = r.rank.color;
+
+    // Vibe
+    document.getElementById("vibe-text").textContent = r.vibe;
+
+    // Stats
+    document.getElementById("stat-kits").textContent = r.count + " kits";
+    document.getElementById("stat-height").textContent = r.heightLabel;
+  }
+
+  function restart() {
+    currentQ = 1;
+    Object.keys(answers).forEach(k => answers[k] = null);
+    document.getElementById("stage-quiz").style.display = "";
+    document.getElementById("stage-result").classList.remove("active");
+    updateQuiz();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /* ====== SHARE ====== */
+  function generateShareImage() {
+    const r = resultData;
+    if (!r) return null;
+    const canvas = document.getElementById("share-canvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    // Background
+    ctx.fillStyle = "#050507";
+    ctx.fillRect(0, 0, W, H);
+    // Vignette
+    const grad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, W*0.7);
+    grad.addColorStop(0, "rgba(178,0,255,0.18)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    // Scanlines
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+    // Border
+    ctx.strokeStyle = "#b8b8aa";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(40, 40, W-80, H-80);
+    // Corners
+    const corners = [
+      [40, 40, "#00f5ff"], [W-40, 40, "#ff2bd6"],
+      [40, H-40, "#fff200"], [W-40, H-40, "#39ff14"],
+    ];
+    corners.forEach(([x, y, c]) => {
+      ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 24;
+      ctx.fillRect(x-12, y-12, 24, 24);
+    });
+    ctx.shadowBlur = 0;
+    // Title
+    ctx.fillStyle = "#fff200";
+    ctx.font = "bold 28px 'VT323', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("▼ YOUR SCORE ▼", W/2, 130);
+    // Subtitle
+    ctx.fillStyle = "#b8b8aa";
+    ctx.font = "20px 'M PLUS 1p', sans-serif";
+    ctx.fillText("積みプラ総額", W/2, 165);
+    // Score
+    ctx.fillStyle = "#00f5ff";
+    ctx.shadowColor = "#00f5ff"; ctx.shadowBlur = 30;
+    ctx.font = "bold 36px 'VT323', monospace";
+    ctx.fillText("¥", W/2 - 230, 295);
+    ctx.font = "bold 140px 'VT323', monospace";
+    ctx.fillText(r.total.toLocaleString(), W/2 + 30, 320);
+    ctx.shadowBlur = 0;
+    // Rank label
+    ctx.fillStyle = "#b8b8aa";
+    ctx.font = "18px 'VT323', monospace";
+    ctx.fillText("─── RANK ───", W/2, 380);
+    // Rank name
+    ctx.fillStyle = r.rank.color;
+    ctx.shadowColor = r.rank.color; ctx.shadowBlur = 20;
+    ctx.font = "bold 44px 'M PLUS 1p', sans-serif";
+    ctx.fillText(r.rank.label, W/2, 440);
+    ctx.shadowBlur = 0;
+    // Stats
+    ctx.fillStyle = "#fff";
+    ctx.font = "20px 'M PLUS 1p', sans-serif";
+    ctx.fillText(`${r.count}個 / 高さ ${r.heightLabel} / 上位 ${r.pct}%`, W/2, 495);
+    // Brand
+    ctx.fillStyle = "#00f5ff";
+    ctx.font = "bold 22px 'M PLUS 1p', sans-serif";
+    ctx.fillText("TSUMITSUMI で診断", W/2, 555);
+    ctx.fillStyle = "#b8b8aa";
+    ctx.font = "16px 'VT323', monospace";
+    ctx.fillText("tsumitsumi.vercel.app/diagnose.html", W/2, 580);
+    return canvas;
+  }
+
+  function downloadShareImage() {
+    const c = generateShareImage();
+    if (!c) return;
+    const a = document.createElement("a");
+    a.download = `tsumitsumi-${resultData.total}.png`;
+    a.href = c.toDataURL("image/png");
+    a.click();
+  }
+
+  function shareToX() {
+    if (!resultData) return;
+    const r = resultData;
+    const text = `私の積みプラ総額：¥${r.total.toLocaleString()}\nランク：${r.rank.label}\n\nあなたも診断してみよう👇\n#積みプラ診断 #ツミツミ`;
+    const url = "https://tsumitsumi.vercel.app/diagnose.html";
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(intent, "_blank", "noopener,noreferrer");
+  }
+</script>
+</body>
+</html>
