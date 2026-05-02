@@ -1134,8 +1134,8 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       <div style={hs.section}>
         <div style={hs.sectionTitle}>🗑️ 画像を整理して容量を節約</div>
         <div style={hs.desc}>
-          JANに紐づくキットの「ユーザー登録画像（端末からアップロードした写真）」を削除し、Yahoo画像URLに置き換えます。<br/>
-          完成写真とJANなしのキットの画像は残ります。
+          ユーザーが登録したキット画像をすべて削除し、デフォルトの画像に戻します。<br/>
+          JAN登録がないキットの画像と完成品の画像は削除されません。
         </div>
         <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 10 }}>対象: {resetTargetCount}件のキット</div>
         <button
