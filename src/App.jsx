@@ -63,7 +63,7 @@ const RANKS = [
   { min: 500, label: "積ミ模型 地獄の一丁目店", color: "#7c3aed" },
   { min: 300, label: "ルナティックツミニスト", color: "#dc2626" },
   { min: 200, label: "ヘルモードツミニスト", color: "#ea580c" },
-  { min: 150, label: "ライフイズツミニスト", color: "#d97706" },
+  { min: 150, label: "ハードモードツミニスト", color: "#d97706" },
   { min: 100, label: "特級ツミニスト", color: "#ca8a04" },
   { min: 80,  label: "上級ツミニスト", color: "#16a34a" },
   { min: 50,  label: "中級ツミニスト", color: "#2563eb" },
