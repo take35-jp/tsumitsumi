@@ -1326,16 +1326,26 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
   const [editingTag, setEditingTag] = useState(null);
   const [editValue, setEditValue] = useState("");
 
-  // タグの一覧と使用件数（キット使用数 + マスター登録のみのタグは0件）
+  // 単キットの希望小売価格（メイン総額バーと同じ retailPrice → price フォールバック）
+  const getKitPrice = (k) => {
+    const rp = parseInt((k.retailPrice || "").toString().replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(rp) && rp > 0) return rp;
+    const p = parseInt((k.price || "").toString().replace(/[^0-9]/g, ""), 10);
+    return isNaN(p) ? 0 : p;
+  };
+
+  // タグの一覧 / 使用件数 / 希望小売価格の合計（マスター登録のみのタグは件数も価格も0）
   const tagUsage = (() => {
     const m = new Map();
     for (const k of kits) {
+      const kitTotalPrice = getKitPrice(k) * (k.count || 1);
       for (const t of (k.tags || [])) {
-        m.set(t, (m.get(t) || 0) + 1);
+        const cur = m.get(t) || { count: 0, totalPrice: 0 };
+        m.set(t, { count: cur.count + 1, totalPrice: cur.totalPrice + kitTotalPrice });
       }
     }
     for (const t of tagMasterList) {
-      if (!m.has(t)) m.set(t, 0);
+      if (!m.has(t)) m.set(t, { count: 0, totalPrice: 0 });
     }
     return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], "ja"));
   })();
@@ -1408,7 +1418,7 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {tagUsage.map(([tag, count]) => (
+          {tagUsage.map(([tag, { count, totalPrice }]) => (
             <div key={tag} style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
               {editingTag === tag ? (
                 <>
@@ -1429,7 +1439,7 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
               ) : (
                 <>
                   <span style={{ flex: 1, fontSize: 13, color: "#111", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
-                    #{tag}<span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{count}件</span>
+                    #{tag}<span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{count}件{totalPrice > 0 ? ` ¥${totalPrice.toLocaleString()}` : ""}</span>
                   </span>
                   <button
                     style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
