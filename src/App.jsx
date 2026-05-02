@@ -1088,7 +1088,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.08", date: "2026/05/02", isNew: true, items: ["並び順・表示モードの永続化機能を追加", "更新履歴の文言を簡潔化"] },
+    { ver: "v1.09", date: "2026/05/02", isNew: true, items: ["金額の編集が総額に反映されない不具合を修正"] },
+    { ver: "v1.08", date: "2026/05/02", isNew: false, items: ["並び順・表示モードの永続化機能を追加", "更新履歴の文言を簡潔化"] },
     { ver: "v1.07", date: "2026/05/02", isNew: false, items: ["プライバシーポリシーを独立ページに分離", "アフィリエイト広告表記を追加"] },
     { ver: "v1.05", date: "2026/05/02", isNew: false, items: ["商品画像の補完取得機能を追加"] },
     { ver: "v1.04", date: "2026/05/01", isNew: false, items: ["価格欄が勝手に埋まる不具合を修正", "新規登録時に前回タグが残る不具合を修正", "タグ削除ボタンを改善"] },
@@ -1175,10 +1176,20 @@ function HelpModal({ onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.08 */}
+          {/* v1.09 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.09</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・金額の編集が総額に反映されない不具合を修正
+            </div>
+          </div>
+          {/* v1.08 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.08</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
             </div>
@@ -1196,16 +1207,6 @@ function HelpModal({ onClose }) {
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・プライバシーポリシーを独立ページに分離<br/>
               ・アフィリエイト広告表記を追加
-            </div>
-          </div>
-          {/* v1.05 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.05</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・商品画像の補完取得機能を追加
             </div>
           </div>
         </div>
