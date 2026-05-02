@@ -2041,7 +2041,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderMode, setReorderMode] = useState(false);
   const [viewMode, setViewMode] = useState("list");
-  const [sortKey, setSortKey] = useState("date"); // custom | name | date | purchaseDate
+  const [sortKey, setSortKey] = useState("date"); // name | date | purchaseDate
   const [sortDir, setSortDir] = useState("desc");
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
@@ -2056,7 +2056,7 @@ export default function App() {
     try {
       const saved = JSON.parse(localStorage.getItem("tsumitsumi_view_settings") || "{}");
       if (["list", "grid"].includes(saved.viewMode)) setViewMode(saved.viewMode);
-      if (["custom", "name", "date", "purchaseDate"].includes(saved.sortKey)) setSortKey(saved.sortKey);
+      if (["name", "date", "purchaseDate"].includes(saved.sortKey)) setSortKey(saved.sortKey);
       if (["asc", "desc"].includes(saved.sortDir)) setSortDir(saved.sortDir);
     } catch { /* ignore */ }
   }, []);
@@ -2516,7 +2516,6 @@ export default function App() {
               onClick={() => setViewMode("grid")}>⊞ サムネ</button>
             <select style={{ fontSize: 11, padding: "3px 6px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", flexShrink: 0 }}
               value={sortKey} onChange={(e) => { setSortKey(e.target.value); setReorderMode(false); }}>
-              <option value="custom">手動順</option>
               <option value="name">名前順</option>
               <option value="date">登録順</option>
               <option value="purchaseDate">購入日順</option>
