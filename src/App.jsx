@@ -2156,12 +2156,12 @@ export default function App() {
     const estSec = Math.ceil(targets.length * 1);
     const ok = window.confirm(
       "⚠️ 警告\n\n" +
-      targets.length + "件のキットの「ユーザー登録画像」を削除し、JANに紐づくYahoo画像URLに置き換えます。\n\n" +
+      targets.length + "件のキットの「ユーザー登録画像」を削除し、JANに紐づくデフォルトの画像URLに置き換えます。\n\n" +
       "⛔ 削除した画像は元に戻せません（バックアップからのみ復元可）\n\n" +
       "【処理内容】\n" +
-      "・JANあり + ユーザー登録画像 → Yahoo画像URLに置換\n" +
+      "・JANあり + ユーザー登録画像 → デフォルトの画像URLに置換\n" +
       "・JANなしの画像 / 完成写真 → そのまま残す\n" +
-      "・Yahoo画像が取得できないキット → そのまま残す\n\n" +
+      "・デフォルトの画像が取得できないキット → そのまま残す\n\n" +
       "処理時間: 約" + estSec + "秒\n\n" +
       "続行しますか？"
     );
@@ -2193,7 +2193,7 @@ export default function App() {
     }
     setImageResetLoading(false);
     setImageResetProgress({ current: 0, total: 0 });
-    alert("✅ 完了\n\n更新: " + updated + "件\nYahoo画像なし: " + notFound + "件\n失敗: " + failed + "件");
+    alert("✅ 完了\n\n更新: " + updated + "件\nデフォルトの画像なし: " + notFound + "件\n失敗: " + failed + "件");
   };
 
   const handleEdit = (kit) => { setForm({ ...kit, retailPrice: kit.retailPrice || kit.price || "" }); setEditId(kit.id); setShowForm(true); setDetail(null); };
