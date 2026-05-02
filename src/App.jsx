@@ -2827,9 +2827,29 @@ export default function App() {
                 </div>
               )}
               {!detail.completed && (
-                <button style={s.wantBtn} onClick={() => handleWant(detail)}>
-                  🙋 これを作ってくれる人に譲りたい！とポストする
-                </button>
+                <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                  <button style={{ ...s.wantBtn, marginTop: 0, width: "auto", flex: 1 }} onClick={() => handleWant(detail)}>
+                    🙋 これを作ってくれる人に譲りたい！とポストする
+                  </button>
+                  <a href="/sell.html" target="_blank" rel="noopener noreferrer"
+                    style={{
+                      flex: 1,
+                      padding: "12px 8px",
+                      background: "#ecfdf5",
+                      color: "#059669",
+                      border: "1.5px solid #a7f3d0",
+                      borderRadius: 12,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      textAlign: "center",
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                    💰 積みを売る
+                  </a>
+                </div>
               )}
               <div style={s.modalBtns}>
                 <button style={s.editBtn} onClick={() => handleEdit(detail)}>編集</button>
