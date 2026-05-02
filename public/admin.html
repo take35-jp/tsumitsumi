@@ -3126,6 +3126,10 @@ function showMsg(id, text, type) {
       }
 
       const SLEEP_MS = 1000;
+      const SKIP_KEY = 'tsumitsumi_admin_image_skip';
+      let skipSet;
+      try { skipSet = new Set(JSON.parse(localStorage.getItem(SKIP_KEY) || '[]')); }
+      catch (_) { skipSet = new Set(); }
 
       // 1. JANあり&画像なしの商品を全件取得(ページネーション)
       msgEl.innerHTML = '<div class="msg msg-info">画像なし商品を抽出中...</div>';
@@ -3154,8 +3158,16 @@ function showMsg(id, text, type) {
         return;
       }
 
+      // 前回までにスキップ済みのJANを除外
+      const beforeFilter = targets.length;
+      targets = targets.filter(t => !skipSet.has(t.jan));
+      const skippedFromSet = beforeFilter - targets.length;
+
       if (targets.length === 0) {
-        msgEl.innerHTML = '<div class="msg msg-ok">✅ 画像なしの商品は見つかりませんでした(JANあり商品で抽出)</div>';
+        const note = skippedFromSet > 0
+          ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は除外)'
+          : '(JANあり商品で抽出)';
+        msgEl.innerHTML = '<div class="msg msg-ok">✅ 画像取得対象はありませんでした ' + note + '</div>';
         return;
       }
 
@@ -3163,6 +3175,7 @@ function showMsg(id, text, type) {
       const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
       const ok = confirm(
         '画像URL未設定の商品 ' + targets.length + ' 件を全件処理します。\n\n' +
+        (skippedFromSet > 0 ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は今回除外)\n\n' : '') +
         '各商品をYahoo!ショッピングAPIで検索し、最初にヒットした画像URLをマスタに登録します。\n' +
         'API負荷軽減のため1件あたり1秒の間隔で処理します。\n' +
         '推定処理時間: 約 ' + estMin + ' 分\n\n' +
@@ -3213,6 +3226,10 @@ function showMsg(id, text, type) {
 
           if (!imageUrl) {
             notFound++;
+            if (t.jan) {
+              skipSet.add(t.jan);
+              try { localStorage.setItem(SKIP_KEY, JSON.stringify([...skipSet])); } catch (_) {}
+            }
             await new Promise(r => setTimeout(r, SLEEP_MS));
             continue;
           }
