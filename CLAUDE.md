@@ -27,7 +27,7 @@
 
 ## 2. 現在のバージョン
 
-**v1.10（2026/05/02）**
+**v1.11（2026/05/03）**
 
 ### バージョニングルール
 - リリース時点（2026/5/1）= v1.00
@@ -47,6 +47,7 @@
 - **v1.08**: 並び順・表示モードの永続化（useEffect方式・初回マウント保存スキップ）＋更新履歴文言の簡潔化
 - **v1.09**: 金額編集が総額に反映されない不具合を修正（getEffectivePriceがkit.priceにフォールバックする際、編集フォームはretailPriceしか書き換えないため、クリアや0入力が無視されていた。handleEditでform.retailPriceにkit.priceを補填、handleSubmitでkit.price=form.retailPriceを同期）
 - **v1.10**: 上位ランク（600〜1000「天照大積ミ神」等）追加＋既存ラベル微調整／タグ編集モーダル新設（作成・編集・削除＋件数・希望小売価格合計表示、tagMasterListをlocalStorage永続化）／一括編集モードのタグ操作を「解除」ピル1つに集約（onDeleteMaster関連UIとhandleRemoveFromTagMaster削除）／並び順から「手動順」を削除しデフォルトを登録順に統一／ヘルプに「画像を整理して容量を節約」ボタンを追加（base64画像→Yahoo画像URL置換、警告confirmあり、completedPhotoUrlとJANなしは保護）
+- **v1.11**: ダークモード対応（CSSフィルタ方式：`filter: invert(1) hue-rotate(180deg)` でbody反転＋img/video/iframeを再反転）。`localStorage["tsumitsumi_theme"]`で永続化、初回はOSの`prefers-color-scheme`に従う。手動選択優先。フラッシュ防止のため`index.html`の`<head>`に同期スクリプトを置きReact描画前に`<html data-theme=...>`を適用。Appコンポーネント内のapply useEffectは初回マウントスキップで頭スクリプトの適用を上書きしない。トグルはHelpModal「使い方はコチラ」の右隣に配置
 
 ---
 
