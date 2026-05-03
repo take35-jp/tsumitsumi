@@ -2677,8 +2677,15 @@ function showMsg(id, text, type) {
 
       const ok = confirm(
         `未対応かつマスタ未登録の報告 ${unmastered.length} 件を、マスタに一括登録します。\n\n` +
-        `※ 価格(retail_price)は登録されません(報告経由のため信頼性検証が必要)\n` +
-        `※ JANのある報告は upsert(JANで重複除去)、JANなしは商品名のみで新規追加されます\n\n` +
+        `続けて以下の自動補完も連続で実行します:\n` +
+        `[2/5] 商品名の一括クリーニング (全件対象)\n` +
+        `[3/5] スケール・シリーズ自動補完 (直近200件)\n` +
+        `[4/5] 希望小売価格の自動取得 (JANあり&未設定全件、1件/1秒)\n` +
+        `[5/5] 画像URLの自動取得 (JANあり&未設定全件、1件/1秒)\n\n` +
+        `※ 価格(retail_price)は登録時には設定されません。[4/5]で外部取得します\n` +
+        `※ JANのある報告は upsert(JANで重複除去)、JANなしは商品名のみで新規追加\n` +
+        `※ [4/5][5/5]は対象数によって数十分かかる場合があります\n` +
+        `※ 取得失敗のJANは次回からスキップされます\n\n` +
         `続行しますか？`
       );
       if (!ok) return;
@@ -2805,9 +2812,29 @@ function showMsg(id, text, type) {
         await new Promise(r => setTimeout(r, 100));
       }
 
-      let summary = '✅ 一括登録完了:新規追加 ' + added + '件 / 既存スキップ ' + skipped + '件';
-      if (failed > 0) summary += ' / 失敗 ' + failed + '件';
-      msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
+      const regSummary = '[1/5] 登録完了:新規 ' + added + '件 / 既存スキップ ' + skipped + '件' + (failed > 0 ? ' / 失敗 ' + failed + '件' : '');
+
+      // 続けて 4 つの自動補完を順次実行（個別 confirm はスキップ）
+      try {
+        msgEl.innerHTML = '<div class="msg msg-info">' + regSummary + '<br>[2/5] 商品名クリーニング中... (master-msg に詳細進捗)</div>';
+        await bulkCleanAllNames(true);
+
+        msgEl.innerHTML = '<div class="msg msg-info">' + regSummary + '<br>[3/5] スケール・シリーズ自動補完中... (master-msg に詳細進捗)</div>';
+        await bulkFillScaleSeries(true);
+
+        msgEl.innerHTML = '<div class="msg msg-info">' + regSummary + '<br>[4/5] 希望小売価格取得中... (数分〜数十分かかる場合あり、master-msg に進捗)</div>';
+        await bulkFetchMissingPrices(true);
+
+        msgEl.innerHTML = '<div class="msg msg-info">' + regSummary + '<br>[5/5] 画像URL取得中... (数分〜数十分かかる場合あり、master-msg に進捗)</div>';
+        await bulkFetchMissingImages(true);
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg msg-err">' + regSummary + '<br>⚠️ 自動補完でエラー: ' + escEdit(String(e && e.message ? e.message : e)) + '<br>※ 登録は完了済み。マスタ一覧タブの一括ボタンで個別に再実行できます</div>';
+        await loadMaster();
+        await loadReports();
+        return;
+      }
+
+      msgEl.innerHTML = '<div class="msg msg-ok">✅ 全 5 工程完了 ／ ' + regSummary.replace('[1/5] ', '') + '<br>クリーニング・スケール補完・価格取得・画像取得は順次実行済み（詳細はマスタ一覧タブの master-msg を参照）</div>';
 
       // マスタとレポートを再読み込み
       await loadMaster();
@@ -2899,7 +2926,7 @@ function showMsg(id, text, type) {
     }
 
     // マスタ全件の商品名にcleanNameをかけて変化があるものだけ更新する
-    async function bulkCleanAllNames() {
+    async function bulkCleanAllNames(silent = false) {
       const msgEl = document.getElementById('master-msg');
       if (!msgEl) {
         alert('メッセージ表示領域が見つかりません');
@@ -2947,14 +2974,16 @@ function showMsg(id, text, type) {
       ).join('\n');
       const morePreview = targets.length > 10 ? '\n... ほか ' + (targets.length - 10) + '件' : '';
 
-      const ok = confirm(
-        '商品名のクリーニングで ' + targets.length + ' 件の変更があります(全' + allProducts.length + '件中)。\n\n' +
-        '【変更プレビュー(先頭10件)】\n' + previewLines + morePreview + '\n\n' +
-        '実行すると元には戻せません(個別にExcel経由で復旧は可能)。続行しますか？'
-      );
-      if (!ok) {
-        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
-        return;
+      if (!silent) {
+        const ok = confirm(
+          '商品名のクリーニングで ' + targets.length + ' 件の変更があります(全' + allProducts.length + '件中)。\n\n' +
+          '【変更プレビュー(先頭10件)】\n' + previewLines + morePreview + '\n\n' +
+          '実行すると元には戻せません(個別にExcel経由で復旧は可能)。続行しますか？'
+        );
+        if (!ok) {
+          msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+          return;
+        }
       }
 
       // 実行
@@ -3113,7 +3142,7 @@ function showMsg(id, text, type) {
     }
 
     // スケール・シリーズが空のマスタを商品名から推測して自動補完する
-    async function bulkFillScaleSeries() {
+    async function bulkFillScaleSeries(silent = false) {
       const msgEl = document.getElementById('master-msg');
       if (!msgEl) {
         alert('メッセージ表示領域が見つかりません');
@@ -3172,19 +3201,21 @@ function showMsg(id, text, type) {
       }).join('\n');
       const morePreview = targets.length > 15 ? '\n... ほか ' + (targets.length - 15) + '件' : '';
 
-      const ok = confirm(
-        '自動補完で ' + targets.length + ' 件の更新があります(直近200件中、空のもの ' + allProducts.length + ' 件が対象)。\n\n' +
-        '【内訳】\n' +
-        '・スケールのみ補完: ' + scaleOnly + '件\n' +
-        '・シリーズのみ補完: ' + seriesOnly + '件\n' +
-        '・両方補完: ' + both + '件\n\n' +
-        '【プレビュー(先頭15件)】\n' + previewLines + morePreview + '\n\n' +
-        '※ 既に値があるものは上書きしません(空のもののみ対象)\n\n' +
-        '実行しますか？'
-      );
-      if (!ok) {
-        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
-        return;
+      if (!silent) {
+        const ok = confirm(
+          '自動補完で ' + targets.length + ' 件の更新があります(直近200件中、空のもの ' + allProducts.length + ' 件が対象)。\n\n' +
+          '【内訳】\n' +
+          '・スケールのみ補完: ' + scaleOnly + '件\n' +
+          '・シリーズのみ補完: ' + seriesOnly + '件\n' +
+          '・両方補完: ' + both + '件\n\n' +
+          '【プレビュー(先頭15件)】\n' + previewLines + morePreview + '\n\n' +
+          '※ 既に値があるものは上書きしません(空のもののみ対象)\n\n' +
+          '実行しますか？'
+        );
+        if (!ok) {
+          msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+          return;
+        }
       }
 
       msgEl.innerHTML = '<div class="msg msg-info">自動補完中... (0/' + targets.length + ')</div>';
@@ -3223,7 +3254,7 @@ function showMsg(id, text, type) {
     }
 
     // 画像URL未設定 (image_url が NULL/空) の商品をJAN検索で画像URLを取得して埋める
-    async function bulkFetchMissingImages() {
+    async function bulkFetchMissingImages(silent = false) {
       const msgEl = document.getElementById('master-msg');
       if (!msgEl) {
         alert('メッセージ表示領域が見つかりません');
@@ -3277,20 +3308,22 @@ function showMsg(id, text, type) {
       }
 
       // 確認ダイアログ
-      const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
-      const ok = confirm(
-        '画像URL未設定の商品 ' + targets.length + ' 件を全件処理します。\n\n' +
-        (skippedFromSet > 0 ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は今回除外)\n\n' : '') +
-        '各商品をYahoo!ショッピングAPIで検索し、最初にヒットした画像URLをマスタに登録します。\n' +
-        'API負荷軽減のため1件あたり1秒の間隔で処理します。\n' +
-        '推定処理時間: 約 ' + estMin + ' 分\n\n' +
-        '⚠️ 処理中はadminのタブを閉じないでください\n' +
-        '⚠️ 取得失敗(Yahooにヒットしない/JANが古い)はスキップされます\n\n' +
-        '続行しますか？'
-      );
-      if (!ok) {
-        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
-        return;
+      if (!silent) {
+        const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
+        const ok = confirm(
+          '画像URL未設定の商品 ' + targets.length + ' 件を全件処理します。\n\n' +
+          (skippedFromSet > 0 ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は今回除外)\n\n' : '') +
+          '各商品をYahoo!ショッピングAPIで検索し、最初にヒットした画像URLをマスタに登録します。\n' +
+          'API負荷軽減のため1件あたり1秒の間隔で処理します。\n' +
+          '推定処理時間: 約 ' + estMin + ' 分\n\n' +
+          '⚠️ 処理中はadminのタブを閉じないでください\n' +
+          '⚠️ 取得失敗(Yahooにヒットしない/JANが古い)はスキップされます\n\n' +
+          '続行しますか？'
+        );
+        if (!ok) {
+          msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+          return;
+        }
       }
 
       // 2. 1件ずつJAN検索→画像URL取得→マスタ更新
@@ -3379,7 +3412,7 @@ function showMsg(id, text, type) {
 
     // 希望小売価格未設定 (retail_price が NULL) の商品を /api/admin-search?action=retail-price で取得して埋める
     // 一括処理ではプレバン経由のヒットを使わない(name を渡さない → ホビーサーチ + Yahoo のみ)
-    async function bulkFetchMissingPrices() {
+    async function bulkFetchMissingPrices(silent = false) {
       const msgEl = document.getElementById('master-msg');
       if (!msgEl) {
         alert('メッセージ表示領域が見つかりません');
@@ -3433,24 +3466,26 @@ function showMsg(id, text, type) {
       }
 
       // 確認ダイアログ
-      const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
-      const ok = confirm(
-        '希望小売価格未設定の商品 ' + targets.length + ' 件を全件処理します。\n\n' +
-        (skippedFromSet > 0 ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は今回除外)\n\n' : '') +
-        '【取得元】\n' +
-        '・ホビーサーチ (JAN検索＋gtin13照合)\n' +
-        '・Yahoo Shopping (priceLabel.fixedPrice)\n' +
-        '※ プレミアムバンダイは商品名検索のため一括処理では使用しません(誤マッチ防止)\n\n' +
-        '各商品をAPIで照会し、希望小売価格をマスタに登録します。\n' +
-        'API負荷軽減のため1件あたり1秒の間隔で処理します。\n' +
-        '推定処理時間: 約 ' + estMin + ' 分\n\n' +
-        '⚠️ 処理中はadminタブを閉じないでください\n' +
-        '⚠️ 取得失敗のJANは次回からスキップされます\n\n' +
-        '続行しますか？'
-      );
-      if (!ok) {
-        msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
-        return;
+      if (!silent) {
+        const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
+        const ok = confirm(
+          '希望小売価格未設定の商品 ' + targets.length + ' 件を全件処理します。\n\n' +
+          (skippedFromSet > 0 ? '(前回までにスキップ済み ' + skippedFromSet + ' 件は今回除外)\n\n' : '') +
+          '【取得元】\n' +
+          '・ホビーサーチ (JAN検索＋gtin13照合)\n' +
+          '・Yahoo Shopping (priceLabel.fixedPrice)\n' +
+          '※ プレミアムバンダイは商品名検索のため一括処理では使用しません(誤マッチ防止)\n\n' +
+          '各商品をAPIで照会し、希望小売価格をマスタに登録します。\n' +
+          'API負荷軽減のため1件あたり1秒の間隔で処理します。\n' +
+          '推定処理時間: 約 ' + estMin + ' 分\n\n' +
+          '⚠️ 処理中はadminタブを閉じないでください\n' +
+          '⚠️ 取得失敗のJANは次回からスキップされます\n\n' +
+          '続行しますか？'
+        );
+        if (!ok) {
+          msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>';
+          return;
+        }
       }
 
       // 2. 1件ずつ価格取得 → マスタ更新
