@@ -673,16 +673,16 @@
   <section>
     <h2><span class="num">1.0</span>本書の目的<span class="en">PURPOSE</span></h2>
     <p>
-      積みプラの管理に使えるツールは複数存在する。本仕様書は、それらを <strong>10 項目の機能基準</strong> で中立的に評価し、
-      利用者の規模・利用環境・予算に応じた選択指針を提示するものである。本書の発行元は TSUMITSUMI 開発元（TSUMI TSUMI）であり、
-      自社サービスの長所のみならず<strong>短所も明記</strong>する。
+      積みプラの管理に使えるツールは複数存在する。本仕様書は、模型管理に特化した代表的な 3 サービス（<strong>TSUMITSUMI / Tsumina / GUNPLAB</strong>）と、
+      汎用の比較対象として <strong>Excel/スプレッドシート</strong> を加えた 4 ツールを <strong>10 項目の機能基準</strong> で中立的に評価する。
+      本書の発行元は TSUMITSUMI 開発元（TSUMI TSUMI）であり、自社サービスの長所のみならず<strong>短所も明記</strong>する。
     </p>
 
     <div class="tldr">
       <ol>
-        <li>数十〜数百個の積みプラを管理するなら、ツール選びで <b>手間が 10 倍違う</b>。</li>
-        <li>模型に特化したツールと汎用ツールでは <b>価格自動取得・JAN登録</b> に決定的な差がある。</li>
-        <li>選定基準は ① <b>規模（積みの個数）</b>、② <b>環境（PC/モバイル）</b>、③ <b>予算</b> の 3 軸でほぼ決まる。</li>
+        <li>模型管理特化アプリは <b>JAN登録 / 状態管理</b> はおおむね揃う。差別化点はそれ以外の機能にある。</li>
+        <li><b>価格自動取得</b>（TSUMITSUMI）、<b>クラウド同期</b>（GUNPLAB）、<b>SNSシェア統計</b>（Tsumina）など、各アプリに核となる強みがある。</li>
+        <li>選定基準は ① <b>登録規模</b>、② <b>PC/モバイル/Webの使い分け</b>、③ <b>必須機能（価格・塗料・同期 etc.）</b> の 3 軸でほぼ決まる。</li>
       </ol>
     </div>
   </section>
@@ -690,7 +690,7 @@
   <!-- SECTION: COMPARISON MATRIX -->
   <section>
     <h2><span class="num">2.0</span>機能比較マトリクス<span class="en">COMPARISON MATRIX</span></h2>
-    <p>5 つの管理方法を 10 機能で比較。記号は ◎ 強い／○ 標準／△ 限定的／× なし。</p>
+    <p>4 つの管理方法を 10 機能で比較。記号は ◎ 強い／○ 標準／△ 限定的／× なし／? 公式情報未確認。</p>
 
     <div class="table-wrap">
       <table class="cmp">
@@ -699,9 +699,8 @@
             <th style="text-align:left; padding-left:16px;">機能 / Feature</th>
             <th class="tsumi">TSUMITSUMI<span class="ja">本サービス</span></th>
             <th>EXCEL<span class="ja">自作スプレッドシート</span></th>
-            <th>COLLECT<span class="ja">汎用コレクションアプリ</span></th>
-            <th>PAPER<span class="ja">紙ノート</span></th>
-            <th>NOTE<span class="ja">メモアプリ / Notion</span></th>
+            <th>TSUMINA<span class="ja">iOS / Android アプリ</span></th>
+            <th>GUNPLAB<span class="ja">Web アプリ</span></th>
           </tr>
         </thead>
         <tbody>
@@ -709,71 +708,69 @@
             <td class="feature">JANバーコード自動登録<span class="key">JAN-AUTO</span></td>
             <td class="tsumi-col"><span class="mark excellent">◎</span></td>
             <td><span class="mark no">×</span></td>
-            <td><span class="mark partial">△</span></td>
-            <td><span class="mark no">×</span></td>
-            <td><span class="mark no">×</span></td>
+            <td><span class="mark good">○</span></td>
+            <td><span class="mark good">○</span></td>
           </tr>
           <tr>
             <td class="feature">希望小売価格 自動取得<span class="key">PRICE-AUTO</span></td>
             <td class="tsumi-col"><span class="mark excellent">◎</span></td>
             <td><span class="mark no">×</span></td>
-            <td><span class="mark no">×</span></td>
-            <td><span class="mark no">×</span></td>
-            <td><span class="mark no">×</span></td>
+            <td><span class="mark no">?</span></td>
+            <td><span class="mark partial">△</span></td>
           </tr>
           <tr>
             <td class="feature">積みプラ総額 自動計算<span class="key">TOTAL-CALC</span></td>
             <td class="tsumi-col"><span class="mark excellent">◎</span></td>
             <td><span class="mark good">○</span></td>
-            <td><span class="mark partial">△</span></td>
-            <td><span class="mark no">×</span></td>
-            <td><span class="mark no">×</span></td>
+            <td><span class="mark no">?</span></td>
+            <td><span class="mark no">?</span></td>
           </tr>
           <tr>
             <td class="feature">写真管理<span class="key">PHOTO</span></td>
             <td class="tsumi-col"><span class="mark good">○</span></td>
             <td><span class="mark partial">△</span></td>
             <td><span class="mark good">○</span></td>
-            <td><span class="mark partial">△</span></td>
-            <td><span class="mark good">○</span></td>
+            <td><span class="mark no">?</span></td>
           </tr>
           <tr>
-            <td class="feature">状態管理（未組立/組立中/完成）<span class="key">STATE</span></td>
+            <td class="feature">状態管理（未組立/組立中/完成 等）<span class="key">STATE</span></td>
+            <td class="tsumi-col"><span class="mark excellent">◎</span></td>
+            <td><span class="mark good">○</span></td>
+            <td><span class="mark excellent">◎</span></td>
+            <td><span class="mark excellent">◎</span></td>
+          </tr>
+          <tr>
+            <td class="feature">タグ・分類（グレード/作品）<span class="key">TAG</span></td>
             <td class="tsumi-col"><span class="mark excellent">◎</span></td>
             <td><span class="mark good">○</span></td>
             <td><span class="mark good">○</span></td>
-            <td><span class="mark good">○</span></td>
-            <td><span class="mark good">○</span></td>
-          </tr>
-          <tr>
-            <td class="feature">タグ・分類<span class="key">TAG</span></td>
-            <td class="tsumi-col"><span class="mark excellent">◎</span></td>
-            <td><span class="mark good">○</span></td>
-            <td><span class="mark good">○</span></td>
-            <td><span class="mark partial">△</span></td>
-            <td><span class="mark good">○</span></td>
+            <td><span class="mark excellent">◎</span></td>
           </tr>
           <tr>
             <td class="feature">検索・フィルタ<span class="key">SEARCH</span></td>
             <td class="tsumi-col"><span class="mark excellent">◎</span></td>
             <td><span class="mark good">○</span></td>
             <td><span class="mark good">○</span></td>
-            <td><span class="mark no">×</span></td>
             <td><span class="mark good">○</span></td>
           </tr>
           <tr>
             <td class="feature">バックアップ・データ移行<span class="key">BACKUP</span></td>
             <td class="tsumi-col"><span class="mark good">○</span></td>
             <td><span class="mark excellent">◎</span></td>
-            <td><span class="mark partial">△</span></td>
-            <td><span class="mark no">×</span></td>
+            <td><span class="mark no">?</span></td>
             <td><span class="mark good">○</span></td>
           </tr>
           <tr>
             <td class="feature">複数デバイス同期<span class="key">SYNC</span></td>
             <td class="tsumi-col"><span class="mark no">×</span></td>
             <td><span class="mark good">○</span></td>
-            <td><span class="mark good">○</span></td>
+            <td><span class="mark no">×</span></td>
+            <td><span class="mark excellent">◎</span></td>
+          </tr>
+          <tr>
+            <td class="feature">塗料管理<span class="key">PAINT</span></td>
+            <td class="tsumi-col"><span class="mark no">×</span></td>
+            <td><span class="mark partial">△</span></td>
             <td><span class="mark no">×</span></td>
             <td><span class="mark excellent">◎</span></td>
           </tr>
@@ -781,9 +778,8 @@
             <td class="feature">月額料金<span class="key">PRICE</span></td>
             <td class="tsumi-col"><span class="mark excellent">¥0</span></td>
             <td><span class="mark excellent">¥0</span></td>
-            <td><span class="mark partial">¥0〜¥800</span></td>
+            <td><span class="mark partial">¥0〜¥480</span></td>
             <td><span class="mark excellent">¥0</span></td>
-            <td><span class="mark good">¥0〜¥1,000</span></td>
           </tr>
         </tbody>
       </table>
@@ -794,7 +790,11 @@
       <span><span class="mark good">○</span>標準</span>
       <span><span class="mark partial">△</span>限定的</span>
       <span><span class="mark no">×</span>非対応</span>
+      <span><span class="mark no">?</span>公式情報なし</span>
     </div>
+    <p style="font-size:12px; color:var(--ink-faint); margin-top:12px; line-height:1.7;">
+      ※ Tsumina / GUNPLAB の評価は 2026年5月3日 時点での公式サイト・App Store・Google Play・公開ブログでの確認結果に基づく。「?」は公式に明記されておらず確認できなかった機能。
+    </p>
   </section>
 
   <!-- SECTION: SPEC SHEETS -->
@@ -888,124 +888,95 @@
         </div>
       </div>
 
-      <!-- COLLECTION APP -->
+      <!-- TSUMINA -->
       <div class="spec">
         <div class="spec-header">
           <span class="spec-id">TOOL-003</span>
-          <span class="spec-name">汎用コレクションアプリ</span>
+          <span class="spec-name">Tsumina（ツミナ）</span>
         </div>
         <div class="spec-summary">
-          書籍・CD・ゲーム等を含む汎用コレクション管理アプリ（My Collection 系）。プラモにも使えるが、特化機能は弱い。
+          個人開発者（Hironori Sakata 氏）による積みプラ管理アプリ。iOS / Android のネイティブアプリで、
+          バーコードスキャン登録・「積む／製作中／完成／欲しい」の 4 ステータス管理・タグ・統計と SNS シェア機能が好評。
+          無料枠は登録 100 件まで、それを超えるとプレミアム（¥480/月）が必要。
+          <br><a href="https://tsumina.app/" target="_blank" rel="noopener noreferrer" style="color:var(--bp-blue);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;">→ tsumina.app</a>
         </div>
         <div class="spec-pros-cons">
           <div class="pc-block pros">
             <div class="pc-label">PROS / 強み</div>
             <ul>
-              <li>UI が成熟、操作感は良好</li>
-              <li>写真管理・タグが標準装備</li>
-              <li>クラウド同期に対応するものが多い</li>
-              <li>プラモ以外も同じアプリで管理</li>
+              <li>ネイティブアプリの操作感、iOS UX が洗練</li>
+              <li>バーコードまとめスキャン</li>
+              <li>「欲しい」リストを含む 4 ステータス</li>
+              <li>統計レポート + SNS シェア機能</li>
+              <li>v5.22.0 で「ガンダムデータベース」追加</li>
+              <li>アカウント登録不要</li>
             </ul>
           </div>
           <div class="pc-block cons">
             <div class="pc-label">CONS / 弱み</div>
             <ul>
-              <li>JANで模型情報は取れない（書籍系DB中心）</li>
-              <li>希望小売価格の自動取得は基本不可</li>
-              <li>ガンプラ専用カテゴリは無い</li>
-              <li>無料版は機能制限、有料版に誘導</li>
+              <li>無料は 100 件まで、超えるとサブスク必須</li>
+              <li>買い切り版なし（レビューでも要望多数）</li>
+              <li>希望小売価格の自動取得は公式説明なし（?）</li>
+              <li>データは端末ローカル、複数デバイス同期なし</li>
+              <li>無料版に広告あり</li>
             </ul>
           </div>
         </div>
         <div class="spec-fit">
           <div class="fit-block good">
             <div class="fit-label">RECOMMENDED FOR / 向いている人</div>
-            プラモ以外も多趣味で、コレクション全般を一括管理したい人
+            iPhone ユーザー、登録 100 件未満、統計やシェアを楽しみたいライト〜中規模の積み師
           </div>
           <div class="fit-block bad">
             <div class="fit-label">NOT FOR / 向かない人</div>
-            プラモに特化した機能（価格自動取得など）を求める人
+            買い切り派、月額課金が嫌な人、100 件超の大量管理、複数端末で同期したい人
           </div>
         </div>
       </div>
 
-      <!-- PAPER -->
+      <!-- GUNPLAB -->
       <div class="spec">
         <div class="spec-header">
           <span class="spec-id">TOOL-004</span>
-          <span class="spec-name">紙ノート / 手書き台帳</span>
+          <span class="spec-name">GUNPLAB（ガンプラボ）</span>
         </div>
         <div class="spec-summary">
-          ノートに写真と情報を貼り付けて管理する古典的方式。アナログの満足感はあるが、検索性・集計性は弱い。
+          ガンプラ特化の Web アプリ。PC / スマホ両対応で、Google アカウントでログインしてクラウド管理。
+          「積みプラ／ビルド中／完成／欲しい」の 4 ステータスに加え、グレード・作品別の絞り込み、
+          そして他にはない <strong>塗料管理機能</strong>（メーカー横断 DB + カラーチップ表示）を持つのが最大の差別化点。
+          <br><a href="https://gunplab.fun/" target="_blank" rel="noopener noreferrer" style="color:var(--bp-blue);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;">→ gunplab.fun</a>
         </div>
         <div class="spec-pros-cons">
           <div class="pc-block pros">
             <div class="pc-label">PROS / 強み</div>
             <ul>
-              <li>機材不要、書く満足感</li>
-              <li>停電・故障の影響なし</li>
-              <li>趣味として書くこと自体が楽しい</li>
+              <li>塗料管理（メーカー DB + カラーチップ）はこのカテゴリで唯一</li>
+              <li>Web 完結で PC / スマホ両用、自動同期</li>
+              <li>ガンプラ特化のグレード・作品分類 DB</li>
+              <li>専用 URL でコレクション共有可能</li>
+              <li>無料、登録数の上限なし</li>
             </ul>
           </div>
           <div class="pc-block cons">
             <div class="pc-label">CONS / 弱み</div>
             <ul>
-              <li>検索・並べ替えが基本不可</li>
-              <li>総額計算は電卓必須</li>
-              <li>30 件超で運用が破綻しがち</li>
-              <li>バックアップ手段が薄い</li>
+              <li>ネイティブアプリなし、Web のみ</li>
+              <li>Google アカウント必須</li>
+              <li>価格情報はコミュニティ手動更新（自動取得なし）</li>
+              <li>非公式ファンサイトで運営者は個人</li>
+              <li>将来的な有料プラン・広告導入が示唆されている</li>
             </ul>
           </div>
         </div>
         <div class="spec-fit">
           <div class="fit-block good">
             <div class="fit-label">RECOMMENDED FOR / 向いている人</div>
-            積みプラ 10 〜 20 個、写真集としての満足感を求める人
+            塗料も含めて一元管理したい本格派、PC とスマホを両用したい人、コレクションを公開・共有したい人
           </div>
           <div class="fit-block bad">
             <div class="fit-label">NOT FOR / 向かない人</div>
-            数十個以上、検索・集計を必要とする人
-          </div>
-        </div>
-      </div>
-
-      <!-- NOTE APP -->
-      <div class="spec">
-        <div class="spec-header">
-          <span class="spec-id">TOOL-005</span>
-          <span class="spec-name">メモアプリ / Notion</span>
-        </div>
-        <div class="spec-summary">
-          汎用ノートアプリ（Notion / Apple Notes / Google Keep 等）でリスト管理する方式。同期は強力だが模型特化機能は無い。
-        </div>
-        <div class="spec-pros-cons">
-          <div class="pc-block pros">
-            <div class="pc-label">PROS / 強み</div>
-            <ul>
-              <li>クラウド同期が標準</li>
-              <li>テキスト・写真・リンクを混在できる</li>
-              <li>Notion なら DB 化も可能</li>
-              <li>すでに使っているアプリの一部にできる</li>
-            </ul>
-          </div>
-          <div class="pc-block cons">
-            <div class="pc-label">CONS / 弱み</div>
-            <ul>
-              <li>JAN・価格の自動取得は不可</li>
-              <li>テンプレ設計が必要（Notion）</li>
-              <li>総額計算は手集計</li>
-              <li>状態管理は自前ルール頼み</li>
-            </ul>
-          </div>
-        </div>
-        <div class="spec-fit">
-          <div class="fit-block good">
-            <div class="fit-label">RECOMMENDED FOR / 向いている人</div>
-            既に Notion ヘビーユーザー、自分でテンプレを組むのが好きな人
-          </div>
-          <div class="fit-block bad">
-            <div class="fit-label">NOT FOR / 向かない人</div>
-            手間をかけずすぐ可視化したい人
+            アカウント登録を避けたい人、ネイティブアプリ派、ガンプラ以外（スケールモデル中心など）の人
           </div>
         </div>
       </div>
@@ -1027,16 +998,16 @@
         </div>
         <div class="flow-options">
           <div class="flow-opt">
-            <span><b>10 個未満</b> ／ メモアプリ・紙ノートで十分。<br>専用ツール導入のメリットは小さい。</span>
-            <span class="arrow">→ NOTE / PAPER</span>
+            <span><b>10 個未満</b> ／ どのツールでも十分。Tsumina の無料枠（100 件）にも余裕。</span>
+            <span class="arrow">→ ANY</span>
           </div>
           <div class="flow-opt recommend">
-            <span><b>10 〜 100 個</b> ／ <b>TSUMITSUMI</b> の効率が活きる規模。<br>JAN登録で総額の可視化が一気に進む。</span>
-            <span class="arrow">→ TSUMITSUMI</span>
+            <span><b>10 〜 100 個</b> ／ 模型特化アプリの効率が活きる規模。<br><b>TSUMITSUMI / Tsumina / GUNPLAB</b> から好みで選択。</span>
+            <span class="arrow">→ TSUMITSUMI / TSUMINA / GUNPLAB</span>
           </div>
           <div class="flow-opt recommend">
-            <span><b>100 個以上</b> ／ 検索・分類・総額把握が必須。<br>TSUMITSUMI または Excel/Sheets で運用すべき規模。</span>
-            <span class="arrow">→ TSUMITSUMI / EXCEL</span>
+            <span><b>100 個以上</b> ／ Tsumina は無料枠超過で月額発生。<br>無料で大量管理するなら <b>TSUMITSUMI / GUNPLAB / Excel</b>。</span>
+            <span class="arrow">→ TSUMITSUMI / GUNPLAB / EXCEL</span>
           </div>
         </div>
       </div>
@@ -1044,20 +1015,20 @@
       <div class="flow-q">
         <div class="flow-q-head">
           <span class="flow-q-num">Q2</span>
-          <span class="flow-q-title">主に PC 派？ モバイル派？</span>
+          <span class="flow-q-title">主にどの環境で使いますか？</span>
         </div>
         <div class="flow-options">
           <div class="flow-opt">
-            <span><b>PC 中心</b> ／ Excel/Sheets が編集効率で優位。<br>大量バルク操作が必要なら特に。</span>
-            <span class="arrow">→ EXCEL</span>
+            <span><b>PC 中心</b> ／ Excel/Sheets または Web ベースの <b>GUNPLAB</b>。<br>Tsumina はネイティブアプリのみ、TSUMITSUMI も主にモバイル想定。</span>
+            <span class="arrow">→ EXCEL / GUNPLAB</span>
           </div>
           <div class="flow-opt recommend">
-            <span><b>モバイル中心</b> ／ 片手で完結する <b>TSUMITSUMI</b>。<br>店頭でその場で登録できるのが大きい。</span>
-            <span class="arrow">→ TSUMITSUMI</span>
+            <span><b>モバイル中心</b> ／ 片手で完結する <b>TSUMITSUMI / Tsumina</b>。<br>店頭でその場で登録できる強み。</span>
+            <span class="arrow">→ TSUMITSUMI / TSUMINA</span>
           </div>
-          <div class="flow-opt">
-            <span><b>両方使う</b> ／ Notion / Google Sheets 等の同期型。<br>片方だけだと不満が残る場合の保険。</span>
-            <span class="arrow">→ NOTION / SHEETS</span>
+          <div class="flow-opt recommend">
+            <span><b>PC とスマホ両方</b> ／ クラウド同期の <b>GUNPLAB</b> が唯一の正解。<br>Excel/Sheets でも可だが手作業多め。</span>
+            <span class="arrow">→ GUNPLAB</span>
           </div>
         </div>
       </div>
@@ -1065,19 +1036,23 @@
       <div class="flow-q">
         <div class="flow-q-head">
           <span class="flow-q-num">Q3</span>
-          <span class="flow-q-title">何を一番自動化したいですか？</span>
+          <span class="flow-q-title">最も重視する機能は何ですか？</span>
         </div>
         <div class="flow-options">
           <div class="flow-opt recommend">
-            <span><b>登録の手間を減らしたい</b> ／ <b>TSUMITSUMI</b> 一択。<br>JANスキャンで秒。</span>
+            <span><b>希望小売価格・総額の自動把握</b> ／ <b>TSUMITSUMI</b> のみ標準対応。<br>他は手入力／コミュニティ更新。</span>
             <span class="arrow">→ TSUMITSUMI</span>
           </div>
           <div class="flow-opt recommend">
-            <span><b>総額をすぐ知りたい</b> ／ 価格自動取得は <b>TSUMITSUMI</b> のみ。<br>他は手調査が必要。</span>
-            <span class="arrow">→ TSUMITSUMI</span>
+            <span><b>塗料の管理も一緒に</b> ／ <b>GUNPLAB</b> の塗料 DB はこのカテゴリで唯一。</span>
+            <span class="arrow">→ GUNPLAB</span>
+          </div>
+          <div class="flow-opt recommend">
+            <span><b>SNS シェア・統計レポート</b> ／ <b>Tsumina</b> の統計機能はモデラーに好評。</span>
+            <span class="arrow">→ TSUMINA</span>
           </div>
           <div class="flow-opt">
-            <span><b>独自の集計式を組みたい</b> ／ Excel が圧倒的。<br>ピボットテーブル・グラフは表計算ソフトの強み。</span>
+            <span><b>独自の集計式・自由なテンプレ</b> ／ <b>Excel/Sheets</b>。<br>ピボット・グラフは表計算ソフトの本領。</span>
             <span class="arrow">→ EXCEL</span>
           </div>
         </div>
@@ -1090,12 +1065,17 @@
   <section>
     <h2><span class="num">5.0</span>結論<span class="en">CONCLUSION</span></h2>
     <p>
-      <strong>10 個未満なら何でも良い</strong>。だが <strong>30 個を超えたあたりから、専用ツールの効率差が体感できる</strong>。
-      特に「価格自動取得」と「JANスキャン登録」の 2 機能は、TSUMITSUMI 以外では実装されていない。
+      模型管理特化の 3 アプリ（<strong>TSUMITSUMI / Tsumina / GUNPLAB</strong>）は基本機能（JAN登録・状態管理）はおおむね揃う。
+      決定的な差は <strong>核機能の方向性</strong>にある：
     </p>
+    <ul style="margin: 0 0 16px 24px; line-height: 2;">
+      <li><strong>TSUMITSUMI</strong> ＝ 希望小売価格の自動取得・総額可視化（金額把握が最強）</li>
+      <li><strong>Tsumina</strong> ＝ ネイティブアプリの操作感・統計レポート・SNS シェア（ライト〜中規模で楽しむ）</li>
+      <li><strong>GUNPLAB</strong> ＝ Web 完結・クラウド同期・塗料管理（本格モデラー向け）</li>
+    </ul>
     <p>
-      逆に、<strong>クラウド同期が必須</strong>な場合や、<strong>独自の集計を細かく組みたい</strong>場合は、
-      Excel/Sheets や Notion を選ぶほうが満足度が高い。本書はそういう判断のための仕様書である。
+      Excel/Sheets はこれら特化アプリと役割が違うので、<strong>独自の集計をしたい人や PC バルク編集中心の人</strong>のみに推奨される。
+      本書はあくまで「自分の優先順位を整理するための判断材料」である。
     </p>
 
     <div class="cta-block">
