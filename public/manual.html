@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
 <title>TSUMITSUMI 取扱説明書｜積みプラ管理ツール</title>
-<meta name="description" content="TSUMITSUMI（ツミツミ）の使い方を完全網羅した取扱説明書。キット登録、バーコードスキャン、検索、バックアップまで。" />
+<meta name="description" content="TSUMITSUMI（ツミツミ）の使い方を完全網羅した取扱説明書。キット登録、バーコードスキャン、タグ編集、ランク、ダークモード、診断、買取連携、バックアップまで。" />
 <meta property="og:title" content="TSUMITSUMI 取扱説明書" />
 <meta property="og:description" content="積みプラ管理ツール TSUMITSUMI の機能・使い方を全部まとめた完全版マニュアル。" />
 <meta property="og:type" content="website" />
@@ -290,13 +290,17 @@
       <a href="#register">キットを登録する</a>
       <a href="#scan">バーコードスキャン</a>
       <a href="#continuous">連続スキャンモード</a>
-      <a href="#search">検索・絞り込み</a>
+      <a href="#search">検索・絞り込み・並び順</a>
       <a href="#detail">キットの詳細・編集</a>
       <a href="#complete">完成マークをつける</a>
       <a href="#tags">タグ機能</a>
       <a href="#bulk">一括登録</a>
       <a href="#stats">合計金額・統計</a>
+      <a href="#rank">ツミニストランク</a>
+      <a href="#darkmode">ダークモード</a>
       <a href="#share">SNSシェア</a>
+      <a href="#diagnose">積みプラ合計額診断</a>
+      <a href="#sell">積みを売る</a>
       <a href="#backup">バックアップと機種変更</a>
       <a href="#storage">保存容量について</a>
       <a href="#tips">困ったときは</a>
@@ -309,7 +313,7 @@
 
     <!-- ヒーロー -->
     <div class="hero">
-      <span class="badge">USER MANUAL</span>
+      <span class="badge">USER MANUAL · v1.11 対応</span>
       <h1>TSUMITSUMI 完全マニュアル</h1>
       <p>積みプラを楽しく管理するための機能と使い方を、全部このページにまとめました。<br>気になるところから読んでください。</p>
     </div>
@@ -431,7 +435,7 @@
 
     <!-- 検索 -->
     <section id="search">
-      <h2>検索・絞り込み</h2>
+      <h2>検索・絞り込み・並び順</h2>
       <p>登録したキットが増えてくると、目的のキットを探す機能が役に立ちます。</p>
 
       <h3>キーワード検索</h3>
@@ -451,9 +455,18 @@
       <p>自分で付けたタグでも絞り込めます。<br>
       例：「塗装中」「制作待ち」「子どもと作る」「コンペ用」など。</p>
 
+      <h3>並び順の切り替え</h3>
+      <p>キット一覧の並び順は、上部のドロップダウンから選べます。</p>
+      <ul>
+        <li><strong>登録順</strong>（デフォルト）：登録した順番</li>
+        <li><strong>名前順</strong>：商品名の50音順／ABC順</li>
+        <li><strong>購入日順</strong>：購入日が新しい順</li>
+      </ul>
+      <p>並び順と <strong>↑昇 / ↓降</strong> の方向は記憶され、次回起動時も同じ設定で表示されます。</p>
+
       <h3>表示モードの切り替え</h3>
       <p>キット一覧は<strong>グリッドビュー</strong>（写真メイン）と<strong>リストビュー</strong>（情報メイン）を切り替えられます。<br>
-      気分やシチュエーションに合わせてお選びください。</p>
+      気分やシチュエーションに合わせてお選びください。表示モードも記憶されます。</p>
     </section>
 
     <!-- 詳細・編集 -->
@@ -515,6 +528,23 @@
       <h3>タグの追加・削除</h3>
       <p>キット編集画面でタグ欄に文字を入力 →「追加」ボタンで登録できます。<br>
       不要になったタグはタグ表示の <strong>×</strong> で削除できます。</p>
+
+      <h3>タグ編集モーダル（一括管理）</h3>
+      <p>キット一覧上部の <span class="btn-example">🏷️ タグ編集</span> ボタンから、すべてのタグを一気に管理できます。</p>
+      <ol class="steps">
+        <li><strong>新規作成</strong>：まだ使っていないタグも先に作成しておけます</li>
+        <li><strong>編集（リネーム）</strong>：タグ名を変更すると、そのタグが付いた全キットに連動して更新されます</li>
+        <li><strong>削除</strong>：タグを削除すると、そのタグが付いた全キットからも一括で外されます（確認ダイアログあり）</li>
+      </ol>
+      <p>各タグの右側には、<strong>そのタグが付いたキットの件数</strong>と、<strong>希望小売価格の合計</strong>が表示されます。<br>
+      たとえば「いつか作る」タグの合計金額を見て、優先度を再考する材料にもなります。</p>
+
+      <h3>一括編集モードでのタグ操作</h3>
+      <p>キット一覧の <span class="btn-example outline">☑ 一括</span> ボタンから一括編集モードに入ると、選択したキットに対してタグをまとめて付け外しできます。</p>
+      <ul>
+        <li>タグ名をタップ → 選択キットにタグを<strong>付与</strong></li>
+        <li>タグ右の <span class="btn-example accent">解除</span> ピル → 選択キットから<strong>外す</strong></li>
+      </ul>
     </section>
 
         <!-- 一括登録 -->
@@ -569,6 +599,64 @@
       </div>
     </section>
 
+    <!-- ツミニストランク -->
+    <section id="rank">
+      <h2>ツミニストランク</h2>
+      <p>登録キットの個数に応じて、あなたに「ツミニスト」としてのランクが付与されます。<br>
+      最初は <strong>ツミニスト見習い</strong> から始まり、積めば積むほどランクが上がっていきます。<br>
+      現在のランクはホーム画面のヘッダー部分で確認できます。</p>
+
+      <h3>ランク一覧</h3>
+      <table>
+        <thead><tr><th>個数</th><th>ランク名</th></tr></thead>
+        <tbody>
+          <tr><td>1,000+</td><td><strong>天照大積ミ神</strong>（最高位）</td></tr>
+          <tr><td>900〜</td><td>最早、積み神様</td></tr>
+          <tr><td>800〜</td><td>神界の積み人</td></tr>
+          <tr><td>700〜</td><td>天界の積み人</td></tr>
+          <tr><td>600〜</td><td>地獄門の積み人</td></tr>
+          <tr><td>500〜</td><td>地獄の一丁目の積み人</td></tr>
+          <tr><td>300〜</td><td>ルナティックツミニスト</td></tr>
+          <tr><td>200〜</td><td>ヘルモードツミニスト</td></tr>
+          <tr><td>150〜</td><td>ハードモードツミニスト</td></tr>
+          <tr><td>100〜</td><td>特級ツミニスト</td></tr>
+          <tr><td>80〜</td><td>上級ツミニスト</td></tr>
+          <tr><td>50〜</td><td>中級ツミニスト</td></tr>
+          <tr><td>20〜</td><td>ビギナーツミニスト</td></tr>
+          <tr><td>1〜</td><td>ツミニスト見習い</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ico">🏆</span>
+        <p>ランクが上がる瞬間は、積みプラ管理ならではの達成感です。<br>
+        次のランクまであと何個か、を意識すると消化のモチベーションになる…かもしれません（責任は持ちません）。</p>
+      </div>
+    </section>
+
+    <!-- ダークモード -->
+    <section id="darkmode">
+      <h2>ダークモード</h2>
+      <p>暗い場所での使用や、目の負担を軽くしたいときにダークモードに切り替えられます。<br>
+      ライトモードとダークモードはいつでも切り替え可能です。</p>
+
+      <h3>切り替え方</h3>
+      <ol class="steps">
+        <li>ヘルプ画面（❓アイコン）を開く</li>
+        <li>「使い方はコチラ」の右にある <span class="btn-example outline">🌙 ダーク</span>（ライトモード時）または <span class="btn-example outline">☀️ ライト</span>（ダークモード時）をタップ</li>
+        <li>その場で全画面のテーマが切り替わります</li>
+      </ol>
+
+      <h3>OS の設定との連動</h3>
+      <p>初回アクセス時は、お使いの OS の設定（ライト／ダーク）を自動的に検出します。<br>
+      アプリ側で手動で切り替えると、その選択が記憶され、次回以降もその設定で起動します。</p>
+
+      <div class="callout info">
+        <span class="ico">ℹ️</span>
+        <p>キット写真や買取バナーなどの画像は、ダークモードでも色味が反転しないように調整されています。</p>
+      </div>
+    </section>
+
     <!-- SNSシェア -->
     <section id="share">
       <h2>SNSシェア</h2>
@@ -585,6 +673,55 @@
       <h3>シェアされる情報</h3>
       <p>個別のキット情報や購入店などのプライベートな情報は<strong>シェアされません</strong>。<br>
       合計値・個数・完成数など、集計された情報のみが含まれます。</p>
+    </section>
+
+    <!-- 合計額診断 -->
+    <section id="diagnose">
+      <h2>積みプラ合計額診断</h2>
+      <p>5 問の質問に答えるだけで、自分の積みプラの<strong>推定総額</strong>と<strong>ツミニストランク</strong>がわかる診断コンテンツです。<br>
+      TSUMITSUMI を使い始める前の腕試しや、まだ使っていない友達への布教ネタにどうぞ。</p>
+
+      <h3>診断ページの開き方</h3>
+      <p>ブラウザで <a href="https://tsumitsumi.vercel.app/diagnose.html" style="color:var(--accent-strong);">tsumitsumi.vercel.app/diagnose.html</a> にアクセスしてください。</p>
+
+      <h3>診断の流れ</h3>
+      <ol class="steps">
+        <li>5 問の質問（個数 / 中心ジャンル / 積み率 / 購入ペース / 性格）に答える</li>
+        <li>結果ページで <strong>総額・ランク・あなたを表す一言</strong> が表示される</li>
+        <li><span class="btn-example outline">𝕏 でシェア</span> または <span class="btn-example outline">画像をダウンロード</span> から SNS で共有</li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <p>結果は「アーケードのハイスコア画面」風のレトロな見た目で、スクショして共有すると映えます。<br>
+        実際に TSUMITSUMI で管理を始めると、診断より精度の高い<strong>正確な総額</strong>が見られます。</p>
+      </div>
+    </section>
+
+    <!-- 積みを売る -->
+    <section id="sell">
+      <h2>積みを売る</h2>
+      <p>「もう作らないかも」「置き場所がない」そんなときは、積みプラを買取に出すという選択肢もあります。<br>
+      TSUMITSUMI は、模型・フィギュアの買取に対応しているサービスを紹介しています。</p>
+
+      <h3>使い方</h3>
+      <ol class="steps">
+        <li>キット一覧から、売りたいキットをタップして詳細画面を開く</li>
+        <li>下部の <span class="btn-example outline">💰 積みを売る</span> ボタンをタップ</li>
+        <li>提携している買取サービス一覧のページが開きます</li>
+        <li>気になるサービスから査定を依頼</li>
+      </ol>
+
+      <div class="callout info">
+        <span class="ico">ℹ️</span>
+        <p>掲載しているのは TSUMITSUMI が提携している<strong>買取サービス</strong>（プラモ・フィギュア専門の買取業者）です。<br>
+        リンクは<strong>アフィリエイト広告</strong>を含みます。詳細は<a href="/privacy.html" style="color:inherit;text-decoration:underline;">プライバシーポリシー</a>をご覧ください。</p>
+      </div>
+
+      <h3>査定の対象</h3>
+      <p>未組立・未開封の積みプラはもちろん、フィギュア・玩具・限定品なども買取対象になる場合があります。<br>
+      具体的な対象品目・査定条件・送料負担は各買取サービスのページをご確認ください。<br>
+      取引・連絡・トラブル対応は各サービス事業者との間で完結します（TSUMITSUMI は仲介・斡旋を行いません）。</p>
     </section>
 
     <!-- バックアップ -->
@@ -647,6 +784,21 @@
         <span class="ico">⚠️</span>
         <p>容量の上限に近づくと、警告が表示されます。<br>
         上限を超えると新しいキットの登録ができなくなりますので、早めに対処してください。</p>
+      </div>
+
+      <h3>「画像を整理して容量を節約」機能</h3>
+      <p>ヘルプ画面の保存容量セクションの下に <span class="btn-example outline">▶ 画像を整理する</span> ボタンがあります。<br>
+      ユーザーが端末から登録したキット画像（base64画像）をすべて削除し、JANに紐づくデフォルトの軽量画像URLに戻します。</p>
+      <ul>
+        <li>JAN登録あり + ユーザー登録画像 → デフォルトの画像URLに置換</li>
+        <li>JAN登録なしのキットの画像 → そのまま残ります</li>
+        <li>完成品の写真 → そのまま残ります</li>
+        <li>デフォルト画像が取得できないキット → そのまま残ります</li>
+      </ul>
+
+      <div class="callout warn">
+        <span class="ico">⛔</span>
+        <p>削除した画像は元に戻せません（バックアップからのみ復元可）。実行前に確認ダイアログが表示されます。</p>
       </div>
     </section>
 
@@ -711,16 +863,17 @@
     <!-- フッター予告 -->
     <section id="end" style="background:var(--accent-soft); border-color:var(--accent-border); text-align:center;">
       <h2 style="justify-content:center;">それでは、よい積みプラライフを！</h2>
-      <p>分からないことがあれば、ヘルプ画面のフィードバックボタンからお問い合わせください。<br>
-      みなさんのコレクションが、いつか積みから「作った」に変わる日まで、TSUMITSUMI が估走します。</p>
+      <p>分からないことがあれば、X（旧Twitter）の <a href="https://x.com/tsumitsumi_pla" style="color:inherit;text-decoration:underline;">@tsumitsumi_pla</a> へ DM でお問い合わせください。<br>
+      みなさんのコレクションが、いつか積みから「作った」に変わる日まで、TSUMITSUMI が伴走します。</p>
     </section>
 
   </main>
 </div>
 
 <footer class="site">
-  <p>© TSUMITSUMI / TAKE35 — 積みプラ管理ツール<br>
-  <a href="https://tsumitsumi.vercel.app/">tsumitsumi.vercel.app</a></p>
+  <p>© 2026 TSUMI TSUMI — 積みプラ管理ツール<br>
+  <a href="https://tsumitsumi.vercel.app/">tsumitsumi.vercel.app</a> ／
+  <a href="https://tsumitsumi.vercel.app/privacy.html">プライバシーポリシー</a></p>
 </footer>
 
 <!-- 目次のアクティブ化（簡易スクロールスパイ） -->
