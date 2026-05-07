@@ -51,6 +51,14 @@
   "keywords": "積みプラ, 診断, 合計額, ガンプラ, プラモデル, ランク"
 }
 </script>
+<!-- Google Analytics (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3STS3L23VS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3STS3L23VS');
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Reggae+One&family=M+PLUS+1p:wght@400;500;700;900&family=VT323&display=swap" rel="stylesheet">
@@ -746,7 +754,7 @@
         いつでも確認できる積みプラ管理アプリ。<br>
         登録不要・無料・ブラウザのみで動きます。
       </p>
-      <a class="btn btn-primary" href="/">▶ TSUMITSUMI を開く</a>
+      <a class="btn btn-primary" href="/" onclick="try{if(typeof gtag==='function')gtag('event','diagnose_to_app',{total_yen:resultData&&resultData.total,rank:resultData&&resultData.rank&&resultData.rank.label});}catch(_){}">▶ TSUMITSUMI を開く</a>
     </div>
   </section>
 
@@ -869,6 +877,16 @@
       document.getElementById("stage-result").classList.add("active");
       revealResult(resultData);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      // GA event: diagnose completed
+      try {
+        if (typeof gtag === "function") {
+          gtag("event", "diagnose_complete", {
+            total_yen: resultData.total,
+            rank: resultData.rank.label,
+            kits: resultData.count,
+          });
+        }
+      } catch (_) {}
     }, 2700);
   }
 
@@ -997,15 +1015,31 @@
     a.download = `tsumitsumi-${resultData.total}.png`;
     a.href = c.toDataURL("image/png");
     a.click();
+    try {
+      if (typeof gtag === "function" && resultData) {
+        gtag("event", "diagnose_image_download", {
+          total_yen: resultData.total,
+          rank: resultData.rank.label,
+        });
+      }
+    } catch (_) {}
   }
 
   function shareToX() {
     if (!resultData) return;
     const r = resultData;
-    const text = `私の積みプラ総額：¥${r.total.toLocaleString()}\nランク：${r.rank.label}\n\nあなたも診断してみよう👇\n#積みプラ診断 #ツミツミ`;
+    const text = `私の積みプラ総額:¥${r.total.toLocaleString()}\nランク:${r.rank.label}\n\nあなたも診断してみよう👇\n#積みプラ診断 #ツミツミ`;
     const url = "https://tsumitsumi.vercel.app/diagnose.html";
     const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(intent, "_blank", "noopener,noreferrer");
+    try {
+      if (typeof gtag === "function") {
+        gtag("event", "diagnose_share_x", {
+          total_yen: r.total,
+          rank: r.rank.label,
+        });
+      }
+    } catch (_) {}
   }
 </script>
 </body>
