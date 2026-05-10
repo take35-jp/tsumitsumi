@@ -2089,6 +2089,36 @@ export default function App() {
   // Phase 3: kits を IDB にも保存(dual-write)。localStorage が 5MB で詰まっても IDB 側で受け止める
   useEffect(() => { kitsIdbSave(kits).then(ok => { lastIdbSaveOk.current = ok; }); }, [kits]);
 
+  // Phase 4.A: マルチタブ同期。BroadcastChannel で他タブの kits 変更を受信し IDB から再読込
+  // - suppressBroadcastRef: 受信時の setKits で再ブロードキャストするのを防ぐ（無限ループ防止）
+  // - 初回マウントの save effect 発火もスキップ（最初の load と被るため）
+  const suppressBroadcastRef = useRef(true);
+  const broadcastChannelRef = useRef(null);
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
+    const ch = new BroadcastChannel('tsumitsumi-kits');
+    ch.onmessage = async (ev) => {
+      if (ev && ev.data && ev.data.type === 'kits-changed') {
+        const fresh = await kitsIdbLoad();
+        if (Array.isArray(fresh)) {
+          suppressBroadcastRef.current = true;
+          setKits(fresh);
+        }
+      }
+    };
+    broadcastChannelRef.current = ch;
+    return () => {
+      try { ch.close(); } catch (e) {}
+      broadcastChannelRef.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    const wasSuppressed = suppressBroadcastRef.current;
+    suppressBroadcastRef.current = false;
+    if (wasSuppressed) return;
+    try { broadcastChannelRef.current?.postMessage({ type: 'kits-changed' }); } catch (e) {}
+  }, [kits]);
+
   // Phase 2: マウント時に IDB から読み込み、データがあれば state を上書き。
   // - lazy init で localStorage から即時表示済みなので「真っ白」は起きない
   // - IDB が空（初回・破損・プライベートモード等）なら何もしない → localStorage の状態を維持
