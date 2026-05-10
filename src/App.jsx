@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { get as idbGet, set as idbSet } from "idb-keyval";
+import { get as idbGet, set as idbSet, del as idbDel } from "idb-keyval";
 
 // ====== IndexedDB ストレージ（kits の overflow 受け皿）======
 // localStorage は 5MB 上限なので、写真が増えると保存できなくなる。
@@ -23,6 +23,51 @@ async function kitsIdbSave(kits) {
     // QuotaExceeded 等。呼び出し側で false を見たら何もしない（localStorage 側でカバー）
     return false;
   }
+}
+
+// ====== Phase 4.C.1.a: 写真の Blob 保存インフラ（追加のみ・まだ未使用）======
+// 設計：kit.photoUrl は文字列のまま。"idb-blob:<id>" の sentinel を入れた場合は IDB に Blob 本体がある。
+// 既存の base64 / http URL はそのままでも動く（KitImage が両対応）。
+const IDB_PHOTO_PREFIX = "tsumitsumi_photo_";
+const IDB_PHOTO_URL_PREFIX = "idb-blob:";
+function isIdbBlobUrl(url) { return typeof url === "string" && url.startsWith(IDB_PHOTO_URL_PREFIX); }
+function idbBlobUrlToId(url) { return isIdbBlobUrl(url) ? url.slice(IDB_PHOTO_URL_PREFIX.length) : null; }
+function idToIdbBlobUrl(id) { return IDB_PHOTO_URL_PREFIX + id; }
+function makePhotoId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+async function kitsIdbPhotoSet(id, blob) {
+  try { await idbSet(IDB_PHOTO_PREFIX + id, blob); return true; } catch { return false; }
+}
+async function kitsIdbPhotoGet(id) {
+  try { const v = await idbGet(IDB_PHOTO_PREFIX + id); return v instanceof Blob ? v : null; } catch { return null; }
+}
+async function kitsIdbPhotoDelete(id) {
+  try { await idbDel(IDB_PHOTO_PREFIX + id); } catch {}
+}
+
+// 写真 src を解決するラッパー。"idb-blob:..." なら IDB から Blob を取り object URL 化。
+// それ以外（http / data: / 空）はそのまま <img> に流す。空・解決失敗時は何も描画しない。
+function KitImage({ src, style, alt, onError }) {
+  const [resolved, setResolved] = useState(() => (src && !isIdbBlobUrl(src)) ? src : null);
+  useEffect(() => {
+    if (!src) { setResolved(null); return; }
+    if (!isIdbBlobUrl(src)) { setResolved(src); return; }
+    let objectUrl = null;
+    let cancelled = false;
+    (async () => {
+      const id = idbBlobUrlToId(src);
+      const blob = await kitsIdbPhotoGet(id);
+      if (cancelled) return;
+      if (!blob) { setResolved(null); return; }
+      objectUrl = URL.createObjectURL(blob);
+      setResolved(objectUrl);
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+  if (!resolved) return null;
+  return <img src={resolved} style={style} alt={alt || ""} onError={onError} />;
 }
 
 const SERIES_OPTIONS = [
