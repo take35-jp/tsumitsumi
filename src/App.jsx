@@ -2375,6 +2375,13 @@ export default function App() {
     try { localStorage.setItem("tsumitsumi_theme", newTheme); } catch { /* ignore */ }
   };
 
+  // Phase 4.C.1.d: idb-blob URL がどの kit にも参照されてなければ IDB から削除する
+  const tryDeleteOrphanBlob = (url, kitList = kits) => {
+    if (!isIdbBlobUrl(url)) return;
+    if (kitList.some(k => k.photoUrl === url || k.completedPhotoUrl === url)) return;
+    kitsIdbPhotoDelete(idbBlobUrlToId(url));
+  };
+
   // Phase 4.C.1.c: 写真は Blob で IDB に保存し、kit には sentinel URL を入れる
   const handlePhoto = async (e) => {
     const file = e.target.files[0];
@@ -2384,6 +2391,7 @@ export default function App() {
     const photoId = makePhotoId();
     const ok = await kitsIdbPhotoSet(photoId, blob);
     if (ok) {
+      tryDeleteOrphanBlob(form.photoUrl);
       setForm((f) => ({ ...f, photo: null, photoUrl: idToIdbBlobUrl(photoId) }));
     } else {
       // IDB 保存失敗時は base64 にフォールバック
@@ -2399,6 +2407,7 @@ export default function App() {
     const photoId = makePhotoId();
     const ok = await kitsIdbPhotoSet(photoId, blob);
     if (ok) {
+      tryDeleteOrphanBlob(form.completedPhotoUrl);
       setForm((f) => ({ ...f, completedPhotoUrl: idToIdbBlobUrl(photoId) }));
     } else {
       const base64 = await compressImageToBase64(file);
@@ -2409,7 +2418,14 @@ export default function App() {
   const handleSubmit = () => {
     if (!form.name.trim()) return;
     if (editId !== null) {
-      setKits((ks) => ks.map((k) => (k.id === editId ? { ...form, id: editId, price: form.retailPrice || "" } : k)));
+      const oldKit = kits.find(k => k.id === editId);
+      const newKits = kits.map((k) => (k.id === editId ? { ...form, id: editId, price: form.retailPrice || "" } : k));
+      if (oldKit) {
+        // 編集前の kit が持っていた blob のうち、新しい kits が参照しないものを削除
+        tryDeleteOrphanBlob(oldKit.photoUrl, newKits);
+        tryDeleteOrphanBlob(oldKit.completedPhotoUrl, newKits);
+      }
+      setKits(newKits);
       setEditId(null);
     } else {
       setKits((ks) => [{ ...form, id: Date.now() }, ...ks]);
@@ -2421,7 +2437,7 @@ export default function App() {
   // ユーザー登録画像（base64）を Yahoo 画像 URL に置き換えて localStorage 容量を節約
   const handleResetUserImages = async () => {
     if (imageResetLoading) return;
-    const targets = kits.filter(k => k.jan && k.photoUrl && k.photoUrl.startsWith("data:"));
+    const targets = kits.filter(k => k.jan && k.photoUrl && (k.photoUrl.startsWith("data:") || isIdbBlobUrl(k.photoUrl)));
     if (targets.length === 0) {
       alert("対象のキットはありません。\n（JANあり＋ユーザー登録画像のキットが見つかりませんでした）");
       return;
@@ -2454,7 +2470,10 @@ export default function App() {
           if (!newUrl) {
             notFound++;
           } else {
+            const oldUrl = kit.photoUrl;
             setKits(prev => prev.map(k => k.id === kit.id ? { ...k, photoUrl: newUrl } : k));
+            // 旧 URL が idb-blob で、置換後も他で参照されないなら削除
+            if (isIdbBlobUrl(oldUrl)) tryDeleteOrphanBlob(oldUrl, kits.filter(k => k.id !== kit.id));
             updated++;
           }
         }
@@ -2470,7 +2489,16 @@ export default function App() {
   };
 
   const handleEdit = (kit) => { setForm({ ...kit, retailPrice: kit.retailPrice || kit.price || "" }); setEditId(kit.id); setShowForm(true); setDetail(null); };
-  const handleDelete = (id) => { setKits((ks) => ks.filter((k) => k.id !== id)); setDetail(null); };
+  const handleDelete = (id) => {
+    const target = kits.find(k => k.id === id);
+    const newKits = kits.filter((k) => k.id !== id);
+    if (target) {
+      tryDeleteOrphanBlob(target.photoUrl, newKits);
+      tryDeleteOrphanBlob(target.completedPhotoUrl, newKits);
+    }
+    setKits(newKits);
+    setDetail(null);
+  };
   const toggleComplete = (id) => {
     setKits((ks) => ks.map((k) => (k.id === id ? { ...k, completed: !k.completed } : k)));
     if (detail?.id === id) setDetail((d) => ({ ...d, completed: !d.completed }));
@@ -2578,7 +2606,12 @@ export default function App() {
   const handleBulkDelete = () => {
     if (bulkSelected.size === 0) return;
     if (!window.confirm(`選択した${bulkSelected.size}件を削除しますか？`)) return;
-    setKits(prev => prev.filter(k => !bulkSelected.has(k.id)));
+    const newKits = kits.filter(k => !bulkSelected.has(k.id));
+    kits.filter(k => bulkSelected.has(k.id)).forEach(kit => {
+      tryDeleteOrphanBlob(kit.photoUrl, newKits);
+      tryDeleteOrphanBlob(kit.completedPhotoUrl, newKits);
+    });
+    setKits(newKits);
     setBulkSelected(new Set());
     setBulkMode(false);
   };
@@ -3169,7 +3202,7 @@ export default function App() {
               onResetUserImages={handleResetUserImages}
               imageResetLoading={imageResetLoading}
               imageResetProgress={imageResetProgress}
-              resetTargetCount={kits.filter(k => k.jan && k.photoUrl && k.photoUrl.startsWith("data:")).length}
+              resetTargetCount={kits.filter(k => k.jan && k.photoUrl && (k.photoUrl.startsWith("data:") || isIdbBlobUrl(k.photoUrl))).length}
               theme={theme}
               onToggleTheme={() => setThemeAndSave(theme === "dark" ? "light" : "dark")}
               kits={kits}
@@ -3343,7 +3376,7 @@ export default function App() {
               </div>
               {form.photoUrl && (
                 <button style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                  onClick={(e) => { e.stopPropagation(); setForm((f) => ({ ...f, photoUrl: "", photo: null })); }}>✕</button>
+                  onClick={(e) => { e.stopPropagation(); tryDeleteOrphanBlob(form.photoUrl); setForm((f) => ({ ...f, photoUrl: "", photo: null })); }}>✕</button>
               )}
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
@@ -3356,7 +3389,7 @@ export default function App() {
               </div>
               {form.completedPhotoUrl && (
                 <button style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                  onClick={(e) => { e.stopPropagation(); setForm((f) => ({ ...f, completedPhotoUrl: "" })); }}>✕</button>
+                  onClick={(e) => { e.stopPropagation(); tryDeleteOrphanBlob(form.completedPhotoUrl); setForm((f) => ({ ...f, completedPhotoUrl: "" })); }}>✕</button>
               )}
             </div>
             <input ref={completedFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleCompletedPhoto} />
