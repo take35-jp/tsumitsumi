@@ -200,6 +200,36 @@ function compressImageToBase64(file, maxPx = 320, quality = 0.5) {
   });
 }
 
+// 画像を Blob に圧縮変換（base64 版と同じロジック・サイズ約30%軽い）
+function compressImageToBlob(file, maxPx = 320, quality = 0.5) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = async () => {
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      const toBlob = (q) => new Promise((r) => canvas.toBlob((b) => r(b), "image/jpeg", q));
+      let q = quality;
+      let blob = await toBlob(q);
+      // base64 で 68000 char 上限 ≒ 51000 bytes binary
+      while (blob && blob.size > 51000 && q > 0.2) {
+        q -= 0.05;
+        blob = await toBlob(q);
+      }
+      resolve(blob || null);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 function guessSeriesFromName(name) {
   if (/MODEROID/i.test(name)) return "MODEROID";
   if (/フレームアームズ・ガール|FA:G/i.test(name)) return "フレームアームズ・ガール";
@@ -1655,21 +1685,33 @@ async function generateShareImages(kits, rank) {
     pages.push(kits.slice(i, i + PER_PAGE));
   }
 
-  // 画像ロードヘルパー（外部URLはプロキシ経由）
-  const loadImage = (src) => new Promise((resolve) => {
-    if (!src) return resolve(null);
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    if (src.startsWith("data:")) {
-      // Base64はそのまま
-      img.src = src;
-    } else {
-      // 外部URLはサーバープロキシ経由でCORSを回避
-      img.crossOrigin = "anonymous";
-      img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+  // 画像ロードヘルパー（外部URLはプロキシ経由 / idb-blob は IDB から取得）
+  const loadImage = async (src) => {
+    if (!src) return null;
+    if (isIdbBlobUrl(src)) {
+      const id = idbBlobUrlToId(src);
+      const blob = await kitsIdbPhotoGet(id);
+      if (!blob) return null;
+      const objectUrl = URL.createObjectURL(blob);
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(objectUrl); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(null); };
+        img.src = objectUrl;
+      });
     }
-  });
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      if (src.startsWith("data:")) {
+        img.src = src;
+      } else {
+        img.crossOrigin = "anonymous";
+        img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+      }
+    });
+  };
 
   // 全画像を事前ロード
   const imgCache = {};
@@ -2333,17 +2375,35 @@ export default function App() {
     try { localStorage.setItem("tsumitsumi_theme", newTheme); } catch { /* ignore */ }
   };
 
+  // Phase 4.C.1.c: 写真は Blob で IDB に保存し、kit には sentinel URL を入れる
   const handlePhoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const base64 = await compressImageToBase64(file);
-    if (base64) setForm((f) => ({ ...f, photo: null, photoUrl: base64 }));
+    const blob = await compressImageToBlob(file);
+    if (!blob) return;
+    const photoId = makePhotoId();
+    const ok = await kitsIdbPhotoSet(photoId, blob);
+    if (ok) {
+      setForm((f) => ({ ...f, photo: null, photoUrl: idToIdbBlobUrl(photoId) }));
+    } else {
+      // IDB 保存失敗時は base64 にフォールバック
+      const base64 = await compressImageToBase64(file);
+      if (base64) setForm((f) => ({ ...f, photo: null, photoUrl: base64 }));
+    }
   };
   const handleCompletedPhoto = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const base64 = await compressImageToBase64(file);
-    if (base64) setForm((f) => ({ ...f, completedPhotoUrl: base64 }));
+    const blob = await compressImageToBlob(file);
+    if (!blob) return;
+    const photoId = makePhotoId();
+    const ok = await kitsIdbPhotoSet(photoId, blob);
+    if (ok) {
+      setForm((f) => ({ ...f, completedPhotoUrl: idToIdbBlobUrl(photoId) }));
+    } else {
+      const base64 = await compressImageToBase64(file);
+      if (base64) setForm((f) => ({ ...f, completedPhotoUrl: base64 }));
+    }
   };
 
   const handleSubmit = () => {
