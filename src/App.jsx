@@ -1202,7 +1202,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.13", date: "2026/05/11", isNew: true, items: ["保存容量の上限を5MBから大幅に拡張（数百MB〜数GB級・容量警告も解消）", "複数タブで自動同期（片方で追加・編集するともう一方にも即反映）", "写真の保存方式を最適化し、容量を約30%節約", "ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も最適化可能）", "バックアップ・復元を新形式の写真に対応"] },
+    { ver: "v1.14", date: "2026/05/11", isNew: true, items: ["総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）"] },
+    { ver: "v1.13", date: "2026/05/11", isNew: false, items: ["保存容量の上限を5MBから大幅に拡張（数百MB〜数GB級・容量警告も解消）", "複数タブで自動同期（片方で追加・編集するともう一方にも即反映）", "写真の保存方式を最適化し、容量を約30%節約", "ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も最適化可能）", "バックアップ・復元を新形式の写真に対応"] },
     { ver: "v1.12", date: "2026/05/10", isNew: false, items: ["総額表示から完成済みキットを除外"] },
     { ver: "v1.11", date: "2026/05/03", isNew: false, items: ["ダークモード（ライト/ダーク切り替え）に対応"] },
     { ver: "v1.10", date: "2026/05/02", isNew: false, items: ["ランクを「天照大積ミ神」「神界の積み人」など上位帯まで追加・既存ラベル調整", "タグの作成・編集・削除ができる「タグ編集」画面を追加（件数・希望小売価格合計も表示）", "一括編集モードのタグ操作を「解除」ボタンに統一", "並び順から「手動順」を削除し、登録順をデフォルトに統一", "ヘルプに「画像を整理して容量を節約」ボタンを追加"] },
@@ -1416,10 +1417,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.13 */}
+          {/* v1.14 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.14</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）
+            </div>
+          </div>
+          {/* v1.13 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.13</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
             </div>
@@ -1439,16 +1450,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・総額表示から完成済みキットを除外
-            </div>
-          </div>
-          {/* v1.11 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.11</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/03</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・ダークモード（ライト/ダーク切り替え）に対応
             </div>
           </div>
         </div>
@@ -2740,6 +2741,7 @@ export default function App() {
   };
   const totalPrice = kits.reduce((sum, k) => sum + getEffectivePrice(k) * (k.count || 1), 0);
   const pendingPrice = kits.filter(k => !k.completed).reduce((sum, k) => sum + getEffectivePrice(k) * (k.count || 1), 0);
+  const donePrice = kits.filter(k => k.completed).reduce((sum, k) => sum + getEffectivePrice(k) * (k.count || 1), 0);
 
   let filtered = kits.filter((k) =>
     filter === "pending" ? !k.completed : filter === "done" ? k.completed : true
@@ -2882,14 +2884,18 @@ export default function App() {
           </div>
         ))}
       </div>
-      {/* 積みプラ総額バー（表示/非表示切替可） */}
-      {!bulkMode && (
+      {/* 総額バー：タブ（積みプラ/完成/総計）に応じて表示を切替 */}
+      {!bulkMode && (() => {
+        const displayPrice = filter === "done" ? donePrice : filter === "all" ? totalPrice : pendingPrice;
+        const displayLabel = filter === "done" ? "💴 完成品の総額" : filter === "all" ? "💴 総計" : "💴 積みプラ総額";
+        const displayColor = filter === "done" ? "#22c55e" : filter === "all" ? "#111" : "#ef4444";
+        return (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "6px 16px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 11, color: "#9ca3af" }}>💴 積みプラ総額</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>{displayLabel}</span>
               {showPriceTotal && totalPrice > 0 && (
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>¥{pendingPrice.toLocaleString()}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: displayColor }}>¥{displayPrice.toLocaleString()}</span>
               )}
               {showPriceTotal && totalPrice === 0 && (
                 <span style={{ fontSize: 11, color: "#d1d5db" }}>希望小売価格を取得中...</span>
@@ -2907,7 +2913,8 @@ export default function App() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", display: bulkMode ? "none" : undefined }}>
         <div style={{ padding: "8px 16px 4px" }}>
