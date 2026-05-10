@@ -813,7 +813,7 @@ function KitNameInput({ value, onChange, onSelect }) {
         <div style={suggS.list}>
           {suggestions.map((item, i) => (
             <div key={i} style={suggS.item} onClick={() => handleSelect(item)}>
-              {item.photoUrl && <img src={item.photoUrl} style={suggS.thumb} alt="" />}
+              {item.photoUrl && <KitImage src={item.photoUrl} style={suggS.thumb} />}
               <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
                 {item.scale && (
                   <span style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: 6, padding: "1px 7px", fontSize: 10, fontWeight: 700, marginBottom: 3 }}>
@@ -1888,7 +1888,7 @@ DM→ @${id}` : "";
                 <div style={{ ...xs.checkbox, background: selected.has(k.id) ? "#22c55e" : "#fff", border: `2px solid ${selected.has(k.id) ? "#22c55e" : "#d1d5db"}` }}>
                   {selected.has(k.id) && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
                 </div>
-                {k.photoUrl && <img src={k.photoUrl} style={xs.kitThumb} alt="" />}
+                {k.photoUrl && <KitImage src={k.photoUrl} style={xs.kitThumb} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={xs.kitName}>{k.name}</div>
                   <div style={xs.kitMeta}>{k.scale || ""}</div>
@@ -2083,7 +2083,7 @@ function PriceReportModal({ target, onClose }) {
           <>
             <div style={{ background: "#f8f9fa", borderRadius: 10, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 12, alignItems: "center" }}>
               {target.photoUrl ? (
-                <img src={target.photoUrl} alt="" style={{ width: 50, height: 50, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                <KitImage src={target.photoUrl} style={{ width: 50, height: 50, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
               ) : (
                 <div style={{ width: 50, height: 50, borderRadius: 6, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}>📦</div>
               )}
@@ -2832,7 +2832,7 @@ export default function App() {
             {filtered.map((kit) => (
               <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
                 {kit.photoUrl
-                  ? <img src={kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} alt="" />
+                  ? <KitImage src={kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
                   : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>
                 }
                 <div style={{ padding: "6px 6px 8px" }}>
@@ -2943,7 +2943,7 @@ export default function App() {
                   onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }} disabled={index === filtered.length - 1}>▼</button>
               </div>
             )}
-            {kit.photoUrl ? <img src={kit.photoUrl} style={s.thumb} alt="" /> : <div style={s.thumbPh}>📦</div>}
+            {kit.photoUrl ? <KitImage src={kit.photoUrl} style={s.thumb} /> : <div style={s.thumbPh}>📦</div>}
             <div style={s.cardBody}>
               <div style={s.cardName}>{kit.name}</div>
               <div style={s.cardMeta}>
@@ -3011,7 +3011,7 @@ export default function App() {
         <div style={s.overlay} onClick={() => setDetail(null)}>
           <div style={s.modal} onClick={(e) => e.stopPropagation()}>
             {(detail.completedPhotoUrl || detail.photoUrl) && (
-              <img src={detail.completedPhotoUrl || detail.photoUrl} style={s.modalPhoto} alt="" />
+              <KitImage src={detail.completedPhotoUrl || detail.photoUrl} style={s.modalPhoto} />
             )}
             <div style={s.modalBody}>
               <div style={s.modalTitle}>{detail.name}</div>
@@ -3086,7 +3086,7 @@ export default function App() {
                 <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
                   {continuousQueue.map((k, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
-                      {k.photoUrl && <img src={k.photoUrl} style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} alt="" />}
+                      {k.photoUrl && <KitImage src={k.photoUrl} style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} />}
                       <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{k.name || k.jan}</span>
                       <button style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14 }}
                         onClick={() => setContinuousQueue(q => q.filter((_, j) => j !== i))}>✕</button>
@@ -3280,7 +3280,7 @@ export default function App() {
             <label style={s.label}>箱の写真</label>
             <div style={{ position: "relative" }}>
               <div style={s.photoArea} onClick={() => fileRef.current.click()}>
-                {form.photoUrl ? <img src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} alt="" />
+                {form.photoUrl ? <KitImage src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
                   : <span style={{ color: "#9ca3af", fontSize: 14 }}>📷 タップして写真を選択</span>}
               </div>
               {form.photoUrl && (
@@ -3293,7 +3293,7 @@ export default function App() {
             <label style={s.label}>完成品の写真</label>
             <div style={{ position: "relative" }}>
               <div style={{ ...s.photoArea, borderColor: form.completedPhotoUrl ? "#22c55e" : "#d1d5db" }} onClick={() => completedFileRef.current.click()}>
-                {form.completedPhotoUrl ? <img src={form.completedPhotoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} alt="" />
+                {form.completedPhotoUrl ? <KitImage src={form.completedPhotoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
                   : <span style={{ color: "#9ca3af", fontSize: 14 }}>🏆 完成したら写真を登録</span>}
               </div>
               {form.completedPhotoUrl && (
