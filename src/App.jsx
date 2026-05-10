@@ -1,4 +1,29 @@
 import { useState, useRef, useEffect } from "react";
+import { get as idbGet, set as idbSet } from "idb-keyval";
+
+// ====== IndexedDB ストレージ（kits の overflow 受け皿）======
+// localStorage は 5MB 上限なので、写真が増えると保存できなくなる。
+// IDB は数百MB〜数GB扱えるので、移行の受け皿として利用する。
+// ※ Phase 1 ではヘルパーを定義するだけで、まだ呼び出さない。
+//    Phase 2 以降で読込→書込の順で組み込む。
+async function kitsIdbLoad() {
+  try {
+    const v = await idbGet("tsumitsumi_kits");
+    return Array.isArray(v) ? v : null;
+  } catch (e) {
+    // IDB 不在/破損/プライベートモード等：null を返して localStorage 経路に任せる
+    return null;
+  }
+}
+async function kitsIdbSave(kits) {
+  try {
+    await idbSet("tsumitsumi_kits", kits);
+    return true;
+  } catch (e) {
+    // QuotaExceeded 等。呼び出し側で false を見たら何もしない（localStorage 側でカバー）
+    return false;
+  }
+}
 
 const SERIES_OPTIONS = [
   // ── バンダイ ガンプラ ──
