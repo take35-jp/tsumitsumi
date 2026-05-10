@@ -1009,17 +1009,39 @@ function BackupModal({ kits, onImport, onClose }) {
   const [msg, setMsg] = useState("");
   const [msgType, setMsgType] = useState(""); // "ok" | "err"
 
-  const handleExport = () => {
-    const data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), kits }, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tsumitsumi_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setMsg("バックアップファイルをダウンロードしました！");
-    setMsgType("ok");
+  const handleExport = async () => {
+    try {
+      // Phase 4.C.2: idb-blob URL は base64 にインライン化して、別端末でも復元できるようにする
+      const inlineBlobUrl = async (url) => {
+        if (!isIdbBlobUrl(url)) return url;
+        const b = await kitsIdbPhotoGet(idbBlobUrlToId(url));
+        if (!b) return ""; // blob 不在（壊れた参照）の場合は空に
+        return await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result || "");
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(b);
+        });
+      };
+      const inlinedKits = await Promise.all(kits.map(async (k) => ({
+        ...k,
+        photoUrl: await inlineBlobUrl(k.photoUrl),
+        completedPhotoUrl: await inlineBlobUrl(k.completedPhotoUrl),
+      })));
+      const data = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), kits: inlinedKits }, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tsumitsumi_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg("バックアップファイルをダウンロードしました！");
+      setMsgType("ok");
+    } catch (e) {
+      setMsg("バックアップの作成に失敗しました");
+      setMsgType("err");
+    }
   };
 
   const handleImport = (e) => {
