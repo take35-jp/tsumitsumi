@@ -1302,7 +1302,7 @@ function StorageGauge({ kits }) {
   );
 }
 
-function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetProgress, resetTargetCount, theme, onToggleTheme, kits }) {
+function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetProgress, resetTargetCount, onMigratePhotos, migrateLoading, migrateProgress, migrateTargetCount, theme, onToggleTheme, kits }) {
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
@@ -1351,6 +1351,31 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             : resetTargetCount === 0
             ? "対象のキットがありません"
             : "▶ 画像を整理する"}
+        </button>
+      </div>
+      <div style={hs.section}>
+        <div style={hs.sectionTitle}>🗜️ 写真を新形式に変換（容量節約）</div>
+        <div style={hs.desc}>
+          古い形式（base64）で保存された写真を新形式（Blob）に変換します。<br/>
+          容量が約30%節約され、写真は同じものが見られます。
+        </div>
+        <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 10 }}>対象: {migrateTargetCount}件のキット</div>
+        <button
+          onClick={onMigratePhotos}
+          disabled={migrateLoading || migrateTargetCount === 0}
+          style={{
+            width: "100%", padding: "10px 16px", border: "none", borderRadius: 10,
+            background: migrateLoading || migrateTargetCount === 0 ? "#e5e7eb" : "#111",
+            color: migrateLoading || migrateTargetCount === 0 ? "#9ca3af" : "#fff",
+            fontSize: 13, fontWeight: 700,
+            cursor: migrateLoading || migrateTargetCount === 0 ? "not-allowed" : "pointer",
+          }}
+        >
+          {migrateLoading
+            ? "処理中... " + migrateProgress.current + "/" + migrateProgress.total + "件"
+            : migrateTargetCount === 0
+            ? "対象のキットがありません"
+            : "▶ 写真を変換する"}
         </button>
       </div>
       <div style={hs.section}>
@@ -2315,6 +2340,9 @@ export default function App() {
   const [priceProgress, setPriceProgress] = useState({ current: 0, total: 0 }); // 進捗
   const [imageResetLoading, setImageResetLoading] = useState(false);
   const [imageResetProgress, setImageResetProgress] = useState({ current: 0, total: 0 });
+  // Phase 4.C.3: 既存 base64 写真を Blob 化するマイグレ用
+  const [migrateLoading, setMigrateLoading] = useState(false);
+  const [migrateProgress, setMigrateProgress] = useState({ current: 0, total: 0 });
   const [showPriceTotal, setShowPriceTotal] = useState(() => {
     try { return localStorage.getItem("tsumitsumi_showPrice") !== "false"; } catch { return true; }
   });
@@ -2508,6 +2536,47 @@ export default function App() {
     setImageResetLoading(false);
     setImageResetProgress({ current: 0, total: 0 });
     alert("✅ 完了\n\n更新: " + updated + "件\nデフォルトの画像なし: " + notFound + "件\n失敗: " + failed + "件");
+  };
+
+  // Phase 4.C.3: 既存の base64 写真を Blob (IDB) に移行して容量を節約する
+  const handleMigratePhotosToBlob = async () => {
+    if (migrateLoading) return;
+    const isB64 = (u) => typeof u === "string" && u.startsWith("data:");
+    const targets = kits.filter(k => isB64(k.photoUrl) || isB64(k.completedPhotoUrl));
+    if (targets.length === 0) {
+      alert("対象の写真はありません。");
+      return;
+    }
+    if (!window.confirm(targets.length + "件のキットの写真を新形式（Blob）に変換し、容量を節約します。\n\n続行しますか？")) return;
+    setMigrateLoading(true);
+    setMigrateProgress({ current: 0, total: targets.length });
+    let migrated = 0, failed = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const kit = targets[i];
+      const update = {};
+      try {
+        if (isB64(kit.photoUrl)) {
+          const blob = await (await fetch(kit.photoUrl)).blob();
+          const photoId = makePhotoId();
+          if (await kitsIdbPhotoSet(photoId, blob)) update.photoUrl = idToIdbBlobUrl(photoId);
+        }
+        if (isB64(kit.completedPhotoUrl)) {
+          const blob = await (await fetch(kit.completedPhotoUrl)).blob();
+          const photoId = makePhotoId();
+          if (await kitsIdbPhotoSet(photoId, blob)) update.completedPhotoUrl = idToIdbBlobUrl(photoId);
+        }
+      } catch (_) { /* skip */ }
+      if (Object.keys(update).length > 0) {
+        setKits(prev => prev.map(k => k.id === kit.id ? { ...k, ...update } : k));
+        migrated++;
+      } else {
+        failed++;
+      }
+      setMigrateProgress({ current: i + 1, total: targets.length });
+    }
+    setMigrateLoading(false);
+    setMigrateProgress({ current: 0, total: 0 });
+    alert("✅ 完了\n\n変換: " + migrated + "件\n失敗: " + failed + "件");
   };
 
   const handleEdit = (kit) => { setForm({ ...kit, retailPrice: kit.retailPrice || kit.price || "" }); setEditId(kit.id); setShowForm(true); setDetail(null); };
@@ -3225,6 +3294,10 @@ export default function App() {
               imageResetLoading={imageResetLoading}
               imageResetProgress={imageResetProgress}
               resetTargetCount={kits.filter(k => k.jan && k.photoUrl && (k.photoUrl.startsWith("data:") || isIdbBlobUrl(k.photoUrl))).length}
+              onMigratePhotos={handleMigratePhotosToBlob}
+              migrateLoading={migrateLoading}
+              migrateProgress={migrateProgress}
+              migrateTargetCount={kits.filter(k => (k.photoUrl && k.photoUrl.startsWith("data:")) || (k.completedPhotoUrl && k.completedPhotoUrl.startsWith("data:"))).length}
               theme={theme}
               onToggleTheme={() => setThemeAndSave(theme === "dark" ? "light" : "dark")}
               kits={kits}
