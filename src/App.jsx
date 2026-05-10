@@ -884,7 +884,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
                 style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: page <= 1 ? "#f3f4f6" : "#fff", borderRadius: 8, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1 }}
                 onClick={() => { const p = page - 1; setPage(p); search(p); }}>← 前へ</button>
               <span style={{ fontSize: 12, color: "#9ca3af" }}>{page} / {Math.ceil(total / 20) || 1} ページ ({total}件)</span>
-              {page * 30 < total && (
+              {page * 20 < total && (
                 <button style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: "#fff", borderRadius: 8, fontSize: 13, cursor: "pointer" }}
                   onClick={() => { const p = page + 1; setPage(p); search(p); }}>次へ →</button>
               )}
