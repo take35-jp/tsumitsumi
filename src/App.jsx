@@ -1141,7 +1141,70 @@ function AllVersionsModal({ onClose }) {
   );
 }
 
-function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetProgress, resetTargetCount, theme, onToggleTheme }) {
+// メモリ上の kits を実データ量として表示し、quota はブラウザ全体の上限を使う。
+// navigator.storage.estimate() の usage はフィンガープリント対策で大幅に丸められるため
+// （実 47MB → 報告 2MB のような乖離あり）、used は kits の stringify サイズで実測する。
+function StorageGauge({ kits }) {
+  const [info, setInfo] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let used;
+      try {
+        used = JSON.stringify(kits || []).length;
+      } catch (e) {
+        if (!cancelled) setInfo({ error: true });
+        return;
+      }
+      let max = 5 * 1024 * 1024; // フォールバック: localStorage 上限
+      let quotaSource = 'localStorage';
+      if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
+        try {
+          const est = await navigator.storage.estimate();
+          if (est && typeof est.quota === 'number' && est.quota > 0) {
+            max = est.quota;
+            quotaSource = 'origin';
+          }
+        } catch (e) { /* keep fallback */ }
+      }
+      if (!cancelled) setInfo({ used, max, quotaSource });
+    })();
+    return () => { cancelled = true; };
+  }, [kits]);
+
+  if (!info) return <div style={{ color: '#9ca3af', fontSize: 12 }}>容量を取得中...</div>;
+  if (info.error) return <div>容量を取得できませんでした</div>;
+
+  const pct = Math.min(100, Math.round(info.used / info.max * 100));
+  const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981';
+
+  const fmt = (bytes) => {
+    if (bytes >= 1024 * 1024 * 1024) return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB';
+    if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    return Math.round(bytes / 1024).toLocaleString() + ' KB';
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 8 }}>
+        使用中: {fmt(info.used)} / 約 {fmt(info.max)} ({pct < 1 ? '<1' : pct}%)
+      </div>
+      <div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ width: Math.max(pct, 0.5) + '%', height: '100%', background: color, transition: 'width 0.3s' }} />
+      </div>
+      {pct >= 80 && (
+        <div style={{ marginTop: 8, color, fontSize: 12 }}>
+          ⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。
+        </div>
+      )}
+      <div style={{ marginTop: 6, fontSize: 11, color: '#9ca3af' }}>
+        ※ 使用中はキット全件の実サイズ ／ 上限は{info.quotaSource === 'origin' ? 'ブラウザの割当（IndexedDB含む）' : 'localStorage のみ（旧来）'}
+      </div>
+    </div>
+  );
+}
+
+function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetProgress, resetTargetCount, theme, onToggleTheme, kits }) {
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
@@ -1165,7 +1228,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         </div>
       <div style={hs.section}>
         <div style={hs.sectionTitle}>💾 保存容量</div>
-        <div style={hs.desc}>{(() => { try { const used = JSON.stringify(localStorage).length; const max = 5 * 1024 * 1024; const pct = Math.min(100, Math.round(used / max * 100)); const usedKB = Math.round(used / 1024); const color = pct >= 95 ? '#ef4444' : pct >= 80 ? '#eab308' : '#10b981'; return (<div><div style={{ marginBottom: 8 }}>使用中: {usedKB.toLocaleString()} KB / 約5,120 KB ({pct}%)</div><div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: color, transition: 'width 0.3s' }} /></div>{pct >= 80 && <div style={{ marginTop: 8, color, fontSize: 12 }}>⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。</div>}</div>); } catch (e) { return '容量を取得できませんでした'; } })()}</div>
+        <div style={hs.desc}><StorageGauge kits={kits} /></div>
       </div>
       <div style={hs.section}>
         <div style={hs.sectionTitle}>🗑️ 画像を整理して容量を節約</div>
@@ -2977,6 +3040,7 @@ export default function App() {
               resetTargetCount={kits.filter(k => k.jan && k.photoUrl && k.photoUrl.startsWith("data:")).length}
               theme={theme}
               onToggleTheme={() => setThemeAndSave(theme === "dark" ? "light" : "dark")}
+              kits={kits}
             />
           </div>
         </div>
