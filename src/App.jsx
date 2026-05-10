@@ -1202,7 +1202,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.14", date: "2026/05/11", isNew: true, items: ["総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）"] },
+    { ver: "v1.15", date: "2026/05/11", isNew: true, items: ["使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）"] },
+    { ver: "v1.14", date: "2026/05/11", isNew: false, items: ["総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）"] },
     { ver: "v1.13", date: "2026/05/11", isNew: false, items: ["保存容量の上限を5MBから大幅に拡張（数百MB〜数GB級・容量警告も解消）", "複数タブで自動同期（片方で追加・編集するともう一方にも即反映）", "写真の保存方式を最適化し、容量を約30%節約", "ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も最適化可能）", "バックアップ・復元を新形式の写真に対応"] },
     { ver: "v1.12", date: "2026/05/10", isNew: false, items: ["総額表示から完成済みキットを除外"] },
     { ver: "v1.11", date: "2026/05/03", isNew: false, items: ["ダークモード（ライト/ダーク切り替え）に対応"] },
@@ -1331,31 +1332,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         <div style={hs.desc}><StorageGauge kits={kits} /></div>
       </div>
       <div style={hs.section}>
-        <div style={hs.sectionTitle}>🗑️ 画像を整理して容量を節約</div>
-        <div style={hs.desc}>
-          ユーザーが登録したキット画像をすべて削除し、デフォルトの画像に戻します。<br/>
-          JAN登録がないキットの画像と完成品の画像は削除されません。
-        </div>
-        <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 10 }}>対象: {resetTargetCount}件のキット</div>
-        <button
-          onClick={onResetUserImages}
-          disabled={imageResetLoading || resetTargetCount === 0}
-          style={{
-            width: "100%", padding: "10px 16px", border: "none", borderRadius: 10,
-            background: imageResetLoading || resetTargetCount === 0 ? "#e5e7eb" : "#111",
-            color: imageResetLoading || resetTargetCount === 0 ? "#9ca3af" : "#fff",
-            fontSize: 13, fontWeight: 700,
-            cursor: imageResetLoading || resetTargetCount === 0 ? "not-allowed" : "pointer",
-          }}
-        >
-          {imageResetLoading
-            ? "処理中... " + imageResetProgress.current + "/" + imageResetProgress.total + "件"
-            : resetTargetCount === 0
-            ? "対象のキットがありません"
-            : "▶ 画像を整理する"}
-        </button>
-      </div>
-      <div style={hs.section}>
         <div style={hs.sectionTitle}>🗜️ 写真を新形式に変換（容量節約）</div>
         <div style={hs.desc}>
           古い形式（base64）で保存された写真を新形式（Blob）に変換します。<br/>
@@ -1417,10 +1393,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.14 */}
+          {/* v1.15 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.15</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）
+            </div>
+          </div>
+          {/* v1.14 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.14</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
             </div>
@@ -1440,16 +1426,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               ・写真の保存方式を最適化し、容量を約30%節約<br/>
               ・ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も最適化可能）<br/>
               ・バックアップ・復元を新形式の写真に対応
-            </div>
-          </div>
-          {/* v1.12 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.12</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/10</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・総額表示から完成済みキットを除外
             </div>
           </div>
         </div>
@@ -2805,66 +2781,6 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
-        {kits.some(k => k.jan) && (
-          priceLoading ? (
-            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
-                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
-                </path>
-              </svg>
-              <span style={{ fontSize: 10, color: "#1d4ed8" }}>
-                取得中 {priceProgress.current}/{priceProgress.total}件...
-              </span>
-            </div>
-          ) : (
-            <button
-              style={{ marginLeft: "auto", fontSize: 10, padding: "2px 8px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 20, cursor: "pointer" }}
-              onClick={async () => {
-                const targets = kits.filter(k => k.jan);
-                const alreadyHave = targets.filter(k => k.retailPrice).length;
-                const msg = alreadyHave > 0
-                  ? `登録中の全${targets.length}件のキットの希望小売価格を上書き取得します。\n（うち${alreadyHave}件はすでに価格が設定されています）\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`
-                  : `登録中の全${targets.length}件のキットの希望小売価格を取得します。\n\n※キット数によっては数分かかります。完了まで画面を閉じないでください。\n※ボタンを連続して押さないでください。\n\nよろしいですか？`;
-                if (!window.confirm(msg)) return;
-                setPriceLoading(true);
-                setPriceProgress({ current: 0, total: targets.length });
-                let updated = 0;
-                for (let i = 0; i < targets.length; i++) {
-                  const kit = targets[i];
-                  setPriceProgress({ current: i + 1, total: targets.length });
-                  try {
-                    // JANがあればJANで、なければ商品名で検索
-                    const url = kit.jan
-                      ? `/api/price?jan=${kit.jan}`
-                      : `/api/price?jan=00000000&name=${encodeURIComponent(kit.name?.slice(0,30)||"")}`;
-                    const r = await fetch(url);
-                    const d = await r.json();
-                    if (d.price) {
-                      setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
-                      updated++;
-                    } else if (kit.jan) {
-                      // フォールバック: /api/search で Yahoo参考価格を取得
-                      try {
-                        const r2 = await fetch(`/api/search?jan=${kit.jan}`);
-                        const d2 = r2.ok ? await r2.json() : null;
-                        if (d2?.price) {
-                          setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d2.price) } : k));
-                          updated++;
-                        }
-                      } catch {}
-                    }
-                  } catch {}
-                  await new Promise(r => setTimeout(r, 350));
-                }
-                setPriceLoading(false);
-                setPriceProgress({ current: 0, total: 0 });
-                alert(`希望小売価格を更新しました：${updated}/${targets.length}件\n（取得できなかった${targets.length - updated}件は変更されていません）`);
-              }}>
-              💴 定価を一括取得（全{kits.filter(k => k.jan).length}件）
-            </button>
-          )
-        )}
       </div>
 
       {showSearch && !bulkMode && (
