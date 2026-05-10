@@ -1202,7 +1202,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.12", date: "2026/05/10", isNew: true, items: ["総額表示から完成済みキットを除外"] },
+    { ver: "v1.13", date: "2026/05/11", isNew: true, items: ["写真の保存先を最適化し、容量を節約（ヘルプ「写真を新形式に変換」ボタンで既存写真も変換可能）", "バックアップ・復元を新形式の写真に対応"] },
+    { ver: "v1.12", date: "2026/05/10", isNew: false, items: ["総額表示から完成済みキットを除外"] },
     { ver: "v1.11", date: "2026/05/03", isNew: false, items: ["ダークモード（ライト/ダーク切り替え）に対応"] },
     { ver: "v1.10", date: "2026/05/02", isNew: false, items: ["ランクを「天照大積ミ神」「神界の積み人」など上位帯まで追加・既存ラベル調整", "タグの作成・編集・削除ができる「タグ編集」画面を追加（件数・希望小売価格合計も表示）", "一括編集モードのタグ操作を「解除」ボタンに統一", "並び順から「手動順」を削除し、登録順をデフォルトに統一", "ヘルプに「画像を整理して容量を節約」ボタンを追加"] },
     { ver: "v1.09", date: "2026/05/02", isNew: false, items: ["金額の編集が総額に反映されない不具合を修正"] },
@@ -1415,10 +1416,22 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.12 */}
+          {/* v1.13 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.13</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・写真の保存先を最適化し、容量を節約<br/>
+              ・ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も変換可能）<br/>
+              ・バックアップ・復元を新形式の写真に対応
+            </div>
+          </div>
+          {/* v1.12 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.12</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/10</span>
             </div>
@@ -1434,20 +1447,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・ダークモード（ライト/ダーク切り替え）に対応
-            </div>
-          </div>
-          {/* v1.10 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.10</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・上位ランクを追加<br/>
-              ・タグの作成・編集・削除ができる「タグ編集」画面を追加<br/>
-              ・一括編集モードのタグ操作を「解除」ボタンに統一<br/>
-              ・並び順から「手動順」を削除し、登録順をデフォルトに変更<br/>
-              ・ヘルプに「画像を整理して容量を節約」ボタンを追加
             </div>
           </div>
         </div>
