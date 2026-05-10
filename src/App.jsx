@@ -2022,6 +2022,22 @@ export default function App() {
   });
   useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) { if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) alert('⚠️ 保存容量がいっぱいです\n古いキットや画像を削除してください\n（ブラウザ localStorage 上限 約5MB）'); } }, [kits]);
 
+  // Phase 2: マウント時に IDB から読み込み、データがあれば state を上書き。
+  // - lazy init で localStorage から即時表示済みなので「真っ白」は起きない
+  // - IDB が空（初回・破損・プライベートモード等）なら何もしない → localStorage の状態を維持
+  // - IDB に有効なデータがある場合のみ setKits で上書き（Phase 3 以降の dual-write を見越したもの）
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const idbKits = await kitsIdbLoad();
+      if (cancelled) return;
+      if (idbKits && idbKits.length > 0) {
+        setKits(idbKits);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
   // 注意:マスタDBからのみ取得する。Yahooからの自動取得は転売価格混入のため行わない
   // (ユーザーが意図的に空にした価格を勝手に埋めてしまうのを防ぐ)
