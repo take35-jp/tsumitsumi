@@ -1150,7 +1150,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.11", date: "2026/05/03", isNew: true, items: ["ダークモード（ライト/ダーク切り替え）に対応"] },
+    { ver: "v1.12", date: "2026/05/10", isNew: true, items: ["総額表示から完成済みキットを除外"] },
+    { ver: "v1.11", date: "2026/05/03", isNew: false, items: ["ダークモード（ライト/ダーク切り替え）に対応"] },
     { ver: "v1.10", date: "2026/05/02", isNew: false, items: ["ランクを「天照大積ミ神」「神界の積み人」など上位帯まで追加・既存ラベル調整", "タグの作成・編集・削除ができる「タグ編集」画面を追加（件数・希望小売価格合計も表示）", "一括編集モードのタグ操作を「解除」ボタンに統一", "並び順から「手動順」を削除し、登録順をデフォルトに統一", "ヘルプに「画像を整理して容量を節約」ボタンを追加"] },
     { ver: "v1.09", date: "2026/05/02", isNew: false, items: ["金額の編集が総額に反映されない不具合を修正"] },
     { ver: "v1.08", date: "2026/05/02", isNew: false, items: ["並び順・表示モードの永続化機能を追加", "更新履歴の文言を簡潔化"] },
@@ -1337,10 +1338,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.11 */}
+          {/* v1.12 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.12</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/10</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・総額表示から完成済みキットを除外
+            </div>
+          </div>
+          {/* v1.11 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.11</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/03</span>
             </div>
@@ -1360,16 +1371,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               ・一括編集モードのタグ操作を「解除」ボタンに統一<br/>
               ・並び順から「手動順」を削除し、登録順をデフォルトに変更<br/>
               ・ヘルプに「画像を整理して容量を節約」ボタンを追加
-            </div>
-          </div>
-          {/* v1.09 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.09</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/02</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・金額の編集が総額に反映されない不具合を修正
             </div>
           </div>
         </div>
@@ -2703,10 +2704,7 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontSize: 11, color: "#9ca3af" }}>💴 積みプラ総額</span>
               {showPriceTotal && totalPrice > 0 && (
-                <>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>¥{pendingPrice.toLocaleString()}</span>
-                  {done > 0 && <span style={{ fontSize: 10, color: "#9ca3af" }}>（完成含む ¥{totalPrice.toLocaleString()}）</span>}
-                </>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#ef4444" }}>¥{pendingPrice.toLocaleString()}</span>
               )}
               {showPriceTotal && totalPrice === 0 && (
                 <span style={{ fontSize: 11, color: "#d1d5db" }}>希望小売価格を取得中...</span>
