@@ -2083,11 +2083,10 @@ export default function App() {
   const [kits, setKits] = useState(() => {
     try { const s = localStorage.getItem("tsumitsumi_kits"); return s ? JSON.parse(s) : []; } catch { return []; }
   });
-  // Phase 3: 直近の IDB 保存結果。localStorage が QuotaExceeded で失敗しても IDB が成功してれば alert 抑制
-  const lastIdbSaveOk = useRef(true);
-  useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) { if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') && !lastIdbSaveOk.current) alert('⚠️ 保存容量がいっぱいです\n古いキットや画像を削除してください\n（ブラウザの保存容量を超えました）'); } }, [kits]);
-  // Phase 3: kits を IDB にも保存(dual-write)。localStorage が 5MB で詰まっても IDB 側で受け止める
-  useEffect(() => { kitsIdbSave(kits).then(ok => { lastIdbSaveOk.current = ok; }); }, [kits]);
+  // Phase 4.B: localStorage は best-effort のキャッシュ扱い。失敗は黙殺（IDB が主保存先）
+  useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) {} }, [kits]);
+  // Phase 4.B: kits の主保存先は IDB。localStorage の 5MB を超えても問題なし
+  useEffect(() => { kitsIdbSave(kits); }, [kits]);
 
   // Phase 4.A: マルチタブ同期。BroadcastChannel で他タブの kits 変更を受信し IDB から再読込
   // - suppressBroadcastRef: 受信時の setKits で再ブロードキャストするのを防ぐ（無限ループ防止）
