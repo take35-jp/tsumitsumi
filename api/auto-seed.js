@@ -145,6 +145,17 @@ async function upsertProducts(products) {
   return r.status;
 }
 
+// retail_price が NULL の商品を新しい順に取得（累積分の追い込み用）
+async function fetchNullPriceItems(limit = 100) {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/products?select=id,jan,name&retail_price=is.null&order=id.desc&limit=${limit}`,
+    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+  );
+  if (!r.ok) return [];
+  const d = await r.json();
+  return Array.isArray(d) ? d : [];
+}
+
 async function patchProductPrice(jan, price) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/products?jan=eq.${jan}`, {
     method: 'PATCH',
@@ -244,6 +255,8 @@ export default async function handler(req, res) {
     candidates: 0,
     newJans: 0,
     inserted: 0,
+    backlogFetched: 0,
+    queueSize: 0,
     pricesAttempted: 0,
     pricesFound: 0,
     elapsedMs: 0,
@@ -295,32 +308,40 @@ export default async function handler(req, res) {
       return res.status(200).json({ ...summary, sample: newProducts.slice(0, 10) });
     }
 
-    if (newProducts.length === 0) {
-      summary.elapsedMs = Date.now() - startTime;
-      return res.status(200).json({ ...summary, message: '新規なし' });
+    // 3. 一括 upsert（新規がある場合のみ）
+    if (newProducts.length > 0) {
+      const status = await upsertProducts(newProducts);
+      summary.inserted = newProducts.length;
+      summary.upsertStatus = status;
     }
 
-    // 3. 一括 upsert
-    const status = await upsertProducts(newProducts);
-    summary.inserted = newProducts.length;
-    summary.upsertStatus = status;
+    // 4. 価格取得キューを組む：今日の新規 + 累積分（DB の retail_price=NULL 新しい順100件）
+    const newJanSet = new Set(newProducts.map((p) => p.jan));
+    const backlog = await fetchNullPriceItems(100);
+    const backlogFiltered = backlog.filter((x) => !newJanSet.has(x.jan));
+    summary.backlogFetched = backlogFiltered.length;
+    const priceQueue = [
+      ...newProducts.map((p) => ({ jan: p.jan, name: p.name })),
+      ...backlogFiltered,
+    ];
+    summary.queueSize = priceQueue.length;
 
-    // 4. 希望小売価格を順次取得（タイムアウト管理）
-    for (const p of newProducts) {
+    // 5. 希望小売価格を順次取得（タイムアウト管理）
+    for (const item of priceQueue) {
       const elapsed = Date.now() - startTime;
       if (elapsed > PRICE_BUDGET_MS) {
-        summary.errors.push(`price budget exceeded at ${summary.pricesAttempted}/${newProducts.length}`);
+        summary.errors.push(`price budget exceeded at ${summary.pricesAttempted}/${priceQueue.length}`);
         break;
       }
       summary.pricesAttempted++;
       try {
-        const price = await fetchRetailPrice(p.jan);
+        const price = await fetchRetailPrice(item.jan);
         if (price) {
-          await patchProductPrice(p.jan, price);
+          await patchProductPrice(item.jan, price);
           summary.pricesFound++;
         }
       } catch (e) {
-        summary.errors.push(`price ${p.jan}: ${e.message}`);
+        summary.errors.push(`price ${item.jan}: ${e.message}`);
       }
       await new Promise((r) => setTimeout(r, PRICE_RATE_LIMIT_MS));
     }
