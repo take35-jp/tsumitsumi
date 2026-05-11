@@ -127,7 +127,7 @@ const SERIES_OPTIONS = [
   // ── その他 ──
   "その他",
 ];
-const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/32", "1/24", "EG", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "SD", "フルメカニクス",  "ノンスケール", "その他", "デカール"];
+const SCALE_OPTIONS = ["1/144", "1/100", "1/72", "1/60", "1/48", "1/35", "1/32", "1/24", "EG", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "SD", "フルメカニクス",  "ノンスケール", "その他", "デカール"];
 
 const RANKS = [
   { min: 1000, label: "天照大積ミ神", color: "#fbbf24" },
@@ -1202,7 +1202,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.15", date: "2026/05/11", isNew: true, items: ["使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）"] },
+    { ver: "v1.16", date: "2026/05/12", isNew: true, items: ["スケール選択肢に 1/35 を追加", "完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア", "連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正"] },
+    { ver: "v1.15", date: "2026/05/11", isNew: false, items: ["使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）"] },
     { ver: "v1.14", date: "2026/05/11", isNew: false, items: ["総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）"] },
     { ver: "v1.13", date: "2026/05/11", isNew: false, items: ["保存容量の上限を5MBから大幅に拡張（数百MB〜数GB級・容量警告も解消）", "複数タブで自動同期（片方で追加・編集するともう一方にも即反映）", "写真の保存方式を最適化し、容量を約30%節約", "ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も最適化可能）", "バックアップ・復元を新形式の写真に対応"] },
     { ver: "v1.12", date: "2026/05/10", isNew: false, items: ["総額表示から完成済みキットを除外"] },
@@ -1393,10 +1394,22 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.15 */}
+          {/* v1.16 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.16</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・スケール選択肢に 1/35 を追加<br/>
+              ・完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア<br/>
+              ・連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正
+            </div>
+          </div>
+          {/* v1.15 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.15</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
             </div>
@@ -1412,20 +1425,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）
-            </div>
-          </div>
-          {/* v1.13 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.13</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・保存容量の上限を5MBから大幅に拡張（数百MB〜数GB級・容量警告も解消）<br/>
-              ・複数タブで自動同期（片方で追加・編集するともう一方にも即反映）<br/>
-              ・写真の保存方式を最適化し、容量を約30%節約<br/>
-              ・ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も最適化可能）<br/>
-              ・バックアップ・復元を新形式の写真に対応
             </div>
           </div>
         </div>
@@ -2340,6 +2339,8 @@ export default function App() {
   const [tagMasterList, setTagMasterList] = useState(() => []);
   const fileRef = useRef();
   const completedFileRef = useRef();
+  // バーコード連続スキャンの再読み込みループ防止（同一JANを5秒以内に再検出した場合は無視）
+  const recentlyScannedJanRef = useRef({ jan: '', ts: 0 });
 
   // 表示設定（並び順・昇降・表示モード）の永続化
   // マウント時に1度だけlocalStorageから読み込み
@@ -2569,11 +2570,29 @@ export default function App() {
     setDetail(null);
   };
   const toggleComplete = (id) => {
-    setKits((ks) => ks.map((k) => (k.id === id ? { ...k, completed: !k.completed } : k)));
-    if (detail?.id === id) setDetail((d) => ({ ...d, completed: !d.completed }));
+    setKits((ks) => ks.map((k) => {
+      if (k.id !== id) return k;
+      // 完成に切り替える時は状態（未開封・素組状態・欠品有り・制作途中）もクリアする
+      return !k.completed
+        ? { ...k, completed: true, condition: "" }
+        : { ...k, completed: false };
+    }));
+    if (detail?.id === id) setDetail((d) => {
+      if (!d) return d;
+      return !d.completed
+        ? { ...d, completed: true, condition: "" }
+        : { ...d, completed: false };
+    });
   };
 
   const handleJanDetected = async (jan) => {
+    // 連続スキャンで同じバーコードを連続して読み込んだ際の確認ダイアログ無限ループを防止
+    // 5秒以内に同じJANを再検出した場合は無視（カメラが同じバーコードを継続的に映していてもOK）
+    const now = Date.now();
+    if (jan === recentlyScannedJanRef.current.jan && now - recentlyScannedJanRef.current.ts < 5000) {
+      return;
+    }
+    recentlyScannedJanRef.current = { jan, ts: now };
     const existingKit = kits.find(k => k.jan === jan);
     if (continuousScan) {
       const inQueue = continuousQueue.find(k => k.jan === jan);
