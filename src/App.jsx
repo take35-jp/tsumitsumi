@@ -1204,7 +1204,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.17", date: "2026/05/12", isNew: true, items: ["スケール選択肢に 1/20・1/12 を追加", "シリーズ選択肢に SMP・R3 を追加", "キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）"] },
+    { ver: "v1.18", date: "2026/05/12", isNew: true, items: ["完成済みキットの「完成」ボタンを「完成を解除」表示に変更（未完成に戻せることを明示）"] },
+    { ver: "v1.17", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/20・1/12 を追加", "シリーズ選択肢に SMP・R3 を追加", "キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）"] },
     { ver: "v1.16", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/35・1/550・1/1700 を追加", "完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア", "連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正"] },
     { ver: "v1.15", date: "2026/05/11", isNew: false, items: ["使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）"] },
     { ver: "v1.14", date: "2026/05/11", isNew: false, items: ["総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）"] },
@@ -1397,10 +1398,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.17 */}
+          {/* v1.18 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.18</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・完成済みキットの「完成」ボタンを「完成を解除」表示に変更（未完成に戻せることを明示）
+            </div>
+          </div>
+          {/* v1.17 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.17</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
             </div>
@@ -1420,16 +1431,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               ・スケール選択肢に 1/35・1/550・1/1700 を追加<br/>
               ・完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア<br/>
               ・連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正
-            </div>
-          </div>
-          {/* v1.15 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.15</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）
             </div>
           </div>
         </div>
@@ -3204,7 +3205,7 @@ export default function App() {
               <div style={s.modalBtns}>
                 <button style={s.editBtn} onClick={() => handleEdit(detail)}>編集</button>
                 <button style={{ ...s.editBtn, background: '#3b82f6', color: '#fff' }} onClick={() => handleDuplicate(detail)}>複製</button>
-                <button style={{ ...s.editBtn, background: '#10b981' }} onClick={() => { toggleComplete(detail.id); setDetail(null); }}>完成</button>
+                <button style={{ ...s.editBtn, background: detail.completed ? '#9ca3af' : '#10b981' }} onClick={() => { toggleComplete(detail.id); setDetail(null); }}>{detail.completed ? '完成を解除' : '完成'}</button>
                 <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
                 <button style={s.closeBtn} onClick={() => setDetail(null)}>閉じる</button>
               </div>
