@@ -73,6 +73,8 @@ function KitImage({ src, style, alt, onError }) {
 const SERIES_OPTIONS = [
   // ── バンダイ ガンプラ ──
   "ガンプラ",
+  "SMP",
+  "R3",
   // ── バンダイ キャラクター ──
   "ポケプラ",
   "Figure-rise Standard", "Figure-rise Bust", "Figure-rise Mechanics",
@@ -127,7 +129,7 @@ const SERIES_OPTIONS = [
   // ── その他 ──
   "その他",
 ];
-const SCALE_OPTIONS = ["1/1700", "1/550", "1/144", "1/100", "1/72", "1/60", "1/48", "1/35", "1/32", "1/24", "EG", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "SD", "フルメカニクス",  "ノンスケール", "その他", "デカール"];
+const SCALE_OPTIONS = ["1/1700", "1/550", "1/144", "1/100", "1/72", "1/60", "1/48", "1/35", "1/32", "1/24", "1/20", "1/12", "EG", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "SD", "フルメカニクス",  "ノンスケール", "その他", "デカール"];
 
 const RANKS = [
   { min: 1000, label: "天照大積ミ神", color: "#fbbf24" },
@@ -1202,7 +1204,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.16", date: "2026/05/12", isNew: true, items: ["スケール選択肢に 1/35・1/550・1/1700 を追加", "完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア", "連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正"] },
+    { ver: "v1.17", date: "2026/05/12", isNew: true, items: ["スケール選択肢に 1/20・1/12 を追加", "シリーズ選択肢に SMP・R3 を追加", "キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）"] },
+    { ver: "v1.16", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/35・1/550・1/1700 を追加", "完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア", "連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正"] },
     { ver: "v1.15", date: "2026/05/11", isNew: false, items: ["使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）"] },
     { ver: "v1.14", date: "2026/05/11", isNew: false, items: ["総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）"] },
     { ver: "v1.13", date: "2026/05/11", isNew: false, items: ["保存容量の上限を5MBから大幅に拡張（数百MB〜数GB級・容量警告も解消）", "複数タブで自動同期（片方で追加・編集するともう一方にも即反映）", "写真の保存方式を最適化し、容量を約30%節約", "ヘルプに「写真を新形式に変換」ボタンを追加（既存写真も最適化可能）", "バックアップ・復元を新形式の写真に対応"] },
@@ -1394,10 +1397,22 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.16 */}
+          {/* v1.17 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.17</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・スケール選択肢に 1/20・1/12 を追加<br/>
+              ・シリーズ選択肢に SMP・R3 を追加<br/>
+              ・キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）
+            </div>
+          </div>
+          {/* v1.16 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.16</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
             </div>
@@ -1415,16 +1430,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）
-            </div>
-          </div>
-          {/* v1.14 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.14</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/11</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・総額表示が選択中のタブに連動（積みプラ・完成・総計それぞれの合計を表示）
             </div>
           </div>
         </div>
@@ -2559,6 +2564,14 @@ export default function App() {
   };
 
   const handleEdit = (kit) => { setForm({ ...kit, retailPrice: kit.retailPrice || kit.price || "" }); setEditId(kit.id); setShowForm(true); setDetail(null); };
+  // キット複製：登録情報をすべてそのままコピーして新規キットとして追加。
+  // photoUrl が idb-blob: の場合は同じ blob を参照（孤児チェックで両方残す限り削除されない）。
+  // tags 配列だけは独立した配列にしておく（片方の編集がもう片方に波及しないように）。
+  const handleDuplicate = (kit) => {
+    const copy = { ...kit, id: Date.now(), tags: Array.isArray(kit.tags) ? [...kit.tags] : [] };
+    setKits((ks) => [copy, ...ks]);
+    setDetail(null);
+  };
   const handleDelete = (id) => {
     const target = kits.find(k => k.id === id);
     const newKits = kits.filter((k) => k.id !== id);
@@ -3190,8 +3203,9 @@ export default function App() {
               )}
               <div style={s.modalBtns}>
                 <button style={s.editBtn} onClick={() => handleEdit(detail)}>編集</button>
-              <button style={{ ...s.editBtn, background: '#10b981' }} onClick={() => { toggleComplete(detail.id); setDetail(null); }}>完成</button>
-                              <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
+                <button style={{ ...s.editBtn, background: '#3b82f6', color: '#fff' }} onClick={() => handleDuplicate(detail)}>複製</button>
+                <button style={{ ...s.editBtn, background: '#10b981' }} onClick={() => { toggleComplete(detail.id); setDetail(null); }}>完成</button>
+                <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
                 <button style={s.closeBtn} onClick={() => setDetail(null)}>閉じる</button>
               </div>
             </div>
