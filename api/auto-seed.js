@@ -235,20 +235,23 @@ async function fetchRetailPrice(jan) {
 
 // マスタの scale / series が空の商品を、商品名から推測して一括補完する一回限りのモード
 // 起動: GET /api/auto-seed?mode=fill-scale-series
+// PATCH ベース・並列実行で時間内に可能な限り処理する。残りがあれば次回呼び出しで継続。
 async function fillScaleSeries(req, res) {
   const startTime = Date.now();
   const BUDGET_MS = 55000;
   const FETCH_PAGE = 1000;
-  const UPSERT_CHUNK = 500;
+  const CONCURRENCY = 15;
 
   const summary = {
     mode: 'fill-scale-series',
     targets: 0,
     needFill: 0,
-    upserted: 0,
+    patched: 0,
+    patchFailed: 0,
     scaleFilled: 0,
     seriesFilled: 0,
     elapsedMs: 0,
+    remaining: 0,
     errors: [],
   };
 
@@ -256,9 +259,9 @@ async function fillScaleSeries(req, res) {
     // 1. scale または series が空のマスタ商品を全件取得
     let allTargets = [];
     let offset = 0;
-    while (Date.now() - startTime < 25000) {
+    while (Date.now() - startTime < 20000) {
       const r = await fetch(
-        `${SUPABASE_URL}/rest/v1/products?select=id,jan,name,scale,series,maker&or=(scale.is.null,scale.eq.,series.is.null,series.eq.)&order=id.asc&limit=${FETCH_PAGE}&offset=${offset}`,
+        `${SUPABASE_URL}/rest/v1/products?select=id,name,scale,series,maker&or=(scale.is.null,scale.eq.,series.is.null,series.eq.)&order=id.asc&limit=${FETCH_PAGE}&offset=${offset}`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       if (!r.ok) { summary.errors.push(`fetch ${offset}: ${r.status}`); break; }
@@ -270,49 +273,53 @@ async function fillScaleSeries(req, res) {
     }
     summary.targets = allTargets.length;
 
-    // 2. 各 product に guess 適用、変化があるものだけアップサート対象に
+    // 2. guess を計算して、変化があるものだけ PATCH 対象に
     const updates = [];
     const nowIso = new Date().toISOString();
     for (const p of allTargets) {
-      // ON CONFLICT で UPDATE に切り替わるが、INSERT 側の NOT NULL 制約を満たすため jan/name も含める
-      const update = { id: p.id, jan: p.jan, name: p.name, updated_at: nowIso };
+      const body = { updated_at: nowIso };
       let changed = false;
       if (!p.scale) {
         const g = guessScale(p.name || '');
-        if (g) { update.scale = g; changed = true; summary.scaleFilled++; }
+        if (g) { body.scale = g; changed = true; summary.scaleFilled++; }
       }
       if (!p.series) {
         const g = guessSeries(p.name || '') || guessSeriesForMaker(p.name || '', p.maker || '');
-        if (g) { update.series = g; changed = true; summary.seriesFilled++; }
+        if (g) { body.series = g; changed = true; summary.seriesFilled++; }
       }
-      if (changed) updates.push(update);
+      if (changed) updates.push({ id: p.id, body });
     }
     summary.needFill = updates.length;
 
-    // 3. 500件ずつバルク upsert
-    for (let i = 0; i < updates.length; i += UPSERT_CHUNK) {
-      if (Date.now() - startTime > BUDGET_MS) {
-        summary.errors.push(`time budget at chunk ${i}/${updates.length}`);
-        break;
+    // 3. 並列 PATCH。タイムバジェット超過で残りは次回送り
+    let idx = 0;
+    const worker = async () => {
+      while (idx < updates.length) {
+        if (Date.now() - startTime > BUDGET_MS) return;
+        const i = idx++;
+        const u = updates[i];
+        try {
+          const r = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${u.id}`, {
+            method: 'PATCH',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(u.body),
+          });
+          if (r.ok) summary.patched++;
+          else summary.patchFailed++;
+        } catch (_) {
+          summary.patchFailed++;
+        }
       }
-      const chunk = updates.slice(i, i + UPSERT_CHUNK);
-      try {
-        const r = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
-          method: 'POST',
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            Prefer: 'resolution=merge-duplicates,return=minimal',
-          },
-          body: JSON.stringify(chunk),
-        });
-        if (r.ok) summary.upserted += chunk.length;
-        else summary.errors.push(`upsert ${i}: ${r.status}`);
-      } catch (e) {
-        summary.errors.push(`upsert ${i}: ${e.message}`);
-      }
-    }
+    };
+    const workers = [];
+    for (let i = 0; i < CONCURRENCY; i++) workers.push(worker());
+    await Promise.all(workers);
+    summary.remaining = Math.max(0, updates.length - summary.patched - summary.patchFailed);
 
     summary.elapsedMs = Date.now() - startTime;
     return res.status(200).json(summary);
