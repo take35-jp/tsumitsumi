@@ -232,24 +232,46 @@ function compressImageToBlob(file, maxPx = 320, quality = 0.5) {
   });
 }
 
+// 商品名から SERIES_OPTIONS のいずれかを推測（マッチしなければ ""）
 function guessSeriesFromName(name) {
-  if (/MODEROID/i.test(name)) return "MODEROID";
-  if (/フレームアームズ・ガール|FA:G/i.test(name)) return "フレームアームズ・ガール";
+  if (!name) return "";
+  // === コトブキヤ系（長いものから順に） ===
+  if (/フレームアームズ・ガール|フレームアームズガール|FA:G/i.test(name)) return "フレームアームズ・ガール";
   if (/フレームアームズ|Frame Arms/i.test(name)) return "フレームアームズ";
-  if (/ヘキサギア|Hexa Gear/i.test(name)) return "ヘキサギア";
-  if (/メガミデバイス/i.test(name)) return "メガミデバイス";
+  if (/ヘキサギア|Hexa Gear|HEXA GEAR/i.test(name)) return "ヘキサギア";
+  if (/メガミデバイス|MEGAMI DEVICE/i.test(name)) return "メガミデバイス";
   if (/アーマーガールズ/i.test(name)) return "アーマーガールズプロジェクト";
   if (/アーマードコア|ARMORED CORE/i.test(name)) return "アーマードコア（コトブキヤ）";
+  if (/バーチャロン/i.test(name)) return "バーチャロン（コトブキヤ）";
   if (/創彩少女庭園/i.test(name)) return "創彩少女庭園";
+  // === グッスマ / Max Factory / ボークス ===
+  if (/MODEROID/i.test(name)) return "MODEROID";
+  if (/PLAMATEA/i.test(name)) return "PLAMATEA";
+  if (/ドルフィードリーム/i.test(name)) return "ドルフィードリーム";
+  // === バンダイ 30min ===
   if (/30MF|30 Minutes Fantasy/i.test(name)) return "30 Minutes Fantasy";
   if (/30MP|30 Minutes Preference/i.test(name)) return "30 Minutes Preference";
   if (/30MS|30 Minutes Sisters/i.test(name)) return "30 Minutes Sisters";
   if (/30MM|30 Minutes Missions/i.test(name)) return "30 Minutes Missions";
+  // === バンダイ キャラクター ===
+  if (/Figure-rise\s+Mechanics/i.test(name)) return "Figure-rise Mechanics";
+  if (/Figure-rise\s+Bust/i.test(name)) return "Figure-rise Bust";
   if (/Figure-rise/i.test(name)) return "Figure-rise Standard";
   if (/ポケモン|ポケプラ|Pokemon/i.test(name)) return "ポケプラ";
+  if (/ウルトラマン/i.test(name)) return "ウルトラマン（バンダイ）";
+  if (/仮面ライダー/i.test(name)) return "仮面ライダー（バンダイ）";
+  if (/スターウォーズ|STAR WARS/i.test(name)) return "スターウォーズ（バンダイ）";
+  if (/マクロス|バルキリー|VF-/i.test(name)) return "マクロス（バンダイ）";
+  // === バンダイ SMP / R3（短い略称なので境界で限定） ===
+  if (/(^|[\s\-_／/])SMP([\s\-_／/]|$)|Shokugan Modeling/i.test(name)) return "SMP";
+  if (/(^|[\s\-_／/])R3([\s\-_／/]|$)|Real Robot Revolution/i.test(name)) return "R3";
+  // === タカラトミー ===
   if (/ゾイド|ZOIDS/i.test(name)) return "ゾイド";
   if (/トランスフォーマー|Transformers/i.test(name)) return "トランスフォーマー";
-  if (/マシーネンクリーガー|Ma.K\.|Maschinen Krieger/i.test(name)) return "マシーネンクリーガー";
+  if (/ダイアクロン/i.test(name)) return "ダイアクロン";
+  // === マシーネン ===
+  if (/マシーネンクリーガー|Ma\.K\.|Maschinen Krieger|S\.F\.3\.D/i.test(name)) return "マシーネンクリーガー";
+  // === バンダイ リアルロボット ===
   if (/パトレイバー/i.test(name)) return "機動警察パトレイバー";
   if (/ダンバイン|オーラバトラー/i.test(name)) return "聖戦士ダンバイン";
   if (/エルガイム/i.test(name)) return "重戦機エルガイム";
@@ -264,24 +286,51 @@ function guessSeriesFromName(name) {
   if (/ダンクーガ/i.test(name)) return "超獣機神ダンクーガ";
   if (/エヴァンゲリオン|エヴァ|EVA/i.test(name)) return "新世紀エヴァンゲリオン";
   if (/エウレカセブン/i.test(name)) return "交響詩篇エウレカセブン";
+  // === FSS / スパロボ ===
   if (/ファイブスター|F\.S\.S\.|FSS/i.test(name)) return "FSS（ファイブスター物語）";
-  if (/マクロス|バルキリー|VF-/i.test(name)) return "マクロス（バンダイ）";
-  if (/スターウォーズ|STAR WARS/i.test(name)) return "スターウォーズ（バンダイ）";
-  if (/ウルトラマン/i.test(name)) return "ウルトラマン（バンダイ）";
-  if (/仮面ライダー/i.test(name)) return "仮面ライダー（バンダイ）";
-  if (/ミニ四駆/i.test(name)) return "ミニ四駆";
-  if (/\bPG\b|\bMG\b|\bRG\b|\bHG\b|\bEG\b|\bSD\b|ガンダム|Gundam/i.test(name)) return "ガンプラ";
+  if (/スパロボ|スーパーロボット大戦/i.test(name)) return "スパロボ";
+  // === タミヤ ミニ四駆 ===
+  if (/ミニ四駆|ミニ4駆/i.test(name)) return "ミニ四駆";
+  // === ガンプラ最終フォールバック（ガンダム系・グレード表記） ===
+  if (/\bPG\b|\bMGSD\b|\bMGEX\b|\bMG\b|\bRG\b|\bHGUC\b|\bHGCE\b|\bHG\b|\bEG\b|\bSD\b|ガンダム|Gundam|RE\/100|フルメカニクス|FULL\s*MECHANICS/i.test(name)) return "ガンプラ";
+  // === ジャンル別フォールバック（メーカー不明な場合） ===
+  if (/戦車|AFV|装甲車/i.test(name)) return "戦車・AFV";
+  if (/戦艦|駆逐艦|空母|護衛艦|巡洋艦|潜水艦|艦船/i.test(name)) return "艦船";
+  if (/戦闘機|爆撃機|輸送機|航空機|ヘリ|飛行機/i.test(name)) return "飛行機";
+  if (/オートバイ|バイク|モーターサイクル/i.test(name)) return "バイク";
+  if (/恐竜|ティラノ|ステゴ|プテラノドン/i.test(name)) return "恐竜・生物";
   return "";
 }
+// 商品名から SCALE_OPTIONS のいずれかを推測（マッチしなければ ""）
 function guessScaleFromName(name) {
+  if (!name) return "";
+  // グレード（長いものから・順序が重要）
   if (/\bMGSD\b/i.test(name)) return "MGSD";
+  if (/\bMGEX\b/i.test(name)) return "MG"; // MGEX は MG にフォールバック（SCALE_OPTIONS に無いため）
+  if (/RE\/100/i.test(name)) return "RE/100";
+  if (/フルメカニクス|FULL\s*MECHANICS/i.test(name)) return "フルメカニクス";
   if (/\bPG\b/i.test(name)) return "PG";
-  if (/\bMG\b/i.test(name)) return "MG";
   if (/\bRG\b/i.test(name)) return "RG";
+  if (/\bHGUC\b|\bHGCE\b|\bHGAC\b|\bHGFC\b/i.test(name)) return "HG";
   if (/\bHG\b/i.test(name)) return "HG";
-  if (/1\/60/i.test(name)) return "1/60";
-  if (/1\/100/i.test(name)) return "1/100";
-  if (/1\/144/i.test(name)) return "1/144";
+  if (/\bMG\b/i.test(name)) return "MG";
+  if (/\bEG\b/i.test(name)) return "EG";
+  if (/\bSD\b|BB戦士/i.test(name)) return "SD";
+  // 数値スケール（\b で部分一致を防止）
+  if (/1\/1700\b/.test(name)) return "1/1700";
+  if (/1\/550\b/.test(name)) return "1/550";
+  if (/1\/144\b/.test(name)) return "1/144";
+  if (/1\/100\b/.test(name)) return "1/100";
+  if (/1\/72\b/.test(name)) return "1/72";
+  if (/1\/60\b/.test(name)) return "1/60";
+  if (/1\/48\b/.test(name)) return "1/48";
+  if (/1\/35\b/.test(name)) return "1/35";
+  if (/1\/32\b/.test(name)) return "1/32";
+  if (/1\/24\b/.test(name)) return "1/24";
+  if (/1\/20\b/.test(name)) return "1/20";
+  if (/1\/12\b/.test(name)) return "1/12";
+  // デカール（最後・他にスケール表記が無い場合）
+  if (/デカール|decal/i.test(name)) return "デカール";
   return "";
 }
 
@@ -1204,7 +1253,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.18", date: "2026/05/12", isNew: true, items: ["完成済みキットの「完成」ボタンを「完成を解除」表示に変更（未完成に戻せることを明示）"] },
+    { ver: "v1.19", date: "2026/05/12", isNew: true, items: ["スケール・シリーズの自動補完を強化（全てのスケール選択肢に対応・SMP/R3 等のシリーズ自動判定にも対応）"] },
+    { ver: "v1.18", date: "2026/05/12", isNew: false, items: ["完成済みキットの「完成」ボタンを「完成を解除」表示に変更（未完成に戻せることを明示）"] },
     { ver: "v1.17", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/20・1/12 を追加", "シリーズ選択肢に SMP・R3 を追加", "キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）"] },
     { ver: "v1.16", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/35・1/550・1/1700 を追加", "完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア", "連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正"] },
     { ver: "v1.15", date: "2026/05/11", isNew: false, items: ["使われていない一括操作ボタンを整理（「定価を一括取得」「画像を整理して容量を節約」を削除）"] },
@@ -1398,10 +1448,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.18 */}
+          {/* v1.19 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.19</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・スケール・シリーズの自動補完を強化（全スケール選択肢に対応・SMP/R3・ジャンル別シリーズも自動判定）
+            </div>
+          </div>
+          {/* v1.18 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.18</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
             </div>
@@ -1419,18 +1479,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               ・スケール選択肢に 1/20・1/12 を追加<br/>
               ・シリーズ選択肢に SMP・R3 を追加<br/>
               ・キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）
-            </div>
-          </div>
-          {/* v1.16 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.16</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・スケール選択肢に 1/35・1/550・1/1700 を追加<br/>
-              ・完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア<br/>
-              ・連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正
             </div>
           </div>
         </div>
