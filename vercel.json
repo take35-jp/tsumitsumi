@@ -1,8 +1,4 @@
 {
-  "crons": [
-    {
-      "path": "/api/auto-seed",
-      "schedule": "0 18 * * *"
-    }
-  ]
+  "_comment_crons": "Vercel Fluid Active CPU 制限到達により一時停止中（2026/05/12）。再開時は schedule '0 18 * * *' で auto-seed を毎日 JST 3:00 に実行",
+  "crons": []
 }
