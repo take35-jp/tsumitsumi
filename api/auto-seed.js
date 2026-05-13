@@ -233,7 +233,101 @@ async function fetchRetailPrice(jan) {
   return null;
 }
 
+// マスタの scale / series が空の商品を、商品名から推測して一括補完する一回限りのモード
+// 起動: GET /api/auto-seed?mode=fill-scale-series
+async function fillScaleSeries(req, res) {
+  const startTime = Date.now();
+  const BUDGET_MS = 55000;
+  const FETCH_PAGE = 1000;
+  const UPSERT_CHUNK = 500;
+
+  const summary = {
+    mode: 'fill-scale-series',
+    targets: 0,
+    needFill: 0,
+    upserted: 0,
+    scaleFilled: 0,
+    seriesFilled: 0,
+    elapsedMs: 0,
+    errors: [],
+  };
+
+  try {
+    // 1. scale または series が空のマスタ商品を全件取得
+    let allTargets = [];
+    let offset = 0;
+    while (Date.now() - startTime < 25000) {
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/products?select=id,jan,name,scale,series,maker&or=(scale.is.null,scale.eq.,series.is.null,series.eq.)&order=id.asc&limit=${FETCH_PAGE}&offset=${offset}`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      );
+      if (!r.ok) { summary.errors.push(`fetch ${offset}: ${r.status}`); break; }
+      const batch = await r.json();
+      if (!Array.isArray(batch) || batch.length === 0) break;
+      allTargets = allTargets.concat(batch);
+      if (batch.length < FETCH_PAGE) break;
+      offset += FETCH_PAGE;
+    }
+    summary.targets = allTargets.length;
+
+    // 2. 各 product に guess 適用、変化があるものだけアップサート対象に
+    const updates = [];
+    const nowIso = new Date().toISOString();
+    for (const p of allTargets) {
+      // ON CONFLICT で UPDATE に切り替わるが、INSERT 側の NOT NULL 制約を満たすため jan/name も含める
+      const update = { id: p.id, jan: p.jan, name: p.name, updated_at: nowIso };
+      let changed = false;
+      if (!p.scale) {
+        const g = guessScale(p.name || '');
+        if (g) { update.scale = g; changed = true; summary.scaleFilled++; }
+      }
+      if (!p.series) {
+        const g = guessSeries(p.name || '') || guessSeriesForMaker(p.name || '', p.maker || '');
+        if (g) { update.series = g; changed = true; summary.seriesFilled++; }
+      }
+      if (changed) updates.push(update);
+    }
+    summary.needFill = updates.length;
+
+    // 3. 500件ずつバルク upsert
+    for (let i = 0; i < updates.length; i += UPSERT_CHUNK) {
+      if (Date.now() - startTime > BUDGET_MS) {
+        summary.errors.push(`time budget at chunk ${i}/${updates.length}`);
+        break;
+      }
+      const chunk = updates.slice(i, i + UPSERT_CHUNK);
+      try {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer: 'resolution=merge-duplicates,return=minimal',
+          },
+          body: JSON.stringify(chunk),
+        });
+        if (r.ok) summary.upserted += chunk.length;
+        else summary.errors.push(`upsert ${i}: ${r.status}`);
+      } catch (e) {
+        summary.errors.push(`upsert ${i}: ${e.message}`);
+      }
+    }
+
+    summary.elapsedMs = Date.now() - startTime;
+    return res.status(200).json(summary);
+  } catch (e) {
+    summary.elapsedMs = Date.now() - startTime;
+    return res.status(500).json({ ...summary, error: e.message });
+  }
+}
+
 export default async function handler(req, res) {
+  // 一回限りの全件補完モード
+  if (req.query.mode === 'fill-scale-series') {
+    return await fillScaleSeries(req, res);
+  }
+
   const startTime = Date.now();
   const PRICE_BUDGET_MS = 50000; // 50秒で価格取得を打ち切る
   const PRICE_RATE_LIMIT_MS = 1000;
