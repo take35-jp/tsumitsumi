@@ -1253,7 +1253,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.19", date: "2026/05/12", isNew: true, items: ["スケール・シリーズの自動補完を強化（全てのスケール選択肢に対応・SMP/R3 等のシリーズ自動判定にも対応）"] },
+    { ver: "v1.20", date: "2026/05/12", isNew: true, items: ["重要: 再起動時に一部キットの画像が消えるデータ消失バグを修正（保存処理の初期化順序を改善）"] },
+    { ver: "v1.19", date: "2026/05/12", isNew: false, items: ["スケール・シリーズの自動補完を強化（全てのスケール選択肢に対応・SMP/R3 等のシリーズ自動判定にも対応）"] },
     { ver: "v1.18", date: "2026/05/12", isNew: false, items: ["完成済みキットの「完成」ボタンを「完成を解除」表示に変更（未完成に戻せることを明示）"] },
     { ver: "v1.17", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/20・1/12 を追加", "シリーズ選択肢に SMP・R3 を追加", "キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）"] },
     { ver: "v1.16", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/35・1/550・1/1700 を追加", "完成チェック時に状態（未開封・素組状態・欠品有り・制作途中）を自動でクリア", "連続バーコードスキャンで同じJANを再読み込みすると確認ダイアログが繰り返し表示される不具合を修正"] },
@@ -1448,10 +1449,21 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* v1.20 */}
+          <div style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ background: "#ef4444", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>重要</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.20</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・アプリ再起動時に一部キットの画像が消えるデータ消失バグを修正<br/>
+              ・影響を受けた方は、画像が揃っていた頃のバックアップを再度読み込んでください（今後は再起動しても保持されます）
+            </div>
+          </div>
           {/* v1.19 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.19</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
             </div>
@@ -2249,10 +2261,21 @@ export default function App() {
   const [kits, setKits] = useState(() => {
     try { const s = localStorage.getItem("tsumitsumi_kits"); return s ? JSON.parse(s) : []; } catch { return []; }
   });
+  // Phase 4 修正: IDB からの読込（hydration）が完了するまで保存しない。
+  // localStorage は 5MB 上限で肥大化データを保持できず、起動時の lazy init は
+  // 不完全な古いスナップショットになり得る。それを IDB に書き戻すと正データを
+  // 破壊するため、IDB load 完了まで両方の保存をスキップする（CLAUDE.md §14）。
+  const hydratedRef = useRef(false);
   // Phase 4.B: localStorage は best-effort のキャッシュ扱い。失敗は黙殺（IDB が主保存先）
-  useEffect(() => { try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) {} }, [kits]);
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) {}
+  }, [kits]);
   // Phase 4.B: kits の主保存先は IDB。localStorage の 5MB を超えても問題なし
-  useEffect(() => { kitsIdbSave(kits); }, [kits]);
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    kitsIdbSave(kits);
+  }, [kits]);
 
   // Phase 4.A: マルチタブ同期。BroadcastChannel で他タブの kits 変更を受信し IDB から再読込
   // - suppressBroadcastRef: 受信時の setKits で再ブロードキャストするのを防ぐ（無限ループ防止）
@@ -2296,6 +2319,9 @@ export default function App() {
       if (idbKits && idbKits.length > 0) {
         setKits(idbKits);
       }
+      // 読込完了（IDB が空・破損・エラーでも）→ 以降の保存を解禁。
+      // これより前に保存が走ると localStorage 由来の不完全 state で IDB を壊す。
+      hydratedRef.current = true;
     })();
     return () => { cancelled = true; };
   }, []);
