@@ -1253,7 +1253,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.20", date: "2026/05/12", isNew: true, items: ["重要: 再起動時に一部キットの画像が消えるデータ消失バグを修正（保存処理の初期化順序を改善）"] },
+    { ver: "v1.21", date: "2026/05/12", isNew: true, items: ["起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）"] },
+    { ver: "v1.20", date: "2026/05/12", isNew: false, items: ["重要: 再起動時に一部キットの画像が消えるデータ消失バグを修正（保存処理の初期化順序を改善）"] },
     { ver: "v1.19", date: "2026/05/12", isNew: false, items: ["スケール・シリーズの自動補完を強化（全てのスケール選択肢に対応・SMP/R3 等のシリーズ自動判定にも対応）"] },
     { ver: "v1.18", date: "2026/05/12", isNew: false, items: ["完成済みキットの「完成」ボタンを「完成を解除」表示に変更（未完成に戻せることを明示）"] },
     { ver: "v1.17", date: "2026/05/12", isNew: false, items: ["スケール選択肢に 1/20・1/12 を追加", "シリーズ選択肢に SMP・R3 を追加", "キット詳細画面に「複製」ボタンを追加（登録情報をそのままコピーして新規キットを作成）"] },
@@ -1449,6 +1450,17 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* v1.21 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.21</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）
+            </div>
+          </div>
           {/* v1.20 */}
           <div style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -2266,6 +2278,9 @@ export default function App() {
   // 不完全な古いスナップショットになり得る。それを IDB に書き戻すと正データを
   // 破壊するため、IDB load 完了まで両方の保存をスキップする（CLAUDE.md §14）。
   const hydratedRef = useRef(false);
+  // hydrated: IDB 読込完了フラグ（UI 制御用）。完了までローディング表示にし、
+  // localStorage 由来の古いスナップショットが一瞬チラつくのを防ぐ。
+  const [hydrated, setHydrated] = useState(false);
   // Phase 4.B: localStorage は best-effort のキャッシュ扱い。失敗は黙殺（IDB が主保存先）
   useEffect(() => {
     if (!hydratedRef.current) return;
@@ -2322,8 +2337,16 @@ export default function App() {
       // 読込完了（IDB が空・破損・エラーでも）→ 以降の保存を解禁。
       // これより前に保存が走ると localStorage 由来の不完全 state で IDB を壊す。
       hydratedRef.current = true;
+      setHydrated(true);
     })();
-    return () => { cancelled = true; };
+    // 安全弁: IDB がハングしても3秒で読込完了扱いにし、無限ローディングを防ぐ
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled && !hydratedRef.current) {
+        hydratedRef.current = true;
+        setHydrated(true);
+      }
+    }, 3000);
+    return () => { cancelled = true; clearTimeout(fallbackTimer); };
   }, []);
 
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
@@ -2856,6 +2879,18 @@ export default function App() {
       if (va > vb) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
+  }
+
+  // IDB 読込完了まではローディング表示（localStorage 由来の古い表示のチラつき防止）
+  if (!hydrated) {
+    return (
+      <div style={{ ...s.root, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 14 }}>
+        <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: 2, color: "#111" }}>TSUMI TSUMI</div>
+        <div style={{ width: 32, height: 32, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: "50%", animation: "ttspin 0.8s linear infinite" }} />
+        <div style={{ fontSize: 12, color: "#9ca3af" }}>読み込み中...</div>
+        <style>{"@keyframes ttspin{to{transform:rotate(360deg)}}"}</style>
+      </div>
+    );
   }
 
   return (
