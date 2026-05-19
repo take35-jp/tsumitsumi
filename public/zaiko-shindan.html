@@ -228,7 +228,7 @@
   }
   function resetForm(){ document.getElementById('err').textContent=''; DIAG=null; show('screen-form'); }
 
-  // 制作ペースモデル B（定年スパイク型）
+  // 制作ペースモデル B（60歳まで一定→定年で一時的に増→65歳以降は加齢で減衰）
   // age<60: 年C個 / 60-65: C→1.5C上昇(65ピーク) / 65-75: 1.5C→0下降 / 75超: 0
   function rateAt(age, C){
     if (age < 60) return C;
@@ -394,7 +394,7 @@
         msg = '今の積み（'+d.S+'個）のうち <b>'+miss+'個</b> は、生涯かけても作りきれない計算です。';
       }
       badge.textContent = badgeTxt;
-      verdict.innerHTML = '<div class="title">75歳までに作れる総数</div>定年スパイク型モデルで、今から75歳までフル稼働した場合の合計です。<br>'+msg;
+      verdict.innerHTML = '<div class="title">75歳までに作れる総数</div>今のペースをベースに、年齢による制作スピードの変化を考慮して、75歳までに作れる数を計算した合計です。<br>'+msg;
       d.r2text = '②生涯であと作れるのは: 約'+d.lifetime+'個';
     }
 
