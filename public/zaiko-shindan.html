@@ -35,10 +35,15 @@
   .screen.active { display: block; }
   @keyframes fade { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform:none;} }
 
-  .hero { text-align: center; padding: 34px 8px 18px; }
-  .hero h1 { font-size: 26px; font-weight: 900; margin: 0 0 10px; line-height: 1.35; }
-  .hero h1 .em { color: var(--danger); }
-  .hero p { font-size: 13px; color: var(--text-sub); margin: 0; }
+  /* ゴシップ誌・週刊誌中吊り風 見出し */
+  .hero { text-align: center; padding: 30px 4px 16px; }
+  .gossip-tag { display:inline-block; background:#dc2626; color:#fff; font-size:12px; font-weight:900; letter-spacing:3px; padding:5px 16px; border-radius:2px; transform:rotate(-2.5deg); margin-bottom:16px; box-shadow:3px 3px 0 rgba(0,0,0,.28); }
+  .gossip-title { font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif; font-weight:900; font-size:30px; line-height:1.32; margin:0; letter-spacing:-1px; color:#0a0a0a; }
+  .gossip-title .line { display:block; }
+  .gossip-title .hl { background:linear-gradient(transparent 52%, #fde047 52%, #fde047 92%, transparent 92%); padding:0 6px; }
+  .gossip-title .red { color:#dc2626; font-size:1.32em; }
+  .gossip-title .q { color:#dc2626; font-size:1.5em; font-weight:900; vertical-align:-2px; }
+  .hero p { font-size: 13px; color: var(--text-sub); margin: 16px 0 0; }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
   .q { margin-bottom: 20px; }
@@ -76,8 +81,12 @@
   .verdict .title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }
   .breakdown { font-size: 12px; color: var(--text-mute); margin: 0; }
   .breakdown div { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--border); }
+  .note { font-size: 11px; color: var(--text-mute); line-height: 1.7; margin: 12px 4px 0; }
+  .note b { color: var(--text-sub); font-weight: 700; }
   .share { display: block; width: 100%; padding: 15px 0; margin: 14px 0 0; text-align: center; background: #000; color: #fff; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 15px; }
-  .next-btn { display:block; width:100%; padding: 15px 0; margin-top: 10px; text-align:center; background: var(--ink); color:#fff; border:none; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; }
+  .share.sm { padding: 10px 0; font-size: 13px; margin-top: 10px; }
+  .next-btn { display:block; width:100%; padding: 16px 0; margin: 14px 0 0; text-align:center; background: var(--danger); color:#fff; border:none; border-radius:12px; font-weight:800; font-size:16px; cursor:pointer; box-shadow:0 2px 8px rgba(239,68,68,.3); }
+  .next-btn:active { transform: scale(.99); }
   .retry { display:block; width:100%; padding: 13px 0; margin-top: 10px; text-align:center; background:#fff; border:1.5px solid var(--border); border-radius:12px; color:var(--text-sub); font-weight:700; font-size:14px; cursor:pointer; text-decoration:none; }
   .promo { margin-top: 22px; background: var(--accent-soft); border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 18px 16px; text-align: center; }
   .promo h3 { margin: 0 0 6px; font-size: 15px; color: var(--accent-strong); }
@@ -102,7 +111,11 @@
   <!-- ===== 入力画面 ===== -->
   <section id="screen-form" class="screen active">
     <div class="hero">
-      <h1>あなたの積みプラは<br><span class="em">何年在庫</span>？</h1>
+      <span class="gossip-tag">緊急診断</span>
+      <h1 class="gossip-title">
+        <span class="line">あなたの積みプラは</span>
+        <span class="line"><span class="hl red">何年在庫</span><span class="q">！？</span></span>
+      </h1>
       <p>その積みプラ、生きてるうちに作り切れますか？<br>2つの視点でシビアに診断します。</p>
     </div>
     <div class="card">
@@ -149,8 +162,8 @@
       <div class="big" id="r1-headline"></div>
     </div>
     <div class="verdict" id="r1-verdict"></div>
-    <a class="share" id="r1-share" href="#" target="_blank" rel="noopener">𝕏 結果をポストする</a>
     <button class="next-btn" onclick="goLoading2()">② 生涯であと何個作れるか診断 →</button>
+    <a class="share sm" id="r1-share" href="#" target="_blank" rel="noopener">𝕏 結果をポストする</a>
     <a class="tsumi-inline" href="https://tsumitsumi.vercel.app/" target="_blank" rel="noopener">📦 積みプラを整理して管理する：TSUMITSUMI</a>
   </section>
 
@@ -178,6 +191,7 @@
     <div class="card" style="padding:14px 16px">
       <div class="breakdown" id="r2-breakdown"></div>
     </div>
+    <p class="note">※ この診断は <b>「60歳までは今のペースのまま／定年で自由時間が増える60〜65歳はペースアップ／65歳以降は体力の低下で少しずつスローダウン／75歳で制作を引退」</b> という前提で、今から75歳までに作れる数をざっくり積み上げて計算しています。あくまで目安としてお楽しみください。</p>
     <a class="share" id="r2-share" href="#" target="_blank" rel="noopener">𝕏 結果をポストする</a>
     <a class="retry" href="#" onclick="resetForm();return false;">もう一度診断する</a>
 
@@ -387,8 +401,7 @@
     document.getElementById('r2-breakdown').innerHTML =
       '<div><span>積みプラ数</span><span>'+d.S+' 個</span></div>' +
       '<div><span>年間完成ペース</span><span>'+(Math.round(d.C*10)/10)+' 個/年</span></div>' +
-      '<div><span>現在の年齢</span><span>'+d.A+' 歳</span></div>' +
-      '<div style="border:none"><span>制作モデル</span><span>定年スパイク型(60-75)</span></div>';
+      '<div style="border:none"><span>現在の年齢</span><span>'+d.A+' 歳</span></div>';
 
     updateShare();
   }
