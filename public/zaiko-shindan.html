@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<title>あなたの積みプラは何年在庫？｜積みプラ寿命診断</title>
+<meta name="description" content="あなたの積みプラ、生きてるうちに作り切れますか？ 積み数・年間完成数・年齢から「あと何年で崩しきれるか」を診断。75歳までに間に合うかシビアに計算します。" />
+<meta name="robots" content="noindex" />
+<meta property="og:title" content="あなたの積みプラは何年在庫？" />
+<meta property="og:description" content="その積みプラ、生きてるうちに作り切れる？ 積み数・完成ペース・年齢から崩しきれる年数を診断。" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://tsumitsumi.vercel.app/LOGO.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="あなたの積みプラは何年在庫？" />
+<meta name="twitter:description" content="その積みプラ、生きてるうちに作り切れる？ 積み寿命を診断。" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-sub: #4b5563;
+    --text-mute: #9ca3af;
+    --accent: #22c55e;
+    --accent-soft: #f0fdf4;
+    --accent-strong: #15803d;
+    --danger: #ef4444;
+    --danger-soft: #fef2f2;
+    --warn: #f59e0b;
+    --ink: #111827;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px 64px; }
+  header.site {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .site-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; gap: 8px; }
+  .site-inner img { width: 26px; height: 26px; border-radius: 6px; }
+  .brand { font-size: 14px; font-weight: 800; letter-spacing: 1px; }
+  .brand small { display:block; font-size: 9px; font-weight: 600; color: var(--text-mute); letter-spacing: 2px; }
+
+  /* セクション切替 */
+  .screen { display: none; animation: fade .35s ease; }
+  .screen.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform:none;} }
+
+  /* HERO */
+  .hero { text-align: center; padding: 36px 8px 20px; }
+  .hero h1 { font-size: 26px; font-weight: 900; margin: 0 0 10px; line-height: 1.35; }
+  .hero h1 .em { color: var(--danger); }
+  .hero p { font-size: 13px; color: var(--text-sub); margin: 0; }
+
+  /* FORM */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .q { margin-bottom: 20px; }
+  .q:last-of-type { margin-bottom: 8px; }
+  .q label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .q .hint { font-size: 11px; color: var(--text-mute); font-weight: 500; margin-left: 6px; }
+  .q input[type=number] {
+    width: 100%; padding: 13px 14px; font-size: 17px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: #fafafa; outline: none; -moz-appearance: textfield;
+  }
+  .q input[type=number]:focus { border-color: var(--accent); background: #fff; }
+  .q input::-webkit-outer-spin-button, .q input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .toggle { display: flex; gap: 8px; margin-bottom: 10px; }
+  .toggle button {
+    flex: 1; padding: 9px 0; font-size: 13px; font-weight: 700; border-radius: 8px;
+    border: 1.5px solid var(--border); background: #f3f4f6; color: var(--text-sub); cursor: pointer;
+  }
+  .toggle button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .cta {
+    width: 100%; padding: 16px 0; margin-top: 14px; font-size: 17px; font-weight: 800;
+    color: #fff; background: var(--ink); border: none; border-radius: 12px; cursor: pointer;
+    letter-spacing: 1px;
+  }
+  .cta:active { transform: scale(.99); }
+  .err { color: var(--danger); font-size: 12px; margin-top: 8px; text-align: center; min-height: 16px; }
+
+  /* 診断中 */
+  .loading { text-align: center; padding: 40px 8px; }
+  .loading .spin {
+    width: 46px; height: 46px; border: 4px solid var(--border); border-top-color: var(--ink);
+    border-radius: 50%; margin: 0 auto 18px; animation: sp .8s linear infinite;
+  }
+  @keyframes sp { to { transform: rotate(360deg);} }
+  .loading .msg { font-size: 16px; font-weight: 800; }
+  .loading .sub { font-size: 12px; color: var(--text-mute); margin-top: 6px; }
+  .bar { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin: 20px auto 0; max-width: 240px; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
+
+  /* 広告枠 */
+  .ad-slot {
+    background: repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 10px,#eceef0 10px,#eceef0 20px);
+    border: 1px dashed #cbd5e1; border-radius: 10px; min-height: 100px;
+    display: flex; align-items: center; justify-content: center;
+    color: #94a3b8; font-size: 11px; margin: 16px 0;
+  }
+
+  /* 結果 */
+  .result-head { text-align: center; padding: 8px 4px 14px; }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 800; padding: 4px 14px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent-strong); margin-bottom: 14px;
+  }
+  .badge.danger { background: var(--danger-soft); color: var(--danger); }
+  .big {
+    font-size: 15px; font-weight: 700; color: var(--text-sub); margin: 4px 0;
+  }
+  .big .num { font-size: 46px; font-weight: 900; color: var(--ink); display: block; line-height: 1.1; margin: 4px 0; }
+  .big .num.danger { color: var(--danger); }
+  .verdict {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; margin: 14px 0; font-size: 14px; line-height: 1.8;
+  }
+  .verdict .title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }
+  .breakdown { font-size: 12px; color: var(--text-mute); margin: 10px 0 0; }
+  .breakdown div { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--border); }
+  .share {
+    display: block; width: 100%; padding: 15px 0; margin: 14px 0 0; text-align: center;
+    background: #000; color: #fff; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 15px;
+  }
+  .retry { display:block; width:100%; padding: 13px 0; margin-top: 10px; text-align:center; background:#fff; border:1.5px solid var(--border); border-radius:12px; color:var(--text-sub); font-weight:700; font-size:14px; cursor:pointer; text-decoration:none; }
+  .promo {
+    margin-top: 22px; background: var(--accent-soft); border: 1.5px solid #bbf7d0; border-radius: 14px;
+    padding: 18px 16px; text-align: center;
+  }
+  .promo h3 { margin: 0 0 6px; font-size: 15px; color: var(--accent-strong); }
+  .promo p { margin: 0 0 12px; font-size: 12px; color: var(--text-sub); }
+  .promo a { display:inline-block; padding: 11px 22px; background: var(--accent); color:#fff; border-radius: 999px; text-decoration:none; font-weight: 800; font-size: 14px; }
+  footer { text-align: center; font-size: 11px; color: var(--text-mute); padding: 30px 0 0; }
+  footer a { color: var(--text-mute); }
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="site-inner">
+    <img src="/LOGO.png" alt="TSUMITSUMI" />
+    <div class="brand">TSUMI TSUMI<small>PLASTIC MODEL TRACKER</small></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== 入力画面 ===== -->
+  <section id="screen-form" class="screen active">
+    <div class="hero">
+      <h1>あなたの積みプラは<br><span class="em">何年在庫</span>？</h1>
+      <p>その積みプラ、生きてるうちに作り切れますか？<br>シビアに診断します。</p>
+    </div>
+    <div class="card">
+      <div class="q">
+        <label>① 今の積みプラ数<span class="hint">未組立の在庫</span></label>
+        <input type="number" id="in-stock" inputmode="numeric" placeholder="例: 120" min="0" />
+      </div>
+      <div class="q">
+        <label>② 完成ペース<span class="hint">直近の実績で</span></label>
+        <div class="toggle">
+          <button type="button" id="unit-year" class="on" onclick="setUnit('year')">昨年の完成数</button>
+          <button type="button" id="unit-month" onclick="setUnit('month')">1ヶ月の完成数</button>
+        </div>
+        <input type="number" id="in-done" inputmode="numeric" placeholder="例: 8" min="0" />
+      </div>
+      <div class="q">
+        <label>③ 現在の年齢</label>
+        <input type="number" id="in-age" inputmode="numeric" placeholder="例: 42" min="1" max="110" />
+      </div>
+      <button class="cta" onclick="diagnose()">診断する</button>
+      <div class="err" id="err"></div>
+    </div>
+
+    <!-- ▼▼▼ 広告枠①（入力画面下）：公開前に nend または 忍者AdMax の発行タグをこの div の中／直後に貼る ▼▼▼ -->
+    <div class="ad-slot" id="ad-form">広告枠（公開前にタグ設置）</div>
+    <!-- ▲▲▲ 広告枠① ここまで ▲▲▲ -->
+  </section>
+
+  <!-- ===== 診断中（時間ゲート演出）===== -->
+  <section id="screen-loading" class="screen">
+    <div class="loading">
+      <div class="spin"></div>
+      <div class="msg">診断中…</div>
+      <div class="sub">あなたの積みプラ人生を計算しています</div>
+      <div class="bar"><i id="bar-fill"></i></div>
+    </div>
+    <!-- ▼▼▼ 広告枠②（診断中・最も見られる枠）：公開前に nend または 忍者AdMax の発行タグを貼る ▼▼▼ -->
+    <div class="ad-slot" id="ad-loading" style="min-height:250px">広告枠（公開前にタグ設置）</div>
+    <!-- ▲▲▲ 広告枠② ここまで ▲▲▲ -->
+  </section>
+
+  <!-- ===== 結果 ===== -->
+  <section id="screen-result" class="screen">
+    <div class="result-head">
+      <span class="badge" id="r-badge">診断結果</span>
+      <div class="big" id="r-headline"></div>
+    </div>
+
+    <!-- ▼▼▼ 広告枠③（結果上部）：公開前に nend または 忍者AdMax の発行タグを貼る ▼▼▼ -->
+    <div class="ad-slot" id="ad-result-top">広告枠（公開前にタグ設置）</div>
+    <!-- ▲▲▲ 広告枠③ ここまで ▲▲▲ -->
+
+    <div class="verdict" id="r-verdict"></div>
+    <div class="card" style="padding:14px 16px">
+      <div class="breakdown" id="r-breakdown"></div>
+    </div>
+
+    <a class="share" id="r-share" href="#" target="_blank" rel="noopener">𝕏 結果をシェアする</a>
+    <a class="retry" href="#" onclick="resetForm();return false;">もう一度診断する</a>
+
+    <div class="promo">
+      <h3>📦 その積み、ちゃんと管理してますか？</h3>
+      <p>TSUMITSUMI なら積みプラの数・総額・完成状況をスマホで一括管理。<br>まずは「今の在庫」を正確に把握しよう。</p>
+      <a href="https://tsumitsumi.vercel.app/" target="_blank" rel="noopener">TSUMITSUMI を使ってみる →</a>
+    </div>
+
+    <!-- ▼▼▼ 広告枠④（結果下部）：公開前に nend または 忍者AdMax の発行タグを貼る ▼▼▼ -->
+    <div class="ad-slot" id="ad-result-bottom">広告枠（公開前にタグ設置）</div>
+    <!-- ▲▲▲ 広告枠④ ここまで ▲▲▲ -->
+  </section>
+
+  <footer>
+    © 2026 TSUMI TSUMI ／ <a href="https://tsumitsumi.vercel.app/" target="_blank" rel="noopener">本体サイト</a> ・ <a href="/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>
+  </footer>
+</div>
+
+<script>
+  // ===== 状態 =====
+  var unit = 'year'; // 'year' | 'month'
+  function setUnit(u){
+    unit = u;
+    document.getElementById('unit-year').classList.toggle('on', u==='year');
+    document.getElementById('unit-month').classList.toggle('on', u==='month');
+    document.getElementById('in-done').placeholder = (u==='year') ? '例: 8' : '例: 1';
+  }
+  function show(id){
+    ['screen-form','screen-loading','screen-result'].forEach(function(s){
+      document.getElementById(s).classList.toggle('active', s===id);
+    });
+    window.scrollTo(0,0);
+  }
+  function resetForm(){ document.getElementById('err').textContent=''; show('screen-form'); }
+
+  // ===== 制作ペースモデル B（定年スパイク型）=====
+  // age<60 : 年 C 個（ベース）
+  // 60-65  : 定年で時間増 → C から 1.5C へ線形上昇（ピーク65歳）
+  // 65-75  : 体力低下 → 1.5C から 0 へ線形下降
+  // age>75 : 制作終了（0）
+  function rateAt(age, C){
+    if (age < 60) return C;
+    if (age < 65) return C * (1 + 0.5 * (age - 60) / 5);
+    if (age <= 75) return 1.5 * C * (75 - age) / 10;
+    return 0;
+  }
+
+  function diagnose(){
+    var S = parseInt(document.getElementById('in-stock').value, 10);
+    var doneRaw = parseFloat(document.getElementById('in-done').value);
+    var A = parseInt(document.getElementById('in-age').value, 10);
+    var err = document.getElementById('err');
+
+    if (isNaN(S) || S < 0) { err.textContent = '① 積みプラ数を入力してください'; return; }
+    if (isNaN(doneRaw) || doneRaw < 0) { err.textContent = '② 完成数を入力してください'; return; }
+    if (isNaN(A) || A < 1 || A > 110) { err.textContent = '③ 年齢を正しく入力してください'; return; }
+    err.textContent = '';
+
+    var C = (unit === 'month') ? doneRaw * 12 : doneRaw; // 年間完成数に換算
+
+    // 時間ゲート演出（約4秒・クリック強制なし）
+    show('screen-loading');
+    var fill = document.getElementById('bar-fill');
+    var t0 = Date.now(), DUR = 4000;
+    var iv = setInterval(function(){
+      var p = Math.min(1, (Date.now()-t0)/DUR);
+      fill.style.width = (p*100)+'%';
+      if (p >= 1){ clearInterval(iv); render(S, C, A); }
+    }, 80);
+  }
+
+  function render(S, C, A){
+    var nowYear = new Date().getFullYear();
+
+    // --- 計算（月次シミュレーション）---
+    var remaining = S, age = A, months = 0;
+    var GUARD = 1200; // 100年分の保険
+    while (remaining > 0 && age < 75 && months < GUARD){
+      var monthly = rateAt(age, C) / 12;
+      if (monthly <= 0.00001) break;
+      remaining -= monthly;
+      age += 1/12;
+      months++;
+    }
+    var years = months / 12;
+    var finished = remaining <= 0.0001;
+    var leftover = Math.max(0, Math.ceil(remaining));
+
+    // --- 結果文言 ---
+    var badge = document.getElementById('r-badge');
+    var headline = document.getElementById('r-headline');
+    var verdict = document.getElementById('r-verdict');
+    var shareText;
+
+    if (S === 0){
+      badge.textContent = '称号: 積み師見習い';
+      badge.className = 'badge';
+      headline.innerHTML = '<span class="num">0年</span>積みプラ在庫';
+      verdict.innerHTML = '<div class="title">健全すぎます👏</div>積みプラがありません。これから積んでいきましょう（？）';
+      shareText = '私の積みプラ在庫は【0年】！まだ積み師ではないようです。';
+    } else if (C === 0){
+      badge.textContent = '称号: 永遠の積み師';
+      badge.className = 'badge danger';
+      headline.innerHTML = '<span class="num danger">∞</span>このペースでは永遠に崩せません';
+      verdict.innerHTML = '<div class="title">完成数 0 …⚠️</div>1個も完成していないと、積みプラは永遠に減りません。まず1個、作りましょう。';
+      shareText = '私の積みプラ、完成ペース0なので【永遠に在庫】という診断が出ました…😇';
+    } else if (A >= 75){
+      badge.textContent = '称号: 沼の長老';
+      badge.className = 'badge danger';
+      headline.innerHTML = '<span class="num danger">'+S+'個</span>が未完のまま';
+      verdict.innerHTML = '<div class="title">制作可能年齢を超えています</div>この診断は75歳までを制作期間としています。残りは次世代へ…🙏';
+      shareText = '私の積みプラ診断結果、'+S+'個が未完のまま…沼の長老でした。';
+    } else if (finished){
+      var finAge = Math.ceil(A + years);
+      var finYear = nowYear + Math.ceil(years);
+      var yText = years < 1 ? 'ほぼ即完' : ('約' + Math.ceil(years) + '年');
+      var title, badgeTxt, badgeCls='badge';
+      if (years < 3){ title='健全な積み師'; badgeTxt='称号: 健全な積み師'; }
+      else if (years < 7){ title='沼の中級者'; badgeTxt='称号: 沼の中級者'; }
+      else if (years < 15){ title='ヴィンテージ熟成中'; badgeTxt='称号: ヴィンテージ熟成中'; }
+      else { title='ギリギリ達成型'; badgeTxt='称号: ギリギリ達成型'; badgeCls='badge'; }
+      badge.textContent = badgeTxt; badge.className = badgeCls;
+      headline.innerHTML = '<span class="num">'+yText+'</span>で崩しきれます';
+      verdict.innerHTML = '<div class="title">'+title+'</div>今のペースなら <b>'+finYear+'年（あなた'+finAge+'歳）</b> ごろに積みプラ完全制覇。<br>その日まで積み増ししなければ…ですが。';
+      shareText = '私の積みプラは【'+yText+'】で崩しきれる予定（'+finYear+'年・'+finAge+'歳）。称号「'+title+'」でした。';
+    } else {
+      // 75歳までに崩しきれない
+      var pct = Math.round((1 - leftover / S) * 100);
+      var title2, badgeTxt2;
+      if (leftover <= 10){ title2='未完の大器'; badgeTxt2='称号: 未完の大器'; }
+      else if (leftover <= 50){ title2='永遠の積み師'; badgeTxt2='称号: 永遠の積み師'; }
+      else { title2='沼の主'; badgeTxt2='称号: 沼の主'; }
+      badge.textContent = badgeTxt2; badge.className = 'badge danger';
+      headline.innerHTML = '<span class="num danger">'+leftover+'個</span>が未完のまま終わります';
+      verdict.innerHTML = '<div class="title">'+title2+'</div>75歳までフルで作っても、<b>'+leftover+'個</b>が未完のまま残る計算です（消化率 '+pct+'%）。<br>今すぐペースを上げるか、潔く積みを愛でましょう。';
+      shareText = '私の積みプラ、75歳までに崩しきれず【'+leftover+'個が未完】という診断が…😱 称号「'+title2+'」';
+    }
+
+    // --- 内訳 ---
+    document.getElementById('r-breakdown').innerHTML =
+      '<div><span>積みプラ数</span><span>'+S+' 個</span></div>' +
+      '<div><span>年間完成ペース</span><span>'+ (Math.round(C*10)/10) +' 個/年</span></div>' +
+      '<div><span>現在の年齢</span><span>'+A+' 歳</span></div>' +
+      '<div style="border:none"><span>制作モデル</span><span>定年スパイク型(60-75)</span></div>';
+
+    // --- シェア ---
+    var url = 'https://tsumitsumi.vercel.app/zaiko-shindan.html';
+    var tweet = shareText + '\n\n#積みプラ #積みプラ診断 #TSUMITSUMI\n' + url;
+    document.getElementById('r-share').href =
+      'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweet);
+
+    show('screen-result');
+  }
+</script>
+</body>
+</html>
