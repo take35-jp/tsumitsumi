@@ -1156,6 +1156,12 @@ function BackupModal({ kits, onImport, onClose }) {
           ⚠️ <strong>注意：</strong>SafariとChromeなど、ブラウザの種類が異なるとデータは別々に保存されます。異なるブラウザへ移行する場合は、必ずエクスポートしてからインポートしてください。
         </div>
       </div>
+
+      {/* 広告（運営費補填用・静的HTMLをiframeで読み込み・CPU消費なし） */}
+      <div style={{ marginTop: 18, textAlign: "center" }}>
+        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+        <iframe src="/admax-rect.html" title="ad" loading="lazy" width="300" height="250" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block" }} />
+      </div>
     </div>
   );
 }
@@ -1513,6 +1519,12 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         <div style={hs.desc}>本サービスのプライバシーポリシー、アフィリエイト広告に関する表記、免責事項は別ページにまとめています。</div>
         <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>プライバシーポリシーを開く →</a>
         <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, textAlign: "center" }}>当サイトはアフィリエイト広告を利用しています</div>
+      </div>
+
+      {/* 広告（運営費補填用・静的HTMLをiframeで読み込み・CPU消費なし） */}
+      <div style={{ marginTop: 18, textAlign: "center" }}>
+        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+        <iframe src="/admax-rect.html" title="ad" loading="lazy" width="300" height="250" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block" }} />
       </div>
     </div>
   );
