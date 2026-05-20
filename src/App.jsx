@@ -1259,7 +1259,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.21", date: "2026/05/12", isNew: true, items: ["起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）"] },
+    { ver: "v1.22", date: "2026/05/20", isNew: true, items: ["完成写真を登録したキットはサムネイルに完成写真を優先表示", "運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）"] },
+    { ver: "v1.21", date: "2026/05/12", isNew: false, items: ["起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）"] },
     { ver: "v1.20", date: "2026/05/12", isNew: false, items: ["重要: 再起動時に一部キットの画像が消えるデータ消失バグを修正（保存処理の初期化順序を改善）"] },
     { ver: "v1.19", date: "2026/05/12", isNew: false, items: ["スケール・シリーズの自動補完を強化（全てのスケール選択肢に対応・SMP/R3 等のシリーズ自動判定にも対応）"] },
     { ver: "v1.18", date: "2026/05/12", isNew: false, items: ["完成済みキットの「完成」ボタンを「完成を解除」表示に変更（未完成に戻せることを明示）"] },
@@ -1456,10 +1457,21 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.21 */}
+          {/* v1.22 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.22</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/20</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・完成写真を登録したキットはサムネイルに完成写真を優先表示<br/>
+              ・運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）
+            </div>
+          </div>
+          {/* v1.21 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.21</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/12</span>
             </div>
@@ -1609,6 +1621,11 @@ function AppShareModal({ onClose }) {
             <div style={{ fontSize: 11, opacity: 0.75, marginTop: 2 }}>{b.sub}</div>
           </button>
         ))}
+      </div>
+      {/* 広告（運営費補填用・iframeでCPU消費なし） */}
+      <div style={{ marginTop: 18, textAlign: "center" }}>
+        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+        <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
       </div>
     </div>
   );
@@ -1830,7 +1847,8 @@ async function generateShareImages(kits, rank) {
   // 全画像を事前ロード
   const imgCache = {};
   await Promise.all(kits.map(async (k) => {
-    if (k.photoUrl) imgCache[k.id] = await loadImage(k.photoUrl);
+    const thumb = k.completedPhotoUrl || k.photoUrl;
+    if (thumb) imgCache[k.id] = await loadImage(thumb);
   }));
 
   const blobs = [];
@@ -2045,7 +2063,7 @@ DM→ @${id}` : "";
                 <div style={{ ...xs.checkbox, background: selected.has(k.id) ? "#22c55e" : "#fff", border: `2px solid ${selected.has(k.id) ? "#22c55e" : "#d1d5db"}` }}>
                   {selected.has(k.id) && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
                 </div>
-                {k.photoUrl && <KitImage src={k.photoUrl} style={xs.kitThumb} />}
+                {(k.completedPhotoUrl || k.photoUrl) && <KitImage src={k.completedPhotoUrl || k.photoUrl} style={xs.kitThumb} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={xs.kitName}>{k.name}</div>
                   <div style={xs.kitMeta}>{k.scale || ""}</div>
@@ -2091,6 +2109,11 @@ DM→ @${id}` : "";
           𝕏 テキストのみ投稿
         </button>
       </>)}
+      {/* 広告（運営費補填用・iframeでCPU消費なし） */}
+      <div style={{ marginTop: 18, textAlign: "center" }}>
+        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+        <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
+      </div>
     </div>
   );
 }
@@ -3091,8 +3114,8 @@ export default function App() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {filtered.map((kit) => (
               <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
-                {kit.photoUrl
-                  ? <KitImage src={kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
+                {(kit.completedPhotoUrl || kit.photoUrl)
+                  ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
                   : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>
                 }
                 <div style={{ padding: "6px 6px 8px" }}>
@@ -3203,7 +3226,7 @@ export default function App() {
                   onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }} disabled={index === filtered.length - 1}>▼</button>
               </div>
             )}
-            {kit.photoUrl ? <KitImage src={kit.photoUrl} style={s.thumb} /> : <div style={s.thumbPh}>📦</div>}
+            {(kit.completedPhotoUrl || kit.photoUrl) ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={s.thumb} /> : <div style={s.thumbPh}>📦</div>}
             <div style={s.cardBody}>
               <div style={s.cardName}>{kit.name}</div>
               <div style={s.cardMeta}>
@@ -3330,6 +3353,11 @@ export default function App() {
                 <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
                 <button style={s.closeBtn} onClick={() => setDetail(null)}>閉じる</button>
               </div>
+              {/* 広告（運営費補填用・iframeでCPU消費なし） */}
+              <div style={{ marginTop: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+                <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
+              </div>
             </div>
           </div>
         </div>
@@ -3347,7 +3375,7 @@ export default function App() {
                 <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
                   {continuousQueue.map((k, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
-                      {k.photoUrl && <KitImage src={k.photoUrl} style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} />}
+                      {(k.completedPhotoUrl || k.photoUrl) && <KitImage src={k.completedPhotoUrl || k.photoUrl} style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} />}
                       <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{k.name || k.jan}</span>
                       <button style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14 }}
                         onClick={() => setContinuousQueue(q => q.filter((_, j) => j !== i))}>✕</button>
