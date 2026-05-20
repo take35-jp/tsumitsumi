@@ -1160,7 +1160,7 @@ function BackupModal({ kits, onImport, onClose }) {
       {/* 広告（運営費補填用・静的HTMLをiframeで読み込み・CPU消費なし） */}
       <div style={{ marginTop: 18, textAlign: "center" }}>
         <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
-        <iframe src="/admax-rect.html" title="ad" loading="lazy" width="300" height="250" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block" }} />
+        <iframe src="/admax-rect.html" title="ad" loading="lazy" width="250" height="200" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block" }} />
       </div>
     </div>
   );
@@ -1524,7 +1524,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       {/* 広告（運営費補填用・静的HTMLをiframeで読み込み・CPU消費なし） */}
       <div style={{ marginTop: 18, textAlign: "center" }}>
         <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
-        <iframe src="/admax-rect.html" title="ad" loading="lazy" width="300" height="250" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block" }} />
+        <iframe src="/admax-rect.html" title="ad" loading="lazy" width="250" height="200" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block" }} />
       </div>
     </div>
   );
