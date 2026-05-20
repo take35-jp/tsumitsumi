@@ -35,24 +35,24 @@
   .screen.active { display: block; }
   @keyframes fade { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform:none;} }
 
-  /* 2ch風 AAバナー（モノスペース・限定色） */
+  /* 2ch風 AAバナー（モノスペース・限定色・やる夫） */
   .hero { text-align: center; padding: 22px 4px 16px; }
   .aa-banner {
     font-family: "MS PGothic","ＭＳ Ｐゴシック","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
-    font-size: 15px;
-    line-height: 1.5;
     color: #1a1a1a;
     background: #f5f4ee;
     border: 1px solid #1a1a1a;
     padding: 16px 8px;
     margin: 0 auto;
-    max-width: 360px;
+    max-width: 380px;
     text-align: center;
-    white-space: pre;
-    overflow-x: auto;
     letter-spacing: 0;
     font-weight: bold;
+    overflow-x: auto;
   }
+  .aa-banner pre { font: inherit; margin: 0; white-space: pre; font-size: 15px; line-height: 1.45; }
+  .aa-banner .aa-head { text-align: center; }
+  .aa-banner .aa-art { display: inline-block; text-align: left; margin: 10px auto; font-size: 13px; line-height: 1.3; }
   .aa-em { color: #8b0000; }
   .hero p { font-size: 13px; color: var(--text-sub); margin: 14px 0 0; }
 
@@ -122,16 +122,23 @@
   <!-- ===== 入力画面 ===== -->
   <section id="screen-form" class="screen active">
     <div class="hero">
-      <pre class="aa-banner" aria-label="あなたの積みプラは何年在庫？">
-━━━━━━━━━━━━━━━━━━
+      <div class="aa-banner" aria-label="あなたの積みプラは何年在庫？">
+<pre class="aa-head">━━━━━━━━━━━━━━━━━━
 　【 緊 急 診 断 】
 ━━━━━━━━━━━━━━━━━━
 
 　あなたの積みプラは
-　<span class="aa-em">何 年 在 庫</span> ！ ？
-
-　　　　( ´_ゝ｀)
-━━━━━━━━━━━━━━━━━━</pre>
+　<span class="aa-em">何 年 在 庫</span> ！ ？</pre>
+<pre class="aa-art">      ____
+     /     \
+    /   ＿   ＼
+   / (●) (●) \
+  |    (__人__)    |
+   \    ` ⌒´   /
+    /         \
+   /           ＼</pre>
+<pre class="aa-head">━━━━━━━━━━━━━━━━━━</pre>
+      </div>
       <p>その積みプラ、生きてるうちに作り切れますか？<br>2つの視点でシビアに診断します。</p>
     </div>
     <div class="card">
