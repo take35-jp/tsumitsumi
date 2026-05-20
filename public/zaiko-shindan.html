@@ -68,7 +68,7 @@
   .bar { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin: 20px auto 0; max-width: 240px; }
   .bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
 
-  .ad-slot { background: repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 10px,#eceef0 10px,#eceef0 20px); border: 1px dashed #cbd5e1; border-radius: 10px; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px; margin: 16px 0; }
+  .ad-slot { margin: 16px 0; min-height: 100px; display: flex; align-items: center; justify-content: center; }
 
   .result-head { text-align: center; padding: 8px 4px 14px; }
   .step-tag { display:inline-block; font-size: 11px; font-weight: 800; color: var(--text-mute); letter-spacing: 2px; margin-bottom: 8px; }
@@ -150,7 +150,11 @@
       <div class="bar"><i id="bar1"></i></div>
     </div>
     <!-- ▼▼▼ 広告枠A（診断中①・最も見られる枠その1）：公開前に nend または 忍者AdMax の発行タグを貼る ▼▼▼ -->
-    <div class="ad-slot" id="ad-loading1" style="min-height:250px">広告枠（公開前にタグ設置）</div>
+    <div class="ad-slot" id="ad-loading1" style="min-height:250px">
+      <!-- admax -->
+      <script src="https://adm.shinobi.jp/s/9c5322ffe5a092cf270669105709696f"></script>
+      <!-- admax -->
+    </div>
     <!-- ▲▲▲ 広告枠A ここまで ▲▲▲ -->
   </section>
 
@@ -176,7 +180,11 @@
       <div class="bar"><i id="bar2"></i></div>
     </div>
     <!-- ▼▼▼ 広告枠B（診断中②・最も見られる枠その2）：公開前に nend または 忍者AdMax の発行タグを貼る ▼▼▼ -->
-    <div class="ad-slot" id="ad-loading2" style="min-height:250px">広告枠（公開前にタグ設置）</div>
+    <div class="ad-slot" id="ad-loading2" style="min-height:250px">
+      <!-- admax -->
+      <script src="https://adm.shinobi.jp/s/9c5322ffe5a092cf270669105709696f"></script>
+      <!-- admax -->
+    </div>
     <!-- ▲▲▲ 広告枠B ここまで ▲▲▲ -->
   </section>
 
@@ -202,7 +210,11 @@
     </div>
 
     <!-- ▼▼▼ 広告枠C（結果②下部・任意の追加枠）：必要なら nend / 忍者AdMax タグを貼る ▼▼▼ -->
-    <div class="ad-slot" id="ad-result-bottom">広告枠（任意・公開前にタグ設置）</div>
+    <div class="ad-slot" id="ad-result-bottom">
+      <!-- admax -->
+      <script src="https://adm.shinobi.jp/s/9c5322ffe5a092cf270669105709696f"></script>
+      <!-- admax -->
+    </div>
     <!-- ▲▲▲ 広告枠C ここまで ▲▲▲ -->
   </section>
 
