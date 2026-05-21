@@ -2939,6 +2939,71 @@ export default function App() {
     return result;
   }, [kits, filter, searchQuery, filterSeries, filterRating, filterCondition, filterScale, filterTags, sortKey, sortDir]);
 
+  // キット一覧の各カードJSXを useMemo でキャッシュ。フォーム入力や検索 debounce 中などの
+  // 無関係な再レンダーで .map() による 500件分の React 要素生成が走らないようにする（入力遅延の主因対策）。
+  // 内部のクリックハンドラは React state setter または functional setState を使う関数のみを参照するので、
+  // キャッシュされたクロージャでも stale 問題は発生しない（moveKit は内部で setKits(prev => ...) を使用）。
+  const gridCards = useMemo(() => filtered.map((kit) => (
+    <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
+      {(kit.completedPhotoUrl || kit.photoUrl)
+        ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
+        : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>
+      }
+      <div style={{ padding: "6px 6px 8px" }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#111", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.3 }}>{kit.name}</div>
+        {kit.scale && <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{kit.scale}</div>}
+        {kit.completed && <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700, marginTop: 2 }}>✓ 完成済み</div>}
+      </div>
+    </div>
+  )), [filtered]);
+
+  const listCards = useMemo(() => filtered.map((kit, index) => (
+    <div key={kit.id} style={{ ...s.card, ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
+      if (bulkMode) { setBulkSelected(prev => { const n = new Set(prev); n.has(kit.id) ? n.delete(kit.id) : n.add(kit.id); return n; }); return; }
+      if (!reorderMode) setDetail(kit);
+    }}>
+      {bulkMode && (
+        <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {bulkSelected.has(kit.id) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
+        </div>
+      )}
+      {reorderMode && !bulkMode && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            onClick={(e) => { e.stopPropagation(); moveKit(kit.id, -1); }} disabled={index === 0}>▲</button>
+          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === filtered.length - 1 ? "#f3f4f6" : "#fff", color: index === filtered.length - 1 ? "#ccc" : "#374151", fontSize: 14, cursor: index === filtered.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }} disabled={index === filtered.length - 1}>▼</button>
+        </div>
+      )}
+      {(kit.completedPhotoUrl || kit.photoUrl) ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={s.thumb} /> : <div style={s.thumbPh}>📦</div>}
+      <div style={s.cardBody}>
+        <div style={s.cardName}>{kit.name}</div>
+        <div style={s.cardMeta}>
+          {kit.series && <span>{kit.series}</span>}
+          {kit.scale && <span style={s.badge}>{kit.scale}</span>}
+          {kit.completed && <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700, marginLeft: 6 }}>✓ 完成済み</span>}
+          {kit.tags?.length > 0 && kit.tags.map(tag => (
+            <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
+          ))}
+        </div>
+        <div style={s.cardBottom}>
+          {kit.rating > 0 && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
+          {kit.count > 1 && <span style={s.countBadge}>{kit.count}個</span>}
+          {kit.condition && <span style={{ ...s.condBadge, ...getCondStyle(kit.condition) }}>{kit.condition}</span>}
+          {(() => {
+            const ep = getEffectivePrice(kit);
+            if (ep <= 0) return null;
+            return (
+              <span style={{ fontSize: 10, color: "#9ca3af", marginLeft: "auto" }}>
+                ¥{ep.toLocaleString()}{kit.count > 1 ? `×${kit.count}` : ""}
+              </span>
+            );
+          })()}
+        </div>
+      </div>
+    </div>
+  )), [filtered, bulkMode, bulkSelected, reorderMode]);
+
   // IDB 読込完了まではローディング表示（localStorage 由来の古い表示のチラつき防止）
   if (!hydrated) {
     return (
@@ -3135,19 +3200,7 @@ export default function App() {
         )}
         {viewMode === "grid" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {filtered.map((kit) => (
-              <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
-                {(kit.completedPhotoUrl || kit.photoUrl)
-                  ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
-                  : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>
-                }
-                <div style={{ padding: "6px 6px 8px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#111", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.3 }}>{kit.name}</div>
-                  {kit.scale && <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{kit.scale}</div>}
-                  {kit.completed && <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700, marginTop: 2 }}>✓ 完成済み</div>}
-                </div>
-              </div>
-            ))}
+            {gridCards}
           </div>
         )}
         {/* 一括操作バー */}
@@ -3231,52 +3284,7 @@ export default function App() {
             </div>
           );
         })()}
-        {viewMode === "list" && filtered.map((kit, index) => (
-          <div key={kit.id} style={{ ...s.card, ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
-            if (bulkMode) { setBulkSelected(prev => { const n = new Set(prev); n.has(kit.id) ? n.delete(kit.id) : n.add(kit.id); return n; }); return; }
-            if (!reorderMode) setDetail(kit);
-          }}>
-            {bulkMode && (
-              <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                {bulkSelected.has(kit.id) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
-              </div>
-            )}
-            {reorderMode && !bulkMode && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
-                <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                  onClick={(e) => { e.stopPropagation(); moveKit(kit.id, -1); }} disabled={index === 0}>▲</button>
-                <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === filtered.length - 1 ? "#f3f4f6" : "#fff", color: index === filtered.length - 1 ? "#ccc" : "#374151", fontSize: 14, cursor: index === filtered.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                  onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }} disabled={index === filtered.length - 1}>▼</button>
-              </div>
-            )}
-            {(kit.completedPhotoUrl || kit.photoUrl) ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={s.thumb} /> : <div style={s.thumbPh}>📦</div>}
-            <div style={s.cardBody}>
-              <div style={s.cardName}>{kit.name}</div>
-              <div style={s.cardMeta}>
-                {kit.series && <span>{kit.series}</span>}
-                {kit.scale && <span style={s.badge}>{kit.scale}</span>}
-                {kit.completed && <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700, marginLeft: 6 }}>✓ 完成済み</span>}
-                {kit.tags?.length > 0 && kit.tags.map(tag => (
-                  <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
-                ))}
-              </div>
-              <div style={s.cardBottom}>
-                {kit.rating > 0 && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
-                {kit.count > 1 && <span style={s.countBadge}>{kit.count}個</span>}
-                {kit.condition && <span style={{ ...s.condBadge, ...getCondStyle(kit.condition) }}>{kit.condition}</span>}
-                {(() => {
-                  const ep = getEffectivePrice(kit);
-                  if (ep <= 0) return null;
-                  return (
-                    <span style={{ fontSize: 10, color: "#9ca3af", marginLeft: "auto" }}>
-                      ¥{ep.toLocaleString()}{kit.count > 1 ? `×${kit.count}` : ""}
-                    </span>
-                  );
-                })()}
-              </div>
-            </div>
-          </div>
-        ))}
+        {viewMode === "list" && listCards}
       </div>
 
       {/* フッター */}
