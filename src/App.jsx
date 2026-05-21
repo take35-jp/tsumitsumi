@@ -2386,29 +2386,43 @@ export default function App() {
 
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
   // 注意:マスタDBからのみ取得する。Yahooからの自動取得は転売価格混入のため行わない
-  // (ユーザーが意図的に空にした価格を勝手に埋めてしまうのを防ぐ)
+  //
+  // Vercel Function 消費を抑えるため以下の制限を入れる:
+  //   - 試行履歴を localStorage に保存し、30日以内に試した JAN は再試行しない
+  //   - 1セッションあたり最大 5 件まで
+  //   - 既に retailPrice ありのキットは触らない（ユーザーが意図的に空にしたものを上書きしない）
   useEffect(() => {
     if (priceLoading) return; // 一括取得中はバックグラウンド取得しない
-    const kitsWithoutPrice = kits.filter(k => k.jan && !k.retailPrice);
-    if (kitsWithoutPrice.length === 0) return;
+    const PRICE_ATTEMPTED_KEY = "tsumitsumi_price_attempted";
+    const RETRY_AFTER_MS = 30 * 24 * 60 * 60 * 1000; // 30日
+    const PER_SESSION = 5;
+    let attempted = {};
+    try { attempted = JSON.parse(localStorage.getItem(PRICE_ATTEMPTED_KEY) || "{}") || {}; } catch {}
+    const now = Date.now();
+    const targets = kits.filter(k => {
+      if (!k.jan || k.retailPrice) return false;
+      const ts = attempted[k.jan];
+      return !ts || (now - ts) > RETRY_AFTER_MS;
+    }).slice(0, PER_SESSION);
+    if (targets.length === 0) return;
     let cancelled = false;
-    const fetchPrices = async () => {
-      for (const kit of kitsWithoutPrice.slice(0, 30)) { // 一度に最大30件
+    (async () => {
+      for (const kit of targets) {
         if (cancelled) break;
         try {
-          // マスタDBから希望小売価格のみを取得(Yahooフォールバックは行わない)
           const r = await fetch(`/api/price?jan=${kit.jan}`);
           const d = await r.json();
-          if (d.price && !cancelled) {
-            setKits(prev => prev.map(k =>
-              k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k
-            ));
+          if (d && d.price && !cancelled) {
+            setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
           }
         } catch {}
-        await new Promise(r => setTimeout(r, 300)); // 0.3秒間隔
+        attempted[kit.jan] = Date.now(); // 成否問わず試行時刻を記録
+        await new Promise(r => setTimeout(r, 300));
       }
-    };
-    fetchPrices();
+      if (!cancelled) {
+        try { localStorage.setItem(PRICE_ATTEMPTED_KEY, JSON.stringify(attempted)); } catch {}
+      }
+    })();
     return () => { cancelled = true; };
   }, []); // 初回マウント時のみ
 
