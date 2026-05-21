@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { get as idbGet, set as idbSet, del as idbDel } from "idb-keyval";
 
 // ====== IndexedDB ストレージ（kits の overflow 受け皿）======
@@ -2480,7 +2480,13 @@ export default function App() {
     try { localStorage.setItem("tsumitsumi_showPrice", showPriceTotal ? "true" : "false"); } catch {}
   }, [showPriceTotal]);
   const [continuousQueue, setContinuousQueue] = useState([]); // 連続スキャンキュー
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // 入力欄の即時値（タイピング応答性のため）
+  const [searchQuery, setSearchQuery] = useState(""); // フィルタ実行用のdebounce後の値
+  // 250ms debounce: 入力停止後にだけ filter を走らせる（大量キットでも入力遅延しない）
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(searchInput), 250);
+    return () => clearTimeout(t);
+  }, [searchInput]);
   const [reorderMode, setReorderMode] = useState(false);
   const [viewMode, setViewMode] = useState("list");
   const [sortKey, setSortKey] = useState("date"); // name | date | purchaseDate
@@ -2898,37 +2904,40 @@ export default function App() {
   const pendingPrice = kits.filter(k => !k.completed).reduce((sum, k) => sum + getEffectivePrice(k) * (k.count || 1), 0);
   const donePrice = kits.filter(k => k.completed).reduce((sum, k) => sum + getEffectivePrice(k) * (k.count || 1), 0);
 
-  let filtered = kits.filter((k) =>
-    filter === "pending" ? !k.completed : filter === "done" ? k.completed : true
-  );
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(k =>
-      k.name.toLowerCase().includes(q) ||
-      (k.series || "").toLowerCase().includes(q) ||
-      (k.scale || "").toLowerCase().includes(q)
+  // filter+sort は useMemo 化：kits/フィルタ/ソートのいずれかが変わった時のみ再計算。
+  // これにより、フォーム入力やモーダル開閉などの無関係な再レンダーで重い処理が走るのを防ぐ。
+  const filtered = useMemo(() => {
+    let result = kits.filter((k) =>
+      filter === "pending" ? !k.completed : filter === "done" ? k.completed : true
     );
-  }
-  if (filterSeries === "__unset__") filtered = filtered.filter(k => !(k.series || "").trim());
-  else if (filterSeries) filtered = filtered.filter(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim() === filterSeries);
-  if (filterRating) filtered = filtered.filter(k => (k.rating || 0) === Number(filterRating));
-  if (filterCondition) filtered = filtered.filter(k => (k.condition || "") === filterCondition);
-  if (filterScale === "__unset__") filtered = filtered.filter(k => !(k.scale || "").trim());
-  else if (filterScale) filtered = filtered.filter(k => (k.scale || "") === filterScale);
-  if (filterTags.length > 0) filtered = filtered.filter(k => filterTags.every(tag => (k.tags || []).includes(tag)));
-
-  // ソート（手動並び替えモード以外）
-  if (sortKey !== "custom") {
-    filtered = [...filtered].sort((a, b) => {
-      let va, vb;
-      if (sortKey === "name") { va = (a.name || ""); vb = (b.name || ""); }
-      else if (sortKey === "date") { va = (a.id || 0); vb = (b.id || 0); }
-      else if (sortKey === "purchaseDate") { va = (a.purchaseDate || ""); vb = (b.purchaseDate || ""); }
-      if (va < vb) return sortDir === "asc" ? -1 : 1;
-      if (va > vb) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-  }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(k =>
+        k.name.toLowerCase().includes(q) ||
+        (k.series || "").toLowerCase().includes(q) ||
+        (k.scale || "").toLowerCase().includes(q)
+      );
+    }
+    if (filterSeries === "__unset__") result = result.filter(k => !(k.series || "").trim());
+    else if (filterSeries) result = result.filter(k => (k.series || "").replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim() === filterSeries);
+    if (filterRating) result = result.filter(k => (k.rating || 0) === Number(filterRating));
+    if (filterCondition) result = result.filter(k => (k.condition || "") === filterCondition);
+    if (filterScale === "__unset__") result = result.filter(k => !(k.scale || "").trim());
+    else if (filterScale) result = result.filter(k => (k.scale || "") === filterScale);
+    if (filterTags.length > 0) result = result.filter(k => filterTags.every(tag => (k.tags || []).includes(tag)));
+    if (sortKey !== "custom") {
+      result = [...result].sort((a, b) => {
+        let va, vb;
+        if (sortKey === "name") { va = (a.name || ""); vb = (b.name || ""); }
+        else if (sortKey === "date") { va = (a.id || 0); vb = (b.id || 0); }
+        else if (sortKey === "purchaseDate") { va = (a.purchaseDate || ""); vb = (b.purchaseDate || ""); }
+        if (va < vb) return sortDir === "asc" ? -1 : 1;
+        if (va > vb) return sortDir === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  }, [kits, filter, searchQuery, filterSeries, filterRating, filterCondition, filterScale, filterTags, sortKey, sortDir]);
 
   // IDB 読込完了まではローディング表示（localStorage 由来の古い表示のチラつき防止）
   if (!hydrated) {
@@ -2979,7 +2988,7 @@ export default function App() {
           <input autoFocus
             style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
             placeholder="キット名・シリーズで検索..."
-            value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </div>
       )}
 
