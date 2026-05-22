@@ -3088,6 +3088,10 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
+        <a href="/storage.html" target="_blank" rel="noopener noreferrer"
+          style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 20, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap" }}>
+          📦 プラモを預ける
+        </a>
       </div>
 
       {showSearch && !bulkMode && (
