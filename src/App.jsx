@@ -1995,6 +1995,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
   const [mode, setMode] = useState("all");
   const [generating, setGenerating] = useState(false);
   const [generatedCount, setGeneratedCount] = useState(0);
+  const [generatedBlobs, setGeneratedBlobs] = useState([]); // 生成された画像本体（プレビュー＆個別保存用）
   const toggleSelect = (id) => setSelected((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const targetKits = mode === "all" ? pending : pending.filter((k) => selected.has(k.id));
   const totalPages = Math.max(1, Math.ceil(targetKits.length / 68));
@@ -2012,24 +2013,49 @@ ${idLine}#積みプラ #ツミツミ #TSUMITSUMI`;
   const handleGenerateImages = async () => {
     setGenerating(true);
     setGeneratedCount(0);
+    setGeneratedBlobs([]);
     try {
       const blobs = await generateShareImages(targetKits, "");
       setGeneratedCount(blobs.length);
-      // 画像を順番にダウンロード
-      for (let i = 0; i < blobs.length; i++) {
-        const url = URL.createObjectURL(blobs[i]);
+      setGeneratedBlobs(blobs); // 全画像をプレビュー＆個別保存できるよう保持
+      // 1枚目だけは自動ダウンロード試行（デスクトップではこれで完了することも多い）
+      // モバイル(特にiOS)は連続ダウンロード不可なので、2枚目以降はプレビューからユーザーが個別保存
+      if (blobs.length > 0) {
+        const url = URL.createObjectURL(blobs[0]);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `tsumitsumi_${String(i + 1).padStart(2, "0")}.png`;
+        a.download = `tsumitsumi_01.png`;
         a.click();
-        await new Promise(r => setTimeout(r, 400));
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
-      // ダウンロード完了 → ボタン表示のみ（iOSではsetTimeout内のwindow.openはブロックされる）
     } catch (e) {
       alert("画像生成エラー: " + e.message);
     }
     setGenerating(false);
+  };
+
+  // 生成済み画像のプレビュー用 object URL（再生成のたびにリボーク）
+  const previewUrls = useMemo(() => generatedBlobs.map(b => URL.createObjectURL(b)), [generatedBlobs]);
+  useEffect(() => () => { previewUrls.forEach(u => URL.revokeObjectURL(u)); }, [previewUrls]);
+
+  // ネイティブ共有（Web Share API）対応判定
+  const canNativeShareImages = typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function";
+  const handleNativeShare = async () => {
+    if (generatedBlobs.length === 0) return;
+    try {
+      const files = generatedBlobs.map((b, i) => new File([b], `tsumitsumi_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
+      if (navigator.canShare && !navigator.canShare({ files })) {
+        alert("このブラウザは画像の共有に対応していません。下の「保存」ボタンで個別に保存してください。");
+        return;
+      }
+      await navigator.share({
+        files,
+        title: "TSUMITSUMI 積みプラ",
+        text: buildTweetForImage(targetKits.length, generatedBlobs.length),
+      });
+    } catch (e) {
+      if (e && e.name !== "AbortError") alert("共有に失敗しました: " + (e.message || e));
+    }
   };
 
   const buildTweetForImage = (count, pages) => {
@@ -2086,18 +2112,34 @@ DM→ @${id}` : "";
           {generatedCount > 0 && (
             <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 8, padding: "12px 14px" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
-                {generatedCount}枚のダウンロードが完了しました
+                {generatedCount}枚の画像を生成しました
               </div>
               <div style={{ fontSize: 11, color: "#166534", lineHeight: 1.7, marginBottom: 10 }}>
-                次のステップ：<br/>
-                1. カメラロールに保存された画像を確認<br/>
-                2. 下のボタンでXを開く<br/>
-                3. 投稿画面で画像を添付して投稿
+                📱 <b>iPhoneなどスマホでは1枚しか自動保存されません</b>。下の各画像の「💾 保存」をタップするか、画像を長押し→「写真に保存」で1枚ずつ保存してください。
+              </div>
+              {canNativeShareImages && (
+                <button onClick={handleNativeShare}
+                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
+                  📤 全画像をまとめて共有（X等を選択）
+                </button>
+              )}
+              {/* 各ページのプレビュー＋個別保存 */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                {previewUrls.map((url, i) => (
+                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 8, padding: 8 }}>
+                    <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>画像 {i + 1} / {previewUrls.length}</div>
+                    <img src={url} alt={`page ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
+                    <a href={url} download={`tsumitsumi_${String(i + 1).padStart(2, "0")}.png`}
+                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                      💾 画像 {i + 1} を保存
+                    </a>
+                  </div>
+                ))}
               </div>
               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweetForImage(targetKits.length, generatedCount))}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
-                𝕏 Xを開いて投稿する
+                𝕏 Xを開いて投稿する（保存した画像を添付）
               </a>
             </div>
           )}
