@@ -2010,17 +2010,34 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
 ${idLine}#積みプラ #ツミツミ #TSUMITSUMI`;
   };
 
+  // モバイル判定（iOS Safari では <a download> がプレビュー画面を開き、戻ると LP に飛ぶ問題を回避）
+  const isMobileShare = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Android/i.test(navigator.userAgent || "");
+  // ネイティブ共有（Web Share API）対応判定
+  const canNativeShareImages = typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function";
+
+  const [generatedDataUrls, setGeneratedDataUrls] = useState([]); // プレビュー用 data URL（blob URL より iOS で確実に表示される）
+  const blobToDataUrl = (blob) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result || "");
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(blob);
+  });
+
   const handleGenerateImages = async () => {
     setGenerating(true);
     setGeneratedCount(0);
     setGeneratedBlobs([]);
+    setGeneratedDataUrls([]);
     try {
       const blobs = await generateShareImages(targetKits, "");
       setGeneratedCount(blobs.length);
-      setGeneratedBlobs(blobs); // 全画像をプレビュー＆個別保存できるよう保持
-      // 1枚目だけは自動ダウンロード試行（デスクトップではこれで完了することも多い）
-      // モバイル(特にiOS)は連続ダウンロード不可なので、2枚目以降はプレビューからユーザーが個別保存
-      if (blobs.length > 0) {
+      setGeneratedBlobs(blobs);
+      // プレビュー用 data URL を生成（iOS Safari で blob URL が無効化される問題を回避）
+      const dataUrls = await Promise.all(blobs.map(blobToDataUrl));
+      setGeneratedDataUrls(dataUrls);
+      // 自動ダウンロードはデスクトップのみ。iOS Safari では <a download> が PNGプレビュー画面を開き、
+      // 戻るボタンを押すと LP に飛んでしまう不具合があるため、モバイルではユーザー操作で保存してもらう。
+      if (!isMobileShare && blobs.length > 0) {
         const url = URL.createObjectURL(blobs[0]);
         const a = document.createElement("a");
         a.href = url;
@@ -2034,12 +2051,7 @@ ${idLine}#積みプラ #ツミツミ #TSUMITSUMI`;
     setGenerating(false);
   };
 
-  // 生成済み画像のプレビュー用 object URL（再生成のたびにリボーク）
-  const previewUrls = useMemo(() => generatedBlobs.map(b => URL.createObjectURL(b)), [generatedBlobs]);
-  useEffect(() => () => { previewUrls.forEach(u => URL.revokeObjectURL(u)); }, [previewUrls]);
-
-  // ネイティブ共有（Web Share API）対応判定
-  const canNativeShareImages = typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function";
+  // 全画像をまとめてシェア（X等を選択）
   const handleNativeShare = async () => {
     if (generatedBlobs.length === 0) return;
     try {
@@ -2056,6 +2068,30 @@ ${idLine}#積みプラ #ツミツミ #TSUMITSUMI`;
     } catch (e) {
       if (e && e.name !== "AbortError") alert("共有に失敗しました: " + (e.message || e));
     }
+  };
+
+  // 個別画像をシェア（iOS では「写真に保存」を共有シートから選択 → プレビュー画面を経由しない）
+  const handleSaveOne = async (index) => {
+    const blob = generatedBlobs[index];
+    if (!blob) return;
+    const filename = `tsumitsumi_${String(index + 1).padStart(2, "0")}.png`;
+    const file = new File([blob], filename, { type: "image/png" });
+    // Web Share API 対応端末では共有シート経由で保存（iOS なら「画像を保存」が選べる）
+    if (canNativeShareImages && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+    // フォールバック: 旧来のダウンロード（デスクトップ用）
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const buildTweetForImage = (count, pages) => {
@@ -2115,7 +2151,8 @@ DM→ @${id}` : "";
                 {generatedCount}枚の画像を生成しました
               </div>
               <div style={{ fontSize: 11, color: "#166534", lineHeight: 1.7, marginBottom: 10 }}>
-                📱 <b>iPhoneなどスマホでは1枚しか自動保存されません</b>。下の各画像の「💾 保存」をタップするか、画像を長押し→「写真に保存」で1枚ずつ保存してください。
+                📱 <b>スマホの方</b>：各画像の下の「💾 保存」ボタンで共有メニューから「画像を保存」を選んでください。<br/>
+                💻 <b>PCの方</b>：1枚目は自動ダウンロード済み。残りは「💾 保存」ボタンで個別に保存できます。
               </div>
               {canNativeShareImages && (
                 <button onClick={handleNativeShare}
@@ -2123,16 +2160,16 @@ DM→ @${id}` : "";
                   📤 全画像をまとめて共有（X等を選択）
                 </button>
               )}
-              {/* 各ページのプレビュー＋個別保存 */}
+              {/* 各ページのプレビュー＋個別保存（data URL 利用で iOS でも確実に表示） */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
-                {previewUrls.map((url, i) => (
+                {generatedDataUrls.map((url, i) => (
                   <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 8, padding: 8 }}>
-                    <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>画像 {i + 1} / {previewUrls.length}</div>
+                    <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>画像 {i + 1} / {generatedDataUrls.length}</div>
                     <img src={url} alt={`page ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
-                    <a href={url} download={`tsumitsumi_${String(i + 1).padStart(2, "0")}.png`}
-                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                    <button onClick={() => handleSaveOne(i)}
+                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
                       💾 画像 {i + 1} を保存
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>
