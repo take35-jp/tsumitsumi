@@ -2106,7 +2106,7 @@ DM→ @${id}` : "";
 
   return (
     <div style={xs.wrap}>
-      <div style={xs.header}><span style={xs.title}>𝕏 積みプラをシェア</span><button style={xs.closeBtn} onClick={onClose}>✕</button></div>
+      <div style={xs.header}><span style={xs.title}>𝕏 積みプラをシェア</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
       {pending.length === 0 ? <div style={xs.empty}>積みプラが登録されていません</div> : (<>
         <label style={xs.label}>あなたのX ID（省略可）</label>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
@@ -2201,7 +2201,7 @@ const xs = {
   wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 32px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
-  closeBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" },
+  closeBtn: { background: "#f3f4f6", border: "1.5px solid #e5e7eb", fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#111", padding: "10px 18px", borderRadius: 22, minHeight: 40, whiteSpace: "nowrap" },
   label: { display: "block", fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 6 },
   empty: { textAlign: "center", color: "#bbb", padding: "32px 0", fontSize: 14 },
   modeRow: { display: "flex", gap: 8, marginBottom: 14 },
