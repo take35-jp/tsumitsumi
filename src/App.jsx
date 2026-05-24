@@ -1259,7 +1259,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.22", date: "2026/05/20", isNew: true, items: ["完成写真を登録したキットはサムネイルに完成写真を優先表示", "運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）"] },
+    { ver: "v1.23", date: "2026/05/24", isNew: true, items: ["スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
+    { ver: "v1.22", date: "2026/05/20", isNew: false, items: ["完成写真を登録したキットはサムネイルに完成写真を優先表示", "運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）"] },
     { ver: "v1.21", date: "2026/05/12", isNew: false, items: ["起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）"] },
     { ver: "v1.20", date: "2026/05/12", isNew: false, items: ["重要: 再起動時に一部キットの画像が消えるデータ消失バグを修正（保存処理の初期化順序を改善）"] },
     { ver: "v1.19", date: "2026/05/12", isNew: false, items: ["スケール・シリーズの自動補完を強化（全てのスケール選択肢に対応・SMP/R3 等のシリーズ自動判定にも対応）"] },
@@ -1457,10 +1458,24 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.22 */}
+          {/* v1.23 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.23</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）<br/>
+              ・称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）<br/>
+              ・Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）<br/>
+              ・Xシェアの「✕ 閉じる」ボタンを大きく押しやすく<br/>
+              ・キット数が多い方の入力遅延・もたつきを大幅改善
+            </div>
+          </div>
+          {/* v1.22 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.22</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/20</span>
             </div>
