@@ -3656,10 +3656,18 @@ export default function App() {
             )}
 
             <label style={s.label}>スケール</label>
-            <select style={s.input} value={form.scale} onChange={(e) => setForm((f) => ({ ...f, scale: e.target.value }))}>
+            <select style={s.input}
+              value={SCALE_OPTIONS.includes(form.scale) ? form.scale : form.scale ? "__custom__" : ""}
+              onChange={(e) => setForm((f) => ({ ...f, scale: e.target.value === "__custom__" ? "" : e.target.value }))}>
               <option value="">選択してください</option>
               {SCALE_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+              <option value="__custom__">✏️ 自由入力...</option>
             </select>
+            {!SCALE_OPTIONS.includes(form.scale) && (
+              <input style={{ ...s.input, marginTop: 6 }} placeholder="スケールを自由に入力（例: 1/8、1/144 などの独自表記も可）"
+                value={form.scale}
+                onChange={(e) => setForm((f) => ({ ...f, scale: e.target.value }))} />
+            )}
 
             <label style={s.label}>タグ</label>
             <TagInput tags={form.tags || []} onChange={(tags) => setForm((f) => ({ ...f, tags }))} allTags={[...new Set(kits.flatMap(k => k.tags || []))]} />
