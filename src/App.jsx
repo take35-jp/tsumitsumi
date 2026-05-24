@@ -456,8 +456,12 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
       let lastTs = 0;
 
       return new Promise((resolve, reject) => {
+        // resolve 後に tick が走り続けて WASM 呼び出しが累積する問題（連続スキャンモードで
+        // ループ毎に新しい tick が追加され、旧 tick が停止せず CPU 食い尽くす → 画面フリーズ）
+        // を防ぐため、done フラグで tick チェーンを明示的に止める。
+        let done = false;
         const tick = async (ts) => {
-          if (cancelled || detectedRef.current) return;
+          if (done || cancelled || detectedRef.current) return;
           animRef.current = requestAnimationFrame(tick);
 
           if (ts - lastTs < 150) return;
@@ -480,11 +484,13 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             const imageData = ctx.getImageData(0, 0, vw, vh);
             const symbols = await zbar.scanImageData(imageData);
 
-            if (symbols && symbols.length > 0 && !detectedRef.current) {
+            if (symbols && symbols.length > 0 && !done && !detectedRef.current) {
               const raw = symbols[0].decode();
               if (raw && raw.length >= 8) {
+                done = true; // この tick チェーンを停止
                 setDebugInfo(`✅ ZBar検出: ${raw}`);
                 resolve(raw);
+                return;
               }
             }
           } catch (e) {
@@ -607,6 +613,9 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
                       const nextCode = await runZBar(video);
                       if (!cancelled) onDetected(nextCode);
                       setDebugInfo("次のバーコードをスキャン...");
+                      // ループ間の小休止：同じバーコードがフレームに残っているときに、
+                      // WASMスキャンを150ms毎ではなく500ms毎にして CPU負荷を抑える。
+                      await new Promise((r) => setTimeout(r, 500));
                     } catch { break; }
                   }
                 };
