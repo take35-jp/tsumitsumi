@@ -752,7 +752,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.26 | スキャン中...
+              v1.27 | スキャン中...
             </div>
           </div>
         )}
@@ -1304,7 +1304,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.26", date: "2026/05/24", isNew: true, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
+    { ver: "v1.27", date: "2026/05/24", isNew: true, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
+    { ver: "v1.26", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
     { ver: "v1.25", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）", "1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更"] },
     { ver: "v1.24", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャンのフリーズ対策（並列WASMスキャン抑止・カメラ自動復帰）", "登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）"] },
     { ver: "v1.23", date: "2026/05/24", isNew: false, items: ["スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
@@ -1506,15 +1507,15 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.26 */}
+          {/* v1.27 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.26</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.27</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）
+              ・1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消
             </div>
           </div>
           {/* v1.25 */}
@@ -2974,8 +2975,13 @@ export default function App() {
     if (existingKit) {
       const ok = await askDuplicateConfirm({ kit: existingKit, where: "登録済み" });
       if (!ok) {
-        // 1回スキャンモードでキャンセルした場合は「カメラに戻る」（既存キット詳細を開かない）
+        // 1回スキャンモードでキャンセルした場合は「カメラに戻る」（既存キット詳細を開かない）。
+        // ただし iOS Safari ではモーダル裏で <video> / MediaStream が止まったまま戻らず、
+        // play() を叩いても復帰しないことが多発（=フリーズ）するため、スキャナーを一旦
+        // 完全に閉じてすぐ開き直し、フレッシュなカメラストリームで再起動する。
         recentlyScannedJanRef.current = { jan, ts: Date.now() };
+        setShowScanner(false);
+        setTimeout(() => setShowScanner(true), 100);
         return;
       }
     }
