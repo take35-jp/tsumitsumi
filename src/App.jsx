@@ -623,43 +623,37 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             const track = stream.getVideoTracks()[0];
             try { track?.applyConstraints({ advanced: [{ zoom: 1.5 }] }).catch(() => {}); } catch (_) {}
 
-            const code = await runZBar(video);
+            const firstCode = await runZBar(video);
             if (!cancelled) {
-              onDetected(code);
-              if (continuous) {
-                // 連続モード：カメラを止めずに再スキャン開始
-                setDebugInfo("次のバーコードをスキャン...");
-                // detectedRefは既に2秒後リセット予定 → runZBarを再帰的に呼ぶ
-                const loopZBar = async () => {
-                  while (!cancelled) {
-                    try {
-                      const nextCode = await runZBar(video);
-                      if (cancelled) break;
-                      // ハンドラ完了まで次のスキャンを開始しない。
-                      // window.confirm でブロックされている間に並列で runZBar が走ると、
-                      // React 状態の競合と WASM 呼び出しの累積でフリーズする。
-                      // onDetected は async（=Promise を返す）なので await できる。
-                      try { await onDetected(nextCode); } catch {}
-                      if (cancelled) break;
-                      // iOS Safari は window.confirm/alert を表示した直後に <video> を
-                      // 一時停止することがあり、ダイアログを閉じても自動再開しないケースが
-                      // ある（=「フリーズしたように見える」）。明示的に play() を呼んで復帰させる。
-                      if (video.paused) {
-                        try { await video.play(); } catch {}
-                      }
-                      setDebugInfo("次のバーコードへ移動してください");
-                      // ループ間の小休止：同じバーコードがフレームに残っているときに、
-                      // 即座に再検出して同JANクールダウンを叩き続けないよう 800ms 待つ。
-                      await new Promise((r) => setTimeout(r, 800));
-                      if (!cancelled) setDebugInfo("次のバーコードをスキャン...");
-                    } catch { break; }
+              // 1回スキャンも連続スキャンも、検出後は同じループを回す。
+              // - 1回スキャンで「追加する」 → handleJanDetected が setShowScanner(false)
+              //   を呼ぶ → unmount で cleanup → cancelled=true → ループ自然終了。
+              // - 1回スキャンで「キャンセル」 → handleJanDetected は何もせず return →
+              //   cancelled は false のまま → カメラを維持して次のバーコードを待つ。
+              // - 連続スキャン → ハンドラがキューに追加して return → ループ継続。
+              // 旧コードでは単発時に直後にカメラを stop() していたため、キャンセル後に
+              // 「カメラに戻る」とき映像が止まったままフリーズして見えた。
+              const scanLoop = async () => {
+                let code = firstCode;
+                while (!cancelled) {
+                  // ハンドラ完了まで次のスキャンを開始しない（React state / WASM 競合防止）
+                  try { await onDetected(code); } catch {}
+                  if (cancelled) break;
+                  // iOS Safari がモーダル裏で <video> を止めていたら再開させる
+                  if (video.paused) {
+                    try { await video.play(); } catch {}
                   }
-                };
-                loopZBar();
-              } else {
-                detectedRef.current = true;
-                stream.getTracks().forEach(t => t.stop());
-              }
+                  setDebugInfo("次のバーコードへ移動してください");
+                  // 同じバーコードを連射しないための小休止
+                  await new Promise((r) => setTimeout(r, 800));
+                  if (cancelled) break;
+                  setDebugInfo("次のバーコードをスキャン...");
+                  try {
+                    code = await runZBar(video);
+                  } catch { break; }
+                }
+              };
+              scanLoop();
             }
             return;
           } catch (e) {
@@ -758,7 +752,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.25 | スキャン中...
+              v1.26 | スキャン中...
             </div>
           </div>
         )}
@@ -1310,7 +1304,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.25", date: "2026/05/24", isNew: true, items: ["連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）", "1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更"] },
+    { ver: "v1.26", date: "2026/05/24", isNew: true, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
+    { ver: "v1.25", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）", "1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更"] },
     { ver: "v1.24", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャンのフリーズ対策（並列WASMスキャン抑止・カメラ自動復帰）", "登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）"] },
     { ver: "v1.23", date: "2026/05/24", isNew: false, items: ["スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
     { ver: "v1.22", date: "2026/05/20", isNew: false, items: ["完成写真を登録したキットはサムネイルに完成写真を優先表示", "運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）"] },
@@ -1511,10 +1506,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.25 */}
+          {/* v1.26 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.26</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）
+            </div>
+          </div>
+          {/* v1.25 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.25</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
             </div>
