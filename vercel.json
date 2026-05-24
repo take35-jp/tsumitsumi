@@ -1,3 +1,23 @@
 {
-  "crons": []
+  "crons": [],
+  "headers": [
+    {
+      "source": "/admax-(.*).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/(LOGO|apple-touch-icon|camera-icon).png",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
+    },
+    {
+      "source": "/(manual|privacy|sell|storage|tsumitsumi-lp|article-tsumipla|article-tool-comparison|diagnose|zaiko-shindan).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300, stale-while-revalidate=3600" }
+      ]
+    }
+  ]
 }
