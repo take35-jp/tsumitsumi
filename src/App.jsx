@@ -45,10 +45,14 @@ async function kitsIdbPhotoDelete(id) {
 }
 
 // 写真 src を解決するラッパー。"idb-blob:..." なら IDB から Blob を取り object URL 化。
-// それ以外（http / data: / 空）はそのまま <img> に流す。空・解決失敗時は何も描画しない。
+// それ以外（http / data: / 空）はそのまま <img> に流す。
+// src が idb-blob で IDB に Blob が無い場合（孤児化・データ消失）は、真っ白ではなく
+// 📦 プレースホルダを表示してユーザーに「画像が無い」状態を明示する。
 function KitImage({ src, style, alt, onError }) {
   const [resolved, setResolved] = useState(() => (src && !isIdbBlobUrl(src)) ? src : null);
+  const [missing, setMissing] = useState(false); // idb-blob だが Blob が IDB に無い場合 true
   useEffect(() => {
+    setMissing(false);
     if (!src) { setResolved(null); return; }
     if (!isIdbBlobUrl(src)) { setResolved(src); return; }
     let objectUrl = null;
@@ -57,7 +61,7 @@ function KitImage({ src, style, alt, onError }) {
       const id = idbBlobUrlToId(src);
       const blob = await kitsIdbPhotoGet(id);
       if (cancelled) return;
-      if (!blob) { setResolved(null); return; }
+      if (!blob) { setResolved(null); setMissing(true); return; }
       objectUrl = URL.createObjectURL(blob);
       setResolved(objectUrl);
     })();
@@ -66,7 +70,17 @@ function KitImage({ src, style, alt, onError }) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [src]);
-  if (!resolved) return null;
+  if (!resolved) {
+    // Blob が見つからなかった場合（IDBから消失等）はプレースホルダを表示
+    if (missing) {
+      return (
+        <div style={{ ...style, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 22 }}>
+          <span title="画像データが見つかりません（再アップロードしてください）">📦</span>
+        </div>
+      );
+    }
+    return null;
+  }
   return <img src={resolved} style={style} alt={alt || ""} onError={onError} />;
 }
 
