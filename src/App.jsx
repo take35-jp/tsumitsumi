@@ -2859,9 +2859,12 @@ export default function App() {
 
   const handleJanDetected = async (jan) => {
     // 連続スキャンで同じバーコードを連続して読み込んだ際の確認ダイアログ無限ループを防止
-    // 5秒以内に同じJANを再検出した場合は無視（カメラが同じバーコードを継続的に映していてもOK）
+    // 10秒以内に同じJANを再検出した場合は無視。検出のたびに ts をロールフォワードし、
+    // confirm 表示中に時間がかかってクールダウンが切れる事故も防ぐ。
     const now = Date.now();
-    if (jan === recentlyScannedJanRef.current.jan && now - recentlyScannedJanRef.current.ts < 5000) {
+    const SAME_JAN_COOLDOWN_MS = 10000;
+    if (jan === recentlyScannedJanRef.current.jan && now - recentlyScannedJanRef.current.ts < SAME_JAN_COOLDOWN_MS) {
+      recentlyScannedJanRef.current.ts = now; // ロールフォワード（カメラがまだ同じバーコード上にある間はクールダウン継続）
       return;
     }
     recentlyScannedJanRef.current = { jan, ts: now };
@@ -2870,7 +2873,11 @@ export default function App() {
       const inQueue = continuousQueue.find(k => k.jan === jan);
       if (existingKit || inQueue) {
         const where = existingKit ? "登録済み" : "今回スキャン済み";
-        if (!window.confirm(`⚠️ このJANは既に${where}です\n\n「${(existingKit || inQueue).name || jan}」\n\nそれでも追加しますか？`)) return;
+        if (!window.confirm(`⚠️ このJANは既に${where}です\n\n「${(existingKit || inQueue).name || jan}」\n\nそれでも追加しますか？`)) {
+          // キャンセル時もクールダウンを「現在時刻」にリセットして、ループ再発を防ぐ
+          recentlyScannedJanRef.current = { jan, ts: Date.now() };
+          return;
+        }
       }
       // 連続スキャンモード：スキャナーを閉じずにキューに追加
       setScanLoading(true);
@@ -2885,6 +2892,7 @@ export default function App() {
     }
     if (existingKit) {
       if (!window.confirm(`⚠️ このJANは既に登録済みです\n\n「${existingKit.name}」\n\nそれでも新しく追加しますか？`)) {
+        recentlyScannedJanRef.current = { jan, ts: Date.now() }; // キャンセル時のロールフォワード
         setShowScanner(false); setDetail(existingKit); return;
       }
     }
