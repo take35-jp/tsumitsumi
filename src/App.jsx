@@ -474,10 +474,16 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
         // ループ毎に新しい tick が追加され、旧 tick が停止せず CPU 食い尽くす → 画面フリーズ）
         // を防ぐため、done フラグで tick チェーンを明示的に止める。
         let done = false;
+        // tick は内部で await zbar.scanImageData を呼ぶが、その完了を待たずに
+        // 次フレームの rAF を予約していたため、iOS で1スキャン>150ms になると WASM 呼び出しが
+        // 並列に積み上がってメインスレッドを食い尽くす（=フリーズ）。
+        // inflight フラグで「同時に走る WASM スキャンは1つだけ」に制限する。
+        let inflight = false;
         const tick = async (ts) => {
           if (done || cancelled || detectedRef.current) return;
           animRef.current = requestAnimationFrame(tick);
 
+          if (inflight) return;                  // 前のスキャンがまだ走っているフレームはスキップ
           if (ts - lastTs < 150) return;
           lastTs = ts;
           frameCount++;
@@ -491,6 +497,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
 
           if (vw === 0 || vh === 0) return;
 
+          inflight = true;
           try {
             canvas.width = vw;
             canvas.height = vh;
@@ -509,6 +516,8 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             }
           } catch (e) {
             // WASM エラー - 継続
+          } finally {
+            inflight = false;
           }
         };
         animRef.current = requestAnimationFrame(tick);
@@ -625,11 +634,24 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
                   while (!cancelled) {
                     try {
                       const nextCode = await runZBar(video);
-                      if (!cancelled) onDetected(nextCode);
-                      setDebugInfo("次のバーコードをスキャン...");
+                      if (cancelled) break;
+                      // ハンドラ完了まで次のスキャンを開始しない。
+                      // window.confirm でブロックされている間に並列で runZBar が走ると、
+                      // React 状態の競合と WASM 呼び出しの累積でフリーズする。
+                      // onDetected は async（=Promise を返す）なので await できる。
+                      try { await onDetected(nextCode); } catch {}
+                      if (cancelled) break;
+                      // iOS Safari は window.confirm/alert を表示した直後に <video> を
+                      // 一時停止することがあり、ダイアログを閉じても自動再開しないケースが
+                      // ある（=「フリーズしたように見える」）。明示的に play() を呼んで復帰させる。
+                      if (video.paused) {
+                        try { await video.play(); } catch {}
+                      }
+                      setDebugInfo("次のバーコードへ移動してください");
                       // ループ間の小休止：同じバーコードがフレームに残っているときに、
-                      // WASMスキャンを150ms毎ではなく500ms毎にして CPU負荷を抑える。
-                      await new Promise((r) => setTimeout(r, 500));
+                      // 即座に再検出して同JANクールダウンを叩き続けないよう 800ms 待つ。
+                      await new Promise((r) => setTimeout(r, 800));
+                      if (!cancelled) setDebugInfo("次のバーコードをスキャン...");
                     } catch { break; }
                   }
                 };
@@ -736,7 +758,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.10 | スキャン中...
+              v1.24 | スキャン中...
             </div>
           </div>
         )}
@@ -1288,7 +1310,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.23", date: "2026/05/24", isNew: true, items: ["スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
+    { ver: "v1.24", date: "2026/05/24", isNew: true, items: ["連続バーコードスキャンで同一JANの確認ポップアップを閉じた直後にカメラが固まる不具合を修正", "登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）"] },
+    { ver: "v1.23", date: "2026/05/24", isNew: false, items: ["スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
     { ver: "v1.22", date: "2026/05/20", isNew: false, items: ["完成写真を登録したキットはサムネイルに完成写真を優先表示", "運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）"] },
     { ver: "v1.21", date: "2026/05/12", isNew: false, items: ["起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）"] },
     { ver: "v1.20", date: "2026/05/12", isNew: false, items: ["重要: 再起動時に一部キットの画像が消えるデータ消失バグを修正（保存処理の初期化順序を改善）"] },
@@ -1487,10 +1510,21 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.23 */}
+          {/* v1.24 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.24</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・連続バーコードスキャンで同一JANの確認ポップアップを閉じた直後にカメラが固まる不具合を修正<br/>
+              ・登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）
+            </div>
+          </div>
+          {/* v1.23 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.23</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
             </div>
