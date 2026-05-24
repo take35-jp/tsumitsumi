@@ -758,7 +758,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.24 | スキャン中...
+              v1.25 | スキャン中...
             </div>
           </div>
         )}
@@ -1310,7 +1310,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.24", date: "2026/05/24", isNew: true, items: ["連続バーコードスキャンで同一JANの確認ポップアップを閉じた直後にカメラが固まる不具合を修正", "登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）"] },
+    { ver: "v1.25", date: "2026/05/24", isNew: true, items: ["連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）", "1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更"] },
+    { ver: "v1.24", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャンのフリーズ対策（並列WASMスキャン抑止・カメラ自動復帰）", "登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）"] },
     { ver: "v1.23", date: "2026/05/24", isNew: false, items: ["スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
     { ver: "v1.22", date: "2026/05/20", isNew: false, items: ["完成写真を登録したキットはサムネイルに完成写真を優先表示", "運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）"] },
     { ver: "v1.21", date: "2026/05/12", isNew: false, items: ["起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）"] },
@@ -1510,16 +1511,16 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.24 */}
+          {/* v1.25 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.24</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.25</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・連続バーコードスキャンで同一JANの確認ポップアップを閉じた直後にカメラが固まる不具合を修正<br/>
-              ・登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）
+              ・連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）<br/>
+              ・1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更
             </div>
           </div>
           {/* v1.23 */}
@@ -2643,6 +2644,23 @@ export default function App() {
     try { localStorage.setItem("tsumitsumi_showPrice", showPriceTotal ? "true" : "false"); } catch {}
   }, [showPriceTotal]);
   const [continuousQueue, setContinuousQueue] = useState([]); // 連続スキャンキュー
+  // 重複JAN確認モーダル（window.confirm の代替）
+  // window.confirm は iOS Safari でスキャナーの <video> を巻き込んで固まる事故が多い。
+  // React 制御のモーダルにして「ダイアログを閉じる→カメラ復帰」を確実にする。
+  const [dupConfirm, setDupConfirm] = useState(null); // { kit, where, message } | null
+  const dupResolveRef = useRef(null);
+  const askDuplicateConfirm = ({ kit, where }) => {
+    return new Promise((resolve) => {
+      dupResolveRef.current = resolve;
+      setDupConfirm({ kit, where });
+    });
+  };
+  const resolveDup = (answer) => {
+    const fn = dupResolveRef.current;
+    dupResolveRef.current = null;
+    setDupConfirm(null);
+    fn?.(answer);
+  };
   const [searchInput, setSearchInput] = useState(""); // 入力欄の即時値（タイピング応答性のため）
   const [searchQuery, setSearchQuery] = useState(""); // フィルタ実行用のdebounce後の値
   // 250ms debounce: 入力停止後にだけ filter を走らせる（大量キットでも入力遅延しない）
@@ -2930,7 +2948,8 @@ export default function App() {
       const inQueue = continuousQueue.find(k => k.jan === jan);
       if (existingKit || inQueue) {
         const where = existingKit ? "登録済み" : "今回スキャン済み";
-        if (!window.confirm(`⚠️ このJANは既に${where}です\n\n「${(existingKit || inQueue).name || jan}」\n\nそれでも追加しますか？`)) {
+        const ok = await askDuplicateConfirm({ kit: existingKit || inQueue, where });
+        if (!ok) {
           // キャンセル時もクールダウンを「現在時刻」にリセットして、ループ再発を防ぐ
           recentlyScannedJanRef.current = { jan, ts: Date.now() };
           return;
@@ -2948,9 +2967,11 @@ export default function App() {
       return;
     }
     if (existingKit) {
-      if (!window.confirm(`⚠️ このJANは既に登録済みです\n\n「${existingKit.name}」\n\nそれでも新しく追加しますか？`)) {
-        recentlyScannedJanRef.current = { jan, ts: Date.now() }; // キャンセル時のロールフォワード
-        setShowScanner(false); setDetail(existingKit); return;
+      const ok = await askDuplicateConfirm({ kit: existingKit, where: "登録済み" });
+      if (!ok) {
+        // 1回スキャンモードでキャンセルした場合は「カメラに戻る」（既存キット詳細を開かない）
+        recentlyScannedJanRef.current = { jan, ts: Date.now() };
+        return;
       }
     }
     setShowScanner(false);
@@ -3570,6 +3591,40 @@ export default function App() {
                   <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 重複JAN確認モーダル（window.confirm の代替）
+          iOS Safari で window.confirm を出すと、スキャナーの <video> が止まったまま
+          ダイアログを閉じても復帰せず固まる事故が多発したため、React 制御のモーダルにする。
+          スキャナーの overlay(zIndex:100) より前面に出す（zIndex:200）。 */}
+      {dupConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+          onClick={() => resolveDup(false)}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 360, padding: 20, boxShadow: "0 10px 40px rgba(0,0,0,0.3)", boxSizing: "border-box" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 10 }}>
+              ⚠️ このJANは既に{dupConfirm.where}です
+            </div>
+            <div style={{ fontSize: 13, color: "#374151", marginBottom: 16, padding: "10px 12px", background: "#f9fafb", borderRadius: 8, lineHeight: 1.5, wordBreak: "break-all" }}>
+              「{dupConfirm.kit?.name || dupConfirm.kit?.jan || "（名称なし）"}」
+            </div>
+            <div style={{ fontSize: 13, color: "#374151", marginBottom: 16 }}>
+              それでも追加しますか？
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => resolveDup(false)}>
+                キャンセル
+              </button>
+              <button
+                style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => resolveDup(true)}>
+                追加する
+              </button>
             </div>
           </div>
         </div>
