@@ -752,7 +752,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.27 | スキャン中...
+              v1.28 | スキャン中...
             </div>
           </div>
         )}
@@ -1304,7 +1304,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.27", date: "2026/05/24", isNew: true, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
+    { ver: "v1.28", date: "2026/05/25", isNew: true, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
+    { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
     { ver: "v1.26", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
     { ver: "v1.25", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）", "1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更"] },
     { ver: "v1.24", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャンのフリーズ対策（並列WASMスキャン抑止・カメラ自動復帰）", "登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）"] },
@@ -1507,10 +1508,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.27 */}
+          {/* v1.28 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.28</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・時間が経つと一部キットの登録画像が消えて「📦」マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）
+            </div>
+          </div>
+          {/* v1.27 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.27</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
             </div>
@@ -2552,6 +2563,26 @@ export default function App() {
       }
     }, 3000);
     return () => { cancelled = true; clearTimeout(fallbackTimer); };
+  }, []);
+
+  // 永続化ストレージ要求：iOS Safari は使われていないサイトの IndexedDB を
+  // 約7日で勝手に削除する仕様があり、キットの参考画像（idb-blob:）が消えて
+  // 📦 プレースホルダだけ残る現象の原因になる。ホーム画面追加済みの PWA や
+  // 高エンゲージメントのサイトは自動で許可されるため、プロンプトは通常出ない。
+  // 失敗・未対応ブラウザでは何も起こらない（=既存挙動と同じ）。
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    if (!navigator.storage || typeof navigator.storage.persist !== 'function') return;
+    (async () => {
+      try {
+        // 既に永続化済みなら再要求しない
+        if (typeof navigator.storage.persisted === 'function') {
+          const already = await navigator.storage.persisted();
+          if (already) return;
+        }
+        await navigator.storage.persist();
+      } catch {}
+    })();
   }, []);
 
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
