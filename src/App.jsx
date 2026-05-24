@@ -131,6 +131,10 @@ const SERIES_OPTIONS = [
 ];
 const SCALE_OPTIONS = ["1/1700", "1/550", "1/144", "1/100", "1/72", "1/60", "1/48", "1/35", "1/32", "1/24", "1/20", "1/12", "EG", "HG", "RG", "MG", "RE/100", "MGSD", "PG", "SD", "フルメカニクス",  "ノンスケール", "その他", "デカール"];
 
+// 忍者AdMax 表示フラグ。AdSense 審査中は false にして、他広告ネットワークの広告枠が
+// 審査の妨げにならないようにする。承認後に true に戻す。
+const ADS_ENABLED = false;
+
 const RANKS = [
   { min: 1000, label: "天照大積ミ神", color: "#fbbf24" },
   { min: 900, label: "最早、積み神様", color: "#ec4899" },
@@ -1157,11 +1161,13 @@ function BackupModal({ kits, onImport, onClose }) {
         </div>
       </div>
 
-      {/* 広告（運営費補填用・静的HTMLをiframeで読み込み・CPU消費なし） */}
-      <div style={{ marginTop: 18, textAlign: "center" }}>
-        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
-        <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
-      </div>
+      {/* 広告（運営費補填用・AdSense審査中は ADS_ENABLED=false で非表示） */}
+      {ADS_ENABLED && (
+        <div style={{ marginTop: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+          <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -1548,11 +1554,13 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, textAlign: "center" }}>当サイトはアフィリエイト広告を利用しています</div>
       </div>
 
-      {/* 広告（運営費補填用・静的HTMLをiframeで読み込み・CPU消費なし） */}
-      <div style={{ marginTop: 18, textAlign: "center" }}>
-        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
-        <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
-      </div>
+      {/* 広告（運営費補填用・AdSense審査中は ADS_ENABLED=false で非表示） */}
+      {ADS_ENABLED && (
+        <div style={{ marginTop: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+          <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -1637,11 +1645,13 @@ function AppShareModal({ onClose }) {
           </button>
         ))}
       </div>
-      {/* 広告（運営費補填用・iframeでCPU消費なし） */}
-      <div style={{ marginTop: 18, textAlign: "center" }}>
-        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
-        <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
-      </div>
+      {/* 広告（運営費補填用・AdSense審査中は ADS_ENABLED=false で非表示） */}
+      {ADS_ENABLED && (
+        <div style={{ marginTop: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+          <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -2203,11 +2213,13 @@ DM→ @${id}` : "";
           𝕏 テキストのみ投稿
         </button>
       </>)}
-      {/* 広告（運営費補填用・iframeでCPU消費なし） */}
-      <div style={{ marginTop: 18, textAlign: "center" }}>
-        <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
-        <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
-      </div>
+      {/* 広告（運営費補填用・AdSense審査中は ADS_ENABLED=false で非表示） */}
+      {ADS_ENABLED && (
+        <div style={{ marginTop: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+          <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -3388,9 +3400,13 @@ export default function App() {
       {/* フッター */}
       <div style={{ textAlign: "center", padding: "20px 20px 100px", borderTop: "1px solid #f0f0f0" }}>
         <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 8 }}>当サイトはアフィリエイト広告を利用しています</div>
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 10 }}>
-          <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プライバシーポリシー</a>
+        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "6px 14px", marginBottom: 10 }}>
           <a href="/manual.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>取扱説明書</a>
+          <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>運営者情報</a>
+          <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>利用規約</a>
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プライバシーポリシー</a>
+          <a href="/sell.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>積みを売る</a>
+          <a href="/storage.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プラモを預ける</a>
         </div>
         <div style={{ fontSize: 10, color: "#cbd5e1" }}>© 2026 TSUMI TSUMI</div>
       </div>
@@ -3482,11 +3498,13 @@ export default function App() {
                 <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
                 <button style={s.closeBtn} onClick={() => setDetail(null)}>閉じる</button>
               </div>
-              {/* 広告（運営費補填用・iframeでCPU消費なし） */}
-              <div style={{ marginTop: 16, textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
-                <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
-              </div>
+              {/* 広告（AdSense審査中は ADS_ENABLED=false で非表示） */}
+              {ADS_ENABLED && (
+                <div style={{ marginTop: 16, textAlign: "center" }}>
+                  <div style={{ fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>広告</div>
+                  <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
+                </div>
+              )}
             </div>
           </div>
         </div>

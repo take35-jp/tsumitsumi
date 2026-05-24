@@ -26,7 +26,19 @@
   </url>
   <url>
     <loc>https://tsumitsumi.vercel.app/privacy.html</loc>
-    <lastmod>2026-05-02</lastmod>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://tsumitsumi.vercel.app/about.html</loc>
+    <lastmod>2026-05-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://tsumitsumi.vercel.app/terms.html</loc>
+    <lastmod>2026-05-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
