@@ -2,12 +2,11 @@
   "meta": {
     "schemaVersion": 1,
     "associateTag": "tsumitsumi232-22",
-    "lastUpdated": "2026-05-25"
+    "lastUpdated": "2026-05-26"
   },
   "sections": [
     {
       "id": "nipper",
-      "emoji": "✂️",
       "title": "ニッパー",
       "desc": "ランナーから部品を切り出すための工具。最も使う頻度が高く、仕上がりにも直結するので、ここだけは妥協しないことを推奨。",
       "subgroups": [],
@@ -20,7 +19,8 @@
           "badgeLabel": "イチオシ",
           "amazonQuery": "ツノダ TTC SKN-140",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         },
         {
           "id": "nipper-2",
@@ -30,7 +30,8 @@
           "badgeLabel": "プロ仕様",
           "amazonQuery": "GH-SPN-120-E",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         },
         {
           "id": "nipper-3",
@@ -40,7 +41,8 @@
           "badgeLabel": "コスパ◎",
           "amazonQuery": "aurochs 極薄刃 ニッパー 片刃",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         },
         {
           "id": "nipper-4",
@@ -50,13 +52,13 @@
           "badgeLabel": "左手用",
           "amazonQuery": "aurochs ニッパー 左手用",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         }
       ]
     },
     {
       "id": "knife",
-      "emoji": "🔪",
       "title": "デザインナイフ",
       "desc": "ゲート跡の整形・パーツ加工・スジ彫り追加など、細かい作業の主役。<strong>このセクションはこの 2点で完結</strong>（NT Cutter のナイフ本体＋100枚入り替刃）。",
       "subgroups": [],
@@ -69,7 +71,8 @@
           "badgeLabel": "イチオシ",
           "amazonQuery": "NT Cutter デザインナイフ D-500GP",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         },
         {
           "id": "knife-2",
@@ -79,54 +82,234 @@
           "badgeLabel": "イチオシ",
           "amazonQuery": "NT Cutter 替刃 BD-2000",
           "extra": "💡 毎日新しい刃にして切れ味を保って。それでも余裕で約2年半持つコスパ。",
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         }
       ]
     },
     {
       "id": "tagane",
-      "emoji": "⛏",
       "title": "タガネ（スジ彫り）",
       "desc": "プラの表面にパネルライン（スジ彫り）を追加・深掘りするための工具。ディテールアップで一段上の仕上がりに。中級者以上向け。",
       "subgroups": [
-        { "id": "dulo", "label": "📌 DULO グリップ付きタガネ【タングステンブレードPRO】（おすすめ・全サイズ）" },
-        { "id": "funtec", "label": "📌 Funtec ファンテック 斬技シリーズ（全サイズ）" }
+        {
+          "id": "dulo",
+          "label": "DULO グリップ付きタガネ【タングステンブレードPRO】（おすすめ・全サイズ）"
+        },
+        {
+          "id": "funtec",
+          "label": "Funtec ファンテック 斬技シリーズ（全サイズ）"
+        }
       ],
       "products": [
-        { "id": "tagane-dulo-010", "headline": "DULO 0.10mm（極細・繊細なディテール用）", "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.10mm", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "DULO タングステンブレードPRO 0.10", "extra": null, "subgroup": "dulo" },
-        { "id": "tagane-dulo-015", "headline": "DULO 0.15mm（最頻出の細幅）", "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.15mm", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "DULO タングステンブレードPRO 0.15", "extra": null, "subgroup": "dulo" },
-        { "id": "tagane-dulo-020", "headline": "DULO 0.20mm（標準的なパネルライン）", "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.20mm", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "DULO タングステンブレードPRO 0.20", "extra": null, "subgroup": "dulo" },
-        { "id": "tagane-dulo-030", "headline": "DULO 0.30mm（太めライン・強調用）", "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.30mm", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "DULO タングステンブレードPRO 0.30", "extra": null, "subgroup": "dulo" },
-        { "id": "tagane-dulo-050", "headline": "DULO 0.50mm（大幅ライン・モールド追加）", "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.50mm", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "DULO タングステンブレードPRO 0.50", "extra": null, "subgroup": "dulo" },
-        { "id": "tagane-funtec-010", "headline": "斬技 0.10mm（極細）", "name": "Funtec ファンテック 斬技シリーズ 0.10mm", "badge": "pro", "badgeLabel": "定番", "amazonQuery": "ファンテック 斬技 0.10", "extra": null, "subgroup": "funtec" },
-        { "id": "tagane-funtec-015", "headline": "斬技 0.15mm", "name": "Funtec ファンテック 斬技シリーズ 0.15mm", "badge": "pro", "badgeLabel": "定番", "amazonQuery": "ファンテック 斬技 0.15", "extra": null, "subgroup": "funtec" },
-        { "id": "tagane-funtec-020", "headline": "斬技 0.20mm（標準）", "name": "Funtec ファンテック 斬技シリーズ 0.20mm", "badge": "pro", "badgeLabel": "定番", "amazonQuery": "ファンテック 斬技 0.20", "extra": null, "subgroup": "funtec" },
-        { "id": "tagane-funtec-030", "headline": "斬技 0.30mm", "name": "Funtec ファンテック 斬技シリーズ 0.30mm", "badge": "pro", "badgeLabel": "定番", "amazonQuery": "ファンテック 斬技 0.30", "extra": null, "subgroup": "funtec" },
-        { "id": "tagane-funtec-050", "headline": "斬技 0.50mm（太幅）", "name": "Funtec ファンテック 斬技シリーズ 0.50mm", "badge": "pro", "badgeLabel": "定番", "amazonQuery": "ファンテック 斬技 0.50", "extra": null, "subgroup": "funtec" }
+        {
+          "id": "tagane-dulo-010",
+          "headline": "DULO 0.10mm（極細・繊細なディテール用）",
+          "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.10mm",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "DULO タングステンブレードPRO 0.10",
+          "extra": null,
+          "subgroup": "dulo",
+          "image": null
+        },
+        {
+          "id": "tagane-dulo-015",
+          "headline": "DULO 0.15mm（最頻出の細幅）",
+          "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.15mm",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "DULO タングステンブレードPRO 0.15",
+          "extra": null,
+          "subgroup": "dulo",
+          "image": null
+        },
+        {
+          "id": "tagane-dulo-020",
+          "headline": "DULO 0.20mm（標準的なパネルライン）",
+          "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.20mm",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "DULO タングステンブレードPRO 0.20",
+          "extra": null,
+          "subgroup": "dulo",
+          "image": null
+        },
+        {
+          "id": "tagane-dulo-030",
+          "headline": "DULO 0.30mm（太めライン・強調用）",
+          "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.30mm",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "DULO タングステンブレードPRO 0.30",
+          "extra": null,
+          "subgroup": "dulo",
+          "image": null
+        },
+        {
+          "id": "tagane-dulo-050",
+          "headline": "DULO 0.50mm（大幅ライン・モールド追加）",
+          "name": "DULO グリップ付きタガネ タングステンブレードPRO 0.50mm",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "DULO タングステンブレードPRO 0.50",
+          "extra": null,
+          "subgroup": "dulo",
+          "image": null
+        },
+        {
+          "id": "tagane-funtec-010",
+          "headline": "斬技 0.10mm（極細）",
+          "name": "Funtec ファンテック 斬技シリーズ 0.10mm",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "ファンテック 斬技 0.10",
+          "extra": null,
+          "subgroup": "funtec",
+          "image": null
+        },
+        {
+          "id": "tagane-funtec-015",
+          "headline": "斬技 0.15mm",
+          "name": "Funtec ファンテック 斬技シリーズ 0.15mm",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "ファンテック 斬技 0.15",
+          "extra": null,
+          "subgroup": "funtec",
+          "image": null
+        },
+        {
+          "id": "tagane-funtec-020",
+          "headline": "斬技 0.20mm（標準）",
+          "name": "Funtec ファンテック 斬技シリーズ 0.20mm",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "ファンテック 斬技 0.20",
+          "extra": null,
+          "subgroup": "funtec",
+          "image": null
+        },
+        {
+          "id": "tagane-funtec-030",
+          "headline": "斬技 0.30mm",
+          "name": "Funtec ファンテック 斬技シリーズ 0.30mm",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "ファンテック 斬技 0.30",
+          "extra": null,
+          "subgroup": "funtec",
+          "image": null
+        },
+        {
+          "id": "tagane-funtec-050",
+          "headline": "斬技 0.50mm（太幅）",
+          "name": "Funtec ファンテック 斬技シリーズ 0.50mm",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "ファンテック 斬技 0.50",
+          "extra": null,
+          "subgroup": "funtec",
+          "image": null
+        }
       ]
     },
     {
       "id": "yasuri",
-      "emoji": "🧱",
       "title": "ヤスリ",
       "desc": "ゲート跡・パーティングラインの処理に。番手違い（粗さの違い）を揃えると仕上がりが段違い。",
       "subgroups": [
-        { "id": "oyaji", "label": "📌 ピットロード「やすりの親父」フィルムスティックやすり（#180〜#600 全番手）" },
-        { "id": "kamiyasu", "label": "📌 ゴッドハンド 神ヤス! スポンジ布ヤスリ（10mm厚）" }
+        {
+          "id": "oyaji",
+          "label": "ピットロード「やすりの親父」フィルムスティックやすり（#180〜#600 全番手）"
+        },
+        {
+          "id": "kamiyasu",
+          "label": "ゴッドハンド 神ヤス! スポンジ布ヤスリ（10mm厚）"
+        }
       ],
       "products": [
-        { "id": "yasuri-oyaji-180", "headline": "#180（粗削り・大きな段差落とし）", "name": "ピットロード やすりの親父 フィルムスティックやすり #180", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "ピットロード やすりの親父 フィルムスティック 180", "extra": null, "subgroup": "oyaji" },
-        { "id": "yasuri-oyaji-240", "headline": "#240（粗削り〜ゲート跡整形）", "name": "ピットロード やすりの親父 フィルムスティックやすり #240", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "ピットロード やすりの親父 フィルムスティック 240", "extra": null, "subgroup": "oyaji" },
-        { "id": "yasuri-oyaji-320", "headline": "#320（中削り・最頻出番手）", "name": "ピットロード やすりの親父 フィルムスティックやすり #320", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "ピットロード やすりの親父 フィルムスティック 320", "extra": null, "subgroup": "oyaji" },
-        { "id": "yasuri-oyaji-400", "headline": "#400（中削り〜仕上げ前・主力番手）", "name": "ピットロード やすりの親父 フィルムスティックやすり #400", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "ピットロード やすりの親父 フィルムスティック 400", "extra": null, "subgroup": "oyaji" },
-        { "id": "yasuri-oyaji-600", "headline": "#600（仕上げ前・表面整え）", "name": "ピットロード やすりの親父 フィルムスティックやすり #600", "badge": "must", "badgeLabel": "イチオシ", "amazonQuery": "ピットロード やすりの親父 フィルムスティック 600", "extra": null, "subgroup": "oyaji" },
-        { "id": "yasuri-kami-400", "headline": "スポンジヤスリの定番（粗削り〜中仕上げ）", "name": "ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 #400（12枚入り）イエロー", "badge": "pro", "badgeLabel": "定番", "amazonQuery": "神ヤス 10mm 400 イエロー", "extra": null, "subgroup": "kamiyasu" },
-        { "id": "yasuri-kami-600", "headline": "仕上げ前のひと番手細かく（中仕上げ〜）", "name": "ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 約35×20mm #600", "badge": "pro", "badgeLabel": "定番", "amazonQuery": "神ヤス 10mm 600 35×20", "extra": null, "subgroup": "kamiyasu" }
+        {
+          "id": "yasuri-oyaji-180",
+          "headline": "#180（粗削り・大きな段差落とし）",
+          "name": "ピットロード やすりの親父 フィルムスティックやすり #180",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "ピットロード やすりの親父 フィルムスティック 180",
+          "extra": null,
+          "subgroup": "oyaji",
+          "image": null
+        },
+        {
+          "id": "yasuri-oyaji-240",
+          "headline": "#240（粗削り〜ゲート跡整形）",
+          "name": "ピットロード やすりの親父 フィルムスティックやすり #240",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "ピットロード やすりの親父 フィルムスティック 240",
+          "extra": null,
+          "subgroup": "oyaji",
+          "image": null
+        },
+        {
+          "id": "yasuri-oyaji-320",
+          "headline": "#320（中削り・最頻出番手）",
+          "name": "ピットロード やすりの親父 フィルムスティックやすり #320",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "ピットロード やすりの親父 フィルムスティック 320",
+          "extra": null,
+          "subgroup": "oyaji",
+          "image": null
+        },
+        {
+          "id": "yasuri-oyaji-400",
+          "headline": "#400（中削り〜仕上げ前・主力番手）",
+          "name": "ピットロード やすりの親父 フィルムスティックやすり #400",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "ピットロード やすりの親父 フィルムスティック 400",
+          "extra": null,
+          "subgroup": "oyaji",
+          "image": null
+        },
+        {
+          "id": "yasuri-oyaji-600",
+          "headline": "#600（仕上げ前・表面整え）",
+          "name": "ピットロード やすりの親父 フィルムスティックやすり #600",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "ピットロード やすりの親父 フィルムスティック 600",
+          "extra": null,
+          "subgroup": "oyaji",
+          "image": null
+        },
+        {
+          "id": "yasuri-kami-400",
+          "headline": "スポンジヤスリの定番（粗削り〜中仕上げ）",
+          "name": "ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 #400（12枚入り）イエロー",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "神ヤス 10mm 400 イエロー",
+          "extra": null,
+          "subgroup": "kamiyasu",
+          "image": null
+        },
+        {
+          "id": "yasuri-kami-600",
+          "headline": "仕上げ前のひと番手細かく（中仕上げ〜）",
+          "name": "ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 約35×20mm #600",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "神ヤス 10mm 600 35×20",
+          "extra": null,
+          "subgroup": "kamiyasu",
+          "image": null
+        }
       ]
     },
     {
       "id": "tweezers",
-      "emoji": "🤏",
       "title": "ピンセット",
       "desc": "小さなパーツの取り扱い・デカール貼り・はめ込み補助に。用途別に2〜3本持つと作業効率がぐっと上がる。",
       "subgroups": [],
@@ -139,7 +322,8 @@
           "badgeLabel": "定番",
           "amazonQuery": "タミヤ 精密ピンセット",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         },
         {
           "id": "tweezers-2",
@@ -149,7 +333,8 @@
           "badgeLabel": "細部用",
           "amazonQuery": "ハイキューパーツ 先細ピンセット",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         },
         {
           "id": "tweezers-3",
@@ -159,7 +344,8 @@
           "badgeLabel": "強掴み",
           "amazonQuery": "ゴッドハンド パワーピンセット",
           "extra": null,
-          "subgroup": null
+          "subgroup": null,
+          "image": null
         }
       ]
     }

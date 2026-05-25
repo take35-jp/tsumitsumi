@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>プラモデル工具・塗料 おすすめカタログ｜ツミツミ</title>
-<meta name="description" content="ガンプラ・スケールモデルを組み立てるための定番工具・塗料を、用途別・グレード別に厳選してまとめました。これから始める方も中級者も役立つカタログです。" />
-<meta property="og:title" content="プラモデル工具・塗料 おすすめカタログ｜ツミツミ" />
-<meta property="og:description" content="積み師が選んだ、本当に役立つ工具・塗料。用途別の定番アイテムをまとめて紹介。" />
+<title>おすすめの定番ツール｜ツミツミ</title>
+<meta name="description" content="ガンプラ・スケールモデルを組み立てるための定番工具を、用途別・グレード別に厳選してまとめました。これから始める方も中級者も役立つカタログです。" />
+<meta property="og:title" content="おすすめの定番ツール｜ツミツミ" />
+<meta property="og:description" content="積み師が選んだ、本当に役立つ工具。用途別の定番アイテムをまとめて紹介。" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="ツミツミ" />
 <meta property="og:url" content="https://tsumitsumi.vercel.app/gears.html" />
@@ -21,8 +21,8 @@
   .nav-back:hover { color: #22c55e; }
   main { max-width: 820px; margin: 0 auto; padding: 32px 20px 60px; }
   h1 { font-size: 26px; font-weight: 800; margin: 0 0 8px; line-height: 1.4; }
-  .lead { color: #4b5563; margin-bottom: 18px; font-size: 14px; }
-  .disclosure { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #92400e; margin-bottom: 28px; line-height: 1.65; }
+  .lead { color: #4b5563; margin-bottom: 28px; font-size: 14px; }
+  .disclosure { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #92400e; margin-top: 32px; line-height: 1.65; }
   .toc { background: #fff; border: 1px solid #e5e7eb; padding: 16px 20px; border-radius: 12px; margin-bottom: 32px; }
   .toc-title { font-weight: 700; margin-bottom: 10px; color: #111827; font-size: 14px; }
   .toc ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 16px; }
@@ -32,9 +32,13 @@
   section { margin-bottom: 40px; scroll-margin-top: 70px; }
   section h2 { font-size: 18px; font-weight: 800; margin: 0 0 6px; padding-left: 10px; border-left: 4px solid #22c55e; }
   section .section-desc { color: #6b7280; font-size: 13px; margin-bottom: 14px; line-height: 1.65; }
-  .subgroup-label { color: #6b7280; font-size: 13px; line-height: 1.65; margin-top: 18px; margin-bottom: 8px; }
-  .product-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s, box-shadow 0.15s; }
+  .subgroup-label { color: #6b7280; font-size: 13px; line-height: 1.65; margin-top: 18px; margin-bottom: 8px; font-weight: 600; }
+  .product-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; gap: 14px; align-items: stretch; transition: border-color 0.15s, box-shadow 0.15s; }
   .product-card:hover { border-color: #fed7aa; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+  .product-thumb { flex: 0 0 96px; width: 96px; height: 96px; border-radius: 8px; background: #f3f4f6; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .product-thumb img { width: 100%; height: 100%; object-fit: contain; }
+  .product-thumb .no-img { font-size: 32px; color: #d1d5db; }
+  .product-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
   .product-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .product-name { font-size: 15px; font-weight: 700; color: #111827; flex: 1; min-width: 200px; }
   .product-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
@@ -42,7 +46,7 @@
   .badge-pro { background: #ede9fe; color: #5b21b6; }
   .badge-budget { background: #fef3c7; color: #92400e; }
   .badge-lefty { background: #dbeafe; color: #1e40af; }
-  .product-pitch { font-size: 13px; color: #4b5563; line-height: 1.65; }
+  .product-pitch { font-size: 13px; color: #4b5563; line-height: 1.65; word-break: break-word; }
   .product-pitch .extra { display: block; margin-top: 4px; color: #15803d; font-weight: 600; }
   .product-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: flex-start; padding: 8px 18px; background: #ff9900; color: #111; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
   .product-link:hover { background: #e88a00; }
@@ -55,6 +59,9 @@
     .toc ul { grid-template-columns: 1fr; }
     h1 { font-size: 22px; }
     main { padding: 24px 16px 50px; }
+    .product-card { gap: 10px; padding: 12px; }
+    .product-thumb { flex-basis: 72px; width: 72px; height: 72px; }
+    .product-thumb .no-img { font-size: 26px; }
   }
 </style>
 </head>
@@ -68,16 +75,10 @@
 </header>
 
 <main>
-  <h1>🛠 プラモデル工具・塗料 おすすめカタログ</h1>
+  <h1>おすすめの定番ツール</h1>
   <p class="lead">
-    積みプラを「組む」ところまで進めるための、定番工具と塗料を用途別にまとめました。
     どれもプラモデル愛好家の間で長く支持されている鉄板アイテムです。
   </p>
-
-  <div class="disclosure">
-    ※ 本ページの商品リンクは Amazon アソシエイトです。リンク経由で商品をご購入いただくと、
-    一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。
-  </div>
 
   <nav class="toc" id="toc">
     <div class="toc-title">📋 目次</div>
@@ -86,6 +87,11 @@
 
   <div id="sections-root">
     <div class="loading">読み込み中…</div>
+  </div>
+
+  <div class="disclosure">
+    ※ 本ページの商品リンクは Amazon アソシエイトです。リンク経由で商品をご購入いただくと、
+    一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。
   </div>
 </main>
 
@@ -96,7 +102,7 @@
     <a href="/about.html">運営者情報</a>
     <a href="/terms.html">利用規約</a>
     <a href="/privacy.html">プライバシーポリシー</a>
-    <a href="/gears.html">工具・塗料カタログ</a>
+    <a href="/gears.html">おすすめの定番ツール</a>
     <a href="/sell.html">積みを売る</a>
     <a href="/storage.html">プラモを預ける</a>
     <a href="https://x.com/tsumitsumi_pla" target="_blank" rel="noopener noreferrer">@tsumitsumi_pla</a>
@@ -105,7 +111,7 @@
 </footer>
 
 <script>
-  // 工具カタログ動的描画。gears.json から商品データを取って <section> を組み立てる。
+  // おすすめツール 動的描画。gears.json から商品データを取って <section> を組み立てる。
   // 商品の追加・編集は admin.html の管理タブから JSON をエクスポート → このファイルを差し替え。
   (function () {
     const escapeHtml = (s) => String(s == null ? "" : s)
@@ -122,43 +128,45 @@
         : "";
       const query = encodeURIComponent(p.amazonQuery || p.name || "");
       const url = `https://www.amazon.co.jp/s?k=${query}&tag=${encodeURIComponent(associateTag)}`;
+      const thumbHtml = p.image
+        ? `<a href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored" class="product-thumb"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name || "")}" loading="lazy" /></a>`
+        : `<div class="product-thumb"><span class="no-img">📦</span></div>`;
       return `
         <div class="product-card">
-          <div class="product-header">
-            <span class="product-name">${escapeHtml(p.headline || p.name)}</span>
-            ${badgeHtml}
+          ${thumbHtml}
+          <div class="product-body">
+            <div class="product-header">
+              <span class="product-name">${escapeHtml(p.headline || p.name)}</span>
+              ${badgeHtml}
+            </div>
+            <div class="product-pitch">${escapeHtml(p.name)}${extraHtml}</div>
+            <a class="product-link" href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
           </div>
-          <div class="product-pitch">${escapeHtml(p.name)}${extraHtml}</div>
-          <a class="product-link" href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
         </div>
       `;
     };
 
     const renderSection = (section, associateTag) => {
-      // subgroup ごとに product を分けてレンダー
       const subgroups = Array.isArray(section.subgroups) ? section.subgroups : [];
       const products = Array.isArray(section.products) ? section.products : [];
 
       let body = "";
       if (subgroups.length === 0) {
-        // サブグループなし：そのまま並べる
         body = products.map(p => renderProductCard(p, associateTag)).join("");
       } else {
-        // サブグループあり：ラベル＋該当商品を順に
         subgroups.forEach(sg => {
           const items = products.filter(p => p.subgroup === sg.id);
           if (items.length === 0) return;
           body += `<p class="subgroup-label">${escapeHtml(sg.label)}</p>`;
           body += items.map(p => renderProductCard(p, associateTag)).join("");
         });
-        // サブグループに属さない商品も拾う（あれば末尾に）
         const orphans = products.filter(p => !p.subgroup);
         if (orphans.length > 0) {
           body += orphans.map(p => renderProductCard(p, associateTag)).join("");
         }
       }
 
-      const title = `${section.emoji ? section.emoji + " " : ""}${escapeHtml(section.title || "")}`;
+      const title = escapeHtml(section.title || "");
       const desc = section.desc ? `<p class="section-desc">${section.desc}</p>` : "";
       return `
         <section id="${escapeHtml(section.id)}">
@@ -171,14 +179,12 @@
 
     const renderToc = (sections) => {
       return sections.map(s => {
-        const label = `${s.emoji ? s.emoji + " " : ""}${escapeHtml(s.title || "")}`;
-        return `<li><a href="#${escapeHtml(s.id)}">${label}</a></li>`;
+        return `<li><a href="#${escapeHtml(s.id)}">${escapeHtml(s.title || "")}</a></li>`;
       }).join("");
     };
 
     async function init() {
       try {
-        // キャッシュ回避のため日付クエリを付ける（再デプロイ後の反映が早くなる）
         const r = await fetch("/gears.json?ts=" + Date.now());
         if (!r.ok) throw new Error("HTTP " + r.status);
         const data = await r.json();

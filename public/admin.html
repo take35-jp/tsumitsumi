@@ -3797,6 +3797,10 @@ function showMsg(id, text, type) {
             `value="${gearsEsc(subgroupCurrent)}" selected`
           );
 
+          const thumbPreview = p.image
+            ? `<img src="${gearsEsc(p.image)}" alt="" style="width:96px; height:96px; object-fit:contain; background:#f3f4f6; border-radius:6px; border:1px solid #e5e7eb;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/><div style="display:none; width:96px; height:96px; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; align-items:center; justify-content:center; color:#991b1b; font-size:11px; text-align:center; padding:4px;">画像読込失敗</div>`
+            : `<div style="width:96px; height:96px; background:#f3f4f6; border:1px dashed #d1d5db; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:24px;">📦</div>`;
+
           productsHtml += `
             <div style="border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -3807,29 +3811,35 @@ function showMsg(id, text, type) {
                   <button onclick="gearsDelete(${sIdx}, ${pIdx})" style="font-size:11px; padding:3px 8px; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; border-radius:4px; cursor:pointer;">🗑 削除</button>
                 </div>
               </div>
-              <div style="display:grid; grid-template-columns: 110px 1fr; gap:6px 10px; font-size:12px;">
-                <label>ヘッドライン</label>
-                <input type="text" value="${gearsEsc(p.headline || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'headline', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+              <div style="display:flex; gap:12px;">
+                <div style="flex:0 0 96px;">${thumbPreview}</div>
+                <div style="flex:1; min-width:0; display:grid; grid-template-columns: 110px 1fr; gap:6px 10px; font-size:12px; align-items:start;">
+                  <label>商品画像URL</label>
+                  <input type="text" value="${gearsEsc(p.image || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'image', this.value); gearsRefreshThumb(this)" placeholder="https://m.media-amazon.com/images/...（Amazon商品画像のURL）" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
 
-                <label>商品名（正式）</label>
-                <textarea oninput="gearsField(${sIdx}, ${pIdx}, 'name', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px; min-height:50px; font-family:inherit; font-size:12px;">${gearsEsc(p.name || "")}</textarea>
+                  <label>ヘッドライン</label>
+                  <input type="text" value="${gearsEsc(p.headline || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'headline', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
 
-                <label>バッジラベル</label>
-                <input type="text" value="${gearsEsc(p.badgeLabel || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'badgeLabel', this.value)" placeholder="例: イチオシ / 定番 / コスパ◎" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+                  <label>商品名（正式）</label>
+                  <textarea oninput="gearsField(${sIdx}, ${pIdx}, 'name', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px; min-height:50px; font-family:inherit; font-size:12px;">${gearsEsc(p.name || "")}</textarea>
 
-                <label>バッジ色</label>
-                <select onchange="gearsField(${sIdx}, ${pIdx}, 'badge', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;">${badgeOpts}</select>
+                  <label>バッジラベル</label>
+                  <input type="text" value="${gearsEsc(p.badgeLabel || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'badgeLabel', this.value)" placeholder="例: イチオシ / 定番 / コスパ◎" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
 
-                <label>Amazon検索ワード</label>
-                <input type="text" value="${gearsEsc(p.amazonQuery || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'amazonQuery', this.value)" placeholder="商品の検索キーワード" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+                  <label>バッジ色</label>
+                  <select onchange="gearsField(${sIdx}, ${pIdx}, 'badge', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;">${badgeOpts}</select>
 
-                <label>追加メッセージ</label>
-                <input type="text" value="${gearsEsc(p.extra || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'extra', this.value)" placeholder="任意。「💡 〜」のような補足" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+                  <label>Amazon検索ワード</label>
+                  <input type="text" value="${gearsEsc(p.amazonQuery || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'amazonQuery', this.value)" placeholder="商品の検索キーワード" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
 
-                ${(section.subgroups && section.subgroups.length > 0) ? `
-                <label>サブグループ</label>
-                <select onchange="gearsField(${sIdx}, ${pIdx}, 'subgroup', this.value || null)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;">${subOpts}</select>
-                ` : ""}
+                  <label>追加メッセージ</label>
+                  <input type="text" value="${gearsEsc(p.extra || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'extra', this.value)" placeholder="任意。「💡 〜」のような補足" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+
+                  ${(section.subgroups && section.subgroups.length > 0) ? `
+                  <label>サブグループ</label>
+                  <select onchange="gearsField(${sIdx}, ${pIdx}, 'subgroup', this.value || null)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;">${subOpts}</select>
+                  ` : ""}
+                </div>
               </div>
             </div>
           `;
@@ -3888,9 +3898,24 @@ function showMsg(id, text, type) {
         amazonQuery: "",
         extra: null,
         subgroup: null,
+        image: null,
       });
       gearsRender();
       gearsSetStatus("商品を追加しました（未保存）", "#f59e0b");
+    }
+
+    // 画像URL欄を変更した時、左のプレビュー画像を即時差し替える（再レンダリングしない）
+    function gearsRefreshThumb(inputEl) {
+      const card = inputEl.closest('div[style*="border:1px solid #e5e7eb"]');
+      if (!card) return;
+      const wrap = card.querySelector('div[style*="flex:0 0 96px"]');
+      if (!wrap) return;
+      const url = (inputEl.value || "").trim();
+      if (url) {
+        wrap.innerHTML = `<img src="${url.replace(/"/g, "&quot;")}" alt="" style="width:96px; height:96px; object-fit:contain; background:#f3f4f6; border-radius:6px; border:1px solid #e5e7eb;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/><div style="display:none; width:96px; height:96px; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; align-items:center; justify-content:center; color:#991b1b; font-size:11px; text-align:center; padding:4px;">画像読込失敗</div>`;
+      } else {
+        wrap.innerHTML = `<div style="width:96px; height:96px; background:#f3f4f6; border:1px dashed #d1d5db; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:24px;">📦</div>`;
+      }
     }
 
     function gearsSerialize() {
