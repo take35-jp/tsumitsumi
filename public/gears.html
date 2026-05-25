@@ -32,6 +32,7 @@
   section { margin-bottom: 40px; scroll-margin-top: 70px; }
   section h2 { font-size: 18px; font-weight: 800; margin: 0 0 6px; padding-left: 10px; border-left: 4px solid #22c55e; }
   section .section-desc { color: #6b7280; font-size: 13px; margin-bottom: 14px; line-height: 1.65; }
+  .subgroup-label { color: #6b7280; font-size: 13px; line-height: 1.65; margin-top: 18px; margin-bottom: 8px; }
   .product-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s, box-shadow 0.15s; }
   .product-card:hover { border-color: #fed7aa; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
   .product-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -42,8 +43,10 @@
   .badge-budget { background: #fef3c7; color: #92400e; }
   .badge-lefty { background: #dbeafe; color: #1e40af; }
   .product-pitch { font-size: 13px; color: #4b5563; line-height: 1.65; }
+  .product-pitch .extra { display: block; margin-top: 4px; color: #15803d; font-weight: 600; }
   .product-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: flex-start; padding: 8px 18px; background: #ff9900; color: #111; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
   .product-link:hover { background: #e88a00; }
+  .loading { padding: 60px 20px; text-align: center; color: #9ca3af; font-size: 14px; }
   footer { border-top: 1px solid #e5e7eb; margin-top: 60px; padding: 24px; text-align: center; font-size: 12px; color: #9ca3af; background: #fff; }
   footer .links { margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
   footer a { color: #6b7280; text-decoration: none; }
@@ -76,206 +79,14 @@
     一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。
   </div>
 
-  <nav class="toc">
+  <nav class="toc" id="toc">
     <div class="toc-title">📋 目次</div>
-    <ul>
-      <li><a href="#nipper">✂️ ニッパー</a></li>
-      <li><a href="#knife">🔪 デザインナイフ</a></li>
-      <li><a href="#tagane">⛏ タガネ（スジ彫り）</a></li>
-      <li><a href="#yasuri">🧱 ヤスリ</a></li>
-      <li><a href="#tweezers">🤏 ピンセット</a></li>
-    </ul>
+    <ul id="toc-list"></ul>
   </nav>
 
-  <section id="nipper">
-    <h2>✂️ ニッパー</h2>
-    <p class="section-desc">ランナーから部品を切り出すための工具。最も使う頻度が高く、仕上がりにも直結するので、ここだけは妥協しないことを推奨。</p>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">迷ったらこれ。使えるし価格も手頃</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">ツノダ(TSUNODA) king TTC 極薄刃プラスチックニッパー（片刃）ステンレス 140mm SKN-140</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%84%E3%83%8E%E3%83%80+TTC+SKN-140&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">定番の高品質ニッパー</span><span class="product-badge badge-pro">プロ仕様</span></div>
-      <div class="product-pitch">ゴッドハンド(GodHand) アルティメットニッパー＆ステッカーセット GH-SPN-120-E</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=GH-SPN-120-E&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">手頃によく切れるニッパー</span><span class="product-badge badge-budget">コスパ◎</span></div>
-      <div class="product-pitch">aurochs 極薄刃 ニッパー 片刃 精密 プラモデル専用 プラスチック 工具 模型 ゲートカット</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=aurochs+%E6%A5%B5%E8%96%84%E5%88%83+%E3%83%8B%E3%83%83%E3%83%91%E3%83%BC+%E7%89%87%E5%88%83&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">左利きならこれ！</span><span class="product-badge badge-lefty">左手用</span></div>
-      <div class="product-pitch">aurochs 極薄刃 ニッパー 片刃 精密 プラモデル専用 プラスチック 工具 模型 ゲートカット（グレー＆ミント/左手用）</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=aurochs+%E3%83%8B%E3%83%83%E3%83%91%E3%83%BC+%E5%B7%A6%E6%89%8B%E7%94%A8&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-  </section>
-
-  <section id="knife">
-    <h2>🔪 デザインナイフ</h2>
-    <p class="section-desc">ゲート跡の整形・パーツ加工・スジ彫り追加など、細かい作業の主役。<strong>このセクションはこの 2点で完結</strong>（NT Cutter のナイフ本体＋100枚入り替刃）。</p>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">これ一択。プラモデラー御用達の本体</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">NT Cutter エヌティー(NT) デザインナイフ D-500GP</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=NT+Cutter+%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3%E3%83%8A%E3%82%A4%E3%83%95+D-500GP&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">100枚入り・刃厚0.38mm の替刃</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">NT Cutter エヌティー カッター 替刃 デザインナイフ D型用 100枚入 刃厚0.38mm BD-2000<br/><span style="color:#15803d;font-weight:600;">💡 毎日新しい刃にして切れ味を保って。それでも余裕で約2年半持つコスパ。</span></div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=NT+Cutter+%E6%9B%BF%E5%88%83+BD-2000&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-  </section>
-
-  <section id="tagane">
-    <h2>⛏ タガネ（スジ彫り）</h2>
-    <p class="section-desc">プラの表面にパネルライン（スジ彫り）を追加・深掘りするための工具。ディテールアップで一段上の仕上がりに。中級者以上向け。</p>
-
-    <p class="section-desc" style="margin-top:18px;margin-bottom:8px;">📌 DULO グリップ付きタガネ【タングステンブレードPRO】（おすすめ・全サイズ）</p>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">DULO 0.10mm（極細・繊細なディテール用）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">DULO グリップ付きタガネ タングステンブレードPRO 0.10mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=DULO+%E3%82%BF%E3%83%B3%E3%82%B0%E3%82%B9%E3%83%86%E3%83%B3%E3%83%96%E3%83%AC%E3%83%BC%E3%83%89PRO+0.10&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">DULO 0.15mm（最頻出の細幅）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">DULO グリップ付きタガネ タングステンブレードPRO 0.15mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=DULO+%E3%82%BF%E3%83%B3%E3%82%B0%E3%82%B9%E3%83%86%E3%83%B3%E3%83%96%E3%83%AC%E3%83%BC%E3%83%89PRO+0.15&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">DULO 0.20mm（標準的なパネルライン）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">DULO グリップ付きタガネ タングステンブレードPRO 0.20mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=DULO+%E3%82%BF%E3%83%B3%E3%82%B0%E3%82%B9%E3%83%86%E3%83%B3%E3%83%96%E3%83%AC%E3%83%BC%E3%83%89PRO+0.20&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">DULO 0.30mm（太めライン・強調用）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">DULO グリップ付きタガネ タングステンブレードPRO 0.30mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=DULO+%E3%82%BF%E3%83%B3%E3%82%B0%E3%82%B9%E3%83%86%E3%83%B3%E3%83%96%E3%83%AC%E3%83%BC%E3%83%89PRO+0.30&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">DULO 0.50mm（大幅ライン・モールド追加）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">DULO グリップ付きタガネ タングステンブレードPRO 0.50mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=DULO+%E3%82%BF%E3%83%B3%E3%82%B0%E3%82%B9%E3%83%86%E3%83%B3%E3%83%96%E3%83%AC%E3%83%BC%E3%83%89PRO+0.50&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <p class="section-desc" style="margin-top:22px;margin-bottom:8px;">📌 Funtec ファンテック 斬技シリーズ（全サイズ）</p>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">斬技 0.10mm（極細）</span><span class="product-badge badge-pro">定番</span></div>
-      <div class="product-pitch">Funtec ファンテック 斬技シリーズ 0.10mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%95%E3%82%A1%E3%83%B3%E3%83%86%E3%83%83%E3%82%AF+%E6%96%AC%E6%8A%80+0.10&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">斬技 0.15mm</span><span class="product-badge badge-pro">定番</span></div>
-      <div class="product-pitch">Funtec ファンテック 斬技シリーズ 0.15mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%95%E3%82%A1%E3%83%B3%E3%83%86%E3%83%83%E3%82%AF+%E6%96%AC%E6%8A%80+0.15&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">斬技 0.20mm（標準）</span><span class="product-badge badge-pro">定番</span></div>
-      <div class="product-pitch">Funtec ファンテック 斬技シリーズ 0.20mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%95%E3%82%A1%E3%83%B3%E3%83%86%E3%83%83%E3%82%AF+%E6%96%AC%E6%8A%80+0.20&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">斬技 0.30mm</span><span class="product-badge badge-pro">定番</span></div>
-      <div class="product-pitch">Funtec ファンテック 斬技シリーズ 0.30mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%95%E3%82%A1%E3%83%B3%E3%83%86%E3%83%83%E3%82%AF+%E6%96%AC%E6%8A%80+0.30&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">斬技 0.50mm（太幅）</span><span class="product-badge badge-pro">定番</span></div>
-      <div class="product-pitch">Funtec ファンテック 斬技シリーズ 0.50mm</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%95%E3%82%A1%E3%83%B3%E3%83%86%E3%83%83%E3%82%AF+%E6%96%AC%E6%8A%80+0.50&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-  </section>
-
-  <section id="yasuri">
-    <h2>🧱 ヤスリ</h2>
-    <p class="section-desc">ゲート跡・パーティングラインの処理に。番手違い（粗さの違い）を揃えると仕上がりが段違い。</p>
-
-    <p class="section-desc" style="margin-top:18px;margin-bottom:8px;">📌 ピットロード「やすりの親父」フィルムスティックやすり（#180〜#600 全番手）</p>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">#180（粗削り・大きな段差落とし）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">ピットロード やすりの親父 フィルムスティックやすり #180</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%94%E3%83%83%E3%83%88%E3%83%AD%E3%83%BC%E3%83%89+%E3%82%84%E3%81%99%E3%82%8A%E3%81%AE%E8%A6%AA%E7%88%B6+%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0%E3%82%B9%E3%83%86%E3%82%A3%E3%83%83%E3%82%AF+180&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">#240（粗削り〜ゲート跡整形）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">ピットロード やすりの親父 フィルムスティックやすり #240</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%94%E3%83%83%E3%83%88%E3%83%AD%E3%83%BC%E3%83%89+%E3%82%84%E3%81%99%E3%82%8A%E3%81%AE%E8%A6%AA%E7%88%B6+%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0%E3%82%B9%E3%83%86%E3%82%A3%E3%83%83%E3%82%AF+240&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">#320（中削り・最頻出番手）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">ピットロード やすりの親父 フィルムスティックやすり #320</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%94%E3%83%83%E3%83%88%E3%83%AD%E3%83%BC%E3%83%89+%E3%82%84%E3%81%99%E3%82%8A%E3%81%AE%E8%A6%AA%E7%88%B6+%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0%E3%82%B9%E3%83%86%E3%82%A3%E3%83%83%E3%82%AF+320&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">#400（中削り〜仕上げ前・主力番手）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">ピットロード やすりの親父 フィルムスティックやすり #400</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%94%E3%83%83%E3%83%88%E3%83%AD%E3%83%BC%E3%83%89+%E3%82%84%E3%81%99%E3%82%8A%E3%81%AE%E8%A6%AA%E7%88%B6+%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0%E3%82%B9%E3%83%86%E3%82%A3%E3%83%83%E3%82%AF+400&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">#600（仕上げ前・表面整え）</span><span class="product-badge badge-must">イチオシ</span></div>
-      <div class="product-pitch">ピットロード やすりの親父 フィルムスティックやすり #600</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%94%E3%83%83%E3%83%88%E3%83%AD%E3%83%BC%E3%83%89+%E3%82%84%E3%81%99%E3%82%8A%E3%81%AE%E8%A6%AA%E7%88%B6+%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0%E3%82%B9%E3%83%86%E3%82%A3%E3%83%83%E3%82%AF+600&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <p class="section-desc" style="margin-top:22px;margin-bottom:8px;">📌 ゴッドハンド 神ヤス! スポンジ布ヤスリ（10mm厚）</p>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">スポンジヤスリの定番（粗削り〜中仕上げ）</span><span class="product-badge badge-pro">定番</span></div>
-      <div class="product-pitch">ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 #400（12枚入り）イエロー</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E7%A5%9E%E3%83%A4%E3%82%B9+10mm+400+%E3%82%A4%E3%82%A8%E3%83%AD%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">仕上げ前のひと番手細かく（中仕上げ〜）</span><span class="product-badge badge-pro">定番</span></div>
-      <div class="product-pitch">ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 約35×20mm #600</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E7%A5%9E%E3%83%A4%E3%82%B9+10mm+600+35%C3%9720&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-  </section>
-
-  <section id="tweezers">
-    <h2>🤏 ピンセット</h2>
-    <p class="section-desc">小さなパーツの取り扱い・デカール貼り・はめ込み補助に。用途別に2〜3本持つと作業効率がぐっと上がる。</p>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">定番・安価で最初の1本に</span><span class="product-badge badge-must">定番</span></div>
-      <div class="product-pitch">タミヤ 精密ピンセット</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4+%E7%B2%BE%E5%AF%86%E3%83%94%E3%83%B3%E3%82%BB%E3%83%83%E3%83%88&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">デカール・細部用</span><span class="product-badge badge-pro">細部用</span></div>
-      <div class="product-pitch">ハイキューパーツ 先細ピンセット</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%8F%E3%82%A4%E3%82%AD%E3%83%A5%E3%83%BC%E3%83%91%E3%83%BC%E3%83%84+%E5%85%88%E7%B4%B0%E3%83%94%E3%83%B3%E3%82%BB%E3%83%83%E3%83%88&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-
-    <div class="product-card">
-      <div class="product-header"><span class="product-name">パーツの強掴みでOK</span><span class="product-badge badge-budget">強掴み</span></div>
-      <div class="product-pitch">ゴッドハンド(GodHand) パワーピンセット</div>
-      <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%82%B4%E3%83%83%E3%83%89%E3%83%8F%E3%83%B3%E3%83%89+%E3%83%91%E3%83%AF%E3%83%BC%E3%83%94%E3%83%B3%E3%82%BB%E3%83%83%E3%83%88&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-    </div>
-  </section>
-
+  <div id="sections-root">
+    <div class="loading">読み込み中…</div>
+  </div>
 </main>
 
 <footer>
@@ -292,6 +103,100 @@
   </div>
   <div>© 2026 TSUMI TSUMI</div>
 </footer>
+
+<script>
+  // 工具カタログ動的描画。gears.json から商品データを取って <section> を組み立てる。
+  // 商品の追加・編集は admin.html の管理タブから JSON をエクスポート → このファイルを差し替え。
+  (function () {
+    const escapeHtml = (s) => String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+    const renderProductCard = (p, associateTag) => {
+      const badgeClass = p.badge ? `badge-${escapeHtml(p.badge)}` : "";
+      const badgeHtml = p.badgeLabel
+        ? `<span class="product-badge ${badgeClass}">${escapeHtml(p.badgeLabel)}</span>`
+        : "";
+      const extraHtml = p.extra
+        ? `<span class="extra">${escapeHtml(p.extra)}</span>`
+        : "";
+      const query = encodeURIComponent(p.amazonQuery || p.name || "");
+      const url = `https://www.amazon.co.jp/s?k=${query}&tag=${encodeURIComponent(associateTag)}`;
+      return `
+        <div class="product-card">
+          <div class="product-header">
+            <span class="product-name">${escapeHtml(p.headline || p.name)}</span>
+            ${badgeHtml}
+          </div>
+          <div class="product-pitch">${escapeHtml(p.name)}${extraHtml}</div>
+          <a class="product-link" href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+        </div>
+      `;
+    };
+
+    const renderSection = (section, associateTag) => {
+      // subgroup ごとに product を分けてレンダー
+      const subgroups = Array.isArray(section.subgroups) ? section.subgroups : [];
+      const products = Array.isArray(section.products) ? section.products : [];
+
+      let body = "";
+      if (subgroups.length === 0) {
+        // サブグループなし：そのまま並べる
+        body = products.map(p => renderProductCard(p, associateTag)).join("");
+      } else {
+        // サブグループあり：ラベル＋該当商品を順に
+        subgroups.forEach(sg => {
+          const items = products.filter(p => p.subgroup === sg.id);
+          if (items.length === 0) return;
+          body += `<p class="subgroup-label">${escapeHtml(sg.label)}</p>`;
+          body += items.map(p => renderProductCard(p, associateTag)).join("");
+        });
+        // サブグループに属さない商品も拾う（あれば末尾に）
+        const orphans = products.filter(p => !p.subgroup);
+        if (orphans.length > 0) {
+          body += orphans.map(p => renderProductCard(p, associateTag)).join("");
+        }
+      }
+
+      const title = `${section.emoji ? section.emoji + " " : ""}${escapeHtml(section.title || "")}`;
+      const desc = section.desc ? `<p class="section-desc">${section.desc}</p>` : "";
+      return `
+        <section id="${escapeHtml(section.id)}">
+          <h2>${title}</h2>
+          ${desc}
+          ${body}
+        </section>
+      `;
+    };
+
+    const renderToc = (sections) => {
+      return sections.map(s => {
+        const label = `${s.emoji ? s.emoji + " " : ""}${escapeHtml(s.title || "")}`;
+        return `<li><a href="#${escapeHtml(s.id)}">${label}</a></li>`;
+      }).join("");
+    };
+
+    async function init() {
+      try {
+        // キャッシュ回避のため日付クエリを付ける（再デプロイ後の反映が早くなる）
+        const r = await fetch("/gears.json?ts=" + Date.now());
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        const sections = Array.isArray(data.sections) ? data.sections : [];
+        const associateTag = (data.meta && data.meta.associateTag) || "tsumitsumi232-22";
+
+        document.getElementById("toc-list").innerHTML = renderToc(sections);
+        document.getElementById("sections-root").innerHTML =
+          sections.map(s => renderSection(s, associateTag)).join("");
+      } catch (e) {
+        document.getElementById("sections-root").innerHTML =
+          '<div class="loading">カタログの読み込みに失敗しました。時間を置いて再度お試しください。</div>';
+        console.error(e);
+      }
+    }
+    init();
+  })();
+</script>
 
 </body>
 </html>

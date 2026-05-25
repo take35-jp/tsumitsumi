@@ -263,6 +263,7 @@
       <button class="tab-btn" onclick="switchTab('master')">📋 マスタ一覧</button>
       <button class="tab-btn" onclick="switchTab('excel')">📊 Excel入出力</button>
       <button class="tab-btn" onclick="switchTab('reports')">📨 報告キュー <span id="reports-badge" class="reports-badge" style="display:none;">0</span></button>
+      <button class="tab-btn" onclick="switchTab('gears')">🛠 工具カタログ</button>
     </div>
 
     <!-- TAB: Yahoo検索 -->
@@ -703,6 +704,26 @@
       <div id="reports-msg"></div>
       <div id="reports-list"></div>
     </div>
+
+    <!-- TAB: 工具カタログ管理 -->
+    <div class="tab-panel" id="tab-gears">
+      <div style="background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:14px; margin-bottom:16px;">
+        <div style="font-size:13px; font-weight:700; color:#9a3412; margin-bottom:6px;">🛠 工具カタログ管理（gears.json 編集）</div>
+        <div style="font-size:12px; color:#9a3412; line-height:1.7;">
+          <code>/gears.html</code> に表示される商品を編集できます。<br/>
+          編集後「⬇ JSONをダウンロード」または「📋 クリップボードにコピー」して、
+          リポジトリの <code>public/gears.json</code> を上書きしてください（Vercel が自動デプロイします）。
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="gearsDownload()">⬇ JSONをダウンロード</button>
+        <button class="btn" onclick="gearsCopy()" style="background:#0ea5e9; color:#fff;">📋 クリップボードにコピー</button>
+        <button class="btn" onclick="gearsReload()" style="background:#9ca3af; color:#fff;">🔄 サーバーから再読み込み</button>
+        <span id="gears-status" style="font-size:12px; color:#6b7280; align-self:center;"></span>
+      </div>
+      <div id="gears-editor"><div style="padding:40px; text-align:center; color:#9ca3af;">読み込み中…</div></div>
+    </div>
+
   </div>
 </div>
 
@@ -739,13 +760,14 @@ function logout() {
 // ---- TABS ----
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['search','direct','master','excel','reports'][i] === name);
+    b.classList.toggle('active', ['search','direct','master','excel','reports','gears'][i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach((p, i) => {
-    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports'][i] === `tab-${name}`);
+    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears'][i] === `tab-${name}`);
   });
   if (name === 'master') loadMaster();
   if (name === 'reports') loadReports();
+  if (name === 'gears') gearsReload();
 }
 
 // ---- REORDER NAME ----
@@ -3708,6 +3730,199 @@ function showMsg(id, text, type) {
             }
           }, 300);
         }
+      }
+    }
+
+    // ============================================================
+    // 工具カタログ管理 (gears.json エディタ)
+    // ============================================================
+    // gears.json をブラウザ内で編集 → 「ダウンロード」or「コピー」して
+    // public/gears.json を上書きコミット。Vercel が自動デプロイ。
+    let gearsData = null;
+    const GEARS_BADGE_OPTIONS = [
+      { value: "must", label: "緑（イチオシ・定番・必須）" },
+      { value: "pro", label: "紫（プロ仕様・定番）" },
+      { value: "budget", label: "オレンジ（コスパ◎・入門）" },
+      { value: "lefty", label: "青（左手用・特殊バリエ）" },
+    ];
+
+    function gearsEsc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function gearsSetStatus(msg, color) {
+      const el = document.getElementById("gears-status");
+      if (!el) return;
+      el.textContent = msg || "";
+      el.style.color = color || "#6b7280";
+    }
+
+    async function gearsReload() {
+      gearsSetStatus("読み込み中…");
+      try {
+        const r = await fetch("/gears.json?ts=" + Date.now());
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        gearsData = await r.json();
+        gearsRender();
+        gearsSetStatus("読み込み完了", "#16a34a");
+      } catch (e) {
+        gearsSetStatus("読み込み失敗: " + String(e).slice(0, 60), "#dc2626");
+      }
+    }
+
+    function gearsRender() {
+      const root = document.getElementById("gears-editor");
+      if (!gearsData || !Array.isArray(gearsData.sections)) {
+        root.innerHTML = '<div style="padding:20px; color:#dc2626;">データ形式が不正です</div>';
+        return;
+      }
+
+      let html = "";
+      gearsData.sections.forEach((section, sIdx) => {
+        const subgroupOptions = ['<option value="">（サブグループなし）</option>']
+          .concat((section.subgroups || []).map(sg =>
+            `<option value="${gearsEsc(sg.id)}">${gearsEsc(sg.label || sg.id)}</option>`
+          )).join("");
+
+        let productsHtml = "";
+        (section.products || []).forEach((p, pIdx) => {
+          const badgeOpts = GEARS_BADGE_OPTIONS.map(o =>
+            `<option value="${o.value}" ${p.badge === o.value ? "selected" : ""}>${gearsEsc(o.label)}</option>`
+          ).join("");
+          const subgroupCurrent = p.subgroup || "";
+          const subOpts = subgroupOptions.replace(
+            `value="${gearsEsc(subgroupCurrent)}"`,
+            `value="${gearsEsc(subgroupCurrent)}" selected`
+          );
+
+          productsHtml += `
+            <div style="border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:11px; color:#9ca3af;">#${pIdx + 1} (id: ${gearsEsc(p.id || "")})</span>
+                <div style="display:flex; gap:4px;">
+                  <button onclick="gearsMove(${sIdx}, ${pIdx}, -1)" ${pIdx === 0 ? "disabled" : ""} style="font-size:11px; padding:3px 8px; cursor:pointer;">▲</button>
+                  <button onclick="gearsMove(${sIdx}, ${pIdx}, 1)" ${pIdx === (section.products.length - 1) ? "disabled" : ""} style="font-size:11px; padding:3px 8px; cursor:pointer;">▼</button>
+                  <button onclick="gearsDelete(${sIdx}, ${pIdx})" style="font-size:11px; padding:3px 8px; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; border-radius:4px; cursor:pointer;">🗑 削除</button>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns: 110px 1fr; gap:6px 10px; font-size:12px;">
+                <label>ヘッドライン</label>
+                <input type="text" value="${gearsEsc(p.headline || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'headline', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+
+                <label>商品名（正式）</label>
+                <textarea oninput="gearsField(${sIdx}, ${pIdx}, 'name', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px; min-height:50px; font-family:inherit; font-size:12px;">${gearsEsc(p.name || "")}</textarea>
+
+                <label>バッジラベル</label>
+                <input type="text" value="${gearsEsc(p.badgeLabel || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'badgeLabel', this.value)" placeholder="例: イチオシ / 定番 / コスパ◎" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+
+                <label>バッジ色</label>
+                <select onchange="gearsField(${sIdx}, ${pIdx}, 'badge', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;">${badgeOpts}</select>
+
+                <label>Amazon検索ワード</label>
+                <input type="text" value="${gearsEsc(p.amazonQuery || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'amazonQuery', this.value)" placeholder="商品の検索キーワード" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+
+                <label>追加メッセージ</label>
+                <input type="text" value="${gearsEsc(p.extra || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'extra', this.value)" placeholder="任意。「💡 〜」のような補足" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+
+                ${(section.subgroups && section.subgroups.length > 0) ? `
+                <label>サブグループ</label>
+                <select onchange="gearsField(${sIdx}, ${pIdx}, 'subgroup', this.value || null)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;">${subOpts}</select>
+                ` : ""}
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+          <div style="border:2px solid #e5e7eb; border-radius:12px; padding:14px; margin-bottom:18px; background:#fafafa;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #e5e7eb;">
+              <div>
+                <div style="font-size:16px; font-weight:700; color:#111;">${gearsEsc(section.emoji || "")} ${gearsEsc(section.title || "")}</div>
+                <div style="font-size:11px; color:#9ca3af;">id: ${gearsEsc(section.id)} / ${section.products.length}件</div>
+              </div>
+              <button onclick="gearsAdd(${sIdx})" class="btn" style="background:#22c55e; color:#fff; font-size:12px;">➕ 商品を追加</button>
+            </div>
+            ${productsHtml || '<div style="padding:20px; text-align:center; color:#9ca3af; font-size:12px;">商品なし</div>'}
+          </div>
+        `;
+      });
+
+      root.innerHTML = html;
+    }
+
+    function gearsField(sIdx, pIdx, field, value) {
+      if (!gearsData) return;
+      const p = gearsData.sections[sIdx].products[pIdx];
+      p[field] = (value === "" && (field === "subgroup" || field === "extra")) ? null : value;
+      gearsSetStatus("未保存の変更あり（ダウンロードまたはコピーで反映）", "#f59e0b");
+    }
+
+    function gearsMove(sIdx, pIdx, dir) {
+      const products = gearsData.sections[sIdx].products;
+      const newIdx = pIdx + dir;
+      if (newIdx < 0 || newIdx >= products.length) return;
+      [products[pIdx], products[newIdx]] = [products[newIdx], products[pIdx]];
+      gearsRender();
+      gearsSetStatus("並び替えました（未保存）", "#f59e0b");
+    }
+
+    function gearsDelete(sIdx, pIdx) {
+      const p = gearsData.sections[sIdx].products[pIdx];
+      if (!confirm(`削除しますか？\n\n「${p.name || p.headline}」`)) return;
+      gearsData.sections[sIdx].products.splice(pIdx, 1);
+      gearsRender();
+      gearsSetStatus("削除しました（未保存）", "#f59e0b");
+    }
+
+    function gearsAdd(sIdx) {
+      const section = gearsData.sections[sIdx];
+      const newId = `${section.id}-new-${Date.now().toString(36)}`;
+      section.products.push({
+        id: newId,
+        headline: "（新規商品）",
+        name: "",
+        badge: "must",
+        badgeLabel: "定番",
+        amazonQuery: "",
+        extra: null,
+        subgroup: null,
+      });
+      gearsRender();
+      gearsSetStatus("商品を追加しました（未保存）", "#f59e0b");
+    }
+
+    function gearsSerialize() {
+      if (!gearsData) return null;
+      // 更新日時を自動でセット
+      if (gearsData.meta) {
+        gearsData.meta.lastUpdated = new Date().toISOString().slice(0, 10);
+      }
+      return JSON.stringify(gearsData, null, 2);
+    }
+
+    function gearsDownload() {
+      const json = gearsSerialize();
+      if (!json) return;
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "gears.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      gearsSetStatus("ダウンロードしました。public/gears.json を上書きしてください。", "#16a34a");
+    }
+
+    async function gearsCopy() {
+      const json = gearsSerialize();
+      if (!json) return;
+      try {
+        await navigator.clipboard.writeText(json);
+        gearsSetStatus("クリップボードにコピーしました。public/gears.json に貼り付けて保存してください。", "#16a34a");
+      } catch (e) {
+        gearsSetStatus("コピー失敗。ダウンロードボタンを使ってください。", "#dc2626");
       }
     }
     </script>
