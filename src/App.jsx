@@ -762,7 +762,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.30 | スキャン中...
+              v1.29 | スキャン中...
             </div>
           </div>
         )}
@@ -1314,8 +1314,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.30", date: "2026/05/25", isNew: true, items: ["新コンテンツ「工具・塗料 おすすめカタログ」を準備中（整い次第アプリからアクセスできるようご案内します）"] },
-    { ver: "v1.29", date: "2026/05/25", isNew: false, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
+    { ver: "v1.29", date: "2026/05/25", isNew: true, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
     { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
     { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
     { ver: "v1.26", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
@@ -1520,20 +1519,10 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.30 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.30</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・新コンテンツ「工具・塗料 おすすめカタログ」を準備中（整い次第アプリからアクセスできるようご案内します）
-            </div>
-          </div>
           {/* v1.29 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.29</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
             </div>
@@ -1549,6 +1538,16 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・時間が経つと一部キットの登録画像が消えて「📦」マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）
+            </div>
+          </div>
+          {/* v1.27 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.27</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消
             </div>
           </div>
         </div>
