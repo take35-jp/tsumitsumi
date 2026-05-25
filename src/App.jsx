@@ -1314,7 +1314,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.30", date: "2026/05/25", isNew: true, items: ["新コンテンツ「工具・塗料 おすすめカタログ」を公開（フッターからアクセス）。組み立て・塗装・撮影グッズを用途別に厳選してご紹介"] },
+    { ver: "v1.30", date: "2026/05/25", isNew: true, items: ["新コンテンツ「工具・塗料 おすすめカタログ」を準備中（整い次第アプリからアクセスできるようご案内します）"] },
     { ver: "v1.29", date: "2026/05/25", isNew: false, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
     { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
     { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
@@ -1528,7 +1528,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・新コンテンツ「工具・塗料 おすすめカタログ」を公開（フッターからアクセス）。組み立て・塗装・撮影グッズを用途別に厳選してご紹介
+              ・新コンテンツ「工具・塗料 おすすめカタログ」を準備中（整い次第アプリからアクセスできるようご案内します）
             </div>
           </div>
           {/* v1.29 */}
@@ -3565,7 +3565,6 @@ export default function App() {
           <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>運営者情報</a>
           <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>利用規約</a>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プライバシーポリシー</a>
-          <a href="/gears.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>工具・塗料</a>
           <a href="/sell.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>積みを売る</a>
           <a href="/storage.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プラモを預ける</a>
         </div>
