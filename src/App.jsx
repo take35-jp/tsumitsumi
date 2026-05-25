@@ -149,6 +149,16 @@ const SCALE_OPTIONS = ["1/1700", "1/550", "1/144", "1/100", "1/72", "1/60", "1/4
 // 審査の妨げにならないようにする。承認後に true に戻す。
 const ADS_ENABLED = false;
 
+// Amazonアソシエイト・トラッキングID（仮承認済み・2026/05/25）
+// 180日以内に3件の売上を発生させないと本承認されないので、まずは流入を確保する。
+const AMAZON_ASSOC_TAG = "tsumitsumi232-22";
+// JAN（13桁）優先、なければ商品名で検索する Amazon アフィリエイト URL を組み立てる。
+function makeAmazonAffUrl(kit) {
+  const q = (kit && (kit.jan || kit.name)) || "";
+  if (!q) return null;
+  return `https://www.amazon.co.jp/s?k=${encodeURIComponent(q)}&tag=${AMAZON_ASSOC_TAG}`;
+}
+
 const RANKS = [
   { min: 1000, label: "天照大積ミ神", color: "#fbbf24" },
   { min: 900, label: "最早、積み神様", color: "#ec4899" },
@@ -752,7 +762,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
             <div style={sc.dimOverlay}><div style={sc.frame} /></div>
             <div style={sc.hint}>バーコードを枠内に合わせてください</div>
             <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)", background: "rgba(0,0,0,0.5)", padding: "4px 8px" }}>
-              v1.28 | スキャン中...
+              v1.29 | スキャン中...
             </div>
           </div>
         )}
@@ -1304,7 +1314,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.28", date: "2026/05/25", isNew: true, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
+    { ver: "v1.29", date: "2026/05/25", isNew: true, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
+    { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
     { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
     { ver: "v1.26", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
     { ver: "v1.25", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）", "1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更"] },
@@ -1508,10 +1519,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.28 */}
+          {/* v1.29 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.29</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）
+            </div>
+          </div>
+          {/* v1.28 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.28</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
             </div>
@@ -3591,6 +3612,35 @@ export default function App() {
                     {detail.tags.map(tag => (
                       <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>#{tag}</span>
                     ))}
+                  </div>
+                </div>
+              )}
+              {/* Amazonアソシエイト：JAN または商品名で Amazon 検索へ送客。
+                  未完成/完成にかかわらず表示（追加購入・関連工具・塗料・撮影グッズ等の需要があるため）。 */}
+              {makeAmazonAffUrl(detail) && (
+                <div style={{ marginTop: 16 }}>
+                  <a
+                    href={makeAmazonAffUrl(detail)}
+                    target="_blank"
+                    rel="nofollow noopener noreferrer sponsored"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      padding: "12px",
+                      background: "#fff7ed",
+                      color: "#9a3412",
+                      border: "1.5px solid #fed7aa",
+                      borderRadius: 12,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      textDecoration: "none",
+                    }}>
+                    🛒 Amazonで関連商品を見る
+                  </a>
+                  <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "center", marginTop: 4, lineHeight: 1.5 }}>
+                    ※ Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています
                   </div>
                 </div>
               )}
