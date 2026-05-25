@@ -126,8 +126,11 @@
       const extraHtml = p.extra
         ? `<span class="extra">${escapeHtml(p.extra)}</span>`
         : "";
-      const query = encodeURIComponent(p.amazonQuery || p.name || "");
-      const url = `https://www.amazon.co.jp/s?k=${query}&tag=${encodeURIComponent(associateTag)}`;
+      // ASIN があれば商品ページ直リンク、なければ検索フォールバック
+      const tag = encodeURIComponent(associateTag);
+      const url = p.asin
+        ? `https://www.amazon.co.jp/dp/${encodeURIComponent(p.asin)}/?tag=${tag}`
+        : `https://www.amazon.co.jp/s?k=${encodeURIComponent(p.amazonQuery || p.name || "")}&tag=${tag}`;
       const thumbHtml = p.image
         ? `<a href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored" class="product-thumb"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name || "")}" loading="lazy" /></a>`
         : `<div class="product-thumb"><span class="no-img">📦</span></div>`;

@@ -3871,8 +3871,21 @@ function showMsg(id, text, type) {
               <div style="display:flex; gap:12px;">
                 <div style="flex:0 0 96px;">${thumbPreview}</div>
                 <div style="flex:1; min-width:0; display:grid; grid-template-columns: 110px 1fr; gap:6px 10px; font-size:12px; align-items:start;">
+
+                  <label style="font-weight:700; color:#9a3412;">Amazon URL貼付</label>
+                  <div>
+                    <input type="text" placeholder="商品ページURLを貼ると ASIN・検索ワードを自動セット" oninput="gearsPasteUrl(${sIdx}, ${pIdx}, this)" style="width:100%; padding:5px 8px; border:1px solid #fed7aa; border-radius:4px; background:#fff7ed;" />
+                    <div style="font-size:10px; color:#9a3412; margin-top:2px;">https://www.amazon.co.jp/.../dp/<b>ASIN</b>/... の形式を認識します</div>
+                  </div>
+
+                  <label style="font-weight:700;">ASIN</label>
+                  <input type="text" value="${gearsEsc(p.asin || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'asin', this.value || null); gearsUpdateLinkPreview(this)" placeholder="例: B000WLOO04（10文字）。空欄なら検索リンクにフォールバック" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px; font-family:monospace;" />
+
+                  <label style="font-size:10px; color:#9ca3af; padding-top:2px;">生成URL</label>
+                  <div class="link-preview" style="font-size:10px; color:#9ca3af; word-break:break-all; line-height:1.4;">${gearsLinkPreviewText(p)}</div>
+
                   <label>商品画像URL</label>
-                  <input type="text" value="${gearsEsc(p.image || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'image', this.value); gearsRefreshThumb(this)" placeholder="https://m.media-amazon.com/images/...（Amazon商品画像のURL）" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+                  <input type="text" value="${gearsEsc(p.image || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'image', this.value); gearsRefreshThumb(this)" placeholder="https://m.media-amazon.com/images/I/...jpg" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
 
                   <label>ヘッドライン</label>
                   <input type="text" value="${gearsEsc(p.headline || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'headline', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
@@ -3887,7 +3900,7 @@ function showMsg(id, text, type) {
                   <select onchange="gearsField(${sIdx}, ${pIdx}, 'badge', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;">${badgeOpts}</select>
 
                   <label>Amazon検索ワード</label>
-                  <input type="text" value="${gearsEsc(p.amazonQuery || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'amazonQuery', this.value)" placeholder="商品の検索キーワード" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+                  <input type="text" value="${gearsEsc(p.amazonQuery || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'amazonQuery', this.value)" placeholder="ASIN未設定時のフォールバック検索ワード" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
 
                   <label>追加メッセージ</label>
                   <input type="text" value="${gearsEsc(p.extra || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'extra', this.value)" placeholder="任意。「💡 〜」のような補足" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
@@ -3956,9 +3969,73 @@ function showMsg(id, text, type) {
         extra: null,
         subgroup: null,
         image: null,
+        asin: null,
       });
       gearsRender();
       gearsSetStatus("商品を追加しました（未保存）", "#f59e0b");
+    }
+
+    // Amazon商品URLからASIN (10文字英数) を抽出。/dp/ASIN /gp/product/ASIN の両形式に対応。
+    function gearsExtractAsin(url) {
+      if (!url || typeof url !== "string") return null;
+      const m = url.match(/(?:\/dp\/|\/gp\/product\/|\/exec\/obidos\/asin\/)([A-Z0-9]{10})(?:[\/?]|$)/i);
+      return m ? m[1].toUpperCase() : null;
+    }
+
+    // Amazon URL貼付欄の処理：ASIN を取り出して product にセット → 再レンダリングしないで該当行のみ更新
+    function gearsPasteUrl(sIdx, pIdx, inputEl) {
+      const url = (inputEl.value || "").trim();
+      if (!url) return;
+      const asin = gearsExtractAsin(url);
+      if (!asin) {
+        gearsSetStatus("ASIN を抽出できませんでした（URL形式を確認してください）", "#dc2626");
+        return;
+      }
+      // データ更新
+      gearsField(sIdx, pIdx, "asin", asin);
+      // 同じカード内の ASIN 入力欄と URL プレビューを差し替え（再レンダなし）
+      const card = inputEl.closest('div[style*="border:1px solid #e5e7eb"]');
+      if (card) {
+        const inputs = card.querySelectorAll("input, textarea");
+        // ASIN 入力欄は2番目の input（順番依存だが現在のレイアウトでは固定）
+        // より頑健に：placeholder で識別
+        const asinInput = card.querySelector('input[placeholder*="B000"]');
+        if (asinInput) {
+          asinInput.value = asin;
+          gearsUpdateLinkPreview(asinInput);
+        }
+      }
+      // 入力欄はクリアしておく（次の貼り付けがしやすい）
+      inputEl.value = "";
+      gearsSetStatus(`ASIN「${asin}」を抽出しました`, "#16a34a");
+    }
+
+    // プレビュー文字列を組み立てる（ASIN 直リンク or 検索フォールバック）
+    function gearsLinkPreviewText(p) {
+      const tag = "tsumitsumi232-22";
+      if (p.asin) {
+        return `https://www.amazon.co.jp/dp/${p.asin}/?tag=${tag}<br/><span style="color:#16a34a;">→ 商品ページ直リンク</span>`;
+      }
+      const q = encodeURIComponent(p.amazonQuery || p.name || "");
+      return `https://www.amazon.co.jp/s?k=${q}&tag=${tag}<br/><span style="color:#f59e0b;">→ 検索フォールバック（ASIN設定推奨）</span>`;
+    }
+
+    // ASIN 入力欄を編集した時、同じカード内の「生成URL」プレビュー欄を即時更新
+    function gearsUpdateLinkPreview(asinInput) {
+      const card = asinInput.closest('div[style*="border:1px solid #e5e7eb"]');
+      if (!card) return;
+      const preview = card.querySelector(".link-preview");
+      if (!preview) return;
+      const tag = "tsumitsumi232-22";
+      const asin = (asinInput.value || "").trim();
+      if (asin) {
+        preview.innerHTML = `https://www.amazon.co.jp/dp/${gearsEsc(asin)}/?tag=${tag}<br/><span style="color:#16a34a;">→ 商品ページ直リンク</span>`;
+      } else {
+        const nameInput = card.querySelector("textarea");
+        const queryInput = card.querySelector('input[placeholder*="検索ワード"]');
+        const q = encodeURIComponent((queryInput && queryInput.value) || (nameInput && nameInput.value) || "");
+        preview.innerHTML = `https://www.amazon.co.jp/s?k=${q}&tag=${tag}<br/><span style="color:#f59e0b;">→ 検索フォールバック（ASIN設定推奨）</span>`;
+      }
     }
 
     // 画像URL欄を変更した時、左のプレビュー画像を即時差し替える（再レンダリングしない）
