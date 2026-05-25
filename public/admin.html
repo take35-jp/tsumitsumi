@@ -708,17 +708,18 @@
     <!-- TAB: 工具カタログ管理 -->
     <div class="tab-panel" id="tab-gears">
       <div style="background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:14px; margin-bottom:16px;">
-        <div style="font-size:13px; font-weight:700; color:#9a3412; margin-bottom:6px;">🛠 工具カタログ管理（gears.json 編集）</div>
+        <div style="font-size:13px; font-weight:700; color:#9a3412; margin-bottom:6px;">🛠 工具カタログ管理（Supabase 連動）</div>
         <div style="font-size:12px; color:#9a3412; line-height:1.7;">
-          <code>/gears.html</code> に表示される商品を編集できます。<br/>
-          編集後「⬇ JSONをダウンロード」または「📋 クリップボードにコピー」して、
-          リポジトリの <code>public/gears.json</code> を上書きしてください（Vercel が自動デプロイします）。
+          <code>/gears.html</code> に表示される商品を編集できます。「💾 Supabaseに保存」を押すと即座に本番に反映されます。<br/>
+          念のため定期的に「⬇ JSONバックアップ」でリポジトリに <code>public/gears.json</code> のスナップショットを取っておくと安心です（Supabase が落ちた時のフォールバック用）。
         </div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
-        <button class="btn btn-primary" onclick="gearsDownload()">⬇ JSONをダウンロード</button>
-        <button class="btn" onclick="gearsCopy()" style="background:#0ea5e9; color:#fff;">📋 クリップボードにコピー</button>
-        <button class="btn" onclick="gearsReload()" style="background:#9ca3af; color:#fff;">🔄 サーバーから再読み込み</button>
+        <button class="btn btn-primary" onclick="gearsSaveSupabase()" style="background:#16a34a; color:#fff;">💾 Supabaseに保存</button>
+        <button class="btn" onclick="gearsReload()" style="background:#9ca3af; color:#fff;">🔄 Supabaseから再読み込み</button>
+        <button class="btn" onclick="gearsImportFromJson()" style="background:#f59e0b; color:#fff;">📥 gears.json から初回インポート</button>
+        <button class="btn" onclick="gearsDownload()" style="background:#0ea5e9; color:#fff;">⬇ JSONバックアップ</button>
+        <button class="btn" onclick="gearsCopy()" style="background:#0ea5e9; color:#fff;">📋 コピー</button>
         <span id="gears-status" style="font-size:12px; color:#6b7280; align-self:center;"></span>
       </div>
       <div id="gears-editor"><div style="padding:40px; text-align:center; color:#9ca3af;">読み込み中…</div></div>
@@ -3759,16 +3760,72 @@ function showMsg(id, text, type) {
       el.style.color = color || "#6b7280";
     }
 
+    // Supabase からカタログを読み込む（gears_catalog テーブル、id='main' の1行に全データを格納）
     async function gearsReload() {
-      gearsSetStatus("読み込み中…");
+      gearsSetStatus("Supabase から読み込み中…");
       try {
-        const r = await fetch("/gears.json?ts=" + Date.now());
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/gears_catalog?id=eq.main&select=data,updated_at`, {
+          headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },
+          cache: "no-store",
+        });
         if (!r.ok) throw new Error("HTTP " + r.status);
-        gearsData = await r.json();
+        const rows = await r.json();
+        if (!Array.isArray(rows) || rows.length === 0) {
+          // テーブルは作ったが行がない → 初回インポートを案内
+          gearsData = null;
+          document.getElementById("gears-editor").innerHTML =
+            '<div style="padding:30px; text-align:center; color:#6b7280; background:#fff; border-radius:10px; border:1px dashed #d1d5db;">' +
+            '<div style="font-size:14px; font-weight:700; color:#111; margin-bottom:8px;">📥 Supabaseが空です</div>' +
+            '<div style="font-size:12px; line-height:1.7;">「📥 gears.json から初回インポート」ボタンを押して、現在のJSONをSupabaseに取り込んでください。</div>' +
+            '</div>';
+          gearsSetStatus("Supabase は空（初回インポート待ち）", "#f59e0b");
+          return;
+        }
+        gearsData = rows[0].data;
         gearsRender();
-        gearsSetStatus("読み込み完了", "#16a34a");
+        const ts = rows[0].updated_at ? new Date(rows[0].updated_at).toLocaleString("ja-JP") : "";
+        gearsSetStatus(`Supabaseから読み込み完了 ${ts ? "(最終更新: " + ts + ")" : ""}`, "#16a34a");
       } catch (e) {
         gearsSetStatus("読み込み失敗: " + String(e).slice(0, 60), "#dc2626");
+      }
+    }
+
+    // Supabase に保存（UPSERT）。Prefer: resolution=merge-duplicates で id='main' を上書き
+    async function gearsSaveSupabase() {
+      if (!gearsData) { gearsSetStatus("データがありません", "#dc2626"); return; }
+      gearsData.meta = gearsData.meta || {};
+      gearsData.meta.lastUpdated = new Date().toISOString().slice(0, 10);
+      gearsSetStatus("Supabase に保存中…");
+      try {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/gears_catalog`, {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY,
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates,return=minimal",
+          },
+          body: JSON.stringify({ id: "main", data: gearsData }),
+        });
+        if (!r.ok) throw new Error("HTTP " + r.status + " " + (await r.text()).slice(0, 100));
+        gearsSetStatus("✅ Supabaseに保存しました。/gears.html に即時反映されます。", "#16a34a");
+      } catch (e) {
+        gearsSetStatus("保存失敗: " + String(e).slice(0, 80), "#dc2626");
+      }
+    }
+
+    // 初回インポート：静的 gears.json を読んで Supabase に流し込む
+    async function gearsImportFromJson() {
+      if (!confirm("static の gears.json から Supabase に取り込みます。\n（既存の Supabase データがあれば上書きされます）\n\n続行しますか？")) return;
+      gearsSetStatus("gears.json を読み込み中…");
+      try {
+        const r = await fetch("/gears.json?ts=" + Date.now());
+        if (!r.ok) throw new Error("JSON HTTP " + r.status);
+        gearsData = await r.json();
+        await gearsSaveSupabase();
+        gearsRender();
+      } catch (e) {
+        gearsSetStatus("インポート失敗: " + String(e).slice(0, 80), "#dc2626");
       }
     }
 
