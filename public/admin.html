@@ -3915,6 +3915,28 @@ function showMsg(id, text, type) {
           `;
         });
 
+        // サブグループ管理 UI
+        const subgroupsList = section.subgroups || [];
+        let subgroupsHtml = "";
+        if (subgroupsList.length > 0 || true) {
+          subgroupsHtml = `
+            <div style="background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+              <div style="font-size:11px; font-weight:700; color:#4b5563; margin-bottom:8px;">📁 サブグループ（任意：商品をグループ分けする見出し）</div>
+              ${subgroupsList.length === 0 ? '<div style="font-size:11px; color:#9ca3af; padding:4px 0;">サブグループなし</div>' : ""}
+              ${subgroupsList.map((sg, sgIdx) => `
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:10px; color:#9ca3af; font-family:monospace; min-width:60px;">${gearsEsc(sg.id || "")}</span>
+                  <input type="text" value="${gearsEsc(sg.label || "")}" oninput="gearsSubgroupLabel(${sIdx}, ${sgIdx}, this.value)" style="flex:1; padding:4px 8px; border:1px solid #d1d5db; border-radius:4px; font-size:12px;" placeholder="見出し（例: DULO ...各サイズ）" />
+                  <button onclick="gearsSubgroupMove(${sIdx}, ${sgIdx}, -1)" ${sgIdx === 0 ? "disabled" : ""} style="font-size:11px; padding:3px 6px; cursor:pointer;">▲</button>
+                  <button onclick="gearsSubgroupMove(${sIdx}, ${sgIdx}, 1)" ${sgIdx === subgroupsList.length - 1 ? "disabled" : ""} style="font-size:11px; padding:3px 6px; cursor:pointer;">▼</button>
+                  <button onclick="gearsSubgroupDelete(${sIdx}, ${sgIdx})" style="font-size:11px; padding:3px 8px; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; border-radius:4px; cursor:pointer;">🗑</button>
+                </div>
+              `).join("")}
+              <button onclick="gearsSubgroupAdd(${sIdx})" class="btn" style="background:#6366f1; color:#fff; font-size:11px; margin-top:4px;">➕ サブグループを追加</button>
+            </div>
+          `;
+        }
+
         html += `
           <div style="border:2px solid #e5e7eb; border-radius:12px; padding:14px; margin-bottom:18px; background:#fafafa;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #e5e7eb;">
@@ -3924,6 +3946,7 @@ function showMsg(id, text, type) {
               </div>
               <button onclick="gearsAdd(${sIdx})" class="btn" style="background:#22c55e; color:#fff; font-size:12px;">➕ 商品を追加</button>
             </div>
+            ${subgroupsHtml}
             ${productsHtml || '<div style="padding:20px; text-align:center; color:#9ca3af; font-size:12px;">商品なし</div>'}
           </div>
         `;
@@ -3973,6 +3996,49 @@ function showMsg(id, text, type) {
       });
       gearsRender();
       gearsSetStatus("商品を追加しました（未保存）", "#f59e0b");
+    }
+
+    // ---- サブグループ操作 ----
+    function gearsSubgroupAdd(sIdx) {
+      const section = gearsData.sections[sIdx];
+      if (!Array.isArray(section.subgroups)) section.subgroups = [];
+      const newId = `${section.id}-sub-${Date.now().toString(36)}`;
+      section.subgroups.push({ id: newId, label: "（新規サブグループ）" });
+      gearsRender();
+      gearsSetStatus("サブグループを追加しました（未保存）", "#f59e0b");
+    }
+
+    function gearsSubgroupDelete(sIdx, sgIdx) {
+      const section = gearsData.sections[sIdx];
+      const sg = section.subgroups[sgIdx];
+      if (!sg) return;
+      // このサブグループを参照している商品がいたら、参照を null（=未分類）にする
+      const refCount = section.products.filter(p => p.subgroup === sg.id).length;
+      const msg = refCount > 0
+        ? `「${sg.label || sg.id}」を削除しますか？\n\n${refCount}件の商品がこのサブグループに紐づいています。\n削除すると、それらの商品は「サブグループなし」になります。`
+        : `「${sg.label || sg.id}」を削除しますか？`;
+      if (!confirm(msg)) return;
+      section.products.forEach(p => { if (p.subgroup === sg.id) p.subgroup = null; });
+      section.subgroups.splice(sgIdx, 1);
+      gearsRender();
+      gearsSetStatus("サブグループを削除しました（未保存）", "#f59e0b");
+    }
+
+    function gearsSubgroupLabel(sIdx, sgIdx, value) {
+      const section = gearsData.sections[sIdx];
+      if (!section.subgroups || !section.subgroups[sgIdx]) return;
+      section.subgroups[sgIdx].label = value;
+      gearsSetStatus("未保存の変更あり（💾 Supabaseに保存 で反映）", "#f59e0b");
+    }
+
+    function gearsSubgroupMove(sIdx, sgIdx, dir) {
+      const section = gearsData.sections[sIdx];
+      const arr = section.subgroups || [];
+      const newIdx = sgIdx + dir;
+      if (newIdx < 0 || newIdx >= arr.length) return;
+      [arr[sgIdx], arr[newIdx]] = [arr[newIdx], arr[sgIdx]];
+      gearsRender();
+      gearsSetStatus("サブグループを並び替えました（未保存）", "#f59e0b");
     }
 
     // Amazon商品URLからASIN (10文字英数) を抽出。/dp/ASIN /gp/product/ASIN の両形式に対応。
