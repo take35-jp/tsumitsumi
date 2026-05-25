@@ -3211,9 +3211,9 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 20px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px" }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
-        <a href="/storage.html" target="_blank" rel="noopener noreferrer"
-          style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 20, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap" }}>
-          📦 プラモを預ける
+        <a href="/gears.html" target="_blank" rel="noopener noreferrer"
+          style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "#9a3412", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 20, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap" }}>
+          🛠 おすすめツール
         </a>
       </div>
 
@@ -3469,6 +3469,13 @@ export default function App() {
         </div>
         <div style={{ fontSize: 10, color: "#cbd5e1" }}>© 2026 TSUMI TSUMI</div>
       </div>
+
+      {/* フロート式「プラモを預ける」リンク。トップから移動して左下に常駐させる。
+          z-index は右下の FAB（50）より下げて、スキャン/手動登録の操作を邪魔しないようにする。 */}
+      <a href="/storage.html" target="_blank" rel="noopener noreferrer"
+        style={{ position: "fixed", bottom: 24, left: 16, zIndex: 40, fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 20, padding: "6px 12px", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+        📦 プラモを預ける
+      </a>
 
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
