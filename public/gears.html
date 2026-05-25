@@ -49,6 +49,9 @@
   .badge-lefty { background: #dbeafe; color: #1e40af; }
   .product-pitch { font-size: 13px; color: #4b5563; line-height: 1.65; word-break: break-word; }
   .product-pitch .extra { display: block; margin-top: 4px; color: #15803d; font-weight: 600; }
+  .product-price { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .product-price .yen { font-size: 17px; font-weight: 800; color: #b91c1c; }
+  .product-price .note { font-size: 10px; color: #9ca3af; }
   .product-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: flex-start; padding: 8px 18px; background: #ff9900; color: #111; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
   .product-link:hover { background: #e88a00; }
   .loading { padding: 60px 20px; text-align: center; color: #9ca3af; font-size: 14px; }
@@ -152,6 +155,10 @@
       const thumbHtml = p.image
         ? `<a href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored" class="product-thumb"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name || "")}" loading="lazy" /></a>`
         : `<div class="product-thumb"><span class="no-img">📦</span></div>`;
+      // 価格表示。Amazon側で頻繁に変動するため正確値はAmazon側で確認してもらう旨を付記。
+      const priceHtml = p.price
+        ? `<div class="product-price"><span class="yen">${escapeHtml(p.price)}</span><span class="note">※Amazonで最新価格をご確認ください</span></div>`
+        : "";
       return `
         <div class="product-card">
           ${thumbHtml}
@@ -160,6 +167,7 @@
               <span class="product-name">${escapeHtml(p.headline || p.name)}</span>
               ${badgeHtml}
             </div>
+            ${priceHtml}
             <div class="product-pitch">${escapeHtml(p.name)}${extraHtml}</div>
             <a class="product-link" href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
           </div>
