@@ -3213,7 +3213,7 @@ export default function App() {
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
         <a href="/gears.html" target="_blank" rel="noopener noreferrer"
           style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "#9a3412", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 20, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap" }}>
-          🛠 おすすめツール
+          🛠 おすすめ定番ツール
         </a>
       </div>
 
