@@ -1508,6 +1508,29 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         </a>
       </div>
 
+      {/* TIPS記事一覧（更新履歴の直前に配置・新しい記事は配列の先頭に追加していく） */}
+      <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>📚 プラモ製作 TIPS</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { title: "ガンプラのゲート跡が白くなる原因と完全な解決法", desc: "白化が起きる原理と、4つの対処法（ヤスリ・マーカー・塗装・接着剤）を解説", url: "/tips/gate-whitening.html", date: "2026/05/27" },
+            { title: "【保存版】ガンプラ初心者が最初に揃える工具5選", desc: "1万円以下で全部そろえる、本当に必要な工具を厳選", url: "/tips/beginner-tools.html", date: "2026/05/27" },
+          ].map((t, i) => (
+            <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
+              style={{ display: "block", padding: "10px 12px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, textDecoration: "none", color: "#111" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#9a3412", marginBottom: 2 }}>{t.title}</div>
+              <div style={{ fontSize: 11, color: "#9a3412", opacity: 0.85, lineHeight: 1.5 }}>{t.desc}</div>
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>{t.date} 公開</div>
+            </a>
+          ))}
+        </div>
+        <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 8, lineHeight: 1.6 }}>
+          ※ 週2本ペースで新しいTIPSを追加していきます
+        </div>
+      </div>
+
       {/* バージョン履歴（最下部・直近3件） */}
       <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
