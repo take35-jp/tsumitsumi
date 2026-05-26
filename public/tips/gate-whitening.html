@@ -117,10 +117,16 @@
   .level-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 14px; }
   .level-box .label { background: #1d4ed8; color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; margin-right: 8px; }
   .product { display: flex; gap: 12px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin: 14px 0; align-items: stretch; }
+  .product-thumb-slot { flex: 0 0 90px; width: 90px; height: 90px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #d1d5db; font-size: 30px; overflow: hidden; }
+  .product-body { flex: 1; min-width: 0; }
   .product-name { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 4px; }
   .product-desc { font-size: 13px; color: #4b5563; margin-bottom: 8px; }
+  .product-price-slot { font-size: 13px; font-weight: 800; color: #b91c1c; margin-bottom: 8px; line-height: 1.4; }
   .product-link { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; background: #ff9900; color: #111; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; align-self: flex-start; }
   .product-link:hover { background: #e88a00; }
+  @media (max-width: 540px) {
+    .product-thumb-slot { flex-basis: 72px; width: 72px; height: 72px; font-size: 26px; }
+  }
   .cta-banner { background: linear-gradient(135deg, #4f8ef7, #22c55e); color: #fff; border-radius: 16px; padding: 28px 22px; text-align: center; margin: 40px 0; }
   .cta-banner h2 { color: #fff; border-left: none; padding-left: 0; margin: 0 0 8px; }
   .cta-banner p { color: rgba(255,255,255,0.95); margin: 0 0 16px; }
@@ -191,10 +197,12 @@
     <h3>② 片刃ニッパーへの投資</h3>
     <p>「片刃ニッパー」は刃の片側が平ら（フラット）になっていて、切断時にプラスチックを<strong>圧縮せずスパッと切る</strong>設計です。両刃ニッパー（普通のニッパー）と比べて白化が劇的に減ります。</p>
 
-    <div class="product">
-      <div style="flex:1;">
+    <div class="product" data-product-id="nipper-2">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">ゴッドハンド(GodHand) アルティメットニッパー GH-SPN-120-E</div>
         <div class="product-desc">片刃ニッパーの定番中の定番。約5,000円と高めだが、切断面がほぼ平らになり仕上げ作業が劇的に楽になる。1本買えば10年使える。</div>
+        <div class="product-price-slot" style="display:none;"></div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=GH-SPN-120-E&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
@@ -212,10 +220,12 @@
     <div class="level-box"><span class="label">初心者</span>難易度：低 / 時間：1パーツ 1〜2分 / 道具コスト：約1,000円</div>
     <p>白化した部分の表面を <strong>#400 → #600</strong> の番手で順に削れば、ほぼ完全に消えます。さらに <strong>#1000</strong> まで掛ければ、塗装無しでもツヤツヤに。</p>
 
-    <div class="product">
-      <div style="flex:1;">
+    <div class="product" data-product-id="yasuri-kami-400">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">ゴッドハンド 神ヤス! 10mm厚 #400 イエロー（12枚入り）</div>
         <div class="product-desc">スポンジ素材で曲面に追従。1パーツずつ削るのに最適。1枚あれば1キット仕上げきれる。</div>
+        <div class="product-price-slot" style="display:none;"></div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=%E7%A5%9E%E3%83%A4%E3%82%B9+10mm+400+%E3%82%A4%E3%82%A8%E3%83%AD%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
@@ -225,7 +235,8 @@
     <p>白化部分にボディと同系色のマーカーを薄く塗るだけ。ヤスリも工具も不要で、最速・最安の対症療法です。</p>
 
     <div class="product">
-      <div style="flex:1;">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">リアルタッチマーカー グレーセット</div>
         <div class="product-desc">グレー系の機体ならコレ一択。色の濃淡が揃っているので大半の機体カラーをカバーできる。</div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%AA%E3%82%A2%E3%83%AB%E3%82%BF%E3%83%83%E3%83%81%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC+%E3%82%BB%E3%83%83%E3%83%88&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
@@ -306,6 +317,9 @@
   </div>
   <div>© 2026 TSUMI TSUMI</div>
 </footer>
+
+<!-- gears_catalog から商品カードへ画像・価格・ASIN直リンクを注入 -->
+<script src="/tips/loader.js"></script>
 
 </body>
 </html>

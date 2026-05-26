@@ -118,11 +118,16 @@
   .warning-box::before { content: "⚠️ "; }
   /* 商品カード（簡易・記事内向け） */
   .product { display: flex; gap: 12px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin: 14px 0; align-items: stretch; }
+  .product-thumb-slot { flex: 0 0 90px; width: 90px; height: 90px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #d1d5db; font-size: 30px; overflow: hidden; }
+  .product-body { flex: 1; min-width: 0; }
   .product-name { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 4px; }
   .product-desc { font-size: 13px; color: #4b5563; margin-bottom: 8px; }
-  .product-price { font-size: 14px; font-weight: 800; color: #b91c1c; margin-bottom: 8px; }
+  .product-price-slot { font-size: 13px; font-weight: 800; color: #b91c1c; margin-bottom: 8px; line-height: 1.4; }
   .product-link { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; background: #ff9900; color: #111; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; align-self: flex-start; }
   .product-link:hover { background: #e88a00; }
+  @media (max-width: 540px) {
+    .product-thumb-slot { flex-basis: 72px; width: 72px; height: 72px; font-size: 26px; }
+  }
   /* CTAバナー */
   .cta-banner { background: linear-gradient(135deg, #4f8ef7, #22c55e); color: #fff; border-radius: 16px; padding: 28px 22px; text-align: center; margin: 40px 0; }
   .cta-banner h2 { color: #fff; border-left: none; padding-left: 0; margin: 0 0 8px; }
@@ -188,10 +193,12 @@
     <h2>1. ニッパー：最初の1本は2,000円台で十分</h2>
     <p>ガンプラ作りで<strong>最も使う頻度が高く、仕上がりに直結する</strong>のがニッパー。100均のニッパーで切るとゲート跡が白く、欠けやすく、薄刃部分が折れることもあります。最初の1本は、プラモ用に作られたものを買いましょう。</p>
 
-    <div class="product">
-      <div style="flex:1;">
+    <div class="product" data-product-id="nipper-1">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">ツノダ(TSUNODA) king TTC 極薄刃プラスチックニッパー SKN-140</div>
         <div class="product-desc">片刃で切断面がきれい。約2,000円とコスパも良く「迷ったらコレ」のスタンダード。</div>
+        <div class="product-price-slot" style="display:none;"></div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%84%E3%83%8E%E3%83%80+TTC+SKN-140&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
@@ -203,10 +210,12 @@
     <h2>2. デザインナイフ：替刃込みで1,000円以下</h2>
     <p>ニッパーで切ったあとに残るゲート跡（白い小さな出っ張り）を、きれいに整えるための工具です。カッターでも代用できますが、デザインナイフのほうが取り回しが圧倒的に楽。</p>
 
-    <div class="product">
-      <div style="flex:1;">
+    <div class="product" data-product-id="knife-1">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">NT Cutter エヌティー(NT) デザインナイフ D-500GP</div>
         <div class="product-desc">プラモデラー御用達のスタンダード。グリップが細身で扱いやすい。</div>
+        <div class="product-price-slot" style="display:none;"></div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=NT+Cutter+%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3%E3%83%8A%E3%82%A4%E3%83%95+D-500GP&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
@@ -219,19 +228,23 @@
     <p>ゲート跡を整える最終仕上げで使うのがヤスリ。<strong>「スポンジヤスリ」と「フィルムスティックやすり」の2系統</strong>から1つずつ揃えると、ほぼすべての作業をカバーできます。</p>
 
     <h3>① スポンジヤスリ（曲面に追従）</h3>
-    <div class="product">
-      <div style="flex:1;">
+    <div class="product" data-product-id="yasuri-kami-400">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">ゴッドハンド 神ヤス! 10mm厚 #400 イエロー（12枚入り）</div>
         <div class="product-desc">曲面パーツでも気持ちよく削れる、スポンジヤスリの定番。#400が一番出番が多い。</div>
+        <div class="product-price-slot" style="display:none;"></div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=%E7%A5%9E%E3%83%A4%E3%82%B9+10mm+400+%E3%82%A4%E3%82%A8%E3%83%AD%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
 
     <h3>② フィルムスティックやすり（細部・直線に）</h3>
-    <div class="product">
-      <div style="flex:1;">
+    <div class="product" data-product-id="yasuri-oyaji-320">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">ピットロード やすりの親父 フィルムスティックやすり #320 / #400</div>
         <div class="product-desc">薄くてしなる、細かい場所に入り込める。#320と#400を1枚ずつあれば十分。</div>
+        <div class="product-price-slot" style="display:none;"></div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%83%94%E3%83%83%E3%83%88%E3%83%AD%E3%83%BC%E3%83%89+%E3%82%84%E3%81%99%E3%82%8A%E3%81%AE%E8%A6%AA%E7%88%B6&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
@@ -239,10 +252,12 @@
     <h2>4. ピンセット：500円のもので十分・先端が薄いものを選ぶ</h2>
     <p>小さなパーツの取り扱い、デカール（シール）貼り、ホコリ取りに使います。安いもので大丈夫ですが、<strong>「先端が薄い・尖っている」</strong>のを選ぶのがコツ。先が太いとシールが掴めません。</p>
 
-    <div class="product">
-      <div style="flex:1;">
+    <div class="product" data-product-id="tweezers-1">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">タミヤ 精密ピンセット</div>
         <div class="product-desc">先端が極細で薄い、定番中の定番。1本500円台。</div>
+        <div class="product-price-slot" style="display:none;"></div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4+%E7%B2%BE%E5%AF%86%E3%83%94%E3%83%B3%E3%82%BB%E3%83%83%E3%83%88&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
@@ -251,7 +266,8 @@
     <p>パーツ表面の細い溝（パネルライン）に流し込むだけで、ディテールが浮き上がる魔法のペンです。<strong>塗装しない派でも、これだけはやるべき</strong>と言われるほど効果絶大。</p>
 
     <div class="product">
-      <div style="flex:1;">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
         <div class="product-name">ガンダムマーカー スミ入れ用ブラック</div>
         <div class="product-desc">細い溝に流し込むだけ。失敗してもクリーナーで拭けばリセット可能。</div>
         <a class="product-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%83%B3%E3%83%80%E3%83%A0%E3%83%9E%E3%83%BC%E3%82%AB%E3%83%BC+%E3%82%B9%E3%83%9F%E5%85%A5%E3%82%8C+%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
@@ -339,6 +355,9 @@
   </div>
   <div>© 2026 TSUMI TSUMI</div>
 </footer>
+
+<!-- gears_catalog から商品カードへ画像・価格・ASIN直リンクを注入 -->
+<script src="/tips/loader.js"></script>
 
 </body>
 </html>
