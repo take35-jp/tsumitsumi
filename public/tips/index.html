@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>プラモ製作 TIPS 一覧｜ツミツミ</title>
+<meta name="description" content="ガンプラ・スケールモデルの製作に役立つTIPS記事をまとめて配信。初心者向けの工具選びから、トラブル解決、塗装・仕上げまで、実際に使った経験ベースで解説します。" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta property="og:title" content="プラモ製作 TIPS 一覧｜ツミツミ" />
+<meta property="og:description" content="ガンプラ製作に役立つ実用TIPSをまとめて配信。" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ツミツミ" />
+<meta property="og:url" content="https://tsumitsumi.vercel.app/tips/" />
+<meta property="og:image" content="https://tsumitsumi.vercel.app/LOGO.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="プラモ製作 TIPS 一覧｜ツミツミ" />
+<meta name="twitter:description" content="ガンプラ製作に役立つ実用TIPSをまとめて配信。" />
+<meta name="twitter:image" content="https://tsumitsumi.vercel.app/LOGO.png" />
+<link rel="canonical" href="https://tsumitsumi.vercel.app/tips/" />
+<link rel="icon" type="image/png" href="/apple-touch-icon.png" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "プラモ製作 TIPS 一覧",
+  "description": "ガンプラ・スケールモデルの製作に役立つTIPS記事をまとめて配信。",
+  "url": "https://tsumitsumi.vercel.app/tips/",
+  "isPartOf": { "@type": "WebSite", "name": "ツミツミ", "url": "https://tsumitsumi.vercel.app/" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "TOP", "item": "https://tsumitsumi.vercel.app/" },
+    { "@type": "ListItem", "position": 2, "name": "TIPS 一覧" }
+  ]
+}
+</script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; color: #1f2937; background: #fafafa; line-height: 1.75; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  header.site { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 20px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px); }
+  .site-inner { max-width: 880px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .logo { font-size: 16px; font-weight: 800; color: #111827; text-decoration: none; }
+  .nav-back { color: #4b5563; text-decoration: none; font-size: 13px; }
+  .nav-back:hover { color: #22c55e; }
+  main { max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; }
+  .breadcrumb { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
+  .breadcrumb a { color: #15803d; text-decoration: none; }
+  h1 { font-size: 28px; font-weight: 800; margin: 0 0 8px; line-height: 1.4; color: #111827; }
+  .lead { font-size: 15px; color: #4b5563; margin: 0 0 28px; line-height: 1.85; }
+  .article-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  @media (max-width: 720px) { .article-grid { grid-template-columns: 1fr; } }
+  .article-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 22px; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+  .article-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.06); border-color: #fed7aa; }
+  .article-tag { display: inline-block; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; align-self: flex-start; }
+  .article-title { font-size: 17px; font-weight: 800; color: #111827; margin: 4px 0 4px; line-height: 1.5; }
+  .article-desc { font-size: 13px; color: #4b5563; line-height: 1.75; }
+  .article-meta { font-size: 11px; color: #9ca3af; margin-top: auto; padding-top: 8px; border-top: 1px solid #f3f4f6; }
+  .cta-banner { background: linear-gradient(135deg, #4f8ef7, #22c55e); color: #fff; border-radius: 16px; padding: 28px 22px; text-align: center; margin: 40px 0 20px; }
+  .cta-banner .cta-logo { display: block; margin: 0 auto 14px; width: 100px; height: 100px; border-radius: 22px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .cta-banner h2 { color: #fff; padding-left: 0; border-left: none; font-size: 20px; margin: 0 0 8px; }
+  .cta-banner p { color: rgba(255,255,255,0.95); margin: 0 0 16px; font-size: 14px; }
+  .cta-button { display: inline-block; padding: 12px 28px; background: #fff; color: #111; border-radius: 24px; font-weight: 800; text-decoration: none; font-size: 15px; }
+  .coming-soon { background: #f9fafb; border: 1.5px dashed #d1d5db; color: #6b7280; padding: 20px 22px; border-radius: 14px; text-align: center; font-size: 13px; margin-top: 16px; }
+  .coming-soon strong { color: #111827; }
+  footer { border-top: 1px solid #e5e7eb; margin-top: 60px; padding: 24px; text-align: center; font-size: 12px; color: #9ca3af; background: #fff; }
+  footer .links { margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
+  footer a { color: #6b7280; text-decoration: none; }
+  footer a:hover { color: #22c55e; }
+  @media (max-width: 540px) {
+    h1 { font-size: 22px; }
+    main { padding: 24px 16px 50px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <a class="logo" href="/">TSUMI TSUMI</a>
+    <a class="nav-back" href="/">← アプリに戻る</a>
+  </div>
+</header>
+
+<main>
+  <div class="breadcrumb">
+    <a href="/">TOP</a> / TIPS 一覧
+  </div>
+
+  <h1>プラモ製作 TIPS 一覧</h1>
+  <p class="lead">
+    ガンプラ・スケールモデルの製作に役立つTIPS記事をまとめてお届け。<strong>管理人が実際に使って効果を確認した知見</strong>だけを厳選してます。週2本ペースで更新中。
+  </p>
+
+  <div class="article-grid">
+
+    <a class="article-card" href="/tips/gate-whitening.html">
+      <span class="article-tag">仕上げ・トラブル解決</span>
+      <div class="article-title">ガンプラのゲート跡が白くなる原因と完全な解決法【4つの対処法】</div>
+      <div class="article-desc">白化が起きる原理から、予防のための「二度切り」テクニック、白くなった後のヤスリ・マーカー・塗装・接着剤による4つの解決法までを順に解説。</div>
+      <div class="article-meta">2026/05/27 公開</div>
+    </a>
+
+    <a class="article-card" href="/tips/beginner-tools.html">
+      <span class="article-tag">工具・準備</span>
+      <div class="article-title">【保存版】ガンプラ初心者が最初に揃える工具5選 - 1万円以下で全部そろえる</div>
+      <div class="article-desc">「いきなり大量の工具を揃えるのは無理…」という初心者向け、本当に必要な5点を厳選。すべて1万円以下、Amazonで揃う定番品ばかり。</div>
+      <div class="article-meta">2026/05/27 公開</div>
+    </a>
+
+  </div>
+
+  <div class="coming-soon">
+    <strong>📝 次回更新予定</strong><br/>
+    比較ランキング、塗装入門、マスキング段差防止、神ヤス番手別ガイドなど、週2本のペースで追加していきます。
+  </div>
+
+  <div class="cta-banner">
+    <img src="/LOGO.png" alt="TSUMI TSUMI" class="cta-logo" width="100" height="100" />
+    <h2>積みプラの管理は「TSUMI TSUMI」で</h2>
+    <p>バーコードをスキャンするだけでカンタン登録。完全無料、登録不要のWebアプリ。</p>
+    <a href="/" class="cta-button">TSUMI TSUMIを使ってみる→</a>
+  </div>
+
+</main>
+
+<footer>
+  <div class="links">
+    <a href="/">アプリ</a>
+    <a href="/tips/">TIPS 一覧</a>
+    <a href="/gears.html">おすすめ定番アイテム</a>
+    <a href="/manual.html">取扱説明書</a>
+    <a href="/about.html">運営者情報</a>
+    <a href="/terms.html">利用規約</a>
+    <a href="/privacy.html">プライバシーポリシー</a>
+    <a href="https://x.com/tsumitsumi_pla" target="_blank" rel="noopener noreferrer">@tsumitsumi_pla</a>
+  </div>
+  <div>© 2026 TSUMI TSUMI</div>
+</footer>
+
+</body>
+</html>

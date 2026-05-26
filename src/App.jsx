@@ -1512,6 +1512,10 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>📚 プラモ製作 TIPS</span>
+          <a href="/tips/" target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 11, color: "#4f8ef7", textDecoration: "underline" }}>
+            すべて見る →
+          </a>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
