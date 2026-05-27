@@ -3,6 +3,10 @@
     {
       "path": "/api/auto-seed",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/instagram-post",
+      "schedule": "0 12 * * *"
     }
   ],
   "headers": [

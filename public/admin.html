@@ -264,6 +264,7 @@
       <button class="tab-btn" onclick="switchTab('excel')">📊 Excel入出力</button>
       <button class="tab-btn" onclick="switchTab('reports')">📨 報告キュー <span id="reports-badge" class="reports-badge" style="display:none;">0</span></button>
       <button class="tab-btn" onclick="switchTab('gears')">🛠 工具カタログ</button>
+      <button class="tab-btn" onclick="switchTab('instagram')">📷 IG投稿予約</button>
     </div>
 
     <!-- TAB: Yahoo検索 -->
@@ -725,6 +726,45 @@
       <div id="gears-editor"><div style="padding:40px; text-align:center; color:#9ca3af;">読み込み中…</div></div>
     </div>
 
+    <!-- TAB: IG投稿予約 -->
+    <div class="tab-panel" id="tab-instagram">
+      <div style="background:#fdf2f8; border:1.5px solid #fbcfe8; border-radius:10px; padding:14px; margin-bottom:16px;">
+        <div style="font-size:13px; font-weight:700; color:#9d174d; margin-bottom:6px;">📷 Instagram 自動投稿（毎日 21:00 JST に1件）</div>
+        <div style="font-size:12px; color:#9d174d; line-height:1.7;">
+          ここに登録した写真を、Vercel cron が毎日 21:00（JST）に<b>古い順で1件ずつ自動投稿</b>します（公式 Graph API）。<br/>
+          画像は <b>公開URL の JPEG</b> である必要があります（Instagram がURLから画像を取得するため）。Supabase Storage 等にアップした公開URLを使ってください。<br/>
+          ⚠ <b>投稿は本番アカウントに即時反映され、取り消せません。</b>下書き確認はできないので、画像URLとキャプションをよく確認してから登録してください。
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:14px; margin-bottom:16px;">
+        <div style="font-size:13px; font-weight:700; margin-bottom:10px;">＋ 投稿を予約に追加</div>
+        <label style="display:block; font-size:12px; color:#374151; margin-bottom:4px;">画像URL（公開・JPEG）<span style="color:#dc2626;">*</span></label>
+        <input id="ig-image-url" type="url" placeholder="https://..." oninput="igPreview(this.value)" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; margin-bottom:10px; box-sizing:border-box;">
+        <div id="ig-image-preview" style="margin-bottom:10px;"></div>
+        <label style="display:block; font-size:12px; color:#374151; margin-bottom:4px;">キャプション（ハッシュタグ込み）</label>
+        <textarea id="ig-caption" rows="5" oninput="document.getElementById('ig-caption-count').textContent=this.value.length" placeholder="今日の積みプラ&#10;&#10;#ガンプラ #積みプラ #プラモデル #gunpla" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px; margin-bottom:6px; resize:vertical; box-sizing:border-box;"></textarea>
+        <div style="font-size:11px; color:#6b7280; margin-bottom:10px;"><span id="ig-caption-count">0</span>/2200 文字</div>
+        <label style="display:block; font-size:12px; color:#374151; margin-bottom:4px;">この日時以降に投稿（任意・空欄なら次の実行で投稿）</label>
+        <input id="ig-scheduled" type="datetime-local" style="padding:8px; border:1px solid #d1d5db; border-radius:6px; margin-bottom:12px;">
+        <div>
+          <button class="btn btn-primary" onclick="igAddToQueue()">＋ 予約に追加</button>
+        </div>
+        <div id="ig-add-msg"></div>
+      </div>
+
+      <div class="master-filter-bar">
+        <label><input type="radio" name="ig-status-filter" value="pending" checked onchange="igRenderQueue()"> ⏳ 予約中</label>
+        <label><input type="radio" name="ig-status-filter" value="posted" onchange="igRenderQueue()"> ✅ 投稿済み</label>
+        <label><input type="radio" name="ig-status-filter" value="failed" onchange="igRenderQueue()"> ⚠ 失敗</label>
+        <label><input type="radio" name="ig-status-filter" value="all" onchange="igRenderQueue()"> 📋 すべて</label>
+        <span class="stats" id="ig-stats"></span>
+        <button class="btn" onclick="loadIgQueue()" style="margin-left:auto; background:#9ca3af; color:#fff;">🔄 更新</button>
+      </div>
+      <div id="ig-msg"></div>
+      <div id="ig-list"></div>
+    </div>
+
   </div>
 </div>
 
@@ -761,14 +801,15 @@ function logout() {
 // ---- TABS ----
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['search','direct','master','excel','reports','gears'][i] === name);
+    b.classList.toggle('active', ['search','direct','master','excel','reports','gears','instagram'][i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach((p, i) => {
-    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears'][i] === `tab-${name}`);
+    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears','tab-instagram'][i] === `tab-${name}`);
   });
   if (name === 'master') loadMaster();
   if (name === 'reports') loadReports();
   if (name === 'gears') gearsReload();
+  if (name === 'instagram') loadIgQueue();
 }
 
 // ---- REORDER NAME ----
@@ -2078,6 +2119,144 @@ function showMsg(id, text, type) {
   const el = document.getElementById(id);
   el.innerHTML = `<div class="msg msg-${type}">${text}</div>`;
   setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+// ============================================================
+// Instagram 投稿予約キュー (instagram_queue)
+// ============================================================
+let igQueueData = [];
+
+function igPreview(url) {
+  const el = document.getElementById('ig-image-preview');
+  if (!el) return;
+  url = (url || '').trim();
+  if (/^https?:\/\//i.test(url)) {
+    el.innerHTML = '<img src="' + escEdit(url) + '" onerror="this.parentNode.innerHTML=\'<span style=&quot;font-size:11px;color:#dc2626;&quot;>画像を読み込めません</span>\'" style="max-width:160px; max-height:160px; border-radius:8px; border:1px solid #e5e7eb;" alt="">';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+async function loadIgQueue() {
+  const listEl = document.getElementById('ig-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="loading">読み込み中...</div>';
+  try {
+    const url = SUPABASE_URL + '/rest/v1/instagram_queue?select=*&order=created_at.desc&limit=300';
+    const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    igQueueData = await r.json();
+    igRenderQueue();
+  } catch (e) {
+    listEl.innerHTML = '<div class="msg msg-err">読み込みエラー: ' + escEdit(e.message) + '<br><span style="font-size:11px;">※ instagram_queue テーブルが未作成の可能性があります（CLAUDE.md / api/instagram-post.js の SQL を実行してください）</span></div>';
+  }
+}
+
+function igRenderQueue() {
+  const radios = document.getElementsByName('ig-status-filter');
+  let statusFilter = 'pending';
+  for (const r of radios) { if (r.checked) { statusFilter = r.value; break; } }
+
+  let filtered = igQueueData;
+  if (statusFilter !== 'all') filtered = igQueueData.filter(x => x.status === statusFilter);
+
+  const total = igQueueData.length;
+  const pending = igQueueData.filter(x => x.status === 'pending').length;
+  const posted = igQueueData.filter(x => x.status === 'posted').length;
+  const failed = igQueueData.filter(x => x.status === 'failed').length;
+  const statsEl = document.getElementById('ig-stats');
+  if (statsEl) statsEl.textContent = '全' + total + '件 / ⏳' + pending + ' / ✅' + posted + ' / ⚠' + failed;
+
+  const el = document.getElementById('ig-list');
+  if (!filtered.length) { el.innerHTML = '<div class="loading">該当する投稿はありません</div>'; return; }
+
+  const fmt = (s) => s ? new Date(s).toLocaleString('ja-JP', { dateStyle: 'short', timeStyle: 'short' }) : '';
+
+  el.innerHTML = filtered.map(item => {
+    const statusLabel = item.status === 'pending' ? '⏳ 予約中'
+      : item.status === 'posted' ? '✅ 投稿済み'
+      : item.status === 'posting' ? '⏳ 投稿処理中'
+      : item.status === 'failed' ? '⚠ 失敗' : escEdit(item.status);
+    const statusStyle = item.status === 'posted' ? 'background:#d1fae5;color:#065f46;'
+      : item.status === 'failed' ? 'background:#fee2e2;color:#991b1b;'
+      : 'background:#fef3c7;color:#92400e;';
+    const cap = item.caption || '';
+    const capShort = cap.slice(0, 280);
+    return `
+      <div style="display:flex; gap:12px; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;">
+        ${item.image_url ? `<img src="${escEdit(item.image_url)}" onerror="this.style.display='none'" style="width:72px;height:72px;object-fit:cover;border-radius:6px;flex-shrink:0;" alt="">` : `<div style="width:72px;height:72px;border-radius:6px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📷</div>`}
+        <div style="flex:1; min-width:0;">
+          <div style="margin-bottom:4px;">
+            <span class="report-status-tag" style="${statusStyle}">${statusLabel}</span>
+            ${item.scheduled_at ? `<span style="font-size:11px;color:#6b7280;margin-left:6px;">📅 ${fmt(item.scheduled_at)} 以降</span>` : ''}
+          </div>
+          <div style="font-size:12px; color:#374151; white-space:pre-wrap; word-break:break-word;">${escEdit(capShort)}${cap.length > 280 ? '…' : ''}</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:4px;">登録: ${fmt(item.created_at)}${item.posted_at ? ' / 投稿: ' + fmt(item.posted_at) : ''}${item.ig_media_id ? ' / media:' + escEdit(item.ig_media_id) : ''}</div>
+          ${item.error ? `<div style="font-size:11px;color:#991b1b;margin-top:4px;">エラー: ${escEdit(item.error)}</div>` : ''}
+          <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+            ${(item.status === 'failed' || item.status === 'posting') ? `<button class="btn" style="background:#fbbf24;color:#78350f;font-size:11px;padding:6px 10px;" onclick="igRetry(${item.id})">↺ 予約に戻す</button>` : ''}
+            <button class="btn btn-danger" style="font-size:11px;padding:6px 10px;" onclick="igDelete(${item.id})">🗑 ${item.status === 'posted' ? '履歴削除' : '削除'}</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function igAddToQueue() {
+  const imageUrl = (document.getElementById('ig-image-url').value || '').trim();
+  const caption = document.getElementById('ig-caption').value || '';
+  const schedVal = document.getElementById('ig-scheduled').value || '';
+  if (!imageUrl) { showMsg('ig-add-msg', '画像URLを入力してください', 'err'); return; }
+  if (!/^https?:\/\//i.test(imageUrl)) { showMsg('ig-add-msg', '画像URLは http(s):// で始まる公開URLにしてください', 'err'); return; }
+  if (caption.length > 2200) { showMsg('ig-add-msg', 'キャプションは2200文字以内にしてください', 'err'); return; }
+
+  const payload = {
+    image_url: imageUrl,
+    caption: caption.trim() || null,
+    status: 'pending',
+    scheduled_at: schedVal ? new Date(schedVal).toISOString() : null,
+  };
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/instagram_queue', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok && r.status !== 201) { const e = await r.json().catch(() => ({})); throw new Error(JSON.stringify(e)); }
+    showMsg('ig-add-msg', '予約に追加しました', 'ok');
+    document.getElementById('ig-image-url').value = '';
+    document.getElementById('ig-caption').value = '';
+    document.getElementById('ig-scheduled').value = '';
+    document.getElementById('ig-image-preview').innerHTML = '';
+    document.getElementById('ig-caption-count').textContent = '0';
+    loadIgQueue();
+  } catch (e) {
+    showMsg('ig-add-msg', 'エラー: ' + e.message, 'err');
+  }
+}
+
+async function igDelete(id) {
+  if (!confirm('この投稿予約を削除しますか？')) return;
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/instagram_queue?id=eq.' + id, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    loadIgQueue();
+  } catch (e) { showMsg('ig-msg', 'エラー: ' + e.message, 'err'); }
+}
+
+async function igRetry(id) {
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/instagram_queue?id=eq.' + id, {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ status: 'pending', error: null, updated_at: new Date().toISOString() }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    loadIgQueue();
+  } catch (e) { showMsg('ig-msg', 'エラー: ' + e.message, 'err'); }
 }
 </script>
 <!-- ========== 商品マスタ編集機能 (2026-04-25 追加) ========== -->
