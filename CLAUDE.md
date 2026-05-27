@@ -148,25 +148,7 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 
 ---
 
-## 6-2. instagram_queue テーブル（Instagram自動投稿キュー）
-
-| カラム | 型 | 説明 |
-|---|---|---|
-| `id` | bigserial | 主キー |
-| `image_url` | text | 投稿画像URL（公開・JPEG必須）|
-| `caption` | text | キャプション（ハッシュタグ込み、〜2200字）|
-| `status` | text | pending / posting / posted / failed |
-| `scheduled_at` | timestamptz | この日時以降に投稿（null=即時）|
-| `posted_at` | timestamptz | 投稿完了時刻 |
-| `ig_media_id` | text | 投稿後のInstagram media id |
-| `error` | text | 失敗時のエラー内容 |
-| `created_at` / `updated_at` | timestamptz | |
-
-RLS 有効、anon に全操作許可（admin.html が anon キーで CRUD）。**テーブル作成SQLは `api/instagram-post.js` 冒頭コメントに記載**。
-
----
-
-## 7. APIエンドポイント一覧（Vercel Function 12個＝Hobby上限・余裕なし）
+## 7. APIエンドポイント一覧（Vercel Function 11個）
 
 | エンドポイント | 用途 | メモ |
 |---|---|---|
@@ -181,7 +163,6 @@ RLS 有効、anon に全操作許可（admin.html が anon キーで CRUD）。*
 | `/api/seed-maker` | メーカー別シード | |
 | `/api/auto-seed` | 月次cron | |
 | `/api/rakuten-books` | 楽天本API | 価格用途では不採用 |
-| `/api/instagram-post` | Instagram自動投稿（cron） | instagram_queueから1日1回投稿。Graph API。これでFunction 12/12到達 |
 
 ---
 
@@ -211,21 +192,12 @@ RLS 有効、anon に全操作許可（admin.html が anon キーで CRUD）。*
 
 ## 9. admin.html（管理ツール）の機能
 
-7タブ構成:
+5タブ構成:
 1. **🔍 Yahoo検索から登録**: 自動一括登録（緑エリア）+ 手動検索
 2. **✏️ 直接入力**: JAN/商品名/メーカー/シリーズ/スケール/画像URL
 3. **📋 マスタ一覧**: 検索・インライン編集・削除・一括処理
 4. **📊 Excel入出力**: エクスポート（件数・並び順指定可）+ インポート（JAN突合UPSERT）
 5. **📨 報告キュー**: 価格訂正報告の管理（未対応バッジ赤丸表示）
-6. **🛠 工具カタログ**: gears.html の商品を Supabase 連動で編集
-7. **📷 IG投稿予約**: Instagram自動投稿キュー（instagram_queue）の管理。画像URL＋キャプションを登録すると cron が毎日1件投稿
-
-### 📷 IG投稿予約タブ（instagram_queue）
-- 画像URL（公開・JPEG）＋キャプション＋投稿日時（任意）を登録 → status=pending で積む
-- `/api/instagram-post`（cron 毎日21:00 JST）が古い順に1件取り出して Graph API で投稿
-- 状態: pending（予約中）/ posting（処理中）/ posted（投稿済み）/ failed（失敗・再投稿ボタンあり）
-- admin.html は anon キーで instagram_queue を直接 CRUD（products/price_reports と同じ方式）
-- ⚠ anon キーは admin.html 内に平文。誰でも閲覧可＝キュー投入も理論上可能。本番アカウントへ即時公開されるため、悪用検知時はトークン失効を。テーブル定義SQLは `api/instagram-post.js` 冒頭コメント参照
 
 ### マスタ一覧タブの一括処理ボタン（5つ）
 - 📷 画像なし商品の画像を一括取得（青）
@@ -263,9 +235,6 @@ REFERER=https://tsumitsumi.vercel.app/
 SUPABASE_URL=https://oxtfwmcdtngvicrcjyue.supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...
 YAHOO_CLIENT_ID=...  # /api/search、/api/admin-search で使用
-IG_USER_ID=...           # Instagram Business/Creator アカウントID（/api/instagram-post）
-IG_ACCESS_TOKEN=...      # Graph API 長期アクセストークン（instagram_content_publish 権限）
-CRON_SECRET=...          # 推奨：/api/instagram-post の手動起動を保護
 ```
 
 ### 楽天新API（openapi.rakuten.co.jp）の注意
@@ -340,10 +309,8 @@ CRON_SECRET=...          # 推奨：/api/instagram-post の手動起動を保護
 - Supabase クエリで `_=タイムスタンプ` を使うとフィルタ判定でエラー → `ts=...` などを使う
 
 ### Vercel 関連
-- Hobby Plan の Function 上限 = 12個。**現在12個で運用中（上限到達・余裕なし）**
+- Hobby Plan の Function 上限 = 12個。現在11個で運用中（余裕は1個）
 - Function を増やすときは何かを統合・削除する必要あり
-- Hobby の cron 上限 = 2個。現在2個（`/api/auto-seed` 18:00 UTC、`/api/instagram-post` 12:00 UTC=21:00 JST）。これ以上は追加不可
-- Hobby の cron は「1日1回」が最大頻度・起動時刻は近傍にずれる場合あり
 
 ### ビルド・デプロイ
 - **修正後は npm run build で本物のビルドを通すこと**（過去の真っ白事件の教訓）
