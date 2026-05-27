@@ -179,6 +179,69 @@
 
     <h2>そもそも、なぜ白くなるの？</h2>
     <p>白化の正体は、<strong>プラスチック内部の微細なヒビ（クラック）</strong>です。ニッパーで切断すると、刃の圧力でプラスチックが引っ張られ、目に見えないレベルのヒビが入ります。そこに光が乱反射するため、白く見えるという仕組みです。</p>
+
+    <figure style="margin: 24px 0;">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="白化のメカニズム" style="width:100%;height:auto;display:block;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
+        <text x="360" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="800" fill="#111827">なぜ白く見える？— プラスチック内部で起きていること</text>
+
+        <!-- LEFT: 正常 -->
+        <g transform="translate(30, 55)">
+          <rect width="290" height="265" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5" rx="10" />
+          <text x="145" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#1e3a8a">正常なプラスチック</text>
+
+          <!-- Incoming light arrow -->
+          <line x1="80" y1="50" x2="80" y2="110" stroke="#fbbf24" stroke-width="2.5" />
+          <polygon points="80,112 75,104 85,104" fill="#fbbf24" />
+          <text x="92" y="80" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#a16207">光</text>
+
+          <!-- Plastic block (clear) -->
+          <rect x="40" y="115" width="210" height="90" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1" />
+          <line x1="50" y1="135" x2="240" y2="135" stroke="#93c5fd" stroke-width="0.5" />
+          <line x1="50" y1="160" x2="240" y2="160" stroke="#93c5fd" stroke-width="0.5" />
+          <line x1="50" y1="185" x2="240" y2="185" stroke="#93c5fd" stroke-width="0.5" />
+
+          <!-- Light passes through -->
+          <line x1="80" y1="115" x2="80" y2="225" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="4 3" />
+          <polygon points="80,228 75,220 85,220" fill="#fbbf24" />
+
+          <text x="145" y="250" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">光がきれいに通る</text>
+          <text x="145" y="265" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">→ 本来の色が見える</text>
+        </g>
+
+        <!-- RIGHT: 切断後（ヒビあり） -->
+        <g transform="translate(380, 55)">
+          <rect width="290" height="265" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" rx="10" />
+          <text x="145" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#991b1b">切断後（ヒビが入った状態）</text>
+
+          <!-- Incoming light -->
+          <line x1="80" y1="50" x2="80" y2="110" stroke="#fbbf24" stroke-width="2.5" />
+          <polygon points="80,112 75,104 85,104" fill="#fbbf24" />
+          <text x="92" y="80" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#a16207">光</text>
+
+          <!-- Plastic with cracks -->
+          <rect x="40" y="115" width="210" height="90" fill="#fecaca" stroke="#7f1d1d" stroke-width="1" opacity="0.7" />
+          <polyline points="55,125 75,145 60,160 85,180 70,200" fill="none" stroke="#7f1d1d" stroke-width="1.5" />
+          <polyline points="120,128 138,150 122,170 145,195" fill="none" stroke="#7f1d1d" stroke-width="1.5" />
+          <polyline points="185,130 205,153 180,175 200,200" fill="none" stroke="#7f1d1d" stroke-width="1.5" />
+
+          <!-- Scattered light arrows (chaotic) -->
+          <g stroke="#fbbf24" stroke-width="2" fill="#fbbf24">
+            <line x1="80" y1="115" x2="55" y2="145" />
+            <polygon points="55,145 60,141 62,150" />
+            <line x1="80" y1="145" x2="115" y2="135" />
+            <polygon points="115,135 109,134 112,141" />
+            <line x1="80" y1="170" x2="105" y2="195" />
+            <polygon points="105,195 99,194 102,188" />
+            <line x1="80" y1="160" x2="40" y2="180" />
+            <polygon points="40,180 47,179 44,185" />
+          </g>
+
+          <text x="145" y="250" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#991b1b">光がヒビで乱反射</text>
+          <text x="145" y="265" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#991b1b">→ 白く見える</text>
+        </g>
+      </svg>
+    </figure>
+
     <p>「切ったあとで一瞬は普通の色なのに、しばらくすると白く浮き出てくる」というのも、ヒビが時間差で開いていくため。これは<strong>ABS樹脂・PS樹脂どちらでも起きる現象</strong>で、避けようがありません。</p>
 
     <div class="tip-box">
@@ -269,6 +332,64 @@
         <a class="product-link" href="https://www.amazon.co.jp/s?k=GH-SPN-120-E&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>
+
+    <figure style="margin: 24px 0;">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="両刃ニッパーと片刃ニッパーの断面構造の違い" style="width:100%;height:auto;display:block;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
+        <text x="360" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="800" fill="#111827">両刃 vs 片刃 — ニッパーの断面構造の違い</text>
+
+        <!-- LEFT: 両刃 -->
+        <g transform="translate(30, 55)">
+          <rect width="290" height="265" fill="#fef2f2" stroke="#f87171" stroke-width="1.5" rx="10" />
+          <text x="145" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#991b1b">両刃（一般的なニッパー）</text>
+
+          <!-- Top blade (V) -->
+          <polygon points="60,50 220,50 145,138" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+          <!-- Plastic -->
+          <rect x="100" y="140" width="90" height="14" fill="#fcd34d" stroke="#92400e" stroke-width="1" />
+          <!-- Bottom blade (V) -->
+          <polygon points="60,250 220,250 145,156" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+
+          <!-- Pressure arrows (both sides) -->
+          <g stroke="#dc2626" stroke-width="2" fill="#dc2626">
+            <line x1="40" y1="100" x2="65" y2="125" />
+            <polygon points="65,125 59,121 62,129" />
+            <line x1="250" y1="100" x2="225" y2="125" />
+            <polygon points="225,125 231,121 228,129" />
+            <line x1="40" y1="195" x2="65" y2="170" />
+            <polygon points="65,170 59,174 62,166" />
+            <line x1="250" y1="195" x2="225" y2="170" />
+            <polygon points="225,170 231,174 228,166" />
+          </g>
+
+          <text x="145" y="280" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#991b1b">両側から圧縮 → 白化しやすい</text>
+        </g>
+
+        <!-- RIGHT: 片刃 -->
+        <g transform="translate(380, 55)">
+          <rect width="290" height="265" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" rx="10" />
+          <text x="145" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" fill="#166534">片刃（プロ仕様ニッパー）</text>
+
+          <!-- Top blade (V) -->
+          <polygon points="60,50 220,50 145,138" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+          <!-- Plastic -->
+          <rect x="100" y="140" width="90" height="14" fill="#fcd34d" stroke="#92400e" stroke-width="1" />
+          <!-- Bottom blade: FLAT (anvil-like) -->
+          <rect x="60" y="156" width="170" height="60" fill="#475569" stroke="#1e293b" stroke-width="1.5" rx="3" />
+          <text x="145" y="190" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" font-weight="700" fill="#fff">フラット面（受け台）</text>
+
+          <!-- Pressure arrow (only from top) -->
+          <g stroke="#16a34a" stroke-width="2" fill="#16a34a">
+            <line x1="40" y1="100" x2="65" y2="125" />
+            <polygon points="65,125 59,121 62,129" />
+            <line x1="250" y1="100" x2="225" y2="125" />
+            <polygon points="225,125 231,121 228,129" />
+          </g>
+
+          <text x="145" y="240" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#166534">片側だけスパッ＆切断面フラット</text>
+          <text x="145" y="280" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#166534">→ 白化が激減</text>
+        </g>
+      </svg>
+    </figure>
 
     <div class="tip-box">
       予算を抑えたい場合は<strong>ツノダ TTC SKN-140</strong>（約2,000円・片刃）が高コスパでおすすめ。最初の1本に最適。
