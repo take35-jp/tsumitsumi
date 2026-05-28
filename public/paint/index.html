@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>プラモデル塗料データベース — 全メーカー横断・色別比較・即購入｜ツミツミ</title>
-<meta name="description" content="GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズの塗料を、メーカー横断で全色グリッド表示。色・タイプ（ラッカー/水性/アクリジョン/エナメル/ウレタン）で絞り込み、すぐにAmazonで購入できる塗料比較データベース。" />
+<title>プラモデル塗料データベース — 色相環順・メーカー別・即購入｜ツミツミ</title>
+<meta name="description" content="GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズの塗料を色相環順に並べてメーカー別にグループ表示。同じ色を各社で比較し、すぐにAmazonで購入できる塗料データベース。" />
 <meta name="robots" content="index, follow, max-image-preview:large" />
-<meta property="og:title" content="プラモデル塗料データベース — 全メーカー横断・色別比較" />
-<meta property="og:description" content="塗料を色・メーカー・タイプで絞り込んで即購入できる比較データベース。" />
+<meta property="og:title" content="プラモデル塗料データベース — 色相環順・メーカー別比較" />
+<meta property="og:description" content="塗料を色相環順×メーカー別に並べて即購入できる比較DB。" />
 <meta property="og:type" content="article" />
 <meta property="og:site_name" content="ツミツミ" />
 <meta property="og:url" content="https://tsumitsumi.vercel.app/paint/" />
@@ -16,7 +16,7 @@
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="プラモデル塗料データベース" />
-<meta name="twitter:description" content="全メーカー横断・色別で比較・即購入できる塗料DB。" />
+<meta name="twitter:description" content="色相環順×メーカー別で比較・即購入できる塗料DB。" />
 <meta name="twitter:image" content="https://tsumitsumi.vercel.app/LOGO.png" />
 <link rel="canonical" href="https://tsumitsumi.vercel.app/paint/" />
 <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
@@ -25,8 +25,8 @@
 {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "プラモデル塗料データベース — 全メーカー横断・色別比較・即購入",
-  "description": "GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズの塗料を全色グリッドで比較・購入できるデータベース。",
+  "headline": "プラモデル塗料データベース — 色相環順・メーカー別・即購入",
+  "description": "GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズの塗料を色相環順×メーカー別で比較・購入できるDB。",
   "image": "https://tsumitsumi.vercel.app/LOGO.png",
   "datePublished": "2026-05-28T00:00:00+09:00",
   "dateModified": "2026-05-28T00:00:00+09:00",
@@ -112,18 +112,53 @@
   .stats { font-size: 12px; color: #6b7280; margin-bottom: 14px; padding: 0 4px; }
   .stats strong { color: #111827; font-size: 14px; }
 
-  /* Paint grid */
-  .paint-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  /* Color section header */
+  .color-section { margin-bottom: 32px; }
+  .color-header { font-size: 16px; font-weight: 800; color: #111827; margin: 0 0 14px; padding: 10px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; background: #f3f4f6; border-left: 5px solid #9ca3af; }
+  .color-header .color-count { font-size: 11px; font-weight: 700; color: #6b7280; margin-left: auto; }
+  .color-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); box-shadow: 0 0 0 1px rgba(0,0,0,0.1); flex-shrink: 0; }
+  /* Color-wheel hue accents */
+  .color-red    .color-header { background:#fef2f2; border-left-color:#dc2626; }      .color-red    .color-dot { background:#dc2626; }
+  .color-orange .color-header { background:#fff7ed; border-left-color:#f97316; }      .color-orange .color-dot { background:#f97316; }
+  .color-yellow .color-header { background:#fefce8; border-left-color:#eab308; }      .color-yellow .color-dot { background:#eab308; }
+  .color-green  .color-header { background:#f0fdf4; border-left-color:#16a34a; }      .color-green  .color-dot { background:#16a34a; }
+  .color-blue   .color-header { background:#eff6ff; border-left-color:#2563eb; }      .color-blue   .color-dot { background:#2563eb; }
+  .color-purple .color-header { background:#faf5ff; border-left-color:#9333ea; }      .color-purple .color-dot { background:#9333ea; }
+  .color-brown  .color-header { background:#fafaf9; border-left-color:#78350f; }      .color-brown  .color-dot { background:#78350f; }
+  .color-white  .color-header { background:#fafafa; border-left-color:#d1d5db; }      .color-white  .color-dot { background:#ffffff; border:1px solid #d1d5db; box-shadow:none; }
+  .color-gray   .color-header { background:#f3f4f6; border-left-color:#6b7280; }      .color-gray   .color-dot { background:#6b7280; }
+  .color-black  .color-header { background:#f3f4f6; border-left-color:#111827; }      .color-black  .color-dot { background:#111827; }
+  .color-metal  .color-header { background:linear-gradient(135deg,#e5e7eb,#9ca3af); border-left-color:#6b7280; color:#111827; }
+                                                                                    .color-metal  .color-dot { background:linear-gradient(135deg,#f3f4f6,#9ca3af); }
+  .color-clear  .color-header { background:#f9fafb; border-left-color:#a3a3a3; }     .color-clear  .color-dot { background:repeating-linear-gradient(45deg,#e5e7eb 0,#e5e7eb 3px,#fafafa 3px,#fafafa 6px); }
+  .color-fluorescent .color-header { background:linear-gradient(135deg,#fef9c3,#fbcfe8); border-left-color:#f43f5e; color:#831843; }
+                                                                                    .color-fluorescent .color-dot { background:linear-gradient(135deg,#fef08a,#f9a8d4); }
+
+  /* Special block divider */
+  .special-divider { margin: 44px 0 24px; padding: 14px 18px; background: #18181b; color: #fff; border-radius: 10px; display: flex; align-items: center; gap: 10px; }
+  .special-divider strong { font-size: 16px; font-weight: 800; letter-spacing: 1px; }
+  .special-divider .sub { font-size: 12px; color: #a1a1aa; }
+
+  /* Manufacturer subgroup */
+  .mfr-subgroup { margin-bottom: 22px; }
+  .mfr-subgroup:last-child { margin-bottom: 0; }
+  .mfr-label { font-size: 13px; font-weight: 800; color: #111; margin: 0 0 8px; padding: 5px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; }
+  .mfr-label.mfr-label-gsi { background:#fee2e2; color:#991b1b; }
+  .mfr-label.mfr-label-gaia { background:#fed7aa; color:#9a3412; }
+  .mfr-label.mfr-label-tamiya { background:#dbeafe; color:#1e40af; }
+  .mfr-label.mfr-label-finishers { background:#e4e4e7; color:#18181b; }
+  .mfr-label .mfr-count { font-size: 11px; color: rgba(0,0,0,0.6); font-weight: 700; }
+
+  /* Paint grid (within subgroup) */
+  .paint-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
   @media (max-width: 900px) { .paint-grid { grid-template-columns: repeat(4, 1fr); } }
-  @media (max-width: 720px) { .paint-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; } }
+  @media (max-width: 720px) { .paint-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
   @media (max-width: 480px) { .paint-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
 
   .paint-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.15s, box-shadow 0.15s; }
   .paint-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  .paint-swatch { height: 70px; width: 100%; border-bottom: 1px solid #e5e7eb; position: relative; }
-  .paint-swatch.metallic { background-image: linear-gradient(135deg, rgba(255,255,255,0.4), transparent 40%, rgba(0,0,0,0.15)); background-blend-mode: overlay; }
-  .paint-swatch.clear { background-image: repeating-linear-gradient(45deg, #e5e7eb 0, #e5e7eb 6px, #fafafa 6px, #fafafa 12px); }
-  .paint-swatch .finish-icon { position: absolute; bottom: 4px; right: 6px; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; background: rgba(255,255,255,0.88); color: #374151; }
+  .paint-image { aspect-ratio: 1 / 1; width: 100%; background: #f9fafb; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: center; color: #d1d5db; font-size: 28px; overflow: hidden; }
+  .paint-image img { width: 100%; height: 100%; object-fit: contain; }
   .paint-body { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
   .paint-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
   .paint-brand { font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 3px; line-height: 1.5; letter-spacing: 0.2px; }
@@ -133,7 +168,8 @@
   .paint-brand.mfr-finishers { background: #e4e4e7; color: #18181b; }
   .paint-code { font-family: ui-monospace, "SF Mono", monospace; font-size: 10px; color: #6b7280; }
   .paint-name { font-size: 13px; font-weight: 700; color: #111827; line-height: 1.4; margin: 1px 0; word-break: keep-all; }
-  .paint-lineup { font-size: 10px; color: #9ca3af; line-height: 1.4; }
+  .paint-meta { font-size: 10px; color: #9ca3af; line-height: 1.5; }
+  .paint-price { font-size: 12px; font-weight: 800; color: #b91c1c; margin-top: 2px; }
   .paint-amazon { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 8px; background: #ff9900; color: #111; border-radius: 5px; font-size: 10px; font-weight: 700; text-decoration: none; transition: background 0.15s; }
   .paint-amazon:hover { background: #e88a00; }
 
@@ -170,6 +206,8 @@
     .filter-bar { padding: 10px 12px; }
     .filter-label { min-width: 48px; font-size: 10px; }
     .filter-pill { font-size: 10px; padding: 3px 8px; }
+    .color-header { font-size: 14px; padding: 8px 12px; }
+    .mfr-label { font-size: 11px; padding: 4px 9px; }
   }
 </style>
 </head>
@@ -187,14 +225,14 @@
     <a href="/">TOP</a> / 塗料データベース
   </div>
 
-  <h1>プラモデル塗料データベース<small>— 全メーカー横断・色別比較・即購入 —</small></h1>
+  <h1>プラモデル塗料データベース<small>— 色相環順 × メーカー別 × 即購入 —</small></h1>
 
   <p class="lead">
-    <strong>GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズ</strong>の塗料をメーカー横断で<strong>1色1カード</strong>でグリッド表示。色・メーカー・タイプで絞り込んで、気に入った塗料はそのままAmazonへ。塗料の「比較→購入」を1ページで完結させる塗料DBです。
+    塗料を<strong>色相環順</strong>に並べ、各色の中で<strong>メーカーごとにグループ</strong>表示しています。「<strong>同じ色を各社で比較したい</strong>」「<strong>欲しい色の選択肢を一望したい</strong>」というニーズに応える、色×メーカーのマトリクスDBです。メタリック・クリアー・蛍光色は別ブロックに分けています。
   </p>
 
   <div class="placeholder-notice">
-    📌 各カードの「Amazonで見る」リンクは現在Amazon検索結果へ飛びます。Amazonアソシエイト Product Advertising API 利用承認後、商品ページ直リンク・リアルタイム価格・商品画像表示に順次切り替えます。掲載点数も継続して拡充中。
+    📌 各カードの商品画像は Amazonアソシエイト Product Advertising API 承認後に順次反映されます。それまでは画像placeholder＋Amazon検索リンクとして動作。掲載点数も継続して拡充中。
   </div>
 
   <!-- Filter Bar -->
@@ -217,18 +255,19 @@
     </div>
     <div class="filter-row">
       <span class="filter-label">色</span>
-      <button class="filter-pill" data-cat="color" data-val="white">ホワイト</button>
-      <button class="filter-pill" data-cat="color" data-val="black">ブラック</button>
-      <button class="filter-pill" data-cat="color" data-val="gray">グレー</button>
       <button class="filter-pill" data-cat="color" data-val="red">レッド</button>
-      <button class="filter-pill" data-cat="color" data-val="blue">ブルー</button>
-      <button class="filter-pill" data-cat="color" data-val="green">グリーン</button>
-      <button class="filter-pill" data-cat="color" data-val="yellow">イエロー</button>
       <button class="filter-pill" data-cat="color" data-val="orange">オレンジ</button>
+      <button class="filter-pill" data-cat="color" data-val="yellow">イエロー</button>
+      <button class="filter-pill" data-cat="color" data-val="green">グリーン</button>
+      <button class="filter-pill" data-cat="color" data-val="blue">ブルー</button>
       <button class="filter-pill" data-cat="color" data-val="purple">パープル</button>
       <button class="filter-pill" data-cat="color" data-val="brown">ブラウン</button>
+      <button class="filter-pill" data-cat="color" data-val="white">ホワイト</button>
+      <button class="filter-pill" data-cat="color" data-val="gray">グレー</button>
+      <button class="filter-pill" data-cat="color" data-val="black">ブラック</button>
       <button class="filter-pill" data-cat="color" data-val="metal">メタリック</button>
       <button class="filter-pill" data-cat="color" data-val="clear">クリアー</button>
+      <button class="filter-pill" data-cat="color" data-val="fluorescent">蛍光</button>
     </div>
     <div class="filter-row">
       <span class="filter-label">仕上げ</span>
@@ -241,7 +280,7 @@
 
   <div class="stats">表示中: <strong id="count">—</strong> / 全 <span id="total">—</span> 件</div>
 
-  <div class="paint-grid" id="grid"></div>
+  <div id="grid"></div>
   <div id="empty" class="empty-state" style="display:none;">条件に一致する塗料が見つかりません。フィルタを変更してください。</div>
 
   <section class="faq">
@@ -274,7 +313,7 @@
   </div>
 
   <div class="disclosure">
-    ※ 本ページの商品リンクは Amazon アソシエイトです。リンク経由で商品をご購入いただくと、一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。Product Advertising API 利用承認後に、商品ページ直リンク・リアルタイム価格・在庫表示への切り替えを順次行います。
+    ※ 本ページの商品リンクは Amazon アソシエイトです。リンク経由で商品をご購入いただくと、一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。Product Advertising API 利用承認後に、商品ページ直リンク・リアルタイム価格・商品画像表示への切り替えを順次行います。
   </div>
 </main>
 
@@ -294,163 +333,208 @@
 </footer>
 
 <script>
-// 塗料データ（メーカー横断・代表的な色を網羅）。PA-API 承認後に asin / image / price を順次入れていく前提。
-// mfr: gsi/gaia/tamiya/finishers
-// type: lacquer/water/acrijon/acrylic/enamel/urethane
-// color: white/black/gray/red/blue/green/yellow/orange/purple/brown/metal/clear
-// finish: gloss/semi/flat
-// swatch: 表示用ヒント色（実物色はPA-API画像で置き換わる）
+// 塗料データ。PA-API 承認後に image / price / asin を順次入れていく前提。
 const TAG = "tsumitsumi232-22";
 const PAINTS = [
   // ===== GSI クレオス Mr.カラー (ラッカー) =====
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C1",  name:"ホワイト",        finish:"gloss", color:"white",  swatch:"#FAFAFA", q:"Mr.カラー C1 ホワイト" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C2",  name:"ブラック",        finish:"gloss", color:"black",  swatch:"#0c0c0c", q:"Mr.カラー C2 ブラック" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C3",  name:"レッド",          finish:"gloss", color:"red",    swatch:"#c61a2a", q:"Mr.カラー C3 レッド" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C4",  name:"イエロー",        finish:"gloss", color:"yellow", swatch:"#ffd300", q:"Mr.カラー C4 イエロー" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C5",  name:"ブルー",          finish:"gloss", color:"blue",   swatch:"#0050a0", q:"Mr.カラー C5 ブルー" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C6",  name:"グリーン",        finish:"gloss", color:"green",  swatch:"#007030", q:"Mr.カラー C6 グリーン" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C7",  name:"ブラウン",        finish:"gloss", color:"brown",  swatch:"#543820", q:"Mr.カラー C7 ブラウン" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C8",  name:"シルバー",        finish:"gloss", color:"metal",  swatch:"#c0c0c0", q:"Mr.カラー C8 シルバー" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C9",  name:"ゴールド",        finish:"gloss", color:"metal",  swatch:"#d4af37", q:"Mr.カラー C9 ゴールド" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C10", name:"カッパー",        finish:"gloss", color:"metal",  swatch:"#b87333", q:"Mr.カラー C10 カッパー" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C11", name:"ガルグレー",      finish:"semi",  color:"gray",   swatch:"#abbac1", q:"Mr.カラー C11 ガルグレー" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C12", name:"オリーブドラブ1", finish:"flat",  color:"green",  swatch:"#4b5320", q:"Mr.カラー C12 オリーブドラブ" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C28", name:"黒鉄色",          finish:"flat",  color:"metal",  swatch:"#2a2d2e", q:"Mr.カラー C28 黒鉄色" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C33", name:"つや消しブラック", finish:"flat", color:"black",  swatch:"#1a1a1a", q:"Mr.カラー C33 つや消しブラック" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C46", name:"クリアー",        finish:"gloss", color:"clear",  swatch:"#eeeeee", q:"Mr.カラー C46 クリアー" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C62", name:"つや消しホワイト", finish:"flat", color:"white",  swatch:"#f0f0f0", q:"Mr.カラー C62 つや消しホワイト" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C92", name:"セミグロスブラック", finish:"semi", color:"black", swatch:"#101010", q:"Mr.カラー C92 セミグロスブラック" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C137",name:"タイヤブラック",  finish:"flat",  color:"black",  swatch:"#1a1814", q:"Mr.カラー C137 タイヤブラック" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C151",name:"ホワイトパール",  finish:"gloss", color:"metal",  swatch:"#f5f5f5", q:"Mr.カラー C151 ホワイトパール" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C155",name:"スーパーパープル",finish:"gloss", color:"purple", swatch:"#6c2dc7", q:"Mr.カラー C155 スーパーパープル" },
-  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C159",name:"スーパーゴールド",finish:"gloss", color:"metal",  swatch:"#ffd700", q:"Mr.カラー C159 スーパーゴールド" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C1",  name:"ホワイト",        finish:"gloss", color:"white",  q:"Mr.カラー C1 ホワイト" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C2",  name:"ブラック",        finish:"gloss", color:"black",  q:"Mr.カラー C2 ブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C3",  name:"レッド",          finish:"gloss", color:"red",    q:"Mr.カラー C3 レッド" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C4",  name:"イエロー",        finish:"gloss", color:"yellow", q:"Mr.カラー C4 イエロー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C5",  name:"ブルー",          finish:"gloss", color:"blue",   q:"Mr.カラー C5 ブルー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C6",  name:"グリーン",        finish:"gloss", color:"green",  q:"Mr.カラー C6 グリーン" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C7",  name:"ブラウン",        finish:"gloss", color:"brown",  q:"Mr.カラー C7 ブラウン" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C8",  name:"シルバー",        finish:"gloss", color:"metal",  q:"Mr.カラー C8 シルバー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C9",  name:"ゴールド",        finish:"gloss", color:"metal",  q:"Mr.カラー C9 ゴールド" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C10", name:"カッパー",        finish:"gloss", color:"metal",  q:"Mr.カラー C10 カッパー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C11", name:"ガルグレー",      finish:"semi",  color:"gray",   q:"Mr.カラー C11 ガルグレー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C12", name:"オリーブドラブ1", finish:"flat",  color:"green",  q:"Mr.カラー C12 オリーブドラブ" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C28", name:"黒鉄色",          finish:"flat",  color:"metal",  q:"Mr.カラー C28 黒鉄色" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C33", name:"つや消しブラック", finish:"flat", color:"black",  q:"Mr.カラー C33 つや消しブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C46", name:"クリアー",        finish:"gloss", color:"clear",  q:"Mr.カラー C46 クリアー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C62", name:"つや消しホワイト", finish:"flat", color:"white",  q:"Mr.カラー C62 つや消しホワイト" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C92", name:"セミグロスブラック", finish:"semi", color:"black", q:"Mr.カラー C92 セミグロスブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C137",name:"タイヤブラック",  finish:"flat",  color:"black",  q:"Mr.カラー C137 タイヤブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C151",name:"ホワイトパール",  finish:"gloss", color:"metal",  q:"Mr.カラー C151 ホワイトパール" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C155",name:"スーパーパープル",finish:"gloss", color:"purple", q:"Mr.カラー C155 スーパーパープル" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C159",name:"スーパーゴールド",finish:"gloss", color:"metal",  q:"Mr.カラー C159 スーパーゴールド" },
 
   // ===== GSI クレオス Mr.カラーGX =====
-  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX1",   name:"クールホワイト",       finish:"gloss", color:"white",  swatch:"#ffffff", q:"Mr.カラーGX1 クールホワイト" },
-  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX2",   name:"ウィノーブラック",     finish:"gloss", color:"black",  swatch:"#050505", q:"Mr.カラーGX2 ウィノーブラック" },
-  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX3",   name:"ハーマンレッド",       finish:"gloss", color:"red",    swatch:"#c0223a", q:"Mr.カラーGX3 ハーマンレッド" },
-  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX4",   name:"キアライエロー",       finish:"gloss", color:"yellow", swatch:"#ffd300", q:"Mr.カラーGX4 キアライエロー" },
-  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX5",   name:"スージーブルー",       finish:"gloss", color:"blue",   swatch:"#0044a8", q:"Mr.カラーGX5 スージーブルー" },
-  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX100", name:"スーパークリアーIII",  finish:"gloss", color:"clear",  swatch:"#f0f0f0", q:"Mr.カラーGX100 スーパークリアー" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX1",   name:"クールホワイト",       finish:"gloss", color:"white",  q:"Mr.カラーGX1 クールホワイト" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX2",   name:"ウィノーブラック",     finish:"gloss", color:"black",  q:"Mr.カラーGX2 ウィノーブラック" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX3",   name:"ハーマンレッド",       finish:"gloss", color:"red",    q:"Mr.カラーGX3 ハーマンレッド" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX4",   name:"キアライエロー",       finish:"gloss", color:"yellow", q:"Mr.カラーGX4 キアライエロー" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX5",   name:"スージーブルー",       finish:"gloss", color:"blue",   q:"Mr.カラーGX5 スージーブルー" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX100", name:"スーパークリアーIII",  finish:"gloss", color:"clear",  q:"Mr.カラーGX100 スーパークリアー" },
 
   // ===== GSI クレオス 水性ホビーカラー =====
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H1",  name:"ホワイト",          finish:"gloss", color:"white",  swatch:"#fafafa", q:"水性ホビーカラー H1 ホワイト" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H2",  name:"ブラック",          finish:"gloss", color:"black",  swatch:"#0c0c0c", q:"水性ホビーカラー H2 ブラック" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H4",  name:"イエロー",          finish:"gloss", color:"yellow", swatch:"#ffd300", q:"水性ホビーカラー H4 イエロー" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H8",  name:"シルバー",          finish:"gloss", color:"metal",  swatch:"#c0c0c0", q:"水性ホビーカラー H8 シルバー" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H9",  name:"ゴールド",          finish:"gloss", color:"metal",  swatch:"#d4af37", q:"水性ホビーカラー H9 ゴールド" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H11", name:"ガルグレー",        finish:"semi",  color:"gray",   swatch:"#abbac1", q:"水性ホビーカラー H11 ガルグレー" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H12", name:"オリーブドラブ1",   finish:"flat",  color:"green",  swatch:"#4b5320", q:"水性ホビーカラー H12 オリーブドラブ" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H33", name:"つや消しブラック",  finish:"flat",  color:"black",  swatch:"#1a1a1a", q:"水性ホビーカラー H33 つや消しブラック" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H46", name:"クリアー",          finish:"gloss", color:"clear",  swatch:"#eeeeee", q:"水性ホビーカラー H46 クリアー" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H62", name:"つや消しホワイト",  finish:"flat",  color:"white",  swatch:"#f0f0f0", q:"水性ホビーカラー H62 つや消しホワイト" },
-  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H92", name:"セミグロスブラック",finish:"semi",  color:"black",  swatch:"#101010", q:"水性ホビーカラー H92 セミグロスブラック" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H1",  name:"ホワイト",          finish:"gloss", color:"white",  q:"水性ホビーカラー H1 ホワイト" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H2",  name:"ブラック",          finish:"gloss", color:"black",  q:"水性ホビーカラー H2 ブラック" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H4",  name:"イエロー",          finish:"gloss", color:"yellow", q:"水性ホビーカラー H4 イエロー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H8",  name:"シルバー",          finish:"gloss", color:"metal",  q:"水性ホビーカラー H8 シルバー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H9",  name:"ゴールド",          finish:"gloss", color:"metal",  q:"水性ホビーカラー H9 ゴールド" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H11", name:"ガルグレー",        finish:"semi",  color:"gray",   q:"水性ホビーカラー H11 ガルグレー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H12", name:"オリーブドラブ1",   finish:"flat",  color:"green",  q:"水性ホビーカラー H12 オリーブドラブ" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H33", name:"つや消しブラック",  finish:"flat",  color:"black",  q:"水性ホビーカラー H33 つや消しブラック" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H46", name:"クリアー",          finish:"gloss", color:"clear",  q:"水性ホビーカラー H46 クリアー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H62", name:"つや消しホワイト",  finish:"flat",  color:"white",  q:"水性ホビーカラー H62 つや消しホワイト" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H92", name:"セミグロスブラック",finish:"semi",  color:"black",  q:"水性ホビーカラー H92 セミグロスブラック" },
 
   // ===== GSI クレオス アクリジョン =====
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N1",  name:"ホワイト",      finish:"gloss", color:"white",  swatch:"#fafafa", q:"アクリジョン N1 ホワイト" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N2",  name:"ブラック",      finish:"gloss", color:"black",  swatch:"#0c0c0c", q:"アクリジョン N2 ブラック" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N3",  name:"レッド",        finish:"gloss", color:"red",    swatch:"#c61a2a", q:"アクリジョン N3 レッド" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N4",  name:"イエロー",      finish:"gloss", color:"yellow", swatch:"#ffd300", q:"アクリジョン N4 イエロー" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N5",  name:"ブルー",        finish:"gloss", color:"blue",   swatch:"#0050a0", q:"アクリジョン N5 ブルー" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N6",  name:"グリーン",      finish:"gloss", color:"green",  swatch:"#007030", q:"アクリジョン N6 グリーン" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N8",  name:"シルバー",      finish:"gloss", color:"metal",  swatch:"#c0c0c0", q:"アクリジョン N8 シルバー" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N9",  name:"ゴールド",      finish:"gloss", color:"metal",  swatch:"#d4af37", q:"アクリジョン N9 ゴールド" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N11", name:"ガルグレー",    finish:"semi",  color:"gray",   swatch:"#abbac1", q:"アクリジョン N11 ガルグレー" },
-  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N12", name:"オリーブドラブ1", finish:"flat", color:"green", swatch:"#4b5320", q:"アクリジョン N12 オリーブドラブ" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N1",  name:"ホワイト",      finish:"gloss", color:"white",  q:"アクリジョン N1 ホワイト" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N2",  name:"ブラック",      finish:"gloss", color:"black",  q:"アクリジョン N2 ブラック" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N3",  name:"レッド",        finish:"gloss", color:"red",    q:"アクリジョン N3 レッド" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N4",  name:"イエロー",      finish:"gloss", color:"yellow", q:"アクリジョン N4 イエロー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N5",  name:"ブルー",        finish:"gloss", color:"blue",   q:"アクリジョン N5 ブルー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N6",  name:"グリーン",      finish:"gloss", color:"green",  q:"アクリジョン N6 グリーン" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N8",  name:"シルバー",      finish:"gloss", color:"metal",  q:"アクリジョン N8 シルバー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N9",  name:"ゴールド",      finish:"gloss", color:"metal",  q:"アクリジョン N9 ゴールド" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N11", name:"ガルグレー",    finish:"semi",  color:"gray",   q:"アクリジョン N11 ガルグレー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N12", name:"オリーブドラブ1", finish:"flat", color:"green", q:"アクリジョン N12 オリーブドラブ" },
 
   // ===== ガイアノーツ ガイアカラー =====
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-01",  name:"ピュアホワイト",    finish:"gloss", color:"white",  swatch:"#ffffff", q:"ガイアカラー T-01 ピュアホワイト" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-02",  name:"ピュアブラック",    finish:"gloss", color:"black",  swatch:"#0a0a0a", q:"ガイアカラー T-02 ピュアブラック" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-04",  name:"ピュアレッド",      finish:"gloss", color:"red",    swatch:"#d60014", q:"ガイアカラー T-04 ピュアレッド" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-05",  name:"ピュアブルー",      finish:"gloss", color:"blue",   swatch:"#0030a0", q:"ガイアカラー T-05 ピュアブルー" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-06",  name:"ピュアグリーン",    finish:"gloss", color:"green",  swatch:"#00a040", q:"ガイアカラー T-06 ピュアグリーン" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-07",  name:"ピュアイエロー",    finish:"gloss", color:"yellow", swatch:"#ffd900", q:"ガイアカラー T-07 ピュアイエロー" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-09",  name:"ニュートラルグレー", finish:"semi", color:"gray",   swatch:"#808080", q:"ガイアカラー T-09 ニュートラルグレー" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-13",  name:"ジョーヌオレンジ",  finish:"gloss", color:"orange", swatch:"#f08020", q:"ガイアカラー T-13 ジョーヌオレンジ" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-14",  name:"リッチパープル",    finish:"gloss", color:"purple", swatch:"#5a1a8a", q:"ガイアカラー T-14 リッチパープル" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-16",  name:"リッチゴールド",    finish:"gloss", color:"metal",  swatch:"#dab040", q:"ガイアカラー T-16 リッチゴールド" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-22",  name:"蛍光イエロー",      finish:"gloss", color:"yellow", swatch:"#fff700", q:"ガイアカラー T-22 蛍光イエロー" },
-  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-25",  name:"蛍光ピンク",        finish:"gloss", color:"red",    swatch:"#ff4080", q:"ガイアカラー T-25 蛍光ピンク" },
-  { mfr:"gaia", lineup:"ガイア クリアー", type:"lacquer", code:"CC-01", name:"クリアー Brilliant", finish:"gloss", color:"clear", swatch:"#eeeeee", q:"ガイア クリアー CC-01 ブリリアントコート" },
-  { mfr:"gaia", lineup:"ガイア クリアー", type:"lacquer", code:"CC-02", name:"シャインクリアー",  finish:"gloss", color:"clear", swatch:"#f0f0f0", q:"ガイア シャインクリアー CC-02" },
-  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-01",  name:"シルバー",        finish:"gloss", color:"metal", swatch:"#cccccc", q:"ガイア M-01 シルバー" },
-  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-03",  name:"スターブライトシルバー", finish:"gloss", color:"metal", swatch:"#dddddd", q:"ガイア M-03 スターブライトシルバー" },
-  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-07",  name:"シャインシルバー",finish:"gloss", color:"metal", swatch:"#e8e8e8", q:"ガイア M-07 シャインシルバー" },
-  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-08",  name:"ブライトゴールド",finish:"gloss", color:"metal", swatch:"#e0c060", q:"ガイア M-08 ブライトゴールド" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-01",  name:"ピュアホワイト",    finish:"gloss", color:"white",  q:"ガイアカラー T-01 ピュアホワイト" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-02",  name:"ピュアブラック",    finish:"gloss", color:"black",  q:"ガイアカラー T-02 ピュアブラック" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-04",  name:"ピュアレッド",      finish:"gloss", color:"red",    q:"ガイアカラー T-04 ピュアレッド" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-05",  name:"ピュアブルー",      finish:"gloss", color:"blue",   q:"ガイアカラー T-05 ピュアブルー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-06",  name:"ピュアグリーン",    finish:"gloss", color:"green",  q:"ガイアカラー T-06 ピュアグリーン" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-07",  name:"ピュアイエロー",    finish:"gloss", color:"yellow", q:"ガイアカラー T-07 ピュアイエロー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-09",  name:"ニュートラルグレー", finish:"semi", color:"gray",   q:"ガイアカラー T-09 ニュートラルグレー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-13",  name:"ジョーヌオレンジ",  finish:"gloss", color:"orange", q:"ガイアカラー T-13 ジョーヌオレンジ" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-14",  name:"リッチパープル",    finish:"gloss", color:"purple", q:"ガイアカラー T-14 リッチパープル" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-16",  name:"リッチゴールド",    finish:"gloss", color:"metal",  q:"ガイアカラー T-16 リッチゴールド" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-22",  name:"蛍光イエロー",      finish:"gloss", color:"fluorescent", q:"ガイアカラー T-22 蛍光イエロー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-25",  name:"蛍光ピンク",        finish:"gloss", color:"fluorescent", q:"ガイアカラー T-25 蛍光ピンク" },
+  { mfr:"gaia", lineup:"ガイア クリアー", type:"lacquer", code:"CC-01", name:"クリアー Brilliant", finish:"gloss", color:"clear", q:"ガイア クリアー CC-01 ブリリアントコート" },
+  { mfr:"gaia", lineup:"ガイア クリアー", type:"lacquer", code:"CC-02", name:"シャインクリアー",  finish:"gloss", color:"clear", q:"ガイア シャインクリアー CC-02" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-01",  name:"シルバー",        finish:"gloss", color:"metal", q:"ガイア M-01 シルバー" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-03",  name:"スターブライトシルバー", finish:"gloss", color:"metal", q:"ガイア M-03 スターブライトシルバー" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-07",  name:"シャインシルバー",finish:"gloss", color:"metal", q:"ガイア M-07 シャインシルバー" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-08",  name:"ブライトゴールド",finish:"gloss", color:"metal", q:"ガイア M-08 ブライトゴールド" },
 
   // ===== タミヤ X(光沢) =====
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-1",  name:"ブラック",        finish:"gloss", color:"black",  swatch:"#0a0a0a", q:"タミヤアクリル X-1 ブラック" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-2",  name:"ホワイト",        finish:"gloss", color:"white",  swatch:"#fafafa", q:"タミヤアクリル X-2 ホワイト" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-3",  name:"ロイヤルブルー",  finish:"gloss", color:"blue",   swatch:"#0040a0", q:"タミヤアクリル X-3 ロイヤルブルー" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-4",  name:"ブルー",          finish:"gloss", color:"blue",   swatch:"#0060c0", q:"タミヤアクリル X-4 ブルー" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-5",  name:"グリーン",        finish:"gloss", color:"green",  swatch:"#008040", q:"タミヤアクリル X-5 グリーン" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-7",  name:"レッド",          finish:"gloss", color:"red",    swatch:"#c00020", q:"タミヤアクリル X-7 レッド" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-8",  name:"レモンイエロー",  finish:"gloss", color:"yellow", swatch:"#ffe000", q:"タミヤアクリル X-8 レモンイエロー" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-9",  name:"ブラウン",        finish:"gloss", color:"brown",  swatch:"#603020", q:"タミヤアクリル X-9 ブラウン" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-11", name:"クロームシルバー",finish:"gloss", color:"metal",  swatch:"#e0e0e0", q:"タミヤアクリル X-11 クロームシルバー" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-12", name:"ゴールドリーフ",  finish:"gloss", color:"metal",  swatch:"#dab040", q:"タミヤアクリル X-12 ゴールドリーフ" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-19", name:"スモーク",        finish:"gloss", color:"clear",  swatch:"#404040", q:"タミヤアクリル X-19 スモーク" },
-  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-22", name:"クリヤー",        finish:"gloss", color:"clear",  swatch:"#eeeeee", q:"タミヤアクリル X-22 クリヤー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-1",  name:"ブラック",        finish:"gloss", color:"black",  q:"タミヤアクリル X-1 ブラック" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-2",  name:"ホワイト",        finish:"gloss", color:"white",  q:"タミヤアクリル X-2 ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-3",  name:"ロイヤルブルー",  finish:"gloss", color:"blue",   q:"タミヤアクリル X-3 ロイヤルブルー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-4",  name:"ブルー",          finish:"gloss", color:"blue",   q:"タミヤアクリル X-4 ブルー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-5",  name:"グリーン",        finish:"gloss", color:"green",  q:"タミヤアクリル X-5 グリーン" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-7",  name:"レッド",          finish:"gloss", color:"red",    q:"タミヤアクリル X-7 レッド" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-8",  name:"レモンイエロー",  finish:"gloss", color:"yellow", q:"タミヤアクリル X-8 レモンイエロー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-9",  name:"ブラウン",        finish:"gloss", color:"brown",  q:"タミヤアクリル X-9 ブラウン" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-11", name:"クロームシルバー",finish:"gloss", color:"metal",  q:"タミヤアクリル X-11 クロームシルバー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-12", name:"ゴールドリーフ",  finish:"gloss", color:"metal",  q:"タミヤアクリル X-12 ゴールドリーフ" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-19", name:"スモーク",        finish:"gloss", color:"clear",  q:"タミヤアクリル X-19 スモーク" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-22", name:"クリヤー",        finish:"gloss", color:"clear",  q:"タミヤアクリル X-22 クリヤー" },
 
   // ===== タミヤ XF(つや消し) =====
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-1",  name:"フラットブラック",  finish:"flat", color:"black",  swatch:"#181818", q:"タミヤアクリル XF-1 フラットブラック" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-2",  name:"フラットホワイト",  finish:"flat", color:"white",  swatch:"#f0f0f0", q:"タミヤアクリル XF-2 フラットホワイト" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-3",  name:"フラットイエロー",  finish:"flat", color:"yellow", swatch:"#e0c020", q:"タミヤアクリル XF-3 フラットイエロー" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-5",  name:"フラットグリーン",  finish:"flat", color:"green",  swatch:"#4a6030", q:"タミヤアクリル XF-5 フラットグリーン" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-7",  name:"フラットレッド",    finish:"flat", color:"red",    swatch:"#a02020", q:"タミヤアクリル XF-7 フラットレッド" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-8",  name:"フラットブルー",    finish:"flat", color:"blue",   swatch:"#204060", q:"タミヤアクリル XF-8 フラットブルー" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-15", name:"フラットフレッシュ",finish:"flat", color:"orange", swatch:"#e0a080", q:"タミヤアクリル XF-15 フラットフレッシュ" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-19", name:"スカイグレイ",      finish:"flat", color:"gray",   swatch:"#a0a8a8", q:"タミヤアクリル XF-19 スカイグレイ" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-22", name:"RLMグレイ",         finish:"flat", color:"gray",   swatch:"#9a9a90", q:"タミヤアクリル XF-22 RLMグレイ" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-49", name:"カーキ",            finish:"flat", color:"brown",  swatch:"#6e6045", q:"タミヤアクリル XF-49 カーキ" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-56", name:"メタリックグレイ",  finish:"flat", color:"metal",  swatch:"#707070", q:"タミヤアクリル XF-56 メタリックグレイ" },
-  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-66", name:"ライトグレイ",      finish:"flat", color:"gray",   swatch:"#b0b0b0", q:"タミヤアクリル XF-66 ライトグレイ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-1",  name:"フラットブラック",  finish:"flat", color:"black",  q:"タミヤアクリル XF-1 フラットブラック" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-2",  name:"フラットホワイト",  finish:"flat", color:"white",  q:"タミヤアクリル XF-2 フラットホワイト" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-3",  name:"フラットイエロー",  finish:"flat", color:"yellow", q:"タミヤアクリル XF-3 フラットイエロー" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-5",  name:"フラットグリーン",  finish:"flat", color:"green",  q:"タミヤアクリル XF-5 フラットグリーン" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-7",  name:"フラットレッド",    finish:"flat", color:"red",    q:"タミヤアクリル XF-7 フラットレッド" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-8",  name:"フラットブルー",    finish:"flat", color:"blue",   q:"タミヤアクリル XF-8 フラットブルー" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-15", name:"フラットフレッシュ",finish:"flat", color:"orange", q:"タミヤアクリル XF-15 フラットフレッシュ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-19", name:"スカイグレイ",      finish:"flat", color:"gray",   q:"タミヤアクリル XF-19 スカイグレイ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-22", name:"RLMグレイ",         finish:"flat", color:"gray",   q:"タミヤアクリル XF-22 RLMグレイ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-49", name:"カーキ",            finish:"flat", color:"brown",  q:"タミヤアクリル XF-49 カーキ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-56", name:"メタリックグレイ",  finish:"flat", color:"metal",  q:"タミヤアクリル XF-56 メタリックグレイ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-66", name:"ライトグレイ",      finish:"flat", color:"gray",   q:"タミヤアクリル XF-66 ライトグレイ" },
 
   // ===== タミヤ LP (ラッカー) =====
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-1", name:"ブラック",        finish:"gloss", color:"black", swatch:"#0a0a0a", q:"タミヤカラーLP-1 ブラック" },
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-2", name:"ホワイト",        finish:"gloss", color:"white", swatch:"#fafafa", q:"タミヤカラーLP-2 ホワイト" },
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-3", name:"フラットブラック", finish:"flat", color:"black",  swatch:"#181818", q:"タミヤカラーLP-3 フラットブラック" },
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-4", name:"フラットホワイト", finish:"flat", color:"white",  swatch:"#f0f0f0", q:"タミヤカラーLP-4 フラットホワイト" },
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-9", name:"クリアー",         finish:"gloss",color:"clear",  swatch:"#eeeeee", q:"タミヤカラーLP-9 クリアー" },
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-15",name:"IJN グレー",       finish:"flat", color:"gray",   swatch:"#8a8a85", q:"タミヤカラーLP-15 IJNグレー" },
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-19",name:"ガンメタル",       finish:"semi", color:"metal",  swatch:"#3a3a3e", q:"タミヤカラーLP-19 ガンメタル" },
-  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-38",name:"フラットアルミ",   finish:"flat", color:"metal",  swatch:"#a8a8a8", q:"タミヤカラーLP-38 フラットアルミ" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-1", name:"ブラック",        finish:"gloss", color:"black", q:"タミヤカラーLP-1 ブラック" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-2", name:"ホワイト",        finish:"gloss", color:"white", q:"タミヤカラーLP-2 ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-3", name:"フラットブラック", finish:"flat", color:"black",  q:"タミヤカラーLP-3 フラットブラック" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-4", name:"フラットホワイト", finish:"flat", color:"white",  q:"タミヤカラーLP-4 フラットホワイト" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-9", name:"クリアー",         finish:"gloss",color:"clear",  q:"タミヤカラーLP-9 クリアー" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-15",name:"IJN グレー",       finish:"flat", color:"gray",   q:"タミヤカラーLP-15 IJNグレー" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-19",name:"ガンメタル",       finish:"semi", color:"metal",  q:"タミヤカラーLP-19 ガンメタル" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-38",name:"フラットアルミ",   finish:"flat", color:"metal",  q:"タミヤカラーLP-38 フラットアルミ" },
 
   // ===== タミヤ エナメル =====
-  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-1",  name:"ブラック",        finish:"gloss", color:"black", swatch:"#0a0a0a", q:"タミヤエナメル X-1 ブラック" },
-  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-2",  name:"ホワイト",        finish:"gloss", color:"white", swatch:"#fafafa", q:"タミヤエナメル X-2 ホワイト" },
-  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-7",  name:"レッド",          finish:"gloss", color:"red",   swatch:"#c00020", q:"タミヤエナメル X-7 レッド" },
-  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-11", name:"クロームシルバー",finish:"gloss", color:"metal", swatch:"#e0e0e0", q:"タミヤエナメル X-11 クロームシルバー" },
-  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-19", name:"スモーク",        finish:"gloss", color:"clear", swatch:"#404040", q:"タミヤエナメル X-19 スモーク" },
-  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"XF-1", name:"フラットブラック",finish:"flat",  color:"black", swatch:"#181818", q:"タミヤエナメル XF-1 フラットブラック" },
-  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"XF-49",name:"カーキ",          finish:"flat",  color:"brown", swatch:"#6e6045", q:"タミヤエナメル XF-49 カーキ" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-1",  name:"ブラック",        finish:"gloss", color:"black", q:"タミヤエナメル X-1 ブラック" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-2",  name:"ホワイト",        finish:"gloss", color:"white", q:"タミヤエナメル X-2 ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-7",  name:"レッド",          finish:"gloss", color:"red",   q:"タミヤエナメル X-7 レッド" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-11", name:"クロームシルバー",finish:"gloss", color:"metal", q:"タミヤエナメル X-11 クロームシルバー" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-19", name:"スモーク",        finish:"gloss", color:"clear", q:"タミヤエナメル X-19 スモーク" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"XF-1", name:"フラットブラック",finish:"flat",  color:"black", q:"タミヤエナメル XF-1 フラットブラック" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"XF-49",name:"カーキ",          finish:"flat",  color:"brown", q:"タミヤエナメル XF-49 カーキ" },
 
   // ===== フィニッシャーズ =====
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ピュアホワイト",        finish:"gloss", color:"white",  swatch:"#ffffff", q:"Finisher's ピュアホワイト" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"リッチブラック",        finish:"gloss", color:"black",  swatch:"#020202", q:"Finisher's リッチブラック" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ファンデーションホワイト", finish:"flat", color:"white", swatch:"#f8f8f8", q:"Finisher's ファンデーションホワイト" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ファンデーションブラック", finish:"flat", color:"black", swatch:"#0a0a0a", q:"Finisher's ファンデーションブラック" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"フェラーリレッド",      finish:"gloss", color:"red",    swatch:"#d80020", q:"Finisher's フェラーリレッド" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ベイビーブルー",        finish:"gloss", color:"blue",   swatch:"#8fb4d8", q:"Finisher's ベイビーブルー" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"パパイアオレンジ",      finish:"gloss", color:"orange", swatch:"#f78030", q:"Finisher's パパイヤオレンジ" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"C.I.A",                finish:"gloss", color:"blue",   swatch:"#003088", q:"Finisher's C.I.A" },
-  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ピュアパール",          finish:"gloss", color:"metal",  swatch:"#f5f5f5", q:"Finisher's ピュアパール" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ピュアホワイト",        finish:"gloss", color:"white",  q:"Finisher's ピュアホワイト" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"リッチブラック",        finish:"gloss", color:"black",  q:"Finisher's リッチブラック" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ファンデーションホワイト", finish:"flat", color:"white", q:"Finisher's ファンデーションホワイト" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ファンデーションブラック", finish:"flat", color:"black", q:"Finisher's ファンデーションブラック" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"フェラーリレッド",      finish:"gloss", color:"red",    q:"Finisher's フェラーリレッド" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ベイビーブルー",        finish:"gloss", color:"blue",   q:"Finisher's ベイビーブルー" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"パパイアオレンジ",      finish:"gloss", color:"orange", q:"Finisher's パパイヤオレンジ" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"C.I.A",                finish:"gloss", color:"blue",   q:"Finisher's C.I.A" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ピュアパール",          finish:"gloss", color:"metal",  q:"Finisher's ピュアパール" },
 ];
 
-const MFR_NAMES = { gsi:"GSI クレオス", gaia:"ガイア", tamiya:"タミヤ", finishers:"フィニッシャーズ" };
-const FINISH_LABEL = { gloss:"光沢", semi:"半光沢", flat:"つや消し" };
+// 色相環順 → 無彩色 → 特殊（メタリック / クリアー / 蛍光）
+const HUE_ORDER     = ["red", "orange", "yellow", "green", "blue", "purple", "brown"];
+const NEUTRAL_ORDER = ["white", "gray", "black"];
+const SPECIAL_ORDER = ["metal", "clear", "fluorescent"];
 
-// State
+const COLOR_LABEL = {
+  red: "レッド", orange: "オレンジ", yellow: "イエロー", green: "グリーン",
+  blue: "ブルー", purple: "パープル", brown: "ブラウン",
+  white: "ホワイト", gray: "グレー", black: "ブラック",
+  metal: "メタリック", clear: "クリアー", fluorescent: "蛍光",
+};
+const MFR_NAMES = { gsi: "GSI クレオス", gaia: "ガイアノーツ", tamiya: "タミヤ", finishers: "フィニッシャーズ" };
+const MFR_ORDER = ["gsi", "gaia", "tamiya", "finishers"];
+const FINISH_LABEL = { gloss: "光沢", semi: "半光沢", flat: "つや消し" };
+
 const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set() };
 
 function escapeHtml(s) {
-  return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 function buildUrl(p) {
-  // PA-API 後は p.asin に値が入っていれば商品ページ直リンクに切り替え
   if (p.asin) return `https://www.amazon.co.jp/dp/${encodeURIComponent(p.asin)}/?tag=${encodeURIComponent(TAG)}`;
   return `https://www.amazon.co.jp/s?k=${encodeURIComponent(p.q || p.name)}&tag=${encodeURIComponent(TAG)}`;
+}
+
+function renderCard(p) {
+  const imgHtml = p.image
+    ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
+    : "📦";
+  return `
+    <div class="paint-card">
+      <div class="paint-image">${imgHtml}</div>
+      <div class="paint-body">
+        <div class="paint-brand-row">
+          <span class="paint-brand mfr-${escapeHtml(p.mfr)}">${escapeHtml(MFR_NAMES[p.mfr])}</span>
+          <span class="paint-code">${escapeHtml(p.code)}</span>
+        </div>
+        <div class="paint-name">${escapeHtml(p.name)}</div>
+        <div class="paint-meta">${escapeHtml(p.lineup)} · ${FINISH_LABEL[p.finish] || ""}</div>
+        ${p.price ? `<div class="paint-price">${escapeHtml(p.price)}</div>` : ""}
+        <a class="paint-amazon" href="${buildUrl(p)}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderColorSection(color, items) {
+  let html = `<section class="color-section color-${color}">
+    <h2 class="color-header">
+      <span class="color-dot"></span>
+      ${COLOR_LABEL[color]}
+      <span class="color-count">${items.length}件</span>
+    </h2>`;
+  for (const mfr of MFR_ORDER) {
+    const mfrItems = items.filter(p => p.mfr === mfr);
+    if (mfrItems.length === 0) continue;
+    html += `<div class="mfr-subgroup">
+      <span class="mfr-label mfr-label-${mfr}">${MFR_NAMES[mfr]} <span class="mfr-count">(${mfrItems.length})</span></span>
+      <div class="paint-grid">${mfrItems.map(renderCard).join("")}</div>
+    </div>`;
+  }
+  html += "</section>";
+  return html;
 }
 
 function render() {
@@ -465,34 +549,40 @@ function render() {
   document.getElementById("count").textContent = list.length + " 件";
   document.getElementById("total").textContent = PAINTS.length;
 
-  const grid = document.getElementById("grid");
+  const root = document.getElementById("grid");
   const empty = document.getElementById("empty");
   if (list.length === 0) {
-    grid.innerHTML = "";
+    root.innerHTML = "";
     empty.style.display = "block";
     return;
   }
   empty.style.display = "none";
 
-  grid.innerHTML = list.map(p => {
-    const swatchClass = (p.color === "metal") ? "metallic" : (p.color === "clear") ? "clear" : "";
-    return `
-      <div class="paint-card">
-        <div class="paint-swatch ${swatchClass}" style="background-color:${escapeHtml(p.swatch)};">
-          <span class="finish-icon">${FINISH_LABEL[p.finish] || ""}</span>
-        </div>
-        <div class="paint-body">
-          <div class="paint-brand-row">
-            <span class="paint-brand mfr-${escapeHtml(p.mfr)}">${escapeHtml(MFR_NAMES[p.mfr])}</span>
-            <span class="paint-code">${escapeHtml(p.code)}</span>
-          </div>
-          <div class="paint-name">${escapeHtml(p.name)}</div>
-          <div class="paint-lineup">${escapeHtml(p.lineup)}</div>
-          <a class="paint-amazon" href="${buildUrl(p)}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </div>
-      </div>
-    `;
-  }).join("");
+  let html = "";
+
+  // 1) 色相環順（warm → cool → warm earth）
+  for (const c of HUE_ORDER) {
+    const items = list.filter(p => p.color === c);
+    if (items.length > 0) html += renderColorSection(c, items);
+  }
+
+  // 2) 無彩色
+  for (const c of NEUTRAL_ORDER) {
+    const items = list.filter(p => p.color === c);
+    if (items.length > 0) html += renderColorSection(c, items);
+  }
+
+  // 3) 特殊（メタリック・クリアー・蛍光）— 区切り見出しつき
+  const specialItems = list.filter(p => SPECIAL_ORDER.includes(p.color));
+  if (specialItems.length > 0) {
+    html += `<div class="special-divider"><strong>✨ 特殊カラー</strong><span class="sub">通常色とは別ブロック</span></div>`;
+    for (const c of SPECIAL_ORDER) {
+      const items = list.filter(p => p.color === c);
+      if (items.length > 0) html += renderColorSection(c, items);
+    }
+  }
+
+  root.innerHTML = html;
 }
 
 function toggleFilter(category, value, btn) {
