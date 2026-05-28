@@ -133,6 +133,12 @@
   .color-clear  .color-header { background:#f9fafb; border-left-color:#a3a3a3; }     .color-clear  .color-dot { background:repeating-linear-gradient(45deg,#e5e7eb 0,#e5e7eb 3px,#fafafa 3px,#fafafa 6px); }
   .color-fluorescent .color-header { background:linear-gradient(135deg,#fef9c3,#fbcfe8); border-left-color:#f43f5e; color:#831843; }
                                                                                     .color-fluorescent .color-dot { background:linear-gradient(135deg,#fef08a,#f9a8d4); }
+  .color-surfacer .color-header { background:linear-gradient(135deg,#fef3c7,#fde68a); border-left-color:#b45309; color:#78350f; }
+                                                                                    .color-surfacer .color-dot { background:repeating-linear-gradient(45deg,#b45309 0,#b45309 3px,#fde68a 3px,#fde68a 6px); border-color:#fde68a; }
+  /* Surfacer divider (own block, separate from 特殊カラー) */
+  .surfacer-divider { margin: 36px 0 20px; padding: 14px 18px; background: linear-gradient(135deg, #b45309, #78350f); color: #fff; border-radius: 10px; display: flex; align-items: center; gap: 10px; }
+  .surfacer-divider strong { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; }
+  .surfacer-divider .sub { font-size: 12px; color: #fde68a; }
 
   /* Special block divider */
   .special-divider { margin: 44px 0 24px; padding: 14px 18px; background: #18181b; color: #fff; border-radius: 10px; display: flex; align-items: center; gap: 10px; }
@@ -246,7 +252,7 @@
   <h1>プラモデル塗料データベース<small>— 色相環順 × メーカー別 × 即購入 —</small></h1>
 
   <p class="lead">
-    塗料を<strong>色相環順</strong>に並べ、各色の中で<strong>メーカーごとにグループ</strong>表示しています。「<strong>同じ色を各社で比較したい</strong>」「<strong>欲しい色の選択肢を一望したい</strong>」というニーズに応える、色×メーカーのマトリクスDBです。メタリック・クリアー・蛍光色は別ブロックに分けています。
+    塗料を<strong>色相環順</strong>に並べ、各色の中で<strong>メーカーごとにグループ</strong>表示しています。「<strong>同じ色を各社で比較したい</strong>」「<strong>欲しい色の選択肢を一望したい</strong>」というニーズに応える、色×メーカーのマトリクスDBです。<strong>サーフェイサー（下地塗料）</strong>はメーカー横断で1つのブロックに集約。メタリック・クリアー・蛍光色も別ブロックに分けています。
   </p>
 
   <div class="placeholder-notice">
@@ -288,6 +294,7 @@
       <button class="filter-pill" data-cat="color" data-val="white">ホワイト</button>
       <button class="filter-pill" data-cat="color" data-val="gray">グレー</button>
       <button class="filter-pill" data-cat="color" data-val="black">ブラック</button>
+      <button class="filter-pill" data-cat="color" data-val="surfacer">サーフェイサー</button>
       <button class="filter-pill" data-cat="color" data-val="metal">メタリック</button>
       <button class="filter-pill" data-cat="color" data-val="clear">クリアー</button>
       <button class="filter-pill" data-cat="color" data-val="fluorescent">蛍光</button>
@@ -463,6 +470,19 @@ const PAINTS = [
   { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX118", name:"クリアーパープル",     finish:"gloss", color:"clear", q:"Mr.カラーGX118 クリアーパープル" },
   { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX119", name:"クリアーブラック",     finish:"gloss", color:"clear", q:"Mr.カラーGX119 クリアーブラック" },
 
+  // ===== GSI クレオス Mr.サーフェイサー =====
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-505", name:"Mr.サーフェイサー 1000 ビン",          finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1000 ビン" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-515", name:"Mr.サーフェイサー 1200 ビン",          finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1200 ビン" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-525", name:"Mr.サーフェイサー 1500 ホワイト ビン",  finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1500 ホワイト ビン" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-526", name:"Mr.サーフェイサー 1500 ブラック ビン",  finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1500 ブラック ビン" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-503", name:"Mr.サーフェイサー 1000 スプレー",       finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1000 スプレー" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-513", name:"Mr.サーフェイサー 1200 スプレー",       finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1200 スプレー" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-541", name:"Mr.フィニッシングサーフェイサー 1500 ホワイト",       finish:"semi", color:"surfacer", q:"Mr.フィニッシングサーフェイサー 1500 ホワイト" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-542", name:"Mr.フィニッシングサーフェイサー 1500 ブラック",       finish:"semi", color:"surfacer", q:"Mr.フィニッシングサーフェイサー 1500 ブラック" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-543", name:"Mr.フィニッシングサーフェイサー 1500 オキサイドレッド", finish:"semi", color:"surfacer", q:"Mr.フィニッシングサーフェイサー 1500 オキサイドレッド" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-518", name:"Mr.ベースホワイト 1000",                finish:"semi", color:"surfacer", q:"Mr.ベースホワイト 1000" },
+  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-519", name:"Mr.ブラックサーフェイサー 1500",         finish:"semi", color:"surfacer", q:"Mr.ブラックサーフェイサー 1500" },
+
   // ===== GSI クレオス 水性ホビーカラー =====
   { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H1",  name:"ホワイト",          finish:"gloss", color:"white",  q:"水性ホビーカラー H1 ホワイト" },
   { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H2",  name:"ブラック",          finish:"gloss", color:"black",  q:"水性ホビーカラー H2 ブラック" },
@@ -566,13 +586,48 @@ const PAINTS = [
   { mfr:"gaia", lineup:"ガイア 蛍光カラー", type:"lacquer", code:"T-25",  name:"蛍光ピンク",        finish:"gloss", color:"fluorescent", q:"ガイアカラー T-25 蛍光ピンク" },
   { mfr:"gaia", lineup:"ガイア 蛍光カラー", type:"lacquer", code:"T-26",  name:"蛍光グリーン",      finish:"gloss", color:"fluorescent", q:"ガイアカラー T-26 蛍光グリーン" },
 
-  // ===== ガイアノーツ NAZCA シリーズ（メカサフ・下地） =====
-  { mfr:"gaia", lineup:"ガイア NAZCA", type:"lacquer", code:"NP", name:"NAZCA メカサフ ヘヴィ",       finish:"flat", color:"gray",   q:"ガイアノーツ NAZCA メカサフ ヘヴィ" },
-  { mfr:"gaia", lineup:"ガイア NAZCA", type:"lacquer", code:"NP", name:"NAZCA メカサフ ライト",       finish:"flat", color:"gray",   q:"ガイアノーツ NAZCA メカサフ ライト" },
-  { mfr:"gaia", lineup:"ガイア NAZCA", type:"lacquer", code:"NP", name:"NAZCA メカサフ スーパーヘヴィ", finish:"flat", color:"gray",  q:"ガイアノーツ NAZCA メカサフ スーパーヘヴィ" },
-  { mfr:"gaia", lineup:"ガイア NAZCA", type:"lacquer", code:"NP", name:"NAZCA ピンクサフ",            finish:"flat", color:"red",    q:"ガイアノーツ NAZCA ピンクサフ" },
-  { mfr:"gaia", lineup:"ガイア NAZCA", type:"lacquer", code:"NP", name:"NAZCA ピュアブラック",        finish:"gloss", color:"black", q:"ガイアノーツ NAZCA ピュアブラック" },
-  { mfr:"gaia", lineup:"ガイア NAZCA", type:"lacquer", code:"NP", name:"NAZCA ピュアホワイト",        finish:"gloss", color:"white", q:"ガイアノーツ NAZCA ピュアホワイト" },
+  // ===== ガイアノーツ サーフェイサー（サーフェイサーエヴォ・ファインサフ） =====
+  { mfr:"gaia", lineup:"ガイア サーフェイサー", type:"lacquer", code:"S-EVO", name:"サーフェイサーエヴォ ホワイト",      finish:"semi", color:"surfacer", q:"ガイア サーフェイサーエヴォ ホワイト" },
+  { mfr:"gaia", lineup:"ガイア サーフェイサー", type:"lacquer", code:"S-EVO", name:"サーフェイサーエヴォ グレー",        finish:"semi", color:"surfacer", q:"ガイア サーフェイサーエヴォ グレー" },
+  { mfr:"gaia", lineup:"ガイア サーフェイサー", type:"lacquer", code:"S-EVO", name:"サーフェイサーエヴォ ブラック",      finish:"semi", color:"surfacer", q:"ガイア サーフェイサーエヴォ ブラック" },
+  { mfr:"gaia", lineup:"ガイア サーフェイサー", type:"lacquer", code:"S-EVO", name:"サーフェイサーエヴォ ピンク",        finish:"semi", color:"surfacer", q:"ガイア サーフェイサーエヴォ ピンク" },
+  { mfr:"gaia", lineup:"ガイア サーフェイサー", type:"lacquer", code:"S-EVO", name:"サーフェイサーエヴォ オキサイドレッド", finish:"semi", color:"surfacer", q:"ガイア サーフェイサーエヴォ オキサイドレッド" },
+  { mfr:"gaia", lineup:"ガイア サーフェイサー", type:"lacquer", code:"GS-03", name:"ガイア ファインサーフェイサーIII",   finish:"semi", color:"surfacer", q:"ガイアノーツ ファインサーフェイサーIII" },
+  { mfr:"gaia", lineup:"ガイア サーフェイサー", type:"lacquer", code:"GS-09", name:"ガイア マルチプライマー",           finish:"flat", color:"surfacer", q:"ガイアノーツ マルチプライマー" },
+
+  // ===== ガイアノーツ NAZCA メカサフ（下地用） =====
+  { mfr:"gaia", lineup:"ガイア NAZCA メカサフ", type:"lacquer", code:"NP-001", name:"NAZCA メカサフ ヘヴィ",        finish:"flat", color:"surfacer", q:"ガイアノーツ NAZCA メカサフ ヘヴィ" },
+  { mfr:"gaia", lineup:"ガイア NAZCA メカサフ", type:"lacquer", code:"NP-002", name:"NAZCA メカサフ ライト",        finish:"flat", color:"surfacer", q:"ガイアノーツ NAZCA メカサフ ライト" },
+  { mfr:"gaia", lineup:"ガイア NAZCA メカサフ", type:"lacquer", code:"NP-003", name:"NAZCA メカサフ スーパーヘヴィ", finish:"flat", color:"surfacer", q:"ガイアノーツ NAZCA メカサフ スーパーヘヴィ" },
+  { mfr:"gaia", lineup:"ガイア NAZCA メカサフ", type:"lacquer", code:"NP-004", name:"NAZCA ピンクサフ",             finish:"flat", color:"surfacer", q:"ガイアノーツ NAZCA ピンクサフ" },
+
+  // ===== ガイアノーツ NAZCA カラー（NCシリーズ・本塗装用） =====
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-001", name:"スチールホワイト",          finish:"semi",  color:"white",  q:"ガイアノーツ NAZCA NC-001 スチールホワイト" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-002", name:"フロストマットブラック",    finish:"flat",  color:"black",  q:"ガイアノーツ NAZCA NC-002 フロストマットブラック" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-003", name:"フレイムレッド",            finish:"gloss", color:"red",    q:"ガイアノーツ NAZCA NC-003 フレイムレッド" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-004", name:"ミリオンブルー",            finish:"gloss", color:"blue",   q:"ガイアノーツ NAZCA NC-004 ミリオンブルー" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-005", name:"ウォームライトグレー",      finish:"semi",  color:"gray",   q:"ガイアノーツ NAZCA NC-005 ウォームライトグレー" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-006", name:"ブルーフォグホワイト",      finish:"semi",  color:"white",  q:"ガイアノーツ NAZCA NC-006 ブルーフォグホワイト" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-007", name:"ジョイントグレー",          finish:"semi",  color:"gray",   q:"ガイアノーツ NAZCA NC-007 ジョイントグレー" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-008", name:"ニュートラルホワイト",      finish:"semi",  color:"white",  q:"ガイアノーツ NAZCA NC-008 ニュートラルホワイト" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-009", name:"コバルトバイオレット",      finish:"gloss", color:"purple", q:"ガイアノーツ NAZCA NC-009 コバルトバイオレット" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-010", name:"マンダリンオレンジ",        finish:"gloss", color:"orange", q:"ガイアノーツ NAZCA NC-010 マンダリンオレンジ" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-011", name:"フラットシルバー",          finish:"flat",  color:"metal",  q:"ガイアノーツ NAZCA NC-011 フラットシルバー" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-012", name:"ディープカーキ",            finish:"flat",  color:"brown",  q:"ガイアノーツ NAZCA NC-012 ディープカーキ" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-013", name:"ブラストカーキ",            finish:"flat",  color:"brown",  q:"ガイアノーツ NAZCA NC-013 ブラストカーキ" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-014", name:"マンダリンイエロー",        finish:"gloss", color:"yellow", q:"ガイアノーツ NAZCA NC-014 マンダリンイエロー" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NC-015", name:"ダークブルーイッシュパープル", finish:"semi", color:"purple", q:"ガイアノーツ NAZCA NC-015 ダークブルーイッシュパープル" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NAZCA",  name:"NAZCA ピュアブラック",       finish:"gloss", color:"black",  q:"ガイアノーツ NAZCA ピュアブラック" },
+  { mfr:"gaia", lineup:"ガイア NAZCA カラー", type:"lacquer", code:"NAZCA",  name:"NAZCA ピュアホワイト",       finish:"gloss", color:"white",  q:"ガイアノーツ NAZCA ピュアホワイト" },
+
+  // ===== ガイアノーツ NAZCA ティタノマキア（NTCシリーズ） =====
+  { mfr:"gaia", lineup:"ガイア NAZCA ティタノマキア", type:"lacquer", code:"NTC-01", name:"ハウンドブラック",  finish:"flat",  color:"black",  q:"ガイアノーツ NAZCA ティタノマキア NTC-01 ハウンドブラック" },
+  { mfr:"gaia", lineup:"ガイア NAZCA ティタノマキア", type:"lacquer", code:"NTC-02", name:"ハウンドシルバー",  finish:"gloss", color:"metal",  q:"ガイアノーツ NAZCA ティタノマキア NTC-02 ハウンドシルバー" },
+
+  // ===== ガイアノーツ NAZCA エナメル（NEシリーズ） =====
+  { mfr:"gaia", lineup:"ガイア NAZCA エナメル", type:"enamel", code:"NE-001", name:"デントグレー",        finish:"semi", color:"gray",  q:"ガイアノーツ NAZCA エナメル NE-001 デントグレー" },
+  { mfr:"gaia", lineup:"ガイア NAZCA エナメル", type:"enamel", code:"NE-002", name:"シャドウブラウン",    finish:"flat", color:"brown", q:"ガイアノーツ NAZCA エナメル NE-002 シャドウブラウン" },
+  { mfr:"gaia", lineup:"ガイア NAZCA エナメル", type:"enamel", code:"NE-003", name:"ピンポイントシルバー", finish:"gloss", color:"metal", q:"ガイアノーツ NAZCA エナメル NE-003 ピンポイントシルバー" },
 
   // ===== ガイアノーツ ガンダムカラー HGシリーズ =====
   { mfr:"gaia", lineup:"ガイア ガンダムカラー(HG)", type:"lacquer", code:"HG-01", name:"ファントムグレー",   finish:"semi",  color:"gray",   q:"ガイア HG-01 ファントムグレー" },
@@ -712,6 +767,15 @@ const PAINTS = [
   { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-37",name:"フィールドグレー", finish:"flat", color:"gray",   q:"タミヤカラーLP-37 フィールドグレー" },
   { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-38",name:"フラットアルミ",   finish:"flat", color:"metal",  q:"タミヤカラーLP-38 フラットアルミ" },
 
+  // ===== タミヤ サーフェイサー =====
+  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87042", name:"タミヤ ファインサーフェイサーL ライトグレイ", finish:"flat", color:"surfacer", q:"タミヤ ファインサーフェイサーL ライトグレイ" },
+  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87044", name:"タミヤ ファインサーフェイサーL オキサイドレッド", finish:"flat", color:"surfacer", q:"タミヤ ファインサーフェイサーL オキサイドレッド" },
+  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87046", name:"タミヤ ファインサーフェイサーL ホワイト", finish:"flat", color:"surfacer", q:"タミヤ ファインサーフェイサーL ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87148", name:"タミヤ ファインサーフェイサーL ピンク", finish:"flat", color:"surfacer", q:"タミヤ ファインサーフェイサーL ピンク" },
+  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87026", name:"タミヤ サーフェイサースプレー グレイ",   finish:"flat", color:"surfacer", q:"タミヤ サーフェイサースプレー グレイ 87026" },
+  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87044", name:"タミヤ サーフェイサースプレー ホワイト", finish:"flat", color:"surfacer", q:"タミヤ サーフェイサースプレー ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87064", name:"タミヤ メタルプライマー",               finish:"flat", color:"surfacer", q:"タミヤ メタルプライマー 87064" },
+
   // ===== タミヤ エナメル =====
   { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-1",  name:"ブラック",        finish:"gloss", color:"black", q:"タミヤエナメル X-1 ブラック" },
   { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-2",  name:"ホワイト",        finish:"gloss", color:"white", q:"タミヤエナメル X-2 ホワイト" },
@@ -758,17 +822,24 @@ const PAINTS = [
   { mfr:"finishers", lineup:"Finisher's メタリック", type:"urethane", code:"FIN", name:"ピュアパール",      finish:"gloss", color:"metal",  q:"Finisher's ピュアパール" },
   { mfr:"finishers", lineup:"Finisher's メタリック", type:"urethane", code:"FIN", name:"ブレットシルバー",  finish:"gloss", color:"metal",  q:"Finisher's ブレットシルバー" },
   { mfr:"finishers", lineup:"Finisher's メタリック", type:"urethane", code:"FIN", name:"リッチゴールド",    finish:"gloss", color:"metal",  q:"Finisher's リッチゴールド" },
+
+  // ===== フィニッシャーズ プライマー・サーフェイサー =====
+  { mfr:"finishers", lineup:"Finisher's プライマー", type:"urethane", code:"FIN", name:"マルチプライマー",          finish:"flat", color:"surfacer", q:"Finisher's マルチプライマー" },
+  { mfr:"finishers", lineup:"Finisher's プライマー", type:"urethane", code:"FIN", name:"ファインサーフェイサー グレー",   finish:"semi", color:"surfacer", q:"Finisher's ファインサーフェイサー グレー" },
+  { mfr:"finishers", lineup:"Finisher's プライマー", type:"urethane", code:"FIN", name:"ファインサーフェイサー ホワイト", finish:"semi", color:"surfacer", q:"Finisher's ファインサーフェイサー ホワイト" },
 ];
 
-// 色相環順 → 無彩色 → 特殊（メタリック / クリアー / 蛍光）
-const HUE_ORDER     = ["red", "orange", "yellow", "green", "blue", "purple", "brown"];
-const NEUTRAL_ORDER = ["white", "gray", "black"];
-const SPECIAL_ORDER = ["metal", "clear", "fluorescent"];
+// 色相環順 → 無彩色 → サーフェイサー → 特殊（メタリック / クリアー / 蛍光）
+const HUE_ORDER      = ["red", "orange", "yellow", "green", "blue", "purple", "brown"];
+const NEUTRAL_ORDER  = ["white", "gray", "black"];
+const SURFACER_ORDER = ["surfacer"];
+const SPECIAL_ORDER  = ["metal", "clear", "fluorescent"];
 
 const COLOR_LABEL = {
   red: "レッド", orange: "オレンジ", yellow: "イエロー", green: "グリーン",
   blue: "ブルー", purple: "パープル", brown: "ブラウン",
   white: "ホワイト", gray: "グレー", black: "ブラック",
+  surfacer: "サーフェイサー",
   metal: "メタリック", clear: "クリアー", fluorescent: "蛍光",
 };
 const MFR_NAMES = { gsi: "GSI クレオス", gaia: "ガイアノーツ", tamiya: "タミヤ", finishers: "フィニッシャーズ" };
@@ -828,7 +899,7 @@ function renderColorSection(color, items) {
 }
 
 // 色のソート順（メーカー軸でラインナップ内の並び順に使う）
-const COLOR_SORT_ORDER = [...HUE_ORDER, ...NEUTRAL_ORDER, ...SPECIAL_ORDER];
+const COLOR_SORT_ORDER = [...HUE_ORDER, ...NEUTRAL_ORDER, ...SURFACER_ORDER, ...SPECIAL_ORDER];
 function sortByColor(items) {
   return [...items].sort((a, b) => {
     const ai = COLOR_SORT_ORDER.indexOf(a.color);
@@ -848,6 +919,14 @@ function renderByColorAxis(list) {
   for (const c of NEUTRAL_ORDER) {
     const items = list.filter(p => p.color === c);
     if (items.length > 0) html += renderColorSection(c, items);
+  }
+  const surfacerItems = list.filter(p => SURFACER_ORDER.includes(p.color));
+  if (surfacerItems.length > 0) {
+    html += `<div class="surfacer-divider"><strong>🎨 サーフェイサー（下地塗料）</strong><span class="sub">メーカー横断でまとめて比較</span></div>`;
+    for (const c of SURFACER_ORDER) {
+      const items = list.filter(p => p.color === c);
+      if (items.length > 0) html += renderColorSection(c, items);
+    }
   }
   const specialItems = list.filter(p => SPECIAL_ORDER.includes(p.color));
   if (specialItems.length > 0) {
