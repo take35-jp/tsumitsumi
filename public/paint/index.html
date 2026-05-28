@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>プラモデル塗料大全 — メーカー別 全ラインナップ徹底ガイド｜ツミツミ</title>
-<meta name="description" content="プラモデル塗料の主要4メーカー（GSIクレオス、ガイアノーツ、タミヤ、フィニッシャーズ）の全ラインナップを徹底解説。ラッカー・水性・アクリジョン・エナメル・ウレタンまで、用途別に選び方を網羅。" />
+<title>プラモデル塗料データベース — 全メーカー横断・色別比較・即購入｜ツミツミ</title>
+<meta name="description" content="GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズの塗料を、メーカー横断で全色グリッド表示。色・タイプ（ラッカー/水性/アクリジョン/エナメル/ウレタン）で絞り込み、すぐにAmazonで購入できる塗料比較データベース。" />
 <meta name="robots" content="index, follow, max-image-preview:large" />
-<meta property="og:title" content="プラモデル塗料大全 — メーカー別 全ラインナップ徹底ガイド" />
-<meta property="og:description" content="GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズの主要塗料ラインを網羅。" />
+<meta property="og:title" content="プラモデル塗料データベース — 全メーカー横断・色別比較" />
+<meta property="og:description" content="塗料を色・メーカー・タイプで絞り込んで即購入できる比較データベース。" />
 <meta property="og:type" content="article" />
 <meta property="og:site_name" content="ツミツミ" />
 <meta property="og:url" content="https://tsumitsumi.vercel.app/paint/" />
@@ -15,8 +15,8 @@
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="プラモデル塗料大全" />
-<meta name="twitter:description" content="主要4メーカーの全ラインナップを徹底解説。" />
+<meta name="twitter:title" content="プラモデル塗料データベース" />
+<meta name="twitter:description" content="全メーカー横断・色別で比較・即購入できる塗料DB。" />
 <meta name="twitter:image" content="https://tsumitsumi.vercel.app/LOGO.png" />
 <link rel="canonical" href="https://tsumitsumi.vercel.app/paint/" />
 <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
@@ -25,8 +25,8 @@
 {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "プラモデル塗料大全 — メーカー別 全ラインナップ徹底ガイド",
-  "description": "プラモデル塗料の主要4メーカーの全ラインナップを徹底解説。",
+  "headline": "プラモデル塗料データベース — 全メーカー横断・色別比較・即購入",
+  "description": "GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズの塗料を全色グリッドで比較・購入できるデータベース。",
   "image": "https://tsumitsumi.vercel.app/LOGO.png",
   "datePublished": "2026-05-28T00:00:00+09:00",
   "dateModified": "2026-05-28T00:00:00+09:00",
@@ -45,7 +45,7 @@
   "@type": "BreadcrumbList",
   "itemListElement": [
     { "@type": "ListItem", "position": 1, "name": "TOP", "item": "https://tsumitsumi.vercel.app/" },
-    { "@type": "ListItem", "position": 2, "name": "塗料大全" }
+    { "@type": "ListItem", "position": 2, "name": "塗料データベース" }
   ]
 }
 </script>
@@ -72,7 +72,7 @@
     {
       "@type": "Question",
       "name": "ガンダム・ガンプラ用の塗料は何？",
-      "acceptedAnswer": { "@type": "Answer", "text": "GSIクレオスの水性ガンダムカラーHUGシリーズ、Mr.カラーのガンダムカラースプレーSGシリーズ、アクリジョンのガンダムアッセンブルカラーNGAシリーズが公式色として展開されています。設定色がそのまま揃うので「無難に再現したい」人に最適。" }
+      "acceptedAnswer": { "@type": "Answer", "text": "GSIクレオスの水性ガンダムカラーHUGシリーズ、Mr.カラーのガンダムカラースプレーSGシリーズ、アクリジョンのガンダムアッセンブルカラーNGAシリーズが公式色として展開されています。設定色がそのまま揃うので無難に再現したい人に最適。" }
     }
   ]
 }
@@ -80,54 +80,73 @@
 
 <style>
   *, *::before, *::after { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; color: #1f2937; background: #fafafa; line-height: 1.85; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; color: #1f2937; background: #fafafa; line-height: 1.75; font-size: 16px; -webkit-font-smoothing: antialiased; }
   header.site { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 20px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px); }
-  .site-inner { max-width: 880px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .site-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
   .logo { font-size: 16px; font-weight: 800; color: #111827; text-decoration: none; }
   .nav-back { color: #4b5563; text-decoration: none; font-size: 13px; }
   .nav-back:hover { color: #22c55e; }
-  main { max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
   .breadcrumb { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
   .breadcrumb a { color: #15803d; text-decoration: none; }
-  h1 { font-size: 28px; font-weight: 800; margin: 0 0 14px; line-height: 1.4; color: #111827; }
-  .lead { font-size: 15px; color: #374151; margin: 0 0 18px; padding: 16px 18px; background: #fff7ed; border-left: 4px solid #f59e0b; border-radius: 6px; line-height: 1.85; }
+  h1 { font-size: 26px; font-weight: 800; margin: 0 0 10px; line-height: 1.35; color: #111827; }
+  h1 small { display: block; font-size: 14px; color: #6b7280; font-weight: 600; margin-top: 4px; }
+  .lead { font-size: 14px; color: #374151; margin: 0 0 18px; padding: 14px 16px; background: #fff7ed; border-left: 4px solid #f59e0b; border-radius: 6px; line-height: 1.8; }
+  .placeholder-notice { background: #fef3c7; border: 1px solid #fcd34d; padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #92400e; margin-bottom: 20px; line-height: 1.65; }
 
-  .toc { background: #fff; border: 1px solid #e5e7eb; padding: 16px 20px; border-radius: 12px; margin-bottom: 32px; }
-  .toc-title { font-weight: 700; margin-bottom: 10px; color: #111; font-size: 14px; }
-  .toc ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 16px; }
-  @media (max-width: 540px) { .toc ul { grid-template-columns: 1fr; } }
-  .toc li { font-size: 13px; padding: 3px 0; }
-  .toc a { color: #15803d; text-decoration: none; }
-  .toc a:hover { text-decoration: underline; }
+  /* Filter bar */
+  .filter-bar { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; position: sticky; top: 56px; z-index: 40; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .filter-row:last-child { margin-bottom: 0; }
+  .filter-label { font-size: 11px; font-weight: 700; color: #6b7280; min-width: 60px; flex-shrink: 0; }
+  .filter-pill { background: #f3f4f6; border: 1px solid #e5e7eb; color: #374151; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; cursor: pointer; transition: all 0.15s; line-height: 1.6; }
+  .filter-pill:hover { background: #e5e7eb; }
+  .filter-pill.active { background: #111827; color: #fff; border-color: #111827; }
+  .filter-pill.mfr-gsi.active { background: #dc2626; border-color: #dc2626; }
+  .filter-pill.mfr-gaia.active { background: #f97316; border-color: #f97316; }
+  .filter-pill.mfr-tamiya.active { background: #1d4ed8; border-color: #1d4ed8; }
+  .filter-pill.mfr-finishers.active { background: #18181b; border-color: #18181b; }
+  .reset-btn { font-size: 11px; color: #6b7280; background: none; border: none; cursor: pointer; padding: 4px 10px; text-decoration: underline; }
+  .reset-btn:hover { color: #111827; }
 
-  .mfr { margin-bottom: 48px; scroll-margin-top: 70px; }
-  .mfr-header { padding: 18px 22px; border-radius: 14px; margin-bottom: 20px; }
-  .mfr-header h2 { font-size: 22px; font-weight: 800; margin: 0 0 6px; color: #fff; }
-  .mfr-header p { color: rgba(255,255,255,0.95); margin: 0; font-size: 14px; line-height: 1.7; }
-  .mfr-gsi .mfr-header { background: linear-gradient(135deg, #dc2626, #991b1b); }
-  .mfr-gaia .mfr-header { background: linear-gradient(135deg, #f97316, #c2410c); }
-  .mfr-tamiya .mfr-header { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); }
-  .mfr-finishers .mfr-header { background: linear-gradient(135deg, #18181b, #52525b); }
+  .stats { font-size: 12px; color: #6b7280; margin-bottom: 14px; padding: 0 4px; }
+  .stats strong { color: #111827; font-size: 14px; }
 
-  .line { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; }
-  .line h3 { font-size: 17px; font-weight: 800; margin: 0 0 4px; color: #111827; }
-  .line .line-meta { font-size: 11px; color: #6b7280; margin-bottom: 10px; }
-  .line .line-desc { font-size: 13.5px; color: #374151; margin: 0 0 14px; line-height: 1.75; }
+  /* Paint grid */
+  .paint-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .paint-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 720px) { .paint-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; } }
+  @media (max-width: 480px) { .paint-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
 
-  .series { list-style: none; padding: 0; margin: 0; }
-  .series-item { padding: 12px 0; border-bottom: 1px dashed #e5e7eb; }
-  .series-item:last-child { border-bottom: none; }
-  .series-name { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 4px; display: block; }
-  .series-desc { font-size: 12px; color: #4b5563; margin-bottom: 8px; line-height: 1.7; }
-  .series-products { font-size: 11px; color: #6b7280; margin-bottom: 8px; font-family: ui-monospace, monospace; }
-  .amazon-link { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; background: #ff9900; color: #111; border-radius: 6px; font-size: 11px; font-weight: 700; text-decoration: none; }
-  .amazon-link:hover { background: #e88a00; }
+  .paint-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.15s, box-shadow 0.15s; }
+  .paint-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .paint-swatch { height: 70px; width: 100%; border-bottom: 1px solid #e5e7eb; position: relative; }
+  .paint-swatch.metallic { background-image: linear-gradient(135deg, rgba(255,255,255,0.4), transparent 40%, rgba(0,0,0,0.15)); background-blend-mode: overlay; }
+  .paint-swatch.clear { background-image: repeating-linear-gradient(45deg, #e5e7eb 0, #e5e7eb 6px, #fafafa 6px, #fafafa 12px); }
+  .paint-swatch .finish-icon { position: absolute; bottom: 4px; right: 6px; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; background: rgba(255,255,255,0.88); color: #374151; }
+  .paint-body { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .paint-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .paint-brand { font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 3px; line-height: 1.5; letter-spacing: 0.2px; }
+  .paint-brand.mfr-gsi { background: #fee2e2; color: #991b1b; }
+  .paint-brand.mfr-gaia { background: #fed7aa; color: #9a3412; }
+  .paint-brand.mfr-tamiya { background: #dbeafe; color: #1e40af; }
+  .paint-brand.mfr-finishers { background: #e4e4e7; color: #18181b; }
+  .paint-code { font-family: ui-monospace, "SF Mono", monospace; font-size: 10px; color: #6b7280; }
+  .paint-name { font-size: 13px; font-weight: 700; color: #111827; line-height: 1.4; margin: 1px 0; word-break: keep-all; }
+  .paint-lineup { font-size: 10px; color: #9ca3af; line-height: 1.4; }
+  .paint-amazon { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 8px; background: #ff9900; color: #111; border-radius: 5px; font-size: 10px; font-weight: 700; text-decoration: none; transition: background 0.15s; }
+  .paint-amazon:hover { background: #e88a00; }
 
-  .placeholder-notice { background: #fef3c7; border: 1px solid #fcd34d; padding: 12px 14px; border-radius: 8px; font-size: 12px; color: #92400e; margin-bottom: 24px; line-height: 1.7; }
+  .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: 13px; background: #fff; border: 1px dashed #d1d5db; border-radius: 12px; }
+
+  /* FAQ */
+  .faq h2 { font-size: 18px; font-weight: 800; margin: 40px 0 14px; padding-left: 12px; border-left: 5px solid #22c55e; color: #111827; }
+  .faq h3 { font-size: 14px; font-weight: 700; margin: 20px 0 6px; color: #111; }
+  .faq p { font-size: 14px; color: #374151; margin: 0 0 12px; line-height: 1.85; }
 
   .cta-banner { background: linear-gradient(135deg, #4f8ef7, #22c55e); color: #fff; border-radius: 16px; padding: 28px 22px; text-align: center; margin: 40px 0 20px; }
   .cta-banner .cta-logo { display: block; margin: 0 auto 14px; width: 100px; height: 100px; border-radius: 22px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
-  .cta-banner h2 { color: #fff; font-size: 20px; margin: 0 0 8px; }
+  .cta-banner h2 { color: #fff; font-size: 20px; margin: 0 0 8px; padding: 0; border: none; }
   .cta-banner p { color: rgba(255,255,255,0.95); margin: 0 0 16px; font-size: 14px; }
   .cta-button { display: inline-block; padding: 12px 28px; background: #fff; color: #111; border-radius: 24px; font-weight: 800; text-decoration: none; font-size: 15px; }
 
@@ -137,7 +156,6 @@
   .related-section li { padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
   .related-section li:last-child { border-bottom: none; }
   .related-section a { color: #15803d; text-decoration: none; font-size: 14px; }
-  .related-section a:hover { text-decoration: underline; }
 
   .disclosure { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #92400e; margin: 24px 0; }
 
@@ -147,9 +165,11 @@
   footer a:hover { color: #22c55e; }
 
   @media (max-width: 540px) {
-    h1 { font-size: 22px; }
-    .mfr-header h2 { font-size: 19px; }
-    main { padding: 24px 16px 50px; }
+    h1 { font-size: 21px; }
+    main { padding: 22px 14px 50px; }
+    .filter-bar { padding: 10px 12px; }
+    .filter-label { min-width: 48px; font-size: 10px; }
+    .filter-pill { font-size: 10px; padding: 3px 8px; }
   }
 </style>
 </head>
@@ -164,369 +184,78 @@
 
 <main>
   <div class="breadcrumb">
-    <a href="/">TOP</a> / 塗料大全
+    <a href="/">TOP</a> / 塗料データベース
   </div>
 
-  <h1>プラモデル塗料大全<br/><small style="font-size:17px;color:#6b7280;font-weight:600;">— メーカー別 全ラインナップ徹底ガイド —</small></h1>
+  <h1>プラモデル塗料データベース<small>— 全メーカー横断・色別比較・即購入 —</small></h1>
 
   <p class="lead">
-    プラモデル塗料の主要4メーカー、<strong>GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズ</strong>のラインナップを一望できるリファレンス記事です。ラッカー・水性・アクリジョン・エナメル・ウレタンまで、各メーカーが何を出していて何が定番なのかを用途別に整理しました。塗料選びの起点としてお使いください。
+    <strong>GSIクレオス・ガイアノーツ・タミヤ・フィニッシャーズ</strong>の塗料をメーカー横断で<strong>1色1カード</strong>でグリッド表示。色・メーカー・タイプで絞り込んで、気に入った塗料はそのままAmazonへ。塗料の「比較→購入」を1ページで完結させる塗料DBです。
   </p>
 
   <div class="placeholder-notice">
-    📌 各製品の「🛒 Amazonで見る」リンクはAmazon検索結果へ飛びます。Amazonアソシエイト Product Advertising API 利用承認後に、商品ページ直リンク・リアルタイム価格・在庫状況の表示に順次切り替えていきます。
+    📌 各カードの「Amazonで見る」リンクは現在Amazon検索結果へ飛びます。Amazonアソシエイト Product Advertising API 利用承認後、商品ページ直リンク・リアルタイム価格・商品画像表示に順次切り替えます。掲載点数も継続して拡充中。
   </div>
 
-  <nav class="toc">
-    <div class="toc-title">📋 目次（メーカー別）</div>
-    <ul>
-      <li><a href="#gsi">🔴 GSI クレオス（Mr.Hobby）</a></li>
-      <li><a href="#gaia">🟠 ガイアノーツ（Gaianotes）</a></li>
-      <li><a href="#tamiya">🔵 タミヤ（Tamiya）</a></li>
-      <li><a href="#finishers">⚫ フィニッシャーズ（Finisher's）</a></li>
-    </ul>
-  </nav>
-
-  <!-- ====== GSI クレオス ====== -->
-  <section class="mfr mfr-gsi" id="gsi">
-    <div class="mfr-header">
-      <h2>GSI クレオス（Mr.Hobby）</h2>
-      <p>日本のプラモデル塗料の業界最大手。Mr.カラー（ラッカー）、水性ホビーカラー、アクリジョン、Mr.ウェザリングカラーの4大ラインを展開し、ガンプラから戦車・カーモデルまで全ジャンルをカバーします。</p>
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <span class="filter-label">メーカー</span>
+      <button class="filter-pill mfr-gsi" data-cat="mfr" data-val="gsi">GSI クレオス</button>
+      <button class="filter-pill mfr-gaia" data-cat="mfr" data-val="gaia">ガイアノーツ</button>
+      <button class="filter-pill mfr-tamiya" data-cat="mfr" data-val="tamiya">タミヤ</button>
+      <button class="filter-pill mfr-finishers" data-cat="mfr" data-val="finishers">フィニッシャーズ</button>
     </div>
+    <div class="filter-row">
+      <span class="filter-label">タイプ</span>
+      <button class="filter-pill" data-cat="type" data-val="lacquer">ラッカー</button>
+      <button class="filter-pill" data-cat="type" data-val="water">水性</button>
+      <button class="filter-pill" data-cat="type" data-val="acrijon">アクリジョン</button>
+      <button class="filter-pill" data-cat="type" data-val="acrylic">アクリル</button>
+      <button class="filter-pill" data-cat="type" data-val="enamel">エナメル</button>
+      <button class="filter-pill" data-cat="type" data-val="urethane">ウレタン</button>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">色</span>
+      <button class="filter-pill" data-cat="color" data-val="white">ホワイト</button>
+      <button class="filter-pill" data-cat="color" data-val="black">ブラック</button>
+      <button class="filter-pill" data-cat="color" data-val="gray">グレー</button>
+      <button class="filter-pill" data-cat="color" data-val="red">レッド</button>
+      <button class="filter-pill" data-cat="color" data-val="blue">ブルー</button>
+      <button class="filter-pill" data-cat="color" data-val="green">グリーン</button>
+      <button class="filter-pill" data-cat="color" data-val="yellow">イエロー</button>
+      <button class="filter-pill" data-cat="color" data-val="orange">オレンジ</button>
+      <button class="filter-pill" data-cat="color" data-val="purple">パープル</button>
+      <button class="filter-pill" data-cat="color" data-val="brown">ブラウン</button>
+      <button class="filter-pill" data-cat="color" data-val="metal">メタリック</button>
+      <button class="filter-pill" data-cat="color" data-val="clear">クリアー</button>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">仕上げ</span>
+      <button class="filter-pill" data-cat="finish" data-val="gloss">光沢</button>
+      <button class="filter-pill" data-cat="finish" data-val="semi">半光沢</button>
+      <button class="filter-pill" data-cat="finish" data-val="flat">つや消し</button>
+      <button class="reset-btn" onclick="resetFilters()" style="margin-left:auto;">✕ 全リセット</button>
+    </div>
+  </div>
 
-    <article class="line">
-      <h3>Mr.カラー（ラッカー系）</h3>
-      <div class="line-meta">主力ライン｜業界標準のラッカー塗料</div>
-      <p class="line-desc">発色・隠蔽力・耐久性に優れ、エアブラシ・筆塗りどちらにも対応。塗装の標準塗料として最も普及している1本。Mr.カラーうすめ液（T101）で希釈、Mr.ツールクリーナーで洗浄。</p>
+  <div class="stats">表示中: <strong id="count">—</strong> / 全 <span id="total">—</span> 件</div>
 
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">基本ラインナップ（C1〜C189）</span>
-          <span class="series-desc">基本色・軍用色・特色を網羅した約190色のメイン展開。</span>
-          <div class="series-products">代表型番: C1ホワイト / C2ブラック / C5ブルー / C8シルバー / C97灰緑色（日本陸軍機）など</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Mr.%E3%82%AB%E3%83%A9%E3%83%BC+%E3%83%A9%E3%83%83%E3%82%AB%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">Mr.カラーGX / GGX（光沢強化ライン）</span>
-          <span class="series-desc">通常のMr.カラーより顔料濃度・光沢を高めた上位グレード。カーモデルやキャンディ塗装の下地に。</span>
-          <div class="series-products">代表型番: GX1クールホワイト / GX2ウィノーブラック / GX100クリアーなど</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Mr.%E3%82%AB%E3%83%A9%E3%83%BCGX&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">Mr.クリスタルカラー（XC01〜08）</span>
-          <span class="series-desc">パール顔料配合の特殊カラー。光の角度で色味が変化する「玉虫色」表現に。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Mr.%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%A9%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">Mr.メタルカラー / スーパーメタリック</span>
-          <span class="series-desc">金属表現の専用ラインで、磨くと金属光沢を再現可能。航空機・SF系の銀塗装に。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Mr.%E3%83%A1%E3%82%BF%E3%83%AB%E3%82%AB%E3%83%A9%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">ガンダムカラースプレー（SG01〜17）</span>
-          <span class="series-desc">ガンダム作中の設定色をそのまま缶スプレーで提供。エアブラシ不要で塗装デビューしたい人向け。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%83%B3%E3%83%80%E3%83%A0%E3%82%AB%E3%83%A9%E3%83%BC%E3%82%B9%E3%83%97%E3%83%AC%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
+  <div class="paint-grid" id="grid"></div>
+  <div id="empty" class="empty-state" style="display:none;">条件に一致する塗料が見つかりません。フィルタを変更してください。</div>
 
-    <article class="line">
-      <h3>水性ホビーカラー（H系）</h3>
-      <div class="line-meta">低臭・水洗いOK｜室内塗装向け</div>
-      <p class="line-desc">水性アクリル塗料。リニューアル後の「新水性ホビーカラー」は定着力がラッカー並みに向上。匂いが少なく、筆や用具を水で洗えるため室内・少量塗装に最適。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">基本ラインナップ（H1〜H110、H151、H301〜340、H511〜515）</span>
-          <span class="series-desc">標準色から軍用・特殊色まで100色以上を展開。</span>
-          <div class="series-products">代表型番: H1ホワイト / H2ブラック / H4イエロー / H92セミグロスブラックなど</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E6%B0%B4%E6%80%A7%E3%83%9B%E3%83%93%E3%83%BC%E3%82%AB%E3%83%A9%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">水性ガンダムカラー（HUG / SEED / SEED FREEDOM / 水星の魔女）</span>
-          <span class="series-desc">ガンダム公式作品ごとに設定色がセット化されている。ガンプラ塗装者の定番。</span>
-          <div class="series-products">代表シリーズ: HUG01〜09（UC系）/ HUG101〜108（SEED）/ XHUG01〜13（水星の魔女）</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E6%B0%B4%E6%80%A7%E3%82%AC%E3%83%B3%E3%83%80%E3%83%A0%E3%82%AB%E3%83%A9%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">うすめ液（T110・T111）</span>
-          <span class="series-desc">水性ホビーカラー専用希釈液。リターダー入りのT111は乾燥遅延仕様。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E6%B0%B4%E6%80%A7%E3%83%9B%E3%83%93%E3%83%BC%E3%82%AB%E3%83%A9%E3%83%BC+%E3%81%86%E3%81%99%E3%82%81%E6%B6%B2&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-
-    <article class="line">
-      <h3>アクリジョン（N系）</h3>
-      <div class="line-meta">水性なのに耐溶剤性｜初心者・室内塗装の決定版</div>
-      <p class="line-desc">水性アクリル系でありながら、乾燥後は耐溶剤性（ラッカー溶剤に溶けない）を持つハイブリッド型塗料。臭気がほぼ無いため室内塗装に最適で、上からラッカー塗料を重ねても下地を侵さない。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">標準色（N1〜N127）</span>
-          <span class="series-desc">基本色〜軍用色まで127色を展開。ベースカラーBN01〜06は隠蔽力強化グレード。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%A2%E3%82%AF%E3%83%AA%E3%82%B8%E3%83%A7%E3%83%B3&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">筆塗り専用カラー（NF01〜09）</span>
-          <span class="series-desc">筆塗りでムラを抑えるよう調整された乾燥遅延タイプ。初心者向け。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%A2%E3%82%AF%E3%83%AA%E3%82%B8%E3%83%A7%E3%83%B3+%E7%AD%86%E5%A1%97%E3%82%8A&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">ガンダムアッセンブルカラー（NGA01〜204）</span>
-          <span class="series-desc">アクリジョン版のガンダム設定色シリーズ。低臭・部分塗装に。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%A2%E3%82%AF%E3%83%AA%E3%82%B8%E3%83%A7%E3%83%B3+%E3%82%AC%E3%83%B3%E3%83%80%E3%83%A0&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">うすめ液・補助剤（T315 / T305 / T312・T313）</span>
-          <span class="series-desc">専用うすめ液T315、リターダーT305、ツールクリーナーT312/T313。ラッカー溶剤は使えないので注意。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%A2%E3%82%AF%E3%83%AA%E3%82%B8%E3%83%A7%E3%83%B3+%E3%81%86%E3%81%99%E3%82%81%E6%B6%B2&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-
-    <article class="line">
-      <h3>Mr.ウェザリングカラー（WC系）</h3>
-      <div class="line-meta">汚し・墨入れ専用｜表現力UPの定番</div>
-      <p class="line-desc">フィルタリング・墨入れ・チッピング用の油彩系塗料。塗装後の表面に「使い込まれた感」を加えるためのライン。乾燥がゆっくりで、ぼかし・拭き取りで自然な汚れを表現可能。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">Mr.ウェザリングカラー（WC01〜08、14〜18）</span>
-          <span class="series-desc">グランドブラウン・サンディウォッシュなど、シーン別の汚し色を揃えた基本ライン。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Mr.%E3%82%A6%E3%82%A7%E3%82%B6%E3%83%AA%E3%83%B3%E3%82%B0%E3%82%AB%E3%83%A9%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">ウェザリングペースト（WP01〜05）</span>
-          <span class="series-desc">泥・砂・錆の立体的な汚しを再現するペースト。戦車・スケールモデルの足回りに。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%A6%E3%82%A7%E3%82%B6%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%9A%E3%83%BC%E3%82%B9%E3%83%88&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">水性ウェザリングペイント（WT01〜06）</span>
-          <span class="series-desc">水性タイプの汚し塗料。低臭・水洗いOKで室内作業向け。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E6%B0%B4%E6%80%A7%E3%82%A6%E3%82%A7%E3%82%B6%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%9A%E3%82%A4%E3%83%B3%E3%83%88&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">八雲〈YAKUMO〉カラーセット（WY01〜04）</span>
-          <span class="series-desc">戦線別（A〜D）にウェザリング色をパッケージ化した上級者向けセット。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E5%85%AB%E9%9B%B2+YAKUMO+%E3%82%AB%E3%83%A9%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
+  <section class="faq">
+    <h2>よくある質問（FAQ）</h2>
+    <h3>Q. ラッカー・水性・アクリジョンの違いは？</h3>
+    <p>ラッカーは溶剤系で発色・耐久性◎ですが匂いが強くマスク・換気必須。水性ホビーカラーは新水性化されラッカー並みの定着力・低臭。アクリジョンは水性なのに乾燥後は耐溶剤性を持つため、上から他塗料を重ねやすいハイブリッド型です。</p>
+    <h3>Q. 初心者が最初に選ぶ塗料は？</h3>
+    <p>室内・少量から始めるなら水性ホビーカラーかアクリジョン、本格塗装を見据えるならMr.カラー（ラッカー）が王道です。エナメル塗料はスミ入れと部分塗装の補助として併用するのが定番。</p>
+    <h3>Q. カーモデルにはどの塗料が向く？</h3>
+    <p>実車色再現に強いのはフィニッシャーズ。次点でガイアカラーのクリアーカラー（キャンディ塗装）が定番。タミヤLPシリーズの実車色や、Mr.カラーGXの光沢強化版も人気です。</p>
+    <h3>Q. ガンダム・ガンプラ用の塗料は何？</h3>
+    <p>GSIクレオスの水性ガンダムカラーHUGシリーズ、Mr.カラーのガンダムカラースプレーSGシリーズ、アクリジョンのガンダムアッセンブルカラーNGAシリーズが公式色として展開されています。設定色がそのまま揃うので「無難に再現したい」人に最適。</p>
   </section>
 
-  <!-- ====== ガイアノーツ ====== -->
-  <section class="mfr mfr-gaia" id="gaia">
-    <div class="mfr-header">
-      <h2>ガイアノーツ（Gaianotes）</h2>
-      <p>「ガイアカラー」を主力に、約40系統40色超のラッカー塗料を展開。発色の鮮やかさと隠蔽力の高さでカーモデル・ガンプラ層に強く、Gシリーズの補助材料（サフ・パテ）も合わせて揃う総合ブランド。</p>
-    </div>
-
-    <article class="line">
-      <h3>ガイアカラー（ラッカー系）</h3>
-      <div class="line-meta">主力ライン｜高彩度・高隠蔽のラッカー塗料</div>
-      <p class="line-desc">単色での発色の良さと隠蔽力に定評。同系統内での色味の幅が広く、調色の自由度が高いのが特徴。Mr.カラーと混用可能。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">基本カラー（Tナンバー）</span>
-          <span class="series-desc">純色から基本色まで、塗装の土台になる定番色を網羅。</span>
-          <div class="series-products">代表型番: T-01ピュアホワイト / T-04ピュアブラック / T-09ニュートラルグレー</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%82%A4%E3%82%A2%E3%82%AB%E3%83%A9%E3%83%BC+%E5%9F%BA%E6%9C%AC%E8%89%B2&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">クリアーカラー（キャンディ塗装）</span>
-          <span class="series-desc">下地のメタリック上に重ねてキャンディ表現を作る透明色シリーズ。カーモデルの花形。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%82%A4%E3%82%A2%E3%82%AB%E3%83%A9%E3%83%BC+%E3%82%AF%E3%83%AA%E3%82%A2%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">メタリック・パール・蛍光</span>
-          <span class="series-desc">下地用の各種シルバー・ゴールドや、玉虫色のパール、UV発光する蛍光カラーを展開。</span>
-          <div class="series-products">代表型番: M-03スターブライトシルバー / M-07シャインシルバー / P-01aプリズムフレーク</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%82%A4%E3%82%A2%E3%82%AB%E3%83%A9%E3%83%BC+%E3%83%A1%E3%82%BF%E3%83%AA%E3%83%83%E3%82%AF&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">NAZCA メカサフ（陰影付け用サーフェイサー）</span>
-          <span class="series-desc">関節・内部メカパーツに先吹きしてシャドウとして残す仕上げ用ライン。ヘヴィ・ライト・スーパーヘヴィ展開。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=NAZCA+%E3%83%A1%E3%82%AB%E3%82%B5%E3%83%95&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">ミリタリーカラー</span>
-          <span class="series-desc">各国軍用機・戦車の標準色シリーズ。スケールモデラー向け。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%82%A4%E3%82%A2%E3%82%AB%E3%83%A9%E3%83%BC+%E3%83%9F%E3%83%AA%E3%82%BF%E3%83%AA%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-
-    <article class="line">
-      <h3>Gシリーズ（補助材料・ツール）</h3>
-      <div class="line-meta">下地・溶剤・パテ・接着剤</div>
-      <p class="line-desc">塗装周辺を1ブランドで揃えられる補助材料群。サーフェイサー、専用溶剤、パテ、接着剤までガイアノーツの中で完結する。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">サーフェイサーエヴォ シリーズ（下地）</span>
-          <span class="series-desc">標準下地用のサーフェイサー。ホワイト・グレー・ブラック・オキサイドレッドを展開。発色の隠蔽下地に。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%82%A4%E3%82%A2%E3%82%B5%E3%83%BC%E3%83%95%E3%82%A7%E3%82%A4%E3%82%B5%E3%83%BC%E3%82%A8%E3%83%B4%E3%82%A9&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">プロユースシンナー / ツールウォッシュ / メタリックマスター</span>
-          <span class="series-desc">大容量シンナー類。プロユースは標準希釈、ツールウォッシュは洗浄用、メタリックマスターはメタリック塗料専用。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%AC%E3%82%A4%E3%82%A2+%E3%83%97%E3%83%AD%E3%83%A6%E3%83%BC%E3%82%B9%E3%82%B7%E3%83%B3%E3%83%8A%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">イージーペインター EP-01</span>
-          <span class="series-desc">コンプレッサー不要の簡易スプレーツール。エアブラシ未導入者向け。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%A4%E3%83%BC%E3%82%B8%E3%83%BC%E3%83%9A%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC+EP-01&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-  </section>
-
-  <!-- ====== タミヤ ====== -->
-  <section class="mfr mfr-tamiya" id="tamiya">
-    <div class="mfr-header">
-      <h2>タミヤ（Tamiya）</h2>
-      <p>プラモデル最大手メーカーのタミヤが展開する純正塗料群。アクリル（XF/X）・ラッカー（LP）・エナメル・スプレー（TS/PS/AS）の4軸で全用途をカバー。初心者にも入手しやすく、量販店流通が広いのが強み。</p>
-    </div>
-
-    <article class="line">
-      <h3>タミヤアクリル塗料（XF系・X系）</h3>
-      <div class="line-meta">水性アクリル｜入門の鉄板</div>
-      <p class="line-desc">タミヤ純正の水性アクリル塗料。XFはつや消し、Xは光沢の系統。エナメルと並んでタミヤキットの説明書で指定されることが多く、模型店での入手性も極めて高い。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">XF系（つや消し）</span>
-          <span class="series-desc">戦車・航空機・キャラクター系まで、つや消し仕上げ向けの基本ライン。</span>
-          <div class="series-products">代表型番: XF-1 フラットブラック / XF-2 フラットホワイト / XF-92 イエロー（DAK仕様）など</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4%E3%82%A2%E3%82%AF%E3%83%AA%E3%83%AB+XF&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">X系（光沢）</span>
-          <span class="series-desc">光沢仕上げの基本色。カー・バイク・ロボット系のメイン色に。</span>
-          <div class="series-products">代表型番: X-1 ブラック / X-2 ホワイト / X-7 レッドなど</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4%E3%82%A2%E3%82%AF%E3%83%AA%E3%83%AB+X&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-
-    <article class="line">
-      <h3>タミヤカラーLP（ラッカー系）</h3>
-      <div class="line-meta">ラッカー｜エアブラシ向けの上位ライン</div>
-      <p class="line-desc">タミヤ製のラッカー塗料。XF/Xよりも発色・耐久性が高く、本格塗装向け。Mr.カラーと混用しても問題なし。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">LPシリーズ</span>
-          <span class="series-desc">基本色・軍用色・実車色をラッカーで展開。100色以上。</span>
-          <div class="series-products">代表型番: LP-1 ブラック / LP-2 ホワイト / LP-80 フラットイエロー / LP-84/85 グレイ系など</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4%E3%82%AB%E3%83%A9%E3%83%BC+LP&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-
-    <article class="line">
-      <h3>タミヤエナメル塗料</h3>
-      <div class="line-meta">スミ入れ・部分塗装の定番</div>
-      <p class="line-desc">乾燥が遅く流動性のあるエナメル塗料。スミ入れや筆塗りでの部分塗装が得意。エナメル溶剤で薄めて使用し、上塗りラッカーを侵さない特性が便利。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">タミヤカラー エナメル X / XF系</span>
-          <span class="series-desc">ラッカー版と同系統の色を、エナメル系で展開。スミ入れの定番X-19スモーク・XF-1フラットブラックなど。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4%E3%82%A8%E3%83%8A%E3%83%A1%E3%83%AB&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">エナメル溶剤（X-20）</span>
-          <span class="series-desc">エナメル塗料の希釈・拭き取り用。スミ入れ後の拭き取りで活躍。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4+%E3%82%A8%E3%83%8A%E3%83%A1%E3%83%AB%E6%BA%B6%E5%89%A4&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-
-    <article class="line">
-      <h3>タミヤスプレー（TS / PS / AS）</h3>
-      <div class="line-meta">缶スプレー｜エアブラシ不要で広面塗装</div>
-      <p class="line-desc">エアブラシなしで広い面を綺麗に塗れる缶スプレー塗料。素材別に系統が分かれる。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">TSシリーズ（プラ用スプレー）</span>
-          <span class="series-desc">プラモデル全般用のラッカー缶スプレー。最も使われるスプレー塗料。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4+TS+%E3%82%B9%E3%83%97%E3%83%AC%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">PSシリーズ（ポリカーボネート用）</span>
-          <span class="series-desc">ラジコンボディなどポリカ素材用のスプレー。内側から吹くことで質感を出す。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4+PS+%E3%82%B9%E3%83%97%E3%83%AC%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">ASシリーズ（航空機色）</span>
-          <span class="series-desc">航空機の現用機・大戦機の標準色を缶スプレーで提供。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=%E3%82%BF%E3%83%9F%E3%83%A4+AS+%E3%82%B9%E3%83%97%E3%83%AC%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-  </section>
-
-  <!-- ====== フィニッシャーズ ====== -->
-  <section class="mfr mfr-finishers" id="finishers">
-    <div class="mfr-header">
-      <h2>フィニッシャーズ（Finisher's）</h2>
-      <p>カーモデラー御用達の少数精鋭ブランド。約132色のウレタン系ラッカーをはじめ、深い発色・高い顔料濃度・硬い塗膜で実車色再現に特化。プロモデラー比率が高い玄人系メーカー。</p>
-    </div>
-
-    <article class="line">
-      <h3>Finisher's カラー（ウレタン系ラッカー）</h3>
-      <div class="line-meta">主力ライン｜実車色再現に強み</div>
-      <p class="line-desc">他メーカーよりも顔料濃度が高く、塗膜が硬いのが特徴。光沢・透明感に優れ、クリアー仕上げが映える。Mr.カラーやガイアカラーと混用可能だが、専用シンナー使用が無難。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">基本色 / 実車カラー</span>
-          <span class="series-desc">日産・トヨタ・ホンダ・フェラーリ等の実車色を再現したカラー群。約132色展開。</span>
-          <div class="series-products">代表色: Baby Clear / Papaya Orange / C.I.A / Pure Breaker（ケブラー色）など</div>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Finisher%27s+%E3%82%AB%E3%83%A9%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-        <li class="series-item">
-          <span class="series-name">クリアー / メタリック / ファンデーション</span>
-          <span class="series-desc">透明感のあるクリアーや、下地として優秀なファンデーションホワイト・ブラックなど補助色。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Finisher%27s+%E3%82%AF%E3%83%AA%E3%82%A2%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-
-    <article class="line">
-      <h3>専用シンナー・補助材料</h3>
-      <div class="line-meta">塗料の性能を最大化する純正展開</div>
-      <p class="line-desc">フィニッシャーズ純正の希釈液「ピュアシンナー」のほか、レジンパーツ・デカール・接着剤など、塗装周りの補助材料を展開。</p>
-
-      <ul class="series">
-        <li class="series-item">
-          <span class="series-name">ピュアシンナー</span>
-          <span class="series-desc">フィニッシャーズカラー専用の純度の高い希釈液。塗料本来の発色を引き出す。</span>
-          <a class="amazon-link" href="https://www.amazon.co.jp/s?k=Finisher%27s+%E3%83%94%E3%83%A5%E3%82%A2%E3%82%B7%E3%83%B3%E3%83%8A%E3%83%BC&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
-        </li>
-      </ul>
-    </article>
-  </section>
-
-  <h2 style="font-size:18px;font-weight:800;margin:40px 0 14px;padding-left:12px;border-left:5px solid #22c55e;color:#111;">よくある質問（FAQ）</h2>
-
-  <h3 style="font-size:15px;font-weight:700;margin:20px 0 6px;color:#111;">Q. ラッカー・水性・アクリジョンの違いは？</h3>
-  <p>ラッカーは溶剤系で発色・耐久性◎ですが匂いが強くマスク・換気必須。水性ホビーカラーは新水性化されラッカー並みの定着力・低臭。アクリジョンは水性なのに乾燥後は耐溶剤性を持つため、上から他塗料を重ねやすいハイブリッド型です。</p>
-
-  <h3 style="font-size:15px;font-weight:700;margin:20px 0 6px;color:#111;">Q. 初心者が最初に選ぶ塗料は？</h3>
-  <p>室内・少量から始めるなら水性ホビーカラーかアクリジョン、本格塗装を見据えるならMr.カラー（ラッカー）が王道です。エナメル塗料はスミ入れと部分塗装の補助として併用するのが定番。</p>
-
-  <h3 style="font-size:15px;font-weight:700;margin:20px 0 6px;color:#111;">Q. カーモデルにはどの塗料が向く？</h3>
-  <p>実車色再現に強いのはフィニッシャーズ。次点でガイアカラーのクリアーカラー（キャンディ塗装）が定番。タミヤLPシリーズの実車色や、Mr.カラーGXの光沢強化版も人気です。</p>
-
-  <h3 style="font-size:15px;font-weight:700;margin:20px 0 6px;color:#111;">Q. ガンダム・ガンプラ用の塗料は何？</h3>
-  <p>GSIクレオスの水性ガンダムカラーHUGシリーズ、Mr.カラーのガンダムカラースプレーSGシリーズ、アクリジョンのガンダムアッセンブルカラーNGAシリーズが公式色として展開されています。設定色がそのまま揃うので「無難に再現したい」人に最適。</p>
-
-  <!-- CTA バナー -->
   <div class="cta-banner">
     <img src="/LOGO.png" alt="TSUMI TSUMI" class="cta-logo" width="100" height="100" />
     <h2>積みプラの管理は「TSUMI TSUMI」で</h2>
@@ -534,7 +263,6 @@
     <a href="/" class="cta-button">TSUMI TSUMIを使ってみる→</a>
   </div>
 
-  <!-- 関連 -->
   <div class="related-section">
     <h3>📚 関連記事</h3>
     <ul>
@@ -548,7 +276,6 @@
   <div class="disclosure">
     ※ 本ページの商品リンクは Amazon アソシエイトです。リンク経由で商品をご購入いただくと、一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。Product Advertising API 利用承認後に、商品ページ直リンク・リアルタイム価格・在庫表示への切り替えを順次行います。
   </div>
-
 </main>
 
 <footer>
@@ -559,12 +286,238 @@
     <a href="/terms.html">利用規約</a>
     <a href="/privacy.html">プライバシーポリシー</a>
     <a href="/gears.html">おすすめ定番アイテム</a>
-    <a href="/paint/">塗料大全</a>
+    <a href="/paint/">塗料データベース</a>
     <a href="/tips/">TIPS一覧</a>
     <a href="https://x.com/tsumitsumi_pla" target="_blank" rel="noopener noreferrer">@tsumitsumi_pla</a>
   </div>
   <div>© 2026 TSUMI TSUMI</div>
 </footer>
+
+<script>
+// 塗料データ（メーカー横断・代表的な色を網羅）。PA-API 承認後に asin / image / price を順次入れていく前提。
+// mfr: gsi/gaia/tamiya/finishers
+// type: lacquer/water/acrijon/acrylic/enamel/urethane
+// color: white/black/gray/red/blue/green/yellow/orange/purple/brown/metal/clear
+// finish: gloss/semi/flat
+// swatch: 表示用ヒント色（実物色はPA-API画像で置き換わる）
+const TAG = "tsumitsumi232-22";
+const PAINTS = [
+  // ===== GSI クレオス Mr.カラー (ラッカー) =====
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C1",  name:"ホワイト",        finish:"gloss", color:"white",  swatch:"#FAFAFA", q:"Mr.カラー C1 ホワイト" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C2",  name:"ブラック",        finish:"gloss", color:"black",  swatch:"#0c0c0c", q:"Mr.カラー C2 ブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C3",  name:"レッド",          finish:"gloss", color:"red",    swatch:"#c61a2a", q:"Mr.カラー C3 レッド" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C4",  name:"イエロー",        finish:"gloss", color:"yellow", swatch:"#ffd300", q:"Mr.カラー C4 イエロー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C5",  name:"ブルー",          finish:"gloss", color:"blue",   swatch:"#0050a0", q:"Mr.カラー C5 ブルー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C6",  name:"グリーン",        finish:"gloss", color:"green",  swatch:"#007030", q:"Mr.カラー C6 グリーン" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C7",  name:"ブラウン",        finish:"gloss", color:"brown",  swatch:"#543820", q:"Mr.カラー C7 ブラウン" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C8",  name:"シルバー",        finish:"gloss", color:"metal",  swatch:"#c0c0c0", q:"Mr.カラー C8 シルバー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C9",  name:"ゴールド",        finish:"gloss", color:"metal",  swatch:"#d4af37", q:"Mr.カラー C9 ゴールド" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C10", name:"カッパー",        finish:"gloss", color:"metal",  swatch:"#b87333", q:"Mr.カラー C10 カッパー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C11", name:"ガルグレー",      finish:"semi",  color:"gray",   swatch:"#abbac1", q:"Mr.カラー C11 ガルグレー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C12", name:"オリーブドラブ1", finish:"flat",  color:"green",  swatch:"#4b5320", q:"Mr.カラー C12 オリーブドラブ" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C28", name:"黒鉄色",          finish:"flat",  color:"metal",  swatch:"#2a2d2e", q:"Mr.カラー C28 黒鉄色" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C33", name:"つや消しブラック", finish:"flat", color:"black",  swatch:"#1a1a1a", q:"Mr.カラー C33 つや消しブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C46", name:"クリアー",        finish:"gloss", color:"clear",  swatch:"#eeeeee", q:"Mr.カラー C46 クリアー" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C62", name:"つや消しホワイト", finish:"flat", color:"white",  swatch:"#f0f0f0", q:"Mr.カラー C62 つや消しホワイト" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C92", name:"セミグロスブラック", finish:"semi", color:"black", swatch:"#101010", q:"Mr.カラー C92 セミグロスブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C137",name:"タイヤブラック",  finish:"flat",  color:"black",  swatch:"#1a1814", q:"Mr.カラー C137 タイヤブラック" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C151",name:"ホワイトパール",  finish:"gloss", color:"metal",  swatch:"#f5f5f5", q:"Mr.カラー C151 ホワイトパール" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C155",name:"スーパーパープル",finish:"gloss", color:"purple", swatch:"#6c2dc7", q:"Mr.カラー C155 スーパーパープル" },
+  { mfr:"gsi", lineup:"Mr.カラー", type:"lacquer", code:"C159",name:"スーパーゴールド",finish:"gloss", color:"metal",  swatch:"#ffd700", q:"Mr.カラー C159 スーパーゴールド" },
+
+  // ===== GSI クレオス Mr.カラーGX =====
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX1",   name:"クールホワイト",       finish:"gloss", color:"white",  swatch:"#ffffff", q:"Mr.カラーGX1 クールホワイト" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX2",   name:"ウィノーブラック",     finish:"gloss", color:"black",  swatch:"#050505", q:"Mr.カラーGX2 ウィノーブラック" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX3",   name:"ハーマンレッド",       finish:"gloss", color:"red",    swatch:"#c0223a", q:"Mr.カラーGX3 ハーマンレッド" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX4",   name:"キアライエロー",       finish:"gloss", color:"yellow", swatch:"#ffd300", q:"Mr.カラーGX4 キアライエロー" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX5",   name:"スージーブルー",       finish:"gloss", color:"blue",   swatch:"#0044a8", q:"Mr.カラーGX5 スージーブルー" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", type:"lacquer", code:"GX100", name:"スーパークリアーIII",  finish:"gloss", color:"clear",  swatch:"#f0f0f0", q:"Mr.カラーGX100 スーパークリアー" },
+
+  // ===== GSI クレオス 水性ホビーカラー =====
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H1",  name:"ホワイト",          finish:"gloss", color:"white",  swatch:"#fafafa", q:"水性ホビーカラー H1 ホワイト" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H2",  name:"ブラック",          finish:"gloss", color:"black",  swatch:"#0c0c0c", q:"水性ホビーカラー H2 ブラック" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H4",  name:"イエロー",          finish:"gloss", color:"yellow", swatch:"#ffd300", q:"水性ホビーカラー H4 イエロー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H8",  name:"シルバー",          finish:"gloss", color:"metal",  swatch:"#c0c0c0", q:"水性ホビーカラー H8 シルバー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H9",  name:"ゴールド",          finish:"gloss", color:"metal",  swatch:"#d4af37", q:"水性ホビーカラー H9 ゴールド" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H11", name:"ガルグレー",        finish:"semi",  color:"gray",   swatch:"#abbac1", q:"水性ホビーカラー H11 ガルグレー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H12", name:"オリーブドラブ1",   finish:"flat",  color:"green",  swatch:"#4b5320", q:"水性ホビーカラー H12 オリーブドラブ" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H33", name:"つや消しブラック",  finish:"flat",  color:"black",  swatch:"#1a1a1a", q:"水性ホビーカラー H33 つや消しブラック" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H46", name:"クリアー",          finish:"gloss", color:"clear",  swatch:"#eeeeee", q:"水性ホビーカラー H46 クリアー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H62", name:"つや消しホワイト",  finish:"flat",  color:"white",  swatch:"#f0f0f0", q:"水性ホビーカラー H62 つや消しホワイト" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", type:"water", code:"H92", name:"セミグロスブラック",finish:"semi",  color:"black",  swatch:"#101010", q:"水性ホビーカラー H92 セミグロスブラック" },
+
+  // ===== GSI クレオス アクリジョン =====
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N1",  name:"ホワイト",      finish:"gloss", color:"white",  swatch:"#fafafa", q:"アクリジョン N1 ホワイト" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N2",  name:"ブラック",      finish:"gloss", color:"black",  swatch:"#0c0c0c", q:"アクリジョン N2 ブラック" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N3",  name:"レッド",        finish:"gloss", color:"red",    swatch:"#c61a2a", q:"アクリジョン N3 レッド" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N4",  name:"イエロー",      finish:"gloss", color:"yellow", swatch:"#ffd300", q:"アクリジョン N4 イエロー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N5",  name:"ブルー",        finish:"gloss", color:"blue",   swatch:"#0050a0", q:"アクリジョン N5 ブルー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N6",  name:"グリーン",      finish:"gloss", color:"green",  swatch:"#007030", q:"アクリジョン N6 グリーン" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N8",  name:"シルバー",      finish:"gloss", color:"metal",  swatch:"#c0c0c0", q:"アクリジョン N8 シルバー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N9",  name:"ゴールド",      finish:"gloss", color:"metal",  swatch:"#d4af37", q:"アクリジョン N9 ゴールド" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N11", name:"ガルグレー",    finish:"semi",  color:"gray",   swatch:"#abbac1", q:"アクリジョン N11 ガルグレー" },
+  { mfr:"gsi", lineup:"アクリジョン", type:"acrijon", code:"N12", name:"オリーブドラブ1", finish:"flat", color:"green", swatch:"#4b5320", q:"アクリジョン N12 オリーブドラブ" },
+
+  // ===== ガイアノーツ ガイアカラー =====
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-01",  name:"ピュアホワイト",    finish:"gloss", color:"white",  swatch:"#ffffff", q:"ガイアカラー T-01 ピュアホワイト" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-02",  name:"ピュアブラック",    finish:"gloss", color:"black",  swatch:"#0a0a0a", q:"ガイアカラー T-02 ピュアブラック" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-04",  name:"ピュアレッド",      finish:"gloss", color:"red",    swatch:"#d60014", q:"ガイアカラー T-04 ピュアレッド" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-05",  name:"ピュアブルー",      finish:"gloss", color:"blue",   swatch:"#0030a0", q:"ガイアカラー T-05 ピュアブルー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-06",  name:"ピュアグリーン",    finish:"gloss", color:"green",  swatch:"#00a040", q:"ガイアカラー T-06 ピュアグリーン" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-07",  name:"ピュアイエロー",    finish:"gloss", color:"yellow", swatch:"#ffd900", q:"ガイアカラー T-07 ピュアイエロー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-09",  name:"ニュートラルグレー", finish:"semi", color:"gray",   swatch:"#808080", q:"ガイアカラー T-09 ニュートラルグレー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-13",  name:"ジョーヌオレンジ",  finish:"gloss", color:"orange", swatch:"#f08020", q:"ガイアカラー T-13 ジョーヌオレンジ" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-14",  name:"リッチパープル",    finish:"gloss", color:"purple", swatch:"#5a1a8a", q:"ガイアカラー T-14 リッチパープル" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-16",  name:"リッチゴールド",    finish:"gloss", color:"metal",  swatch:"#dab040", q:"ガイアカラー T-16 リッチゴールド" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-22",  name:"蛍光イエロー",      finish:"gloss", color:"yellow", swatch:"#fff700", q:"ガイアカラー T-22 蛍光イエロー" },
+  { mfr:"gaia", lineup:"ガイアカラー", type:"lacquer", code:"T-25",  name:"蛍光ピンク",        finish:"gloss", color:"red",    swatch:"#ff4080", q:"ガイアカラー T-25 蛍光ピンク" },
+  { mfr:"gaia", lineup:"ガイア クリアー", type:"lacquer", code:"CC-01", name:"クリアー Brilliant", finish:"gloss", color:"clear", swatch:"#eeeeee", q:"ガイア クリアー CC-01 ブリリアントコート" },
+  { mfr:"gaia", lineup:"ガイア クリアー", type:"lacquer", code:"CC-02", name:"シャインクリアー",  finish:"gloss", color:"clear", swatch:"#f0f0f0", q:"ガイア シャインクリアー CC-02" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-01",  name:"シルバー",        finish:"gloss", color:"metal", swatch:"#cccccc", q:"ガイア M-01 シルバー" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-03",  name:"スターブライトシルバー", finish:"gloss", color:"metal", swatch:"#dddddd", q:"ガイア M-03 スターブライトシルバー" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-07",  name:"シャインシルバー",finish:"gloss", color:"metal", swatch:"#e8e8e8", q:"ガイア M-07 シャインシルバー" },
+  { mfr:"gaia", lineup:"ガイア メタリック", type:"lacquer", code:"M-08",  name:"ブライトゴールド",finish:"gloss", color:"metal", swatch:"#e0c060", q:"ガイア M-08 ブライトゴールド" },
+
+  // ===== タミヤ X(光沢) =====
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-1",  name:"ブラック",        finish:"gloss", color:"black",  swatch:"#0a0a0a", q:"タミヤアクリル X-1 ブラック" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-2",  name:"ホワイト",        finish:"gloss", color:"white",  swatch:"#fafafa", q:"タミヤアクリル X-2 ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-3",  name:"ロイヤルブルー",  finish:"gloss", color:"blue",   swatch:"#0040a0", q:"タミヤアクリル X-3 ロイヤルブルー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-4",  name:"ブルー",          finish:"gloss", color:"blue",   swatch:"#0060c0", q:"タミヤアクリル X-4 ブルー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-5",  name:"グリーン",        finish:"gloss", color:"green",  swatch:"#008040", q:"タミヤアクリル X-5 グリーン" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-7",  name:"レッド",          finish:"gloss", color:"red",    swatch:"#c00020", q:"タミヤアクリル X-7 レッド" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-8",  name:"レモンイエロー",  finish:"gloss", color:"yellow", swatch:"#ffe000", q:"タミヤアクリル X-8 レモンイエロー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-9",  name:"ブラウン",        finish:"gloss", color:"brown",  swatch:"#603020", q:"タミヤアクリル X-9 ブラウン" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-11", name:"クロームシルバー",finish:"gloss", color:"metal",  swatch:"#e0e0e0", q:"タミヤアクリル X-11 クロームシルバー" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-12", name:"ゴールドリーフ",  finish:"gloss", color:"metal",  swatch:"#dab040", q:"タミヤアクリル X-12 ゴールドリーフ" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-19", name:"スモーク",        finish:"gloss", color:"clear",  swatch:"#404040", q:"タミヤアクリル X-19 スモーク" },
+  { mfr:"tamiya", lineup:"タミヤX(光沢)", type:"acrylic", code:"X-22", name:"クリヤー",        finish:"gloss", color:"clear",  swatch:"#eeeeee", q:"タミヤアクリル X-22 クリヤー" },
+
+  // ===== タミヤ XF(つや消し) =====
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-1",  name:"フラットブラック",  finish:"flat", color:"black",  swatch:"#181818", q:"タミヤアクリル XF-1 フラットブラック" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-2",  name:"フラットホワイト",  finish:"flat", color:"white",  swatch:"#f0f0f0", q:"タミヤアクリル XF-2 フラットホワイト" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-3",  name:"フラットイエロー",  finish:"flat", color:"yellow", swatch:"#e0c020", q:"タミヤアクリル XF-3 フラットイエロー" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-5",  name:"フラットグリーン",  finish:"flat", color:"green",  swatch:"#4a6030", q:"タミヤアクリル XF-5 フラットグリーン" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-7",  name:"フラットレッド",    finish:"flat", color:"red",    swatch:"#a02020", q:"タミヤアクリル XF-7 フラットレッド" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-8",  name:"フラットブルー",    finish:"flat", color:"blue",   swatch:"#204060", q:"タミヤアクリル XF-8 フラットブルー" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-15", name:"フラットフレッシュ",finish:"flat", color:"orange", swatch:"#e0a080", q:"タミヤアクリル XF-15 フラットフレッシュ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-19", name:"スカイグレイ",      finish:"flat", color:"gray",   swatch:"#a0a8a8", q:"タミヤアクリル XF-19 スカイグレイ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-22", name:"RLMグレイ",         finish:"flat", color:"gray",   swatch:"#9a9a90", q:"タミヤアクリル XF-22 RLMグレイ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-49", name:"カーキ",            finish:"flat", color:"brown",  swatch:"#6e6045", q:"タミヤアクリル XF-49 カーキ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-56", name:"メタリックグレイ",  finish:"flat", color:"metal",  swatch:"#707070", q:"タミヤアクリル XF-56 メタリックグレイ" },
+  { mfr:"tamiya", lineup:"タミヤXF(つや消し)", type:"acrylic", code:"XF-66", name:"ライトグレイ",      finish:"flat", color:"gray",   swatch:"#b0b0b0", q:"タミヤアクリル XF-66 ライトグレイ" },
+
+  // ===== タミヤ LP (ラッカー) =====
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-1", name:"ブラック",        finish:"gloss", color:"black", swatch:"#0a0a0a", q:"タミヤカラーLP-1 ブラック" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-2", name:"ホワイト",        finish:"gloss", color:"white", swatch:"#fafafa", q:"タミヤカラーLP-2 ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-3", name:"フラットブラック", finish:"flat", color:"black",  swatch:"#181818", q:"タミヤカラーLP-3 フラットブラック" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-4", name:"フラットホワイト", finish:"flat", color:"white",  swatch:"#f0f0f0", q:"タミヤカラーLP-4 フラットホワイト" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-9", name:"クリアー",         finish:"gloss",color:"clear",  swatch:"#eeeeee", q:"タミヤカラーLP-9 クリアー" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-15",name:"IJN グレー",       finish:"flat", color:"gray",   swatch:"#8a8a85", q:"タミヤカラーLP-15 IJNグレー" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-19",name:"ガンメタル",       finish:"semi", color:"metal",  swatch:"#3a3a3e", q:"タミヤカラーLP-19 ガンメタル" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-38",name:"フラットアルミ",   finish:"flat", color:"metal",  swatch:"#a8a8a8", q:"タミヤカラーLP-38 フラットアルミ" },
+
+  // ===== タミヤ エナメル =====
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-1",  name:"ブラック",        finish:"gloss", color:"black", swatch:"#0a0a0a", q:"タミヤエナメル X-1 ブラック" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-2",  name:"ホワイト",        finish:"gloss", color:"white", swatch:"#fafafa", q:"タミヤエナメル X-2 ホワイト" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-7",  name:"レッド",          finish:"gloss", color:"red",   swatch:"#c00020", q:"タミヤエナメル X-7 レッド" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-11", name:"クロームシルバー",finish:"gloss", color:"metal", swatch:"#e0e0e0", q:"タミヤエナメル X-11 クロームシルバー" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"X-19", name:"スモーク",        finish:"gloss", color:"clear", swatch:"#404040", q:"タミヤエナメル X-19 スモーク" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"XF-1", name:"フラットブラック",finish:"flat",  color:"black", swatch:"#181818", q:"タミヤエナメル XF-1 フラットブラック" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", type:"enamel", code:"XF-49",name:"カーキ",          finish:"flat",  color:"brown", swatch:"#6e6045", q:"タミヤエナメル XF-49 カーキ" },
+
+  // ===== フィニッシャーズ =====
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ピュアホワイト",        finish:"gloss", color:"white",  swatch:"#ffffff", q:"Finisher's ピュアホワイト" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"リッチブラック",        finish:"gloss", color:"black",  swatch:"#020202", q:"Finisher's リッチブラック" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ファンデーションホワイト", finish:"flat", color:"white", swatch:"#f8f8f8", q:"Finisher's ファンデーションホワイト" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ファンデーションブラック", finish:"flat", color:"black", swatch:"#0a0a0a", q:"Finisher's ファンデーションブラック" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"フェラーリレッド",      finish:"gloss", color:"red",    swatch:"#d80020", q:"Finisher's フェラーリレッド" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ベイビーブルー",        finish:"gloss", color:"blue",   swatch:"#8fb4d8", q:"Finisher's ベイビーブルー" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"パパイアオレンジ",      finish:"gloss", color:"orange", swatch:"#f78030", q:"Finisher's パパイヤオレンジ" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"C.I.A",                finish:"gloss", color:"blue",   swatch:"#003088", q:"Finisher's C.I.A" },
+  { mfr:"finishers", lineup:"Finisher's", type:"urethane", code:"FIN", name:"ピュアパール",          finish:"gloss", color:"metal",  swatch:"#f5f5f5", q:"Finisher's ピュアパール" },
+];
+
+const MFR_NAMES = { gsi:"GSI クレオス", gaia:"ガイア", tamiya:"タミヤ", finishers:"フィニッシャーズ" };
+const FINISH_LABEL = { gloss:"光沢", semi:"半光沢", flat:"つや消し" };
+
+// State
+const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set() };
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+function buildUrl(p) {
+  // PA-API 後は p.asin に値が入っていれば商品ページ直リンクに切り替え
+  if (p.asin) return `https://www.amazon.co.jp/dp/${encodeURIComponent(p.asin)}/?tag=${encodeURIComponent(TAG)}`;
+  return `https://www.amazon.co.jp/s?k=${encodeURIComponent(p.q || p.name)}&tag=${encodeURIComponent(TAG)}`;
+}
+
+function render() {
+  const list = PAINTS.filter(p => {
+    if (FILTERS.mfr.size > 0 && !FILTERS.mfr.has(p.mfr)) return false;
+    if (FILTERS.type.size > 0 && !FILTERS.type.has(p.type)) return false;
+    if (FILTERS.color.size > 0 && !FILTERS.color.has(p.color)) return false;
+    if (FILTERS.finish.size > 0 && !FILTERS.finish.has(p.finish)) return false;
+    return true;
+  });
+
+  document.getElementById("count").textContent = list.length + " 件";
+  document.getElementById("total").textContent = PAINTS.length;
+
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("empty");
+  if (list.length === 0) {
+    grid.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  grid.innerHTML = list.map(p => {
+    const swatchClass = (p.color === "metal") ? "metallic" : (p.color === "clear") ? "clear" : "";
+    return `
+      <div class="paint-card">
+        <div class="paint-swatch ${swatchClass}" style="background-color:${escapeHtml(p.swatch)};">
+          <span class="finish-icon">${FINISH_LABEL[p.finish] || ""}</span>
+        </div>
+        <div class="paint-body">
+          <div class="paint-brand-row">
+            <span class="paint-brand mfr-${escapeHtml(p.mfr)}">${escapeHtml(MFR_NAMES[p.mfr])}</span>
+            <span class="paint-code">${escapeHtml(p.code)}</span>
+          </div>
+          <div class="paint-name">${escapeHtml(p.name)}</div>
+          <div class="paint-lineup">${escapeHtml(p.lineup)}</div>
+          <a class="paint-amazon" href="${buildUrl(p)}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleFilter(category, value, btn) {
+  if (FILTERS[category].has(value)) {
+    FILTERS[category].delete(value);
+    btn.classList.remove("active");
+  } else {
+    FILTERS[category].add(value);
+    btn.classList.add("active");
+  }
+  render();
+}
+
+function resetFilters() {
+  Object.values(FILTERS).forEach(s => s.clear());
+  document.querySelectorAll(".filter-pill.active").forEach(b => b.classList.remove("active"));
+  render();
+}
+
+document.querySelectorAll(".filter-pill[data-cat]").forEach(btn => {
+  btn.addEventListener("click", () => toggleFilter(btn.dataset.cat, btn.dataset.val, btn));
+});
+
+render();
+</script>
 
 </body>
 </html>
