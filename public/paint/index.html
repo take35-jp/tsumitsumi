@@ -139,7 +139,11 @@
   .special-divider strong { font-size: 16px; font-weight: 800; letter-spacing: 1px; }
   .special-divider .sub { font-size: 12px; color: #a1a1aa; }
 
-  /* Manufacturer subgroup */
+  /* View toggle (filter-row first row) */
+  .view-row .filter-pill.view-pill { font-size: 12px; padding: 6px 14px; }
+  .view-row .filter-pill.view-pill.active { background: #111827; color: #fff; border-color: #111827; }
+
+  /* Manufacturer subgroup (in color-axis view) */
   .mfr-subgroup { margin-bottom: 22px; }
   .mfr-subgroup:last-child { margin-bottom: 0; }
   .mfr-label { font-size: 13px; font-weight: 800; color: #111; margin: 0 0 8px; padding: 5px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; }
@@ -148,6 +152,20 @@
   .mfr-label.mfr-label-tamiya { background:#dbeafe; color:#1e40af; }
   .mfr-label.mfr-label-finishers { background:#e4e4e7; color:#18181b; }
   .mfr-label .mfr-count { font-size: 11px; color: rgba(0,0,0,0.6); font-weight: 700; }
+
+  /* Manufacturer section (in manufacturer-axis view) */
+  .mfr-section { margin-bottom: 36px; }
+  .mfr-section-header { font-size: 17px; font-weight: 800; margin: 0 0 16px; padding: 12px 18px; border-radius: 10px; display: flex; align-items: center; gap: 10px; color: #fff; }
+  .mfr-section-header .mfr-count { font-size: 12px; font-weight: 700; margin-left: auto; opacity: 0.9; }
+  .mfr-section-gsi       .mfr-section-header { background: linear-gradient(135deg, #dc2626, #991b1b); }
+  .mfr-section-gaia      .mfr-section-header { background: linear-gradient(135deg, #f97316, #c2410c); }
+  .mfr-section-tamiya    .mfr-section-header { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); }
+  .mfr-section-finishers .mfr-section-header { background: linear-gradient(135deg, #18181b, #52525b); }
+
+  .lineup-subgroup { margin-bottom: 24px; }
+  .lineup-subgroup:last-child { margin-bottom: 0; }
+  .lineup-label { font-size: 13px; font-weight: 800; color: #111; margin: 0 0 8px; padding: 5px 12px; background: #f3f4f6; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; }
+  .lineup-label .lineup-count { font-size: 11px; color: #6b7280; font-weight: 700; }
 
   /* Paint grid (within subgroup) */
   .paint-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
@@ -237,6 +255,11 @@
 
   <!-- Filter Bar -->
   <div class="filter-bar">
+    <div class="filter-row view-row">
+      <span class="filter-label">表示</span>
+      <button class="filter-pill view-pill active" data-view="color">🎨 カラー軸</button>
+      <button class="filter-pill view-pill" data-view="mfr">🏭 メーカー軸</button>
+    </div>
     <div class="filter-row">
       <span class="filter-label">メーカー</span>
       <button class="filter-pill mfr-gsi" data-cat="mfr" data-val="gsi">GSI クレオス</button>
@@ -487,6 +510,7 @@ const MFR_ORDER = ["gsi", "gaia", "tamiya", "finishers"];
 const FINISH_LABEL = { gloss: "光沢", semi: "半光沢", flat: "つや消し" };
 
 const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set() };
+let viewMode = "color"; // "color" | "mfr"
 
 function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -537,6 +561,71 @@ function renderColorSection(color, items) {
   return html;
 }
 
+// 色のソート順（メーカー軸でラインナップ内の並び順に使う）
+const COLOR_SORT_ORDER = [...HUE_ORDER, ...NEUTRAL_ORDER, ...SPECIAL_ORDER];
+function sortByColor(items) {
+  return [...items].sort((a, b) => {
+    const ai = COLOR_SORT_ORDER.indexOf(a.color);
+    const bi = COLOR_SORT_ORDER.indexOf(b.color);
+    if (ai !== bi) return ai - bi;
+    return 0;
+  });
+}
+
+// カラー軸：色 → メーカー → カード
+function renderByColorAxis(list) {
+  let html = "";
+  for (const c of HUE_ORDER) {
+    const items = list.filter(p => p.color === c);
+    if (items.length > 0) html += renderColorSection(c, items);
+  }
+  for (const c of NEUTRAL_ORDER) {
+    const items = list.filter(p => p.color === c);
+    if (items.length > 0) html += renderColorSection(c, items);
+  }
+  const specialItems = list.filter(p => SPECIAL_ORDER.includes(p.color));
+  if (specialItems.length > 0) {
+    html += `<div class="special-divider"><strong>✨ 特殊カラー</strong><span class="sub">通常色とは別ブロック</span></div>`;
+    for (const c of SPECIAL_ORDER) {
+      const items = list.filter(p => p.color === c);
+      if (items.length > 0) html += renderColorSection(c, items);
+    }
+  }
+  return html;
+}
+
+// メーカー軸：メーカー → ラインナップ → カード（ライン内は色相環順）
+function renderByMfrAxis(list) {
+  let html = "";
+  for (const mfr of MFR_ORDER) {
+    const mfrItems = list.filter(p => p.mfr === mfr);
+    if (mfrItems.length === 0) continue;
+
+    // ラインナップごとに分割（データ出現順を尊重）
+    const lineupOrder = [];
+    for (const p of mfrItems) {
+      if (!lineupOrder.includes(p.lineup)) lineupOrder.push(p.lineup);
+    }
+
+    html += `<section class="mfr-section mfr-section-${mfr}">
+      <h2 class="mfr-section-header">
+        ${escapeHtml(MFR_NAMES[mfr])}
+        <span class="mfr-count">${mfrItems.length}件</span>
+      </h2>`;
+
+    for (const lineup of lineupOrder) {
+      const lineupItems = sortByColor(mfrItems.filter(p => p.lineup === lineup));
+      html += `<div class="lineup-subgroup">
+        <span class="lineup-label">${escapeHtml(lineup)} <span class="lineup-count">(${lineupItems.length})</span></span>
+        <div class="paint-grid">${lineupItems.map(renderCard).join("")}</div>
+      </div>`;
+    }
+
+    html += `</section>`;
+  }
+  return html;
+}
+
 function render() {
   const list = PAINTS.filter(p => {
     if (FILTERS.mfr.size > 0 && !FILTERS.mfr.has(p.mfr)) return false;
@@ -558,31 +647,15 @@ function render() {
   }
   empty.style.display = "none";
 
-  let html = "";
+  root.innerHTML = viewMode === "mfr" ? renderByMfrAxis(list) : renderByColorAxis(list);
+}
 
-  // 1) 色相環順（warm → cool → warm earth）
-  for (const c of HUE_ORDER) {
-    const items = list.filter(p => p.color === c);
-    if (items.length > 0) html += renderColorSection(c, items);
-  }
-
-  // 2) 無彩色
-  for (const c of NEUTRAL_ORDER) {
-    const items = list.filter(p => p.color === c);
-    if (items.length > 0) html += renderColorSection(c, items);
-  }
-
-  // 3) 特殊（メタリック・クリアー・蛍光）— 区切り見出しつき
-  const specialItems = list.filter(p => SPECIAL_ORDER.includes(p.color));
-  if (specialItems.length > 0) {
-    html += `<div class="special-divider"><strong>✨ 特殊カラー</strong><span class="sub">通常色とは別ブロック</span></div>`;
-    for (const c of SPECIAL_ORDER) {
-      const items = list.filter(p => p.color === c);
-      if (items.length > 0) html += renderColorSection(c, items);
-    }
-  }
-
-  root.innerHTML = html;
+function setViewMode(mode) {
+  viewMode = mode;
+  document.querySelectorAll(".view-pill").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === mode);
+  });
+  render();
 }
 
 function toggleFilter(category, value, btn) {
@@ -604,6 +677,10 @@ function resetFilters() {
 
 document.querySelectorAll(".filter-pill[data-cat]").forEach(btn => {
   btn.addEventListener("click", () => toggleFilter(btn.dataset.cat, btn.dataset.val, btn));
+});
+
+document.querySelectorAll(".view-pill[data-view]").forEach(btn => {
+  btn.addEventListener("click", () => setViewMode(btn.dataset.view));
 });
 
 render();
