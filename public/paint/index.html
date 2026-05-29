@@ -219,6 +219,33 @@
 
   .disclosure { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #92400e; margin: 24px 0; }
 
+  /* 塗料タイプ特性・相性ガイド */
+  .paint-guide { background:#fff; border:1px solid #e5e7eb; border-radius:12px; margin-bottom:18px; overflow:hidden; }
+  .paint-guide > summary { cursor:pointer; padding:14px 18px; font-weight:800; font-size:15px; color:#111827; list-style:none; display:flex; align-items:center; gap:8px; background:#f9fafb; }
+  .paint-guide > summary::-webkit-details-marker { display:none; }
+  .paint-guide > summary::before { content:"▶"; font-size:11px; color:#22c55e; transition:transform .15s; }
+  .paint-guide[open] > summary::before { transform:rotate(90deg); }
+  .paint-guide .guide-inner { padding:4px 18px 20px; }
+  .guide-h { font-size:14px; font-weight:800; margin:20px 0 8px; color:#111827; padding-left:10px; border-left:4px solid #22c55e; }
+  .guide-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table.guide-table { border-collapse:collapse; width:100%; font-size:12.5px; }
+  table.guide-table th, table.guide-table td { border:1px solid #e5e7eb; padding:7px 9px; text-align:left; vertical-align:top; line-height:1.65; }
+  table.guide-table thead th { background:#eef2f7; font-weight:800; color:#1f2937; }
+  table.guide-table tbody th { background:#f6f8fa; font-weight:700; white-space:nowrap; }
+  table.charac { min-width:640px; }
+  table.compat { min-width:480px; text-align:center; }
+  table.compat th, table.compat td { text-align:center; }
+  table.compat thead th { background:#cfe0e6; color:#1f2937; }
+  table.compat tbody th { background:#eef3ee; }
+  table.compat .vlabel { writing-mode:vertical-rl; text-orientation:upright; background:#dde7e0; white-space:nowrap; letter-spacing:3px; font-weight:800; }
+  table.compat .compat-corner { background:#cfe0e6; font-size:11px; color:#52706f; font-weight:700; }
+  .mk-o { color:#dc6b2f; font-weight:800; font-size:15px; }
+  .mk-t { color:#3f7d4e; font-weight:800; font-size:15px; }
+  .mk-x { color:#4a6fa5; font-weight:800; font-size:15px; }
+  .guide-legend { font-size:12px; color:#4b5563; margin:10px 0 0; display:flex; flex-wrap:wrap; gap:6px 18px; }
+  .guide-rule { font-size:13px; font-weight:700; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin:14px 0 0; line-height:1.8; }
+  .guide-note { font-size:12px; color:#6b7280; margin-top:10px; line-height:1.85; background:#fffbeb; border-left:3px solid #f59e0b; padding:8px 12px; border-radius:4px; }
+
   footer { border-top: 1px solid #e5e7eb; margin-top: 60px; padding: 24px; text-align: center; font-size: 12px; color: #9ca3af; background: #fff; }
   footer .links { margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
   footer a { color: #6b7280; text-decoration: none; }
@@ -258,6 +285,113 @@
   <div class="placeholder-notice">
     📌 各カードの商品画像は Amazonアソシエイト Product Advertising API 承認後に順次反映されます。それまでは画像placeholder＋Amazon検索リンクとして動作。掲載点数も継続して拡充中。
   </div>
+
+  <!-- 塗料タイプ特性・相性ガイド -->
+  <details class="paint-guide">
+    <summary>🧪 塗料タイプの特性＆重ね塗り相性表（タップで開く）</summary>
+    <div class="guide-inner">
+
+      <h2 class="guide-h">① 塗料タイプ別の特性</h2>
+      <div class="guide-table-wrap">
+        <table class="guide-table charac">
+          <thead>
+            <tr>
+              <th>タイプ</th>
+              <th>うすめ液（溶剤）</th>
+              <th>乾燥・塗膜</th>
+              <th>匂い・安全性</th>
+              <th>得意な用途</th>
+              <th>代表ブランド</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>ラッカー<br/><span style="font-weight:400;color:#6b7280;font-size:11px;">（溶剤系アクリル）</span></th>
+              <td>ラッカー専用うすめ液</td>
+              <td>速乾・塗膜は最も強い</td>
+              <td>強い臭気・要マスク＆換気</td>
+              <td>下地〜本塗装まで万能。エアブラシの定番</td>
+              <td>Mr.カラー / ガイアカラー / タミヤLP / GGX</td>
+            </tr>
+            <tr>
+              <th>水性・アクリル</th>
+              <td>水 or 専用うすめ液</td>
+              <td>やや遅乾・塗膜は柔らかめ（アクリジョンは硬化後に強くなる）</td>
+              <td>低臭・室内向き</td>
+              <td>筆塗り・初心者・換気しにくい環境</td>
+              <td>水性ホビーカラー / タミヤアクリル / アクリジョン</td>
+            </tr>
+            <tr>
+              <th>エナメル</th>
+              <td>エナメル専用溶剤（石油系）</td>
+              <td>遅乾・塗膜は薄く弱い</td>
+              <td>中程度の臭気</td>
+              <td>スミ入れ・ウォッシング・部分塗装</td>
+              <td>タミヤエナメル / ガイア NAZCA エナメル</td>
+            </tr>
+            <tr>
+              <th>ウレタン</th>
+              <td>専用シンナー（主に2液型）</td>
+              <td>硬化後は最も硬く耐溶剤性◎</td>
+              <td>強い臭気・要防護</td>
+              <td>カーモデルのクリアー・本格仕上げ</td>
+              <td>フィニッシャーズ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 class="guide-h">② 重ね塗りの相性表（下塗り × 上塗り）</h2>
+      <div class="guide-table-wrap">
+        <table class="guide-table compat">
+          <thead>
+            <tr>
+              <td class="compat-corner" colspan="2" rowspan="2">下塗り＼上塗り</td>
+              <th colspan="4">上塗り（上に塗る）</th>
+            </tr>
+            <tr>
+              <th>ラッカー</th><th>水性・アクリル</th><th>エナメル</th><th>ウレタン</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th class="vlabel" rowspan="4">下塗り</th>
+              <th>ラッカー</th>
+              <td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td>
+            </tr>
+            <tr>
+              <th>水性・アクリル</th>
+              <td><span class="mk-x">×</span></td><td><span class="mk-o">○</span></td><td><span class="mk-t">△</span></td><td><span class="mk-t">△</span></td>
+            </tr>
+            <tr>
+              <th>エナメル</th>
+              <td><span class="mk-x">×</span></td><td><span class="mk-t">△</span></td><td><span class="mk-o">○</span></td><td><span class="mk-x">×</span></td>
+            </tr>
+            <tr>
+              <th>ウレタン</th>
+              <td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="guide-legend">
+        <span><span class="mk-o">○</span> 問題なし</span>
+        <span><span class="mk-t">△</span> 要注意（はがれ・割れ・はじきの恐れ。端材でテスト推奨）</span>
+        <span><span class="mk-x">×</span> 不可（下地が溶ける／定着しない）</span>
+      </div>
+
+      <div class="guide-rule">
+        💡 迷ったらこの順番： <strong>ラッカー（下地）→ 水性・アクリル（本塗装）→ エナメル（スミ入れ・上）</strong><br/>
+        上に行くほど溶剤が弱く、下の層を侵さないのが基本ルール。逆順（弱い下地に強い溶剤）は溶けるのでNG。
+      </div>
+      <div class="guide-note">
+        ※ <strong>エナメル溶剤は応力のかかったプラを割る</strong>ことがあります。可動部・ABS・テンションのかかる箇所への流し込みは要注意。<br/>
+        ※ <strong>アクリジョン</strong>は水性ながら乾燥後に耐溶剤性が出るため、上にラッカーを重ねやすいハイブリッド型です。<br/>
+        ※ △の組み合わせでも、間に<strong>水性／ラッカーのクリアーでコート</strong>すれば層を保護でき、相性問題を回避できます。
+      </div>
+
+    </div>
+  </details>
 
   <!-- Filter Bar -->
   <div class="filter-bar">
