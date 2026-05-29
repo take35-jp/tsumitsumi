@@ -90,5 +90,119 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- 静的コンテンツ（アプリ下部・クローラー/初回訪問者向けの紹介＆ガイド導線） -->
+    <style>
+      .tt-info { max-width: 880px; margin: 0 auto; padding: 40px 20px 56px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; color: #1f2937; line-height: 1.85; }
+      .tt-info h2 { font-size: 22px; font-weight: 800; margin: 36px 0 12px; padding-left: 12px; border-left: 5px solid #22c55e; color: #111827; }
+      .tt-info h2:first-child { margin-top: 0; }
+      .tt-info h3 { font-size: 16px; font-weight: 700; margin: 18px 0 6px; color: #111827; }
+      .tt-info p { margin: 0 0 14px; font-size: 15px; color: #374151; }
+      .tt-info ul, .tt-info ol { margin: 0 0 14px; padding-left: 1.4em; color: #374151; font-size: 15px; }
+      .tt-info li { margin-bottom: 6px; }
+      .tt-info .tt-lead { background: #fff7ed; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 16px 18px; font-size: 15px; }
+      .tt-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 12px 0 4px; }
+      @media (max-width: 640px) { .tt-cards { grid-template-columns: 1fr; } }
+      .tt-card { display: block; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; text-decoration: none; color: inherit; transition: box-shadow .15s, transform .15s, border-color .15s; }
+      .tt-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.06); border-color: #bbf7d0; }
+      .tt-card .tt-card-tag { display: inline-block; background: #f0fdf4; color: #166534; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-bottom: 6px; }
+      .tt-card .tt-card-title { font-size: 15px; font-weight: 800; color: #111827; margin-bottom: 4px; line-height: 1.5; }
+      .tt-card .tt-card-desc { font-size: 13px; color: #4b5563; line-height: 1.7; }
+      .tt-faq h3 { font-size: 15px; }
+      .tt-info-footer { border-top: 1px solid #e5e7eb; margin-top: 40px; padding-top: 20px; text-align: center; font-size: 13px; color: #6b7280; }
+      .tt-info-footer .tt-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin-bottom: 10px; }
+      .tt-info-footer a { color: #15803d; text-decoration: none; }
+      .tt-info-footer a:hover { text-decoration: underline; }
+    </style>
+
+    <section class="tt-info" aria-label="ツミツミについて・プラモ製作ガイド">
+      <h2>ツミツミとは — 完全無料の積みプラ管理アプリ</h2>
+      <p class="tt-lead">
+        「<strong>TSUMI TSUMI（ツミツミ）</strong>」は、増えていく積みプラ（未組立のプラモデル）を、<strong>バーコードをスキャンするだけ</strong>でカンタンに管理できる無料のWebアプリです。ガンプラからカーモデル・スケールモデルまで対応。インストール不要、会員登録も不要で、スマホのブラウザからすぐに使えます。
+      </p>
+
+      <h2>主な機能</h2>
+      <ul>
+        <li><strong>バーコードスキャン登録</strong>：箱のJANコードを読み取るだけで商品名・メーカー・参考価格を自動入力。連続スキャンでまとめ登録も可能。</li>
+        <li><strong>積みプラの一覧管理</strong>：未組立／組立中／完成済みの状態、タグ、評価、購入日を記録。リスト表示とグリッド表示を切り替えできます。</li>
+        <li><strong>総額の見える化</strong>：希望小売価格 × 個数で「積みの総額」を自動計算。積みの規模をひと目で把握。</li>
+        <li><strong>SNSシェア画像の生成</strong>：手持ちのコレクションを画像化してX（旧Twitter）でシェア。</li>
+        <li><strong>バックアップ</strong>：Excel／CSVでエクスポート・インポート。機種変更も安心。</li>
+      </ul>
+      <p>キット情報は<strong>お使いの端末内（ブラウザのローカルストレージ）に保存</strong>され、サーバーには送信されません。プライバシーを重視した設計です。</p>
+
+      <h2>使い方は3ステップ</h2>
+      <ol>
+        <li>画面下の<strong>スキャンボタン</strong>をタップしてカメラを起動</li>
+        <li>プラモの箱の<strong>バーコードを読み取る</strong>（手動入力でもOK）</li>
+        <li>状態やタグを設定して<strong>登録</strong>。あとは一覧で管理するだけ</li>
+      </ol>
+      <p>詳しい操作は <a href="/manual.html" style="color:#15803d;font-weight:700;">取扱説明書</a> でも解説しています。</p>
+
+      <h2>プラモ製作お役立ちガイド</h2>
+      <p>ツミツミでは、管理人が実際に使って効果を確認した<strong>プラモ製作のTIPSや塗料情報</strong>も発信しています。初心者の工具選びから、塗装・仕上げのコツまで、製作に役立つ知識をまとめています。</p>
+      <div class="tt-cards">
+        <a class="tt-card" href="/tips/paint-compatibility.html">
+          <span class="tt-card-tag">塗装・基礎知識</span>
+          <div class="tt-card-title">塗料の種類と重ね塗りの相性 完全ガイド</div>
+          <div class="tt-card-desc">ラッカー・水性・エナメル・ウレタンの特性と、失敗しない塗り順を図解で解説。</div>
+        </a>
+        <a class="tt-card" href="/paint/">
+          <span class="tt-card-tag">データベース</span>
+          <div class="tt-card-title">プラモデル塗料大全（色相環順×メーカー別）</div>
+          <div class="tt-card-desc">主要4メーカーの塗料を色で並べて横断比較。同じ色を各社で見比べられます。</div>
+        </a>
+        <a class="tt-card" href="/tips/gate-whitening.html">
+          <span class="tt-card-tag">仕上げ・トラブル解決</span>
+          <div class="tt-card-title">ゲート跡が白くなる原因と完全な解決法</div>
+          <div class="tt-card-desc">白化が起きる原理から、予防の二度切り、4つの対処法まで。</div>
+        </a>
+        <a class="tt-card" href="/tips/beginner-tools.html">
+          <span class="tt-card-tag">工具・準備</span>
+          <div class="tt-card-title">ガンプラ初心者が最初に揃える工具5選</div>
+          <div class="tt-card-desc">1万円以下で揃う、本当に必要な5点を厳選して紹介。</div>
+        </a>
+      </div>
+      <p style="margin-top:12px;"><a href="/tips/" style="color:#15803d;font-weight:700;">→ プラモ製作TIPS一覧をすべて見る</a> ／ <a href="/gears.html" style="color:#15803d;font-weight:700;">→ おすすめ定番アイテム</a></p>
+
+      <div class="tt-faq">
+        <h2>よくある質問</h2>
+        <h3>Q. 本当に無料で使えますか？</h3>
+        <p>はい、完全無料です。会員登録もアプリのインストールも不要で、ブラウザからそのままご利用いただけます。</p>
+        <h3>Q. ガンプラ以外のプラモデルも管理できますか？</h3>
+        <p>できます。カーモデル、スケールモデル、フィギュアなど、バーコード（JANコード）が付いている製品なら登録可能です。手動登録にも対応しています。</p>
+        <h3>Q. データはどこに保存されますか？</h3>
+        <p>登録したキット情報は、お使いの端末のブラウザ内に保存されます。サーバーには送信しないため、プライバシー面で安心です。バックアップ機能でExcel／CSVに書き出すこともできます。</p>
+        <h3>Q. 機種変更したらデータは消えますか？</h3>
+        <p>バックアップ（エクスポート）したファイルを新しい端末でインポートすれば引き継げます。詳しくは取扱説明書をご覧ください。</p>
+      </div>
+
+      <div class="tt-info-footer">
+        <div class="tt-links">
+          <a href="/tips/">TIPS一覧</a>
+          <a href="/paint/">塗料大全</a>
+          <a href="/gears.html">おすすめ定番アイテム</a>
+          <a href="/manual.html">取扱説明書</a>
+          <a href="/about.html">運営者情報</a>
+          <a href="/terms.html">利用規約</a>
+          <a href="/privacy.html">プライバシーポリシー</a>
+          <a href="https://x.com/tsumitsumi_pla" target="_blank" rel="noopener noreferrer">@tsumitsumi_pla</a>
+        </div>
+        <div>© 2026 TSUMI TSUMI</div>
+      </div>
+    </section>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "本当に無料で使えますか？", "acceptedAnswer": { "@type": "Answer", "text": "はい、完全無料です。会員登録もアプリのインストールも不要で、ブラウザからそのままご利用いただけます。" } },
+        { "@type": "Question", "name": "ガンプラ以外のプラモデルも管理できますか？", "acceptedAnswer": { "@type": "Answer", "text": "できます。カーモデル、スケールモデル、フィギュアなど、バーコード（JANコード）が付いている製品なら登録可能です。手動登録にも対応しています。" } },
+        { "@type": "Question", "name": "データはどこに保存されますか？", "acceptedAnswer": { "@type": "Answer", "text": "登録したキット情報はお使いの端末のブラウザ内に保存され、サーバーには送信されません。バックアップ機能でExcel／CSVに書き出すこともできます。" } },
+        { "@type": "Question", "name": "機種変更したらデータは消えますか？", "acceptedAnswer": { "@type": "Answer", "text": "バックアップ（エクスポート）したファイルを新しい端末でインポートすれば引き継げます。" } }
+      ]
+    }
+    </script>
   </body>
 </html>
