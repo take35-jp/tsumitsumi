@@ -49,6 +49,12 @@
       background: #333; color: #fff; border: none; padding: 6px 14px;
       border-radius: 6px; font-size: 12px; cursor: pointer;
     }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .header-link {
+      background: #4f8ef7; color: #fff; text-decoration: none; padding: 6px 14px;
+      border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-block; white-space: nowrap;
+    }
+    .header-link:hover { background: #3b7de0; }
 
     .container { max-width: 900px; margin: 0 auto; padding: 24px; }
 
@@ -253,7 +259,10 @@
       <div class="header-title">ツミツミ 管理ツール</div>
       <div class="header-sub">商品マスタ管理</div>
     </div>
-    <button class="logout-btn" onclick="logout()">ログアウト</button>
+    <div class="header-actions">
+      <a class="header-link" href="/paint/" target="_blank" rel="noopener">🎨 塗料大全</a>
+      <button class="logout-btn" onclick="logout()">ログアウト</button>
+    </div>
   </div>
 
   <div class="container">
