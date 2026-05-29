@@ -1381,7 +1381,7 @@ function renderColorSection(color, items) {
 }
 
 // 色のソート順（メーカー軸でラインナップ内の並び順に使う）
-const COLOR_SORT_ORDER = [...HUE_ORDER, ...NEUTRAL_ORDER, ...SURFACER_ORDER, ...SPECIAL_ORDER];
+const COLOR_SORT_ORDER = [...HUE_ORDER, ...NEUTRAL_ORDER, ...SPECIAL_ORDER, ...SURFACER_ORDER];
 function sortByColor(items) {
   return [...items].sort((a, b) => {
     const ai = COLOR_SORT_ORDER.indexOf(a.color);
@@ -1402,18 +1402,19 @@ function renderByColorAxis(list) {
     const items = list.filter(p => p.color === c);
     if (items.length > 0) html += renderColorSection(c, items);
   }
-  const surfacerItems = list.filter(p => SURFACER_ORDER.includes(p.color));
-  if (surfacerItems.length > 0) {
-    html += `<div class="surfacer-divider"><strong>🎨 サーフェイサー（下地塗料）</strong><span class="sub">メーカー横断でまとめて比較</span></div>`;
-    for (const c of SURFACER_ORDER) {
-      const items = list.filter(p => p.color === c);
-      if (items.length > 0) html += renderColorSection(c, items);
-    }
-  }
   const specialItems = list.filter(p => SPECIAL_ORDER.includes(p.color));
   if (specialItems.length > 0) {
     html += `<div class="special-divider"><strong>✨ 特殊カラー</strong><span class="sub">通常色とは別ブロック</span></div>`;
     for (const c of SPECIAL_ORDER) {
+      const items = list.filter(p => p.color === c);
+      if (items.length > 0) html += renderColorSection(c, items);
+    }
+  }
+  // サーフェイサー（下地塗料）は一番下に配置
+  const surfacerItems = list.filter(p => SURFACER_ORDER.includes(p.color));
+  if (surfacerItems.length > 0) {
+    html += `<div class="surfacer-divider"><strong>🎨 サーフェイサー（下地塗料）</strong><span class="sub">メーカー横断でまとめて比較</span></div>`;
+    for (const c of SURFACER_ORDER) {
       const items = list.filter(p => p.color === c);
       if (items.length > 0) html += renderColorSection(c, items);
     }
