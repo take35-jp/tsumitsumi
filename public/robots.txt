@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /admax-rect.html
+Disallow: /admax-banner.html
 
 Sitemap: https://tsumitsumi.vercel.app/sitemap.xml
