@@ -5,3 +5,4 @@ Disallow: /admax-rect.html
 Disallow: /admax-banner.html
 
 Sitemap: https://tsumitsumi.vercel.app/sitemap.xml
+Sitemap: https://tsumitsumi.vercel.app/sitemap-v2.xml
