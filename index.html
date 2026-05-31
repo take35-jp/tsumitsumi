@@ -47,6 +47,9 @@
       })();
     </script>
     <style>
+      /* #root にビューポート分の高さを予約し、JS読み込み前に下部の静的コンテンツ(.tt-info)
+         が一瞬画面に出る『LPフラッシュ』を防ぐ。背景色はApp.jsxのroot背景と一致させる。 */
+      #root { min-height: 100vh; background: #f8f9fa; }
       /* ダークモード：filter は :root(html) に適用する。body に当てると body が
          position:fixed 要素の包含ブロックになり、body が viewport より長い場合に
          モーダルが下端に飛ぶ（html はビューポート基準なので問題なし）。 */
