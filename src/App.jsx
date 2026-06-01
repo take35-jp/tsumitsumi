@@ -3560,35 +3560,6 @@ export default function App() {
                   </div>
                 </div>
               )}
-              {/* Amazonアソシエイト：JAN または商品名で Amazon 検索へ送客。
-                  未完成/完成にかかわらず表示（追加購入・関連工具・塗料・撮影グッズ等の需要があるため）。 */}
-              {makeAmazonAffUrl(detail) && (
-                <div style={{ marginTop: 16 }}>
-                  <a
-                    href={makeAmazonAffUrl(detail)}
-                    target="_blank"
-                    rel="nofollow noopener noreferrer sponsored"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      padding: "12px",
-                      background: "#fff7ed",
-                      color: "#9a3412",
-                      border: "1.5px solid #fed7aa",
-                      borderRadius: 12,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      textDecoration: "none",
-                    }}>
-                    🛒 Amazonで関連商品を見る
-                  </a>
-                  <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "center", marginTop: 4, lineHeight: 1.5 }}>
-                    ※ Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています
-                  </div>
-                </div>
-              )}
               {!detail.completed && (
                 <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
                   <button style={{ ...s.wantBtn, marginTop: 0, width: "auto", flex: 1 }} onClick={() => handleWant(detail)}>
@@ -3612,6 +3583,35 @@ export default function App() {
                     }}>
                     💰 積みを売る
                   </a>
+                </div>
+              )}
+              {/* Amazonアソシエイト：JAN または商品名で Amazon 検索へ送客。
+                  譲る・売るの下に小さめサイズで配置（控えめなセカンダリ動線）。 */}
+              {makeAmazonAffUrl(detail) && (
+                <div style={{ marginTop: 10 }}>
+                  <a
+                    href={makeAmazonAffUrl(detail)}
+                    target="_blank"
+                    rel="nofollow noopener noreferrer sponsored"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      padding: "6px 10px",
+                      background: "#fff7ed",
+                      color: "#9a3412",
+                      border: "1px solid #fed7aa",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textDecoration: "none",
+                    }}>
+                    🛒 Amazonで関連商品を見る
+                  </a>
+                  <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "center", marginTop: 3, lineHeight: 1.5 }}>
+                    ※ Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています
+                  </div>
                 </div>
               )}
               <div style={s.modalBtns}>
