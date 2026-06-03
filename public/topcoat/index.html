@@ -162,6 +162,37 @@
   footer .links { margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
   footer a { color: #6b7280; text-decoration: none; }
   footer a:hover { color: #22c55e; }
+
+  /* HOWTOガイド領域 */
+  .howto-head { background: linear-gradient(135deg,#4f8ef7,#22c55e); color:#fff; padding:18px 22px; border-radius:14px; margin: 44px 0 22px; }
+  .howto-head h2 { color:#fff; margin:0; font-size:20px; font-weight:800; }
+  .howto-head p { color:rgba(255,255,255,0.95); margin:4px 0 0; font-size:13px; line-height:1.7; }
+  .howto h3 { font-size:17px; font-weight:800; margin:30px 0 10px; padding-left:12px; border-left:5px solid #4f8ef7; color:#111827; }
+  .howto h4 { font-size:14px; font-weight:700; margin:14px 0 6px; color:#111827; }
+  .howto p { font-size:14px; color:#374151; line-height:1.85; margin:0 0 12px; }
+  .howto ol, .howto ul { font-size:14px; color:#374151; margin:0 0 14px; padding-left:1.4em; }
+  .howto li { margin-bottom:5px; line-height:1.75; }
+  .howto strong { color:#b91c1c; font-weight:700; }
+  .howto a { color:#15803d; font-weight:700; text-decoration:none; }
+  .howto a:hover { text-decoration:underline; }
+  .howto .tip-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px 16px; margin:14px 0; font-size:13px; }
+  .howto .tip-box::before { content:"💡 "; font-weight:700; }
+  .howto .warning-box { background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px 16px; margin:14px 0; font-size:13px; }
+  .howto .warning-box::before { content:"⚠️ "; }
+  .howto figure { margin:18px 0; }
+  .howto figure svg { width:100%; height:auto; display:block; background:#fff; border:1px solid #e5e7eb; border-radius:10px; }
+  .howto .quick-table { border-collapse:collapse; width:100%; font-size:13px; margin:8px 0 18px; }
+  .howto .quick-table th, .howto .quick-table td { border:1px solid #e5e7eb; padding:8px 10px; text-align:left; vertical-align:top; line-height:1.65; }
+  .howto .quick-table thead th { background:#eef2f7; font-weight:800; }
+  .howto .quick-table tbody th { background:#f6f8fa; font-weight:700; white-space:nowrap; }
+  .howto-toc { background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:14px 18px; margin:12px 0 22px; }
+  .howto-toc-title { font-size:13px; font-weight:800; color:#111827; margin-bottom:6px; }
+  .howto-toc ul { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(2,1fr); gap:4px 16px; }
+  @media (max-width:640px) { .howto-toc ul { grid-template-columns:1fr; } }
+  .howto-toc li { font-size:13px; padding:3px 0; }
+  .howto-toc a { color:#15803d; text-decoration:none; }
+  .howto-toc a:hover { text-decoration:underline; }
+
   @media (max-width: 540px) { h1 { font-size: 21px; } main { padding: 22px 14px 50px; } .filter-bar { padding: 10px 12px; } .filter-label { min-width: 48px; font-size: 10px; } .filter-pill { font-size: 10px; padding: 3px 8px; } .finish-header { font-size: 14px; padding: 8px 12px; } }
 </style>
 </head>
@@ -226,6 +257,164 @@
 
   <div id="grid"></div>
   <div id="empty" class="empty-state" style="display:none;">条件に一致するトップコートが見つかりません。フィルタを変更してください。</div>
+
+  <!-- ===== HOWTO・TIPS ガイド ===== -->
+  <div class="howto-head">
+    <h2>📘 トップコート HOWTO・選び方ガイド</h2>
+    <p>用途別の早見表から、缶スプレーの基本5ステップ、白化を防ぐコツ、塗装順序、UVカットの要否まで一気に解説。</p>
+  </div>
+
+  <nav class="howto-toc" aria-label="ガイド目次">
+    <div class="howto-toc-title">📋 目次</div>
+    <ul>
+      <li><a href="#howto-quick">① どれを選べばいい？早見表</a></li>
+      <li><a href="#howto-can">② 缶スプレーの基本5ステップ</a></li>
+      <li><a href="#howto-cabu">③ 白化（かぶり）を防ぐコツ</a></li>
+      <li><a href="#howto-order">④ 塗装順序の中での位置</a></li>
+      <li><a href="#howto-airbrush">⑤ エアブラシで吹くときの違い</a></li>
+      <li><a href="#howto-uv">⑥ UVカットは必要？</a></li>
+    </ul>
+  </nav>
+
+  <section class="howto">
+
+    <!-- ① 早見表 -->
+    <h3 id="howto-quick">① どれを選べばいい？— 用途別 早見表</h3>
+    <p>まずは「自分の作るもの」と「持っている道具」から、適したタイプを絞り込みましょう。</p>
+    <div style="overflow-x:auto;">
+      <table class="quick-table">
+        <thead><tr><th>こんな人・用途</th><th>おすすめ仕上げ</th><th>おすすめ形態</th><th>定番製品</th></tr></thead>
+        <tbody>
+          <tr><th>ガンプラ初心者・素組み派</th><td>つや消し</td><td>缶スプレー</td><td>水性プレミアム つや消し / TS-80</td></tr>
+          <tr><th>カーモデル仕上げ</th><td>光沢</td><td>缶 or エアブラシ</td><td>TS-13 / フィニッシャーズ GP1</td></tr>
+          <tr><th>キャラ系・MS全般</th><td>つや消し or 半光沢</td><td>缶スプレー</td><td>Mr.スーパークリアー UVカット 各種</td></tr>
+          <tr><th>長期保管・色褪せ対策</th><td>—（UVカット必須）</td><td>缶 or ビン</td><td>Mr.スーパークリアー UVカット / GGX UVカット</td></tr>
+          <tr><th>水性塗装の上に重ねたい</th><td>—（系統合わせる）</td><td>缶スプレー（水性）</td><td>水性プレミアムトップコート</td></tr>
+          <tr><th>エアブラシ持ちで節約</th><td>すべて対応</td><td>ビン（大容量）</td><td>ガイア Ex-03/04/09/10、C181/182</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tip-box">
+      迷ったら：<strong>ガンプラなら「Mr.スーパークリアー UVカット つや消し」缶スプレー</strong>。1本で大半のキットに対応できる定番中の定番です。</div>
+
+    <!-- ② 缶スプレー基本 -->
+    <h3 id="howto-can">② 缶スプレーの基本5ステップ</h3>
+    <p>缶スプレーは手軽ですが「ただプッシュする」だけだと白化・タレ・粒立ちが出ます。次の5つを守るだけで仕上がりが激変します。</p>
+    <ol>
+      <li><strong>缶をよく振る</strong>：30秒〜1分。中の塗料・撹拌ボールが回る音を確認。</li>
+      <li><strong>試し吹き</strong>：いきなり本番ではなく、別紙やランナーで吹き具合を確認。</li>
+      <li><strong>距離は15〜30cm</strong>：近すぎ＝タレ、遠すぎ＝粒立ち。指3本〜手のひらの距離が目安。</li>
+      <li><strong>動かしながら吹く</strong>：止まったまま吹かない。左→右、または上→下に一方向で素早く。</li>
+      <li><strong>薄く何度も</strong>：1回で隠そうとせず、薄塗りを2〜3回。各回 <strong>10〜15分</strong>乾燥。</li>
+    </ol>
+
+    <figure>
+      <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="缶スプレーの正しい吹き方の距離と動かし方の図">
+        <text x="360" y="28" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="800" fill="#111827">缶スプレーの正しい吹き方 — 距離・動かし方</text>
+        <!-- ターゲット(キット) -->
+        <rect x="290" y="160" width="140" height="60" fill="#cbd5e1" stroke="#475569" stroke-width="1.5" rx="6"/>
+        <text x="360" y="196" text-anchor="middle" font-size="12" font-weight="700" fill="#1f2937">プラモデル</text>
+        <!-- 缶(右側→左→右に動かす) -->
+        <g transform="translate(120,80)">
+          <rect width="40" height="70" fill="#1e3a8a" stroke="#0c1c4c" stroke-width="1.5" rx="3"/>
+          <rect x="14" y="-12" width="12" height="14" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+          <text x="20" y="42" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">CAN</text>
+        </g>
+        <text x="170" y="80" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">缶を左右に動かす</text>
+        <!-- 噴霧コーン -->
+        <polygon points="140,150 290,170 290,210 140,160" fill="#bfdbfe" opacity="0.5" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3 2"/>
+        <!-- 距離寸法線 -->
+        <line x1="160" y1="245" x2="290" y2="245" stroke="#dc2626" stroke-width="1.5"/>
+        <polygon points="160,245 168,241 168,249" fill="#dc2626"/>
+        <polygon points="290,245 282,241 282,249" fill="#dc2626"/>
+        <text x="225" y="263" text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">距離 15〜30cm</text>
+        <!-- 動かす矢印 -->
+        <g stroke="#16a34a" stroke-width="2" fill="#16a34a">
+          <line x1="100" y1="120" x2="260" y2="120"/>
+          <polygon points="260,120 250,114 250,126"/>
+          <line x1="260" y1="135" x2="100" y2="135"/>
+          <polygon points="100,135 110,129 110,141"/>
+        </g>
+        <text x="180" y="115" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">薄く何度も往復</text>
+        <!-- 右側のNG例 -->
+        <g transform="translate(530,80)">
+          <rect x="-10" y="60" width="40" height="70" fill="#7f1d1d" stroke="#450a0a" stroke-width="1.5" rx="3"/>
+          <text x="10" y="102" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">CAN</text>
+          <line x1="35" y1="120" x2="120" y2="120" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="80" y="50" font-size="10" font-weight="700" fill="#991b1b">NG: 近すぎ＆止めて吹く</text>
+          <text x="80" y="65" font-size="10" font-weight="700" fill="#991b1b">→ タレ・厚塗り</text>
+          <text x="80" y="170" font-size="10" font-weight="700" fill="#991b1b">距離 &lt; 10cm</text>
+        </g>
+      </svg>
+    </figure>
+
+    <div class="warning-box"><strong>缶が冷たい時は要注意</strong>。気温が低い冬や、屋外保管していた缶は粒立ちが激しくなります。<strong>常温に戻して</strong>から、ぬるま湯（40℃前後）に1〜2分浸けて少し温めると吹きが安定。**※絶対に直火・熱湯はNG**（破裂の危険）。</div>
+
+    <!-- ③ 白化対策 -->
+    <h3 id="howto-cabu">③ 白化（かぶり）を防ぐコツ</h3>
+    <p>つや消しトップコート後に塗膜が<strong>白く曇る</strong>現象を「白化（かぶり）」と呼びます。一度かぶると地味なリカバリーが必要なので、予防が肝心です。</p>
+    <h4>主な原因と対策</h4>
+    <ul>
+      <li><strong>湿度70%以上の日</strong>に吹くと、空気中の水分が塗膜内に閉じ込められて白く濁る → <strong>晴れた日・乾燥した日に作業</strong>。湿度計を1個用意すると確実。</li>
+      <li><strong>厚吹き</strong>：1回で塗膜が厚くなると、内部の溶剤が抜ける前に表面が乾いて水分を閉じ込める → <strong>薄吹きを2〜3回</strong>。</li>
+      <li><strong>近距離</strong>：勢いで湿気を巻き込む → 距離15〜30cm。</li>
+      <li><strong>缶が冷たい</strong>：噴霧が冷えて結露 → 缶を常温〜ぬるま湯で温める。</li>
+    </ul>
+    <h4>もし白化してしまったら</h4>
+    <ol>
+      <li><strong>軽い白化</strong>：もう一度同じトップコートを<strong>薄く重ねる</strong>と消えることがある。</li>
+      <li><strong>中程度</strong>：「Mr.カラー かぶり止め」などの<strong>かぶり防止剤・リターダー混合シンナー</strong>で吹き直し。</li>
+      <li><strong>重症</strong>：耐水ペーパーで磨いて再吹き直し（最終手段）。</li>
+    </ol>
+    <div class="tip-box">梅雨〜夏場の作業は、エアコンの除湿が効いた部屋＋換気で実施するのが理想。</div>
+
+    <!-- ④ 塗装順序 -->
+    <h3 id="howto-order">④ 塗装手順の中での「トップコートの位置」</h3>
+    <p>トップコートは<strong>すべての塗装工程の「最後」</strong>です。正しい順序：</p>
+    <ol>
+      <li>サーフェイサー（下地）</li>
+      <li>基本塗装（ラッカー or 水性）</li>
+      <li>部分塗装・スミ入れ（エナメル等）</li>
+      <li>デカール貼付</li>
+      <li><strong>トップコート</strong>（光沢でデカール保護 → つや消しで質感統一、の2回吹きも有効）</li>
+    </ol>
+    <p>各層の溶剤系統と相性は <a href="/tips/paint-compatibility.html">塗料の重ね塗りガイド</a> で詳しく解説。デカールの貼り方は <a href="/tips/decal-guide.html">デカール完全ガイド</a>、スミ入れは <a href="/tips/panel-lining.html">スミ入れ完全ガイド</a> をどうぞ。</p>
+
+    <h4>光沢→つや消し の2段吹きテクニック</h4>
+    <p>カーモデル以外でも有用なテク：</p>
+    <ol>
+      <li>デカール後、まず<strong>光沢トップコートで保護＆段差消し</strong>（デカール段差をクリアー層で埋める）</li>
+      <li>完全乾燥後、<strong>つや消しトップコートで質感統一</strong></li>
+    </ol>
+    <p>この手間でデカールの剥がれ・段差が激減します。</p>
+
+    <!-- ⑤ エアブラシ -->
+    <h3 id="howto-airbrush">⑤ エアブラシで吹くときの違い</h3>
+    <p>ビン入りトップコート（Mr.カラーC181/182、ガイアExシリーズ等）はエアブラシ前提。缶スプレーと違うのは以下：</p>
+    <ul>
+      <li><strong>希釈が必要</strong>：専用うすめ液で1:1〜1:1.5程度に薄める。瓶のままだと濃すぎる。</li>
+      <li><strong>圧</strong>：0.1〜0.15MPa（缶より低圧）。</li>
+      <li><strong>距離</strong>：10〜15cm（缶より近い）。</li>
+      <li><strong>コスパ</strong>：大容量だが希釈分も計算すると缶の約半額。長期的に塗装するなら断然お得。</li>
+      <li><strong>仕上がり調整可</strong>：希釈率を変えれば「半つや」を作るのも自在。</li>
+    </ul>
+    <div class="tip-box">ウレタンクリアー（フィニッシャーズGP1等）は2液型なので、混ぜたら<strong>その日に使い切る</strong>のが鉄則。少量小分けで使うのがおすすめ。</div>
+
+    <!-- ⑥ UVカット -->
+    <h3 id="howto-uv">⑥ UVカットは必要？</h3>
+    <p>結論：<strong>飾る場所に直射日光・蛍光灯が当たるなら効果あり、暗所保管なら不要</strong>。</p>
+    <table class="quick-table">
+      <thead><tr><th>状況</th><th>UVカットの必要性</th></tr></thead>
+      <tbody>
+        <tr><td>窓際に飾る・撮影する</td><td><strong>必要</strong>（黄変・退色対策）</td></tr>
+        <tr><td>蛍光灯・LED下の常設展示</td><td>あった方が安心</td></tr>
+        <tr><td>暗所保管・たまに出して眺める程度</td><td>不要（通常版で十分）</td></tr>
+        <tr><td>クリアパーツがある（武器・センサー等）</td><td><strong>必須</strong>（透明部の黄変防止）</td></tr>
+      </tbody>
+    </table>
+    <p>特に<strong>白系・クリア系のキット</strong>は経年で黄ばみやすいので、長く飾る予定ならUVカット仕様を選ぶ価値があります。</p>
+
+  </section>
 
   <section class="faq">
     <h2>よくある質問（FAQ）</h2>
