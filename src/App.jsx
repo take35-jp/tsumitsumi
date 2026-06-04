@@ -160,6 +160,11 @@ function makeAmazonAffUrl(kit) {
 }
 
 const RANKS = [
+  { min: 2000, label: "全てを積み、全てを手放した。", color: "#1f2937" },
+  { min: 1800, label: "創世ノツミ神", color: "#fde047" },
+  { min: 1600, label: "多次元宇宙のツミ神", color: "#c026d3" },
+  { min: 1400, label: "小宇宙のツミ神", color: "#a855f7" },
+  { min: 1200, label: "七大陸ノツミ神", color: "#059669" },
   { min: 1000, label: "天照大積ミ神", color: "#fbbf24" },
   { min: 900, label: "最早、積み神様", color: "#ec4899" },
   { min: 800, label: "神界の積み人", color: "#4338ca" },
@@ -1314,7 +1319,12 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.29", date: "2026/05/25", isNew: true, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
+    { ver: "v1.30", date: "2026/05/30", isNew: true, items: [
+      "積みプラ数ランクを最大2000まで拡張（七大陸ノツミ神／小宇宙のツミ神／多次元宇宙のツミ神／創世ノツミ神／『全てを積み、全てを手放した。』の5段階を追加）",
+      "Amazonリンクのデザインをサイト全体で黒地・白文字に統一",
+      "キット詳細のAmazon関連商品ボタンを縮小し『譲る／売る』の下に再配置"
+    ] },
+    { ver: "v1.29", date: "2026/05/25", isNew: false, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
     { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
     { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
     { ver: "v1.26", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
@@ -1546,10 +1556,22 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.29 */}
+          {/* v1.30 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.30</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/30</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・積みプラ数ランクを最大2000まで拡張（七大陸ノツミ神／小宇宙のツミ神／多次元宇宙のツミ神／創世ノツミ神／『全てを積み、全てを手放した。』の5段階を追加）<br/>
+              ・Amazonリンクのデザインをサイト全体で黒地・白文字に統一<br/>
+              ・キット詳細のAmazon関連商品ボタンを縮小し『譲る／売る』の下に再配置
+            </div>
+          </div>
+          {/* v1.29 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.29</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
             </div>
@@ -1565,16 +1587,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・時間が経つと一部キットの登録画像が消えて「📦」マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）
-            </div>
-          </div>
-          {/* v1.27 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.27</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/24</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消
             </div>
           </div>
         </div>
