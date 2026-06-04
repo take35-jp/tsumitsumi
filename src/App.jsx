@@ -1319,11 +1319,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.30", date: "2026/05/30", isNew: true, items: [
-      "積みプラ数ランクを最大2000まで拡張（七大陸ノツミ神／小宇宙のツミ神／多次元宇宙のツミ神／創世ノツミ神／『全てを積み、全てを手放した。』の5段階を追加）",
-      "Amazonリンクのデザインをサイト全体で黒地・白文字に統一",
-      "キット詳細のAmazon関連商品ボタンを縮小し『譲る／売る』の下に再配置"
-    ] },
+    { ver: "v1.30", date: "2026/05/30", isNew: true, items: ["積みプラ数のランクの上限を更新"] },
     { ver: "v1.29", date: "2026/05/25", isNew: false, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
     { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
     { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
@@ -1564,9 +1560,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/30</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・積みプラ数ランクを最大2000まで拡張（七大陸ノツミ神／小宇宙のツミ神／多次元宇宙のツミ神／創世ノツミ神／『全てを積み、全てを手放した。』の5段階を追加）<br/>
-              ・Amazonリンクのデザインをサイト全体で黒地・白文字に統一<br/>
-              ・キット詳細のAmazon関連商品ボタンを縮小し『譲る／売る』の下に再配置
+              ・積みプラ数のランクの上限を更新
             </div>
           </div>
           {/* v1.29 */}
