@@ -1,3 +1,11 @@
 .claude/
 node_modules/
 dist/
+
+# 機密ファイル (Supabase service_role キー等)
+.env
+.env.*
+local-tools/.env
+local-tools/.env.*
+local-tools/asin-matches.json
+local-tools/asin-review.csv
