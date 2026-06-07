@@ -1340,6 +1340,17 @@ function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+// 安定キー生成（local-tools/asin-crossref.js と同じアルゴリズム）
+function makeKey(p, ns) {
+  const str = `${p.mfr || ''}|${p.lineup || ''}|${p.code || ''}|${p.name || ''}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return `${ns}-${p.mfr || 'x'}-${Math.abs(hash).toString(36)}`;
+}
+
 function buildUrl(p) {
   if (p.asin) return `https://www.amazon.co.jp/dp/${encodeURIComponent(p.asin)}/?tag=${encodeURIComponent(TAG)}`;
   return `https://www.amazon.co.jp/s?k=${encodeURIComponent(p.q || p.name)}&tag=${encodeURIComponent(TAG)}`;
@@ -1350,7 +1361,7 @@ function renderCard(p) {
     ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
     : "📦";
   return `
-    <div class="paint-card">
+    <div class="paint-card" data-product-id="${escapeHtml(makeKey(p, 'paint'))}">
       <div class="paint-image">${imgHtml}</div>
       <div class="paint-body">
         <div class="paint-brand-row">
@@ -1481,6 +1492,8 @@ function render() {
   empty.style.display = "none";
 
   root.innerHTML = viewMode === "mfr" ? renderByMfrAxis(list) : renderByColorAxis(list);
+  // 描画後、loader.js に通知（asin_map から画像・直リンクを反映）
+  document.dispatchEvent(new CustomEvent('tsumitsumi:cards-rendered'));
 }
 
 function setViewMode(mode) {
@@ -1518,6 +1531,9 @@ document.querySelectorAll(".view-pill[data-view]").forEach(btn => {
 
 render();
 </script>
+
+<!-- asin_map から画像・ASIN直リンクを商品カードに注入 -->
+<script src="/tips/loader.js"></script>
 
 </body>
 </html>

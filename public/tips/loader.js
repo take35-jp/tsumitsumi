@@ -1,19 +1,14 @@
-/* TIPS 記事の商品カードに、おすすめ定番アイテム（gears_catalog）の
-   画像・価格・ASIN直リンクを注入する共有スクリプト。
+/* TIPS記事・塗料大全・トップコート大全の商品カードに、
+   gears_catalog または asin_map のデータから
+   画像・価格・Amazon ASIN 直リンクを注入する共通スクリプト。
 
-   使い方：
-     <div class="product" data-product-id="nipper-1">
-       <div class="product-thumb-slot">📦</div>
-       ...
-       <div class="product-price-slot" style="display:none"></div>
-       <a class="product-link" href="<フォールバックURL>">🛒 Amazonで見る</a>
-     </div>
+   使い方:
+     <div class="product"      data-product-id="...">   ← gears_catalog の id を指定
+     <div class="paint-card"   data-product-id="...">   ← asin_map の key と一致
+     <div class="pc"           data-product-id="...">   ← 同上
 
-   id がマッチすれば
-     - thumb-slot に <img> を差し込み
-     - price-slot に価格テキストを設定 + display 解除
-     - product-link を ASIN直リンク（あれば）に書き換え
-   マッチしなければ何もせず、HTMLに書かれたフォールバックがそのまま使われる。
+   再レンダリング後に再適用したい場合:
+     document.dispatchEvent(new CustomEvent('tsumitsumi:cards-rendered'));
 */
 (function () {
   const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
@@ -25,16 +20,19 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
-
-  function buildUrl(p) {
-    const tag = encodeURIComponent(ASSOCIATE_TAG);
-    return p.asin
-      ? `https://www.amazon.co.jp/dp/${encodeURIComponent(p.asin)}/?tag=${tag}`
-      : `https://www.amazon.co.jp/s?k=${encodeURIComponent(p.amazonQuery || p.name || "")}&tag=${tag}`;
+  function buildAsinUrl(asin) {
+    return `https://www.amazon.co.jp/dp/${encodeURIComponent(asin)}/?tag=${encodeURIComponent(ASSOCIATE_TAG)}`;
+  }
+  function buildSearchUrl(q) {
+    return `https://www.amazon.co.jp/s?k=${encodeURIComponent(q || "")}&tag=${encodeURIComponent(ASSOCIATE_TAG)}`;
   }
 
+  // ---- データソース ----
+  let gearsMap = null;  // { id -> gears product }
+  let asinMap  = null;  // { key -> asin_map row }
+  let loadPromise = null;
+
   async function fetchGears() {
-    // Supabase 優先、ダメなら静的JSONフォールバック
     try {
       const r = await fetch(`${SUPABASE_URL}/rest/v1/gears_catalog?id=eq.main&select=data`, {
         headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },
@@ -52,42 +50,129 @@
     return null;
   }
 
+  async function fetchAsinMap() {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/asin_map?select=key,asin,title,image_url,price`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },
+        cache: "no-store",
+      });
+      if (r.ok) {
+        const rows = await r.json();
+        const m = {};
+        for (const row of rows) m[row.key] = row;
+        return m;
+      }
+    } catch (e) {}
+    return {};
+  }
+
+  async function loadAll() {
+    if (loadPromise) return loadPromise;
+    loadPromise = (async () => {
+      const [gearsData, asinData] = await Promise.all([fetchGears(), fetchAsinMap()]);
+      const gMap = {};
+      if (gearsData) {
+        (gearsData.sections || []).forEach(s => {
+          (s.products || []).forEach(p => { gMap[p.id] = p; });
+        });
+      }
+      gearsMap = gMap;
+      asinMap  = asinData || {};
+    })();
+    return loadPromise;
+  }
+
+  // ---- カードクラスごとの設定 ----
+  const CARD_CONFIGS = [
+    // TIPS記事用（旧来）
+    {
+      cardSel:  ".product",
+      linkSel:  ".product-link",
+      thumbSel: ".product-thumb-slot",
+      priceSel: ".product-price-slot",
+      priceWrap: (s) => s + " ※Amazonで最新価格をご確認ください",
+    },
+    // 塗料大全
+    {
+      cardSel:  ".paint-card",
+      linkSel:  ".paint-amazon",
+      thumbSel: ".paint-image",
+      priceSel: ".paint-price",
+      priceWrap: (s) => "¥" + s + " ※最新価格はAmazonで",
+    },
+    // トップコート大全
+    {
+      cardSel:  ".pc",
+      linkSel:  ".pc-amazon",
+      thumbSel: ".pc-image",
+      priceSel: null, // pc には独立した価格スロットが無い
+    },
+  ];
+
+  function lookup(id) {
+    // gears_catalog 優先（TIPS既存）→ なければ asin_map
+    const g = gearsMap && gearsMap[id];
+    if (g && g.asin) {
+      return { asin: g.asin, image: g.image || null, price: g.price || null, title: g.name || "" };
+    }
+    const a = asinMap && asinMap[id];
+    if (a && a.asin) {
+      const priceStr = (a.price != null) ? Number(a.price).toLocaleString() : null;
+      return { asin: a.asin, image: a.image_url || null, price: priceStr, title: a.title || "" };
+    }
+    return null;
+  }
+
+  function apply() {
+    if (!gearsMap || !asinMap) return;
+    for (const cfg of CARD_CONFIGS) {
+      document.querySelectorAll(cfg.cardSel + "[data-product-id]").forEach(card => {
+        const id = card.dataset.productId;
+        const info = lookup(id);
+        if (!info) return;
+
+        const url = buildAsinUrl(info.asin);
+
+        // リンクを ASIN 直リンクに上書き
+        const linkEl = card.querySelector(cfg.linkSel);
+        if (linkEl) linkEl.href = url;
+
+        // サムネ画像
+        if (info.image && cfg.thumbSel) {
+          const thumb = card.querySelector(cfg.thumbSel);
+          if (thumb) {
+            thumb.innerHTML = `<a href="${escapeHtml(url)}" target="_blank" rel="nofollow noopener noreferrer sponsored" style="display:block;width:100%;height:100%;"><img src="${escapeHtml(info.image)}" alt="${escapeHtml(info.title)}" loading="lazy" style="width:100%;height:100%;object-fit:contain;" /></a>`;
+          }
+        }
+
+        // 価格
+        if (info.price && cfg.priceSel) {
+          const slot = card.querySelector(cfg.priceSel);
+          if (slot) {
+            const text = cfg.priceWrap ? cfg.priceWrap(info.price) : info.price;
+            slot.textContent = text;
+            slot.style.display = "";
+          }
+        }
+      });
+    }
+  }
+
+  // Public API: paint/topcoat の render() から呼べる
+  window.tsumitsumiApplyAsin = async function () {
+    await loadAll();
+    apply();
+  };
+
+  // カスタムイベント経由でも発火可能（paint/topcoat の render() が dispatch）
+  document.addEventListener("tsumitsumi:cards-rendered", () => {
+    loadAll().then(apply);
+  });
+
+  // 初回実行
   async function init() {
-    const data = await fetchGears();
-    if (!data) return;
-    const productMap = {};
-    (data.sections || []).forEach(s => {
-      (s.products || []).forEach(p => { productMap[p.id] = p; });
-    });
-
-    document.querySelectorAll(".product[data-product-id]").forEach(card => {
-      const id = card.dataset.productId;
-      const p = productMap[id];
-      if (!p) return; // 未登録ならフォールバックを維持
-
-      const url = buildUrl(p);
-
-      // サムネ画像（クリックでAmazonへ）
-      if (p.image) {
-        const slot = card.querySelector(".product-thumb-slot");
-        if (slot) {
-          slot.innerHTML = `<a href="${escapeHtml(url)}" target="_blank" rel="nofollow noopener noreferrer sponsored" style="display:block;width:100%;height:100%;"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name || "")}" loading="lazy" style="width:100%;height:100%;object-fit:contain;" /></a>`;
-        }
-      }
-
-      // 価格
-      if (p.price) {
-        const slot = card.querySelector(".product-price-slot");
-        if (slot) {
-          slot.textContent = p.price + " ※Amazonで最新価格をご確認ください";
-          slot.style.display = "";
-        }
-      }
-
-      // リンクをASIN直リンクに上書き
-      const linkEl = card.querySelector(".product-link");
-      if (linkEl) linkEl.href = url;
-    });
+    await loadAll();
+    apply();
   }
 
   if (document.readyState === "loading") {

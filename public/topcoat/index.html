@@ -551,11 +551,21 @@ const MFR_ORDER    = ["gsi", "gaia", "tamiya", "finishers"];
 const FILTERS = { mfr:new Set(), finish:new Set(), form:new Set(), type:new Set(), uv:new Set() };
 
 function escapeHtml(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+// 安定キー生成（local-tools/asin-crossref.js と同じアルゴリズム）
+function makeKey(p, ns) {
+  const str = `${p.mfr || ''}|${p.lineup || ''}|${p.code || ''}|${p.name || ''}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return `${ns}-${p.mfr || 'x'}-${Math.abs(hash).toString(36)}`;
+}
 function buildUrl(p){ return `https://www.amazon.co.jp/s?k=${encodeURIComponent(p.q||p.name)}&tag=${encodeURIComponent(TAG)}`; }
 
 function renderCard(p){
   return `
-    <div class="pc">
+    <div class="pc" data-product-id="${escapeHtml(makeKey(p, 'topcoat'))}">
       <div class="pc-image">📦</div>
       <div class="pc-body">
         <div class="pc-tags">
@@ -603,6 +613,8 @@ function render(){
     html += `</section>`;
   }
   root.innerHTML = html;
+  // 描画後、loader.js に通知（asin_map から画像・直リンクを反映）
+  document.dispatchEvent(new CustomEvent('tsumitsumi:cards-rendered'));
 }
 
 function toggleFilter(cat, val, btn){
@@ -620,6 +632,9 @@ document.querySelectorAll(".filter-pill[data-cat]").forEach(btn => {
 });
 render();
 </script>
+
+<!-- asin_map から画像・ASIN直リンクを商品カードに注入 -->
+<script src="/tips/loader.js"></script>
 
 </body>
 </html>
