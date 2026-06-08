@@ -32,7 +32,7 @@ const ASIN_MAP = {
   "photo-sp-light-3":   "B0F59KNRDX",
   "photo-sp-booth-1":   "B07Z673F7K",
   "photo-sp-booth-2":   "B0DMZX2177",
-  // "photo-sp-booth-3": ユーザー手動指定待ち
+  "photo-sp-booth-3":   "B07VKQYQQ9",  // PVC 60×130cm 黒1枚+白1枚 両面
   "photo-sp-tripod-1":  "B09KT6444P",
   "photo-sp-tripod-2":  "B0169SORBO",
   "photo-sp-tripod-3":  "B0BBQ9TW1R",
