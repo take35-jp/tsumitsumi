@@ -1525,6 +1525,8 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
+            { title: "ミラーレス・一眼カメラで撮るプラモデル写真", desc: "本格撮影のためのレンズ選び・絞り・3点照明・LEDとストロボの使い分け・RAW現像まで", url: "/tips/photo-camera.html", date: "2026/06/08" },
+            { title: "スマートフォンで撮るプラモデル写真", desc: "完成したキットをスマホで映えさせる撮影テクと、必要な3点機材（ライト・背景・三脚）", url: "/tips/photo-smartphone.html", date: "2026/06/08" },
             { title: "ガンプラのゲート跡が白くなる原因と完全な解決法", desc: "白化が起きる原理と、4つの対処法（ヤスリ・マーカー・塗装・接着剤）を解説", url: "/tips/gate-whitening.html", date: "2026/05/27" },
             { title: "【保存版】ガンプラ初心者が最初に揃える工具5選", desc: "1万円以下で全部そろえる、本当に必要な工具を厳選", url: "/tips/beginner-tools.html", date: "2026/05/27" },
           ].map((t, i) => (
@@ -3497,7 +3499,7 @@ export default function App() {
           <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>運営者情報</a>
           <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>利用規約</a>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プライバシーポリシー</a>
-          <a href="/paint/" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>塗料大全</a>
+          <a href="/paint/" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>塗料大全（工事中）</a>
           <a href="/sell.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>積みを売る</a>
           <a href="/storage.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プラモを預ける</a>
         </div>
