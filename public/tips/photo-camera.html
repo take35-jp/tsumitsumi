@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ミラーレス・一眼カメラで撮るプラモデル写真｜マクロ撮影と照明の基本｜ツミツミTIPS</title>
+<meta name="description" content="ミラーレス・一眼レフでプラモデルを本格撮影するためのガイド。レンズ選び、絞り・ISO・SS、被写界深度、3点照明、LEDとストロボの使い分け、現像までを解説します。" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta property="og:title" content="ミラーレス・一眼カメラで撮るプラモデル写真｜マクロ撮影と照明の基本" />
+<meta property="og:description" content="ミラーレス・一眼でプラモデルを本格撮影するためのガイド。" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="ツミツミ" />
+<meta property="og:url" content="https://tsumitsumi.vercel.app/tips/photo-camera.html" />
+<meta property="og:image" content="https://tsumitsumi.vercel.app/LOGO.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="article:published_time" content="2026-06-08T00:00:00+09:00" />
+<meta property="article:modified_time" content="2026-06-08T00:00:00+09:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ミラーレス・一眼カメラで撮るプラモデル写真｜マクロ撮影と照明の基本" />
+<meta name="twitter:description" content="ミラーレス・一眼でプラモデルを本格撮影するためのガイド。" />
+<meta name="twitter:image" content="https://tsumitsumi.vercel.app/LOGO.png" />
+<link rel="canonical" href="https://tsumitsumi.vercel.app/tips/photo-camera.html" />
+<link rel="icon" type="image/png" href="/apple-touch-icon.png" />
+
+<!-- Article structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "ミラーレス・一眼カメラで撮るプラモデル写真｜マクロ撮影と照明の基本",
+  "description": "ミラーレス・一眼レフでプラモデルを本格撮影するためのガイド。レンズ選び、絞り・ISO・SS、被写界深度、3点照明、LEDとストロボの使い分け、現像までを解説します。",
+  "image": "https://tsumitsumi.vercel.app/LOGO.png",
+  "datePublished": "2026-06-08T00:00:00+09:00",
+  "dateModified": "2026-06-08T00:00:00+09:00",
+  "author": { "@type": "Organization", "name": "TSUMI TSUMI", "url": "https://tsumitsumi.vercel.app/about.html" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "TSUMI TSUMI",
+    "logo": { "@type": "ImageObject", "url": "https://tsumitsumi.vercel.app/LOGO.png" }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://tsumitsumi.vercel.app/tips/photo-camera.html"
+  }
+}
+</script>
+
+<!-- Breadcrumb structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "TOP", "item": "https://tsumitsumi.vercel.app/" },
+    { "@type": "ListItem", "position": 2, "name": "TIPS", "item": "https://tsumitsumi.vercel.app/tips/" },
+    { "@type": "ListItem", "position": 3, "name": "一眼カメラで撮るプラモデル写真" }
+  ]
+}
+</script>
+
+<!-- FAQ structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "スマホと一眼カメラ、どこがどう違うのですか？",
+      "acceptedAnswer": { "@type": "Answer", "text": "センサーサイズが大きく、レンズを交換できる点が最大の違いです。マクロレンズを使えばパーティングラインの数十μm単位まで描写できますし、絞りを開ければ背景を大きくぼかせます。スマホの計算合成では出せない自然な階調表現も強みです。" }
+    },
+    {
+      "@type": "Question",
+      "name": "最初の1台はどんなカメラがおすすめ？",
+      "acceptedAnswer": { "@type": "Answer", "text": "ミラーレスのエントリー機（Sony α6400、Canon EOS R10、富士フイルム X-S10/X-S20、Nikon Z fc など）が候補です。プラモ撮影ならフルサイズである必要はなく、APS-Cで十分。レンズ資産も含めて、家電量販店で実機を触って決めるのが確実です。" }
+    },
+    {
+      "@type": "Question",
+      "name": "マクロレンズは必須ですか？",
+      "acceptedAnswer": { "@type": "Answer", "text": "「等倍撮影（1:1）」が必要ならマクロレンズが必須ですが、HG/MG クラスを全身撮影する分には標準ズームでも対応できます。寄って撮りたいパーツの細部表現を求める段階で導入を検討してください。" }
+    },
+    {
+      "@type": "Question",
+      "name": "LEDライトがあれば、ストロボはなくても大丈夫？",
+      "acceptedAnswer": { "@type": "Answer", "text": "プラモ撮影では LED だけでもかなりの表現ができます。ただしストロボは「瞬間光」なので、ハイライトのキレ・コントラストが LED とは異なる質感になります。両方使い分けると表現幅が広がります。" }
+    },
+    {
+      "@type": "Question",
+      "name": "RAW で撮るメリットは？",
+      "acceptedAnswer": { "@type": "Answer", "text": "後から露出・色温度・コントラストを大きく調整しても画質が破綻しにくいのが最大のメリット。プラモ撮影では、ホワイトバランスや影部分の明るさを後から細かく追い込むことが多いので、RAW 撮影を推奨します。" }
+    }
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; color: #1f2937; background: #fafafa; line-height: 1.85; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  header.site { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 20px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px); }
+  .site-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .logo { font-size: 16px; font-weight: 800; color: #111827; text-decoration: none; }
+  .nav-back { color: #4b5563; text-decoration: none; font-size: 13px; }
+  .nav-back:hover { color: #22c55e; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 20px 60px; }
+  .breadcrumb { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
+  .breadcrumb a { color: #15803d; text-decoration: none; }
+  h1 { font-size: 28px; font-weight: 800; margin: 0 0 12px; line-height: 1.4; color: #111827; }
+  .meta { font-size: 12px; color: #9ca3af; margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .meta .tag { background: #f3f4f6; padding: 2px 10px; border-radius: 20px; }
+  .lead { font-size: 16px; color: #374151; margin-bottom: 28px; padding: 16px 18px; background: #fff7ed; border-left: 4px solid #f59e0b; border-radius: 6px; line-height: 1.85; }
+  h2 { font-size: 21px; font-weight: 800; margin: 36px 0 14px; padding-left: 12px; border-left: 5px solid #22c55e; color: #111827; }
+  h3 { font-size: 17px; font-weight: 700; margin: 24px 0 10px; color: #111827; }
+  p { margin: 0 0 16px; color: #374151; }
+  strong { color: #b91c1c; font-weight: 700; }
+  .tip-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 14px; }
+  .tip-box::before { content: "💡 "; font-weight: 700; }
+  .warning-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 14px; }
+  .warning-box::before { content: "⚠️ "; }
+  .product { display: flex; gap: 12px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin: 14px 0; align-items: stretch; }
+  .product-thumb-slot { flex: 0 0 90px; width: 90px; height: 90px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #d1d5db; font-size: 30px; overflow: hidden; }
+  .product-body { flex: 1; min-width: 0; }
+  .product-name { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+  .product-desc { font-size: 13px; color: #4b5563; margin-bottom: 8px; }
+  .product-price-slot { font-size: 13px; font-weight: 800; color: #b91c1c; margin-bottom: 8px; line-height: 1.4; }
+  .product-link { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; background: #111; color: #fff; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; align-self: flex-start; }
+  .product-link:hover { background: #333; }
+  @media (max-width: 540px) {
+    .product-thumb-slot { flex-basis: 72px; width: 72px; height: 72px; font-size: 26px; }
+  }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  table th { background: #f3f4f6; padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+  table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
+  .cta-banner { background: linear-gradient(135deg, #4f8ef7, #22c55e); color: #fff; border-radius: 16px; padding: 28px 22px; text-align: center; margin: 40px 0; }
+  .cta-banner .cta-logo { display: block; margin: 0 auto 14px; width: 100px; height: 100px; border-radius: 22px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .cta-banner h2 { color: #fff; border-left: none; padding-left: 0; margin: 0 0 8px; }
+  .cta-banner p { color: rgba(255,255,255,0.95); margin: 0 0 16px; }
+  .cta-button { display: inline-block; padding: 12px 28px; background: #fff; color: #111; border-radius: 24px; font-weight: 800; text-decoration: none; font-size: 15px; }
+  .related-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 22px; margin: 32px 0; }
+  .related-section h3 { margin-top: 0; }
+  .related-section ul { list-style: none; padding: 0; margin: 0; }
+  .related-section li { padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+  .related-section li:last-child { border-bottom: none; }
+  .related-section a { color: #15803d; text-decoration: none; font-size: 14px; }
+  .related-section a:hover { text-decoration: underline; }
+  .disclosure { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #92400e; margin: 24px 0; }
+  footer { border-top: 1px solid #e5e7eb; margin-top: 60px; padding: 24px; text-align: center; font-size: 12px; color: #9ca3af; background: #fff; }
+  footer .links { margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
+  footer a { color: #6b7280; text-decoration: none; }
+  footer a:hover { color: #22c55e; }
+  @media (max-width: 540px) {
+    h1 { font-size: 22px; }
+    h2 { font-size: 18px; }
+    main { padding: 24px 16px 50px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <a class="logo" href="/">TSUMI TSUMI</a>
+    <a class="nav-back" href="/">← アプリに戻る</a>
+  </div>
+</header>
+
+<main>
+  <article>
+    <div class="breadcrumb">
+      <a href="/">TOP</a> / <a href="/tips/">TIPS</a> / 撮影
+    </div>
+
+    <h1>ミラーレス・一眼カメラで撮るプラモデル写真<br/>― マクロ撮影と照明の基本 ―</h1>
+
+    <div class="meta">
+      <span class="tag">撮影・写真</span>
+      <time datetime="2026-06-08">2026/06/08 公開</time>
+    </div>
+
+    <div style="font-size:12px;color:#9ca3af;margin:0 0 14px;padding:6px 12px;background:#f9fafb;border-left:3px solid #d1d5db;border-radius:4px;">※ 本記事はアフィリエイト広告（PR・Amazonアソシエイト等）を含みます。詳細は<a href="/privacy.html" style="color:#6b7280;text-decoration:underline;">プライバシーポリシー</a>をご確認ください。</div>
+
+    <p class="lead">
+      スマホでも十分撮影できますが、ミラーレス・一眼カメラを導入すると<strong>解像感・階調・ボケ表現</strong>のすべてで一段上の写真に到達できます。本記事ではレンズ選びから、絞り・ISO・SSの基礎、3点照明、LEDとストロボの使い分け、現像まで、初級〜中級の本格撮影の基本を解説します。
+    </p>
+
+    <h2>一眼で撮ると何が変わるか</h2>
+    <p>スマホとの最大の違いは<strong>センサーサイズ</strong>と<strong>レンズ交換</strong>。これにより、以下のような表現が可能になります。</p>
+    <ul>
+      <li><strong>等倍マクロ撮影</strong> — パーティングラインや塗膜のテクスチャまで克明に描写</li>
+      <li><strong>絞り（被写界深度）の自在なコントロール</strong> — 全身ピントから一部だけ浮かせるボケ表現まで</li>
+      <li><strong>RAW撮影 + 大きな階調</strong> — 影部や白飛び際の救済幅が広がる</li>
+      <li><strong>外部ストロボとの連携</strong> — 一瞬の光でハイライトをコントロール</li>
+    </ul>
+
+    <h2>最初の1台はミラーレスのAPS-C機が現実的</h2>
+    <p>プラモ撮影のためにフルサイズを買う必要はありません。<strong>APS-Cのミラーレス</strong>でも十分すぎるくらい撮れます。エントリー機の候補：</p>
+
+    <table>
+      <thead><tr><th>機種</th><th>強み</th></tr></thead>
+      <tbody>
+        <tr><td>Sony α6400 / α6700</td><td>AFが速い・動画も強い・レンズ豊富</td></tr>
+        <tr><td>Canon EOS R10 / R50</td><td>ボディがコンパクト・色乗りが好評</td></tr>
+        <tr><td>富士フイルム X-S10 / X-S20</td><td>フィルムシミュレーションで撮って出しが綺麗</td></tr>
+        <tr><td>Nikon Z fc / Z 50</td><td>クラシカルなデザインを好む方に</td></tr>
+        <tr><td>OM SYSTEM OM-5（マイクロフォーサーズ）</td><td>本体・レンズが小型軽量・マクロが豊富</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip-box">
+      家電量販店で<strong>実機を触って、握り感とメニューの分かりやすさで決める</strong>のが正解。スペック差は数年使えば誤差です。
+    </div>
+
+    <h2>レンズの選び方</h2>
+    <p>本体以上に写りを決めるのがレンズ。プラモ撮影では次の2系統で選びます。</p>
+
+    <h3>① 標準ズーム（キットレンズ）</h3>
+    <p>最初に買うならまずキットレンズで十分。HG/MGの全身撮影は焦点距離 35〜50mm 換算が扱いやすいです。寄れる距離（最短撮影距離）が短いほどプラモ向きです。</p>
+
+    <h3>② マクロ単焦点レンズ（等倍撮影が可能）</h3>
+    <p>パネルラインのスミ入れ、デカール段差、関節構造など、近接で描写したい段階に来たら導入。各社の主要マクロ：</p>
+    <ul>
+      <li>Sony FE 90mm F2.8 Macro G OSS（フルサイズ／APS-C両対応）</li>
+      <li>Sony E 30mm F3.5 Macro（APS-C 専用・コンパクト）</li>
+      <li>Canon RF 100mm F2.8 L Macro IS USM</li>
+      <li>富士フイルム XF 80mm F2.8 R LM OIS WR Macro</li>
+      <li>シグマ 70mm F2.8 DG MACRO Art（マウント別）</li>
+    </ul>
+
+    <div class="tip-box">
+      予算優先なら<strong>「中古の60〜100mm 等倍マクロ」</strong>を狙うのが定番。プラモ撮影で求められる解像感は中古のオールドマクロでも十分なので、無理せず予算と相談しましょう。
+    </div>
+
+    <h2>絞り・ISO・シャッタースピードの関係</h2>
+    <p>カメラの露出は次の3要素で決まります。プラモ撮影ではこの3つを「マニュアル」で固定するのが基本です。</p>
+
+    <table>
+      <thead><tr><th>要素</th><th>役割</th><th>プラモ撮影での目安</th></tr></thead>
+      <tbody>
+        <tr><td><strong>絞り（F値）</strong></td><td>ボケの量・被写界深度</td><td>F8〜F11（全身にピント）／ F2.8〜F4（背景ぼかし）</td></tr>
+        <tr><td><strong>ISO感度</strong></td><td>センサー感度・ノイズ量</td><td>ISO 100〜400（できる限り低く）</td></tr>
+        <tr><td><strong>シャッタースピード</strong></td><td>露光時間・ブレに影響</td><td>三脚使用なら任意（1/2秒でも OK）</td></tr>
+      </tbody>
+    </table>
+
+    <p>定常光（LED）でじっくり撮るなら、<strong>「絞りF8〜F11・ISO 100・シャッタースピード可変」</strong>を基本セットにすると失敗しません。三脚を使えば SS は気にしなくて済むため、画質を決める ISO と絞りに集中できます。</p>
+
+    <h2>被写界深度（DoF）のコントロール</h2>
+    <p>絞り（F値）を変えると、ピントが合う範囲（被写界深度）が変わります。プラモ撮影では「どこにピントを置いて、どこをぼかすか」が表現の核です。</p>
+
+    <figure style="margin: 24px 0;">
+      <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="絞りと被写界深度の関係図" style="width:100%;height:auto;display:block;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
+        <text x="360" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="800" fill="#111827">F値と被写界深度（ピントの合う範囲）</text>
+
+        <!-- F2.8 -->
+        <g transform="translate(40, 60)">
+          <text x="100" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">F2.8（開放）</text>
+          <rect x="0" y="30" width="200" height="60" fill="#fafafa" stroke="#d1d5db" />
+          <rect x="80" y="30" width="40" height="60" fill="#22c55e" opacity="0.4" />
+          <circle cx="100" cy="60" r="14" fill="#111" />
+          <text x="100" y="115" text-anchor="middle" font-size="11" fill="#6b7280">主役にピン・背景ぼかし</text>
+          <text x="100" y="132" text-anchor="middle" font-size="10" fill="#9ca3af">ピント範囲：狭い</text>
+        </g>
+
+        <!-- F5.6 -->
+        <g transform="translate(260, 60)">
+          <text x="100" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">F5.6（中間）</text>
+          <rect x="0" y="30" width="200" height="60" fill="#fafafa" stroke="#d1d5db" />
+          <rect x="50" y="30" width="100" height="60" fill="#22c55e" opacity="0.4" />
+          <circle cx="100" cy="60" r="14" fill="#111" />
+          <text x="100" y="115" text-anchor="middle" font-size="11" fill="#6b7280">人物・主役のディテール</text>
+          <text x="100" y="132" text-anchor="middle" font-size="10" fill="#9ca3af">ピント範囲：中</text>
+        </g>
+
+        <!-- F11 -->
+        <g transform="translate(480, 60)">
+          <text x="100" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">F11（絞り込み）</text>
+          <rect x="0" y="30" width="200" height="60" fill="#fafafa" stroke="#d1d5db" />
+          <rect x="10" y="30" width="180" height="60" fill="#22c55e" opacity="0.4" />
+          <circle cx="100" cy="60" r="14" fill="#111" />
+          <text x="100" y="115" text-anchor="middle" font-size="11" fill="#6b7280">全身にピント・カタログ向き</text>
+          <text x="100" y="132" text-anchor="middle" font-size="10" fill="#9ca3af">ピント範囲：広い</text>
+        </g>
+
+        <text x="360" y="200" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" fill="#374151">プラモは小さい被写体のため、開放（F2.8）だとピントが薄くなりすぎる傾向。</text>
+        <text x="360" y="220" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" fill="#374151">全身を見せるなら F8〜F11、表情の一部を浮かせるなら F4〜F5.6 が現実的な選択肢。</text>
+        <text x="360" y="250" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" font-style="italic" fill="#6b7280">※ F16以上に絞りすぎると「小絞りボケ」で解像感が落ちるので注意</text>
+      </svg>
+    </figure>
+
+    <h2>RAW撮影のススメ</h2>
+    <p>JPEG はカメラが現像を仕上げてくれる便利な形式ですが、後から調整できる幅が狭い。<strong>RAW</strong>はセンサー情報をそのまま保存する形式で、後から露出・色温度・コントラストを大きく動かしても破綻しにくい。</p>
+    <p>プラモ撮影では撮影現場の光・色を完璧に詰めるのが難しいため、<strong>RAW撮影で撮って、後から細部を追い込む</strong>のが定石。容量は増えますが、現代のSDカードなら問題にならない範囲です。</p>
+
+    <h2>3点照明 — プラモ撮影の王道セットアップ</h2>
+    <p>「主役（メインライト）・補助（フィルライト）・後ろからの分離光（バックライト）」の3灯構成。プロの広告撮影で使われる王道です。</p>
+
+    <table>
+      <thead><tr><th>役割</th><th>位置</th><th>強さ</th></tr></thead>
+      <tbody>
+        <tr><td><strong>メインライト</strong></td><td>被写体の斜め45度・少し上</td><td>100%（基準）</td></tr>
+        <tr><td><strong>フィルライト</strong></td><td>メインの反対側（影側）</td><td>30〜50%（影起こし）</td></tr>
+        <tr><td><strong>バックライト</strong></td><td>被写体の真後ろ・斜め上</td><td>50〜80%（輪郭照らし）</td></tr>
+      </tbody>
+    </table>
+
+    <p>フィルライトはレフ板で代用できますが、3灯すべて光源にすると表現の自由度が一段上がります。</p>
+
+    <div class="product" data-product-id="photo-cam-led-1">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
+        <div class="product-name">Neewer LED 660 PRO 2灯セット</div>
+        <div class="product-desc">3点照明の最初の2灯として、価格・性能のバランス最高。バイカラーで色温度を自由に変えられる定番モデル。</div>
+        <div class="product-price-slot" style="display:none;"></div>
+        <a class="product-link" href="https://www.amazon.co.jp/s?k=Neewer+660+PRO+2灯セット&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+      </div>
+    </div>
+
+    <div class="product" data-product-id="photo-cam-led-2">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
+        <div class="product-name">GODOX SL-60W II（COB LEDライト）</div>
+        <div class="product-desc">COB（一点集光）型なのでパラボラやソフトボックスと組み合わせると本格的な光質に。ボーエンズマウントでアクセサリ豊富。</div>
+        <div class="product-price-slot" style="display:none;"></div>
+        <a class="product-link" href="https://www.amazon.co.jp/s?k=GODOX+SL-60W+II&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+      </div>
+    </div>
+
+    <h2>LEDライトとストロボの違い・使い分け</h2>
+    <p>プラモ撮影では LED（定常光）だけでも十分に綺麗な写真が撮れますが、<strong>ストロボ（瞬間光）</strong>を加えると表現の幅がさらに広がります。両者の違いを整理しておきます。</p>
+
+    <table>
+      <thead><tr><th>項目</th><th>LED（定常光）</th><th>ストロボ（瞬間光）</th></tr></thead>
+      <tbody>
+        <tr><td>光り方</td><td>常に点灯</td><td>シャッターと同期して一瞬</td></tr>
+        <tr><td>確認のしやすさ</td><td>◎ 見たまま撮れる</td><td>テスト発光が必要</td></tr>
+        <tr><td>パワー</td><td>連続点灯・出力は中程度</td><td>瞬間最大出力が大きい</td></tr>
+        <tr><td>動画</td><td>◎ そのまま使える</td><td>× 使えない</td></tr>
+        <tr><td>影の質</td><td>柔らかめ</td><td>キレのあるハイライト</td></tr>
+        <tr><td>初期費用</td><td>1灯1〜3万円</td><td>クリップオン+トリガーで2万円〜</td></tr>
+      </tbody>
+    </table>
+
+    <p>プラモ撮影での使い分けは、ざっくり以下のように考えると分かりやすいです。</p>
+    <ul>
+      <li><strong>LED 中心</strong>：撮影しながら光の当たり方を目で見て調整したい・動画も撮りたい・初期投資を抑えたい</li>
+      <li><strong>ストロボ中心</strong>：金属パーツのハイライトをキレ良く出したい・暗い環境でもパワフルに撮りたい</li>
+      <li><strong>併用</strong>：LED でベース照明・ストロボでハイライトのアクセント。中級以上の構成</li>
+    </ul>
+
+    <h3>ストロボエントリーの王道：GODOX TT600 + X2T トリガー</h3>
+    <p>これからストロボを始めるなら、価格と機能のバランスが圧倒的に良い<strong>GODOX TT600 + X2T トリガー</strong>のセットが第一候補。2.4G ワイヤレスを内蔵しているので、カメラから離れた位置に置いたストロボもトリガー経由でリモート発光できます。</p>
+
+    <div class="product" data-product-id="photo-cam-strobe-1">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
+        <div class="product-name">GODOX TT600 クリップオンストロボ</div>
+        <div class="product-desc">GN60 のパワー・2.4Gワイヤレス受信を内蔵で1万円台前半。コスパで選ぶ初心者の鉄板。マニュアル発光のみだが、定常的なプラモ撮影では問題なし。</div>
+        <div class="product-price-slot" style="display:none;"></div>
+        <a class="product-link" href="https://www.amazon.co.jp/s?k=GODOX+TT600&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+      </div>
+    </div>
+
+    <div class="product" data-product-id="photo-cam-strobe-2">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
+        <div class="product-name">GODOX X2T ワイヤレスフラッシュトリガー</div>
+        <div class="product-desc">TT600 と組み合わせると、カメラのホットシューに付けるだけでオフカメラ発光が可能に。Sony / Canon / Nikon / Fuji 用が用意されているので、自分のカメラに合うモデルを選ぶ。</div>
+        <div class="product-price-slot" style="display:none;"></div>
+        <a class="product-link" href="https://www.amazon.co.jp/s?k=GODOX+X2T+トリガー&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+      </div>
+    </div>
+
+    <div class="warning-box">
+      <strong>注意</strong>：X2T はカメラメーカー別に型番が異なります（X2T-S=Sony / X2T-N=Nikon / X2T-C=Canon / X2T-F=Fuji）。購入時に自分のカメラのマウントに合うモデルを確認してください。
+    </div>
+
+    <h3>ストロボのシンプルな1灯セットアップ</h3>
+    <p>最初の1灯は、被写体の<strong>斜め45度上方</strong>から、白い壁や天井に向けて<strong>バウンス（反射）発光</strong>させるのが万能。直射すると影が硬くなりすぎますが、バウンスすれば壁全体が大きな光源になり、柔らかいライティングになります。</p>
+    <p>もしバウンスできる白壁が無ければ、ストロボの前にディフューザー（傘・ソフトボックス）を入れて光を拡散させると同じ効果が得られます。</p>
+
+    <h2>ホワイトバランスとグレーカード</h2>
+    <p>ホワイトバランス（WB）が外れると、せっかく塗装した色が緑がかったり黄色がかったりします。<strong>グレーカード</strong>を使うと、撮影現場の光の色を正確に基準化できます。</p>
+
+    <p>撮影手順：</p>
+    <ol>
+      <li>撮影開始時、グレーカードを被写体と同じ位置に置いて1枚撮る</li>
+      <li>その後、グレーカードを外して本撮影に入る</li>
+      <li>現像時（Lightroom等）、グレーカードを写した1枚で「スポイトでホワイトバランスを取得」→ 同じセッションの全カットに適用</li>
+    </ol>
+
+    <div class="product" data-product-id="photo-cam-acc-2">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
+        <div class="product-name">グレーカード（ホワイトバランス用・3枚セット）</div>
+        <div class="product-desc">18% 反射率の標準グレー。Lightroom などのスポイト機能と組み合わせて、現像時のWB調整に。1セット買えば長く使える。</div>
+        <div class="product-price-slot" style="display:none;"></div>
+        <a class="product-link" href="https://www.amazon.co.jp/s?k=グレーカード+ホワイトバランス+18%25&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+      </div>
+    </div>
+
+    <h2>Lightroom Classic での現像基本フロー</h2>
+    <p>RAW で撮ったら、Adobe Lightroom Classic（または無料の Darktable など）で現像します。プラモ撮影の標準フローは以下のとおりです。</p>
+
+    <ol>
+      <li><strong>ホワイトバランス調整</strong>（グレーカード写真からスポイト取得）</li>
+      <li><strong>露出</strong>を整える（ヒストグラムを見て、白飛び黒つぶれを避ける）</li>
+      <li><strong>シャドウ / ハイライト</strong>で明暗の階調を引き出す（シャドウ +30〜+60 程度）</li>
+      <li><strong>明瞭度 + テクスチャ</strong>を少し上げる（プラの質感が立つ）</li>
+      <li><strong>カラーグレーディング</strong>でハイライト・シャドウに色味を入れる（任意）</li>
+      <li><strong>レンズ補正</strong>を有効化（プロファイル補正・色収差除去）</li>
+      <li><strong>ノイズ低減</strong>と<strong>シャープ</strong>を仕上げに</li>
+    </ol>
+
+    <div class="tip-box">
+      Adobe フォトプラン（月額1,180円〜）に Lightroom Classic + Photoshop が含まれており、本格的な現像をするならコスパで圧勝。フリーで済ませたい方は <strong>Darktable</strong>（無料・オープンソース）が高機能です。
+    </div>
+
+    <h2>三脚 — 「重ければ良い」は半分本当</h2>
+    <p>三脚はカメラを止めるためではなく、<strong>「ブレない・狙ったアングルを保持する」</strong>ために使います。プラモ撮影では超長秒露光は基本不要ですが、絞り込んで撮るとSS が遅くなりがちなので三脚は必須。</p>
+
+    <p>選ぶときのポイント：</p>
+    <ul>
+      <li><strong>耐荷重</strong>：カメラ+レンズ重量の2倍以上が目安</li>
+      <li><strong>段数</strong>：4段より3段のほうが剛性◎（畳むと長くなるが）</li>
+      <li><strong>雲台</strong>：自由雲台（ボール雲台）が直感的で扱いやすい</li>
+      <li><strong>センターポール</strong>：横倒しできる機構があると俯瞰撮影に便利</li>
+    </ul>
+
+    <div class="product" data-product-id="photo-cam-tripod-1">
+      <div class="product-thumb-slot">📦</div>
+      <div class="product-body">
+        <div class="product-name">Manfrotto MT290XTA3 アルミ3段三脚</div>
+        <div class="product-desc">一生もの三脚の代表格。剛性・精度・耐久性すべて文句なし。センターポール横倒し機構ありで俯瞰撮影も可能。</div>
+        <div class="product-price-slot" style="display:none;"></div>
+        <a class="product-link" href="https://www.amazon.co.jp/s?k=Manfrotto+290+アルミ+3段&tag=tsumitsumi232-22" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
+      </div>
+    </div>
+
+    <h2>よくある質問（FAQ）</h2>
+
+    <h3>Q. スマホと一眼カメラ、どこがどう違うのですか？</h3>
+    <p>センサーサイズが大きく、レンズを交換できる点が最大の違いです。マクロレンズを使えばパーティングラインの数十μm単位まで描写できますし、絞りを開ければ背景を大きくぼかせます。スマホの計算合成では出せない自然な階調表現も強みです。</p>
+
+    <h3>Q. 最初の1台はどんなカメラがおすすめ？</h3>
+    <p>ミラーレスのエントリー機（Sony α6400、Canon EOS R10、富士フイルム X-S10/X-S20、Nikon Z fc など）が候補です。プラモ撮影ならフルサイズである必要はなく、APS-Cで十分。レンズ資産も含めて、家電量販店で実機を触って決めるのが確実です。</p>
+
+    <h3>Q. マクロレンズは必須ですか？</h3>
+    <p>「等倍撮影（1:1）」が必要ならマクロレンズが必須ですが、HG/MG クラスを全身撮影する分には標準ズームでも対応できます。寄って撮りたいパーツの細部表現を求める段階で導入を検討してください。</p>
+
+    <h3>Q. LEDライトがあれば、ストロボはなくても大丈夫？</h3>
+    <p>プラモ撮影では LED だけでもかなりの表現ができます。ただしストロボは「瞬間光」なので、ハイライトのキレ・コントラストが LED とは異なる質感になります。両方使い分けると表現幅が広がります。</p>
+
+    <h3>Q. RAW で撮るメリットは？</h3>
+    <p>後から露出・色温度・コントラストを大きく調整しても画質が破綻しにくいのが最大のメリット。プラモ撮影では、ホワイトバランスや影部分の明るさを後から細かく追い込むことが多いので、RAW 撮影を推奨します。</p>
+
+    <h2>まとめ — 「光」を主役に考える</h2>
+    <p>カメラ・レンズの選択も大事ですが、最終的に写真の印象を決めるのは<strong>光のデザイン</strong>です。3点照明の考え方、LEDとストロボの使い分け、グレーカードによる正確な色管理、この3点を押さえれば、機材スペックの差は誤差の範囲に収まります。</p>
+    <p>本記事で紹介した機材は、<a href="/gears.html#photo-camera" style="color:#15803d;font-weight:700;">おすすめ定番アイテム > 📷 一眼・ミラーレスでプラモ撮影</a> セクションにまとめてあります。スマホでの撮影方法を知りたい方は <a href="/tips/photo-smartphone.html" style="color:#15803d;font-weight:700;">スマートフォンで撮るプラモデル写真</a> もご覧ください。</p>
+
+    <!-- CTA バナー -->
+    <div class="cta-banner">
+      <img src="/LOGO.png" alt="TSUMI TSUMI" class="cta-logo" width="100" height="100" />
+      <h2>積みプラの管理は「TSUMI TSUMI」で</h2>
+      <p>バーコードをスキャンするだけでカンタン登録。完全無料、登録不要のWebアプリ。</p>
+      <a href="/" class="cta-button">TSUMI TSUMIを使ってみる→</a>
+    </div>
+
+    <!-- 関連 -->
+    <div class="related-section">
+      <h3>📚 関連記事</h3>
+      <ul>
+        <li><a href="/tips/photo-smartphone.html">→ スマートフォンで撮るプラモデル写真｜基本機材と撮影のコツ</a></li>
+        <li><a href="/tips/topcoat-guide.html">→ トップコート完全ガイド（撮影前の質感調整に）</a></li>
+        <li><a href="/gears.html#photo-camera">→ おすすめ定番アイテム（一眼・ミラーレス撮影機材）</a></li>
+      </ul>
+    </div>
+
+    <div class="disclosure">
+      ※ 本記事の商品リンクは Amazon アソシエイトです。Amazon のアソシエイトとして、当サイトは適格販売により収入を得ています。リンク経由で商品をご購入いただくと、一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。
+    </div>
+
+  </article>
+</main>
+
+<footer>
+  <div class="links">
+    <a href="/">アプリ</a>
+    <a href="/manual.html">取扱説明書</a>
+    <a href="/about.html">運営者情報</a>
+    <a href="/terms.html">利用規約</a>
+    <a href="/privacy.html">プライバシーポリシー</a>
+    <a href="/gears.html">おすすめ定番アイテム</a>
+    <a href="/paint/">塗料大全</a>
+    <a href="/topcoat/">トップコート大全</a>
+    <a href="/tips/">TIPS一覧</a>
+    <a href="https://x.com/tsumitsumi_pla" target="_blank" rel="noopener noreferrer">@tsumitsumi_pla</a>
+  </div>
+  <div>© 2026 TSUMI TSUMI</div>
+</footer>
+
+<!-- gears_catalog から商品カードへ画像・価格・ASIN直リンクを注入 -->
+<script src="/tips/loader.js"></script>
+
+</body>
+</html>
