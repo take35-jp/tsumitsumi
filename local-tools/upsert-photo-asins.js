@@ -52,7 +52,7 @@ const ASIN_MAP = {
   "photo-cam-strobe-3": "B00OFLFD2U",
   "photo-cam-booth-1":  "B0BZ3WJ6J9",
   "photo-cam-booth-2":  "B00I4JO9TC",
-  // "photo-cam-booth-3": ユーザー手動指定待ち
+  "photo-cam-booth-3":  "B0DN47VXQG",  // Good-three-directions フィギュア用 50×50ジオラマシート
   "photo-cam-tripod-1": "B013SJZVIU",
   "photo-cam-tripod-2": "B0053CEPQU",
   "photo-cam-tripod-3": "B0BBTDPP2W",
