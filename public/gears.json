@@ -348,6 +348,319 @@
           "image": null
         }
       ]
+    },
+    {
+      "id": "photo-smartphone",
+      "title": "📱 スマホでプラモ撮影",
+      "desc": "完成したキットをスマホで撮影するための機材セット。ライト・撮影ボックス・スタンドの3点があれば、SNSに上げて見栄えする写真がすぐ撮れます。撮影の基本テクニックは <a href=\"/tips/photo-smartphone.html\" style=\"color:#15803d;font-weight:700;\">スマートフォンで撮るプラモデル写真</a> をご覧ください。",
+      "subgroups": [
+        { "id": "light", "label": "💡 ライト（LED）" },
+        { "id": "booth", "label": "📦 撮影ボックス・背景" },
+        { "id": "tripod", "label": "📐 三脚・スマホスタンド" },
+        { "id": "acc", "label": "🔬 レンズ・小物" }
+      ],
+      "products": [
+        {
+          "id": "photo-sp-light-1",
+          "headline": "迷ったらこれ。色温度可変で柔らかい光",
+          "name": "Neewer NL-660 LEDビデオライト（バイカラー・3200K-5600K）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "Neewer NL-660 LED",
+          "extra": null,
+          "subgroup": "light",
+          "image": null
+        },
+        {
+          "id": "photo-sp-light-2",
+          "headline": "コンパクトでサブライトに最適",
+          "name": "GODOX LEDM150 ポケットLEDライト",
+          "badge": "budget",
+          "badgeLabel": "コスパ◎",
+          "amazonQuery": "GODOX LEDM150",
+          "extra": null,
+          "subgroup": "light",
+          "image": null
+        },
+        {
+          "id": "photo-sp-light-3",
+          "headline": "スマホ撮影者の定番リングライト",
+          "name": "Neewer 18インチ リングライト + スマホホルダー付きスタンドキット",
+          "badge": "pick",
+          "badgeLabel": "万能",
+          "amazonQuery": "Neewer 18インチ リングライト スマホホルダー",
+          "extra": null,
+          "subgroup": "light",
+          "image": null
+        },
+        {
+          "id": "photo-sp-booth-1",
+          "headline": "HG/RGに最適サイズ。畳めて収納◎",
+          "name": "PULUZ 折りたたみ撮影ボックス 30cm（LED内蔵）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "PULUZ 撮影ボックス 30cm LED",
+          "extra": null,
+          "subgroup": "booth",
+          "image": null
+        },
+        {
+          "id": "photo-sp-booth-2",
+          "headline": "ライト一体型・電源入れるだけで撮影OK",
+          "name": "Neewer 撮影ブース 40cm（LEDライト一体型）",
+          "badge": "pro",
+          "badgeLabel": "本格派",
+          "amazonQuery": "Neewer 撮影ブース 40cm LED",
+          "extra": null,
+          "subgroup": "booth",
+          "image": null
+        },
+        {
+          "id": "photo-sp-booth-3",
+          "headline": "雰囲気を変えたい時に。1,000円台",
+          "name": "撮影用 背景紙セット PVC（白・黒・グレー・他 6色）",
+          "badge": "budget",
+          "badgeLabel": "コスパ◎",
+          "amazonQuery": "撮影 背景紙 PVC 6色",
+          "extra": null,
+          "subgroup": "booth",
+          "image": null
+        },
+        {
+          "id": "photo-sp-tripod-1",
+          "headline": "1セットで完結・SmallRigの信頼性",
+          "name": "SmallRig スマートフォン三脚 + クランプセット",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "SmallRig スマホ 三脚 クランプ",
+          "extra": null,
+          "subgroup": "tripod",
+          "image": null
+        },
+        {
+          "id": "photo-sp-tripod-2",
+          "headline": "本格派の小型三脚・耐久性◎",
+          "name": "Manfrotto PIXI ミニ三脚 + スマートフォンクランプ",
+          "badge": "pro",
+          "badgeLabel": "本格派",
+          "amazonQuery": "Manfrotto PIXI スマホクランプ",
+          "extra": null,
+          "subgroup": "tripod",
+          "image": null
+        },
+        {
+          "id": "photo-sp-tripod-3",
+          "headline": "俯瞰撮影の自由度が一気にUP",
+          "name": "デスククランプ式 スマホアームスタンド（俯瞰撮影用）",
+          "badge": "pick",
+          "badgeLabel": "俯瞰用",
+          "amazonQuery": "スマホアームスタンド 俯瞰 デスククランプ",
+          "extra": null,
+          "subgroup": "tripod",
+          "image": null
+        },
+        {
+          "id": "photo-sp-acc-1",
+          "headline": "細部のディテール撮影に必須",
+          "name": "スマホ用 クリップ式マクロレンズ（25倍接写）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "スマホ マクロレンズ クリップ 25倍",
+          "extra": null,
+          "subgroup": "acc",
+          "image": null
+        },
+        {
+          "id": "photo-sp-acc-2",
+          "headline": "影を柔らかく・1,000円台で激変",
+          "name": "レフ板 30cm 5in1（白・銀・金・黒・透過）",
+          "badge": "budget",
+          "badgeLabel": "コスパ◎",
+          "amazonQuery": "レフ板 30cm 5in1",
+          "extra": null,
+          "subgroup": "acc",
+          "image": null
+        },
+        {
+          "id": "photo-sp-acc-3",
+          "headline": "撮影直前のホコリ除去に必須",
+          "name": "HAKUBA シリコンブロアー プロ KMC-60（カメラ・モデル用）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "HAKUBA シリコンブロアー プロ",
+          "extra": null,
+          "subgroup": "acc",
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "photo-camera",
+      "title": "📷 一眼・ミラーレスでプラモ撮影",
+      "desc": "本格的にプラモ写真に取り組むための機材。LEDライトに加えてストロボ（クリップオン）を組み合わせると、ハイライトの立体感が一段上がります。撮影の基礎は <a href=\"/tips/photo-camera.html\" style=\"color:#15803d;font-weight:700;\">ミラーレス・一眼カメラで撮るプラモデル写真</a> をご覧ください。",
+      "subgroups": [
+        { "id": "led", "label": "💡 LEDライト（定常光）" },
+        { "id": "strobe", "label": "⚡ ストロボ（エントリー）" },
+        { "id": "booth", "label": "📦 撮影ブース・背景" },
+        { "id": "tripod", "label": "📐 三脚・固定具" },
+        { "id": "acc", "label": "🪞 レフ板・小物" }
+      ],
+      "products": [
+        {
+          "id": "photo-cam-led-1",
+          "headline": "王道2灯セット・3点照明の基本",
+          "name": "Neewer LED 660 PRO 2灯セット（バイカラー・スタンド付き）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "Neewer 660 PRO 2灯セット",
+          "extra": null,
+          "subgroup": "led",
+          "image": null
+        },
+        {
+          "id": "photo-cam-led-2",
+          "headline": "コスパ最強COB型・ボーエンズマウント対応",
+          "name": "GODOX SL-60W II（COB LEDライト）",
+          "badge": "pro",
+          "badgeLabel": "定番",
+          "amazonQuery": "GODOX SL-60W II",
+          "extra": null,
+          "subgroup": "led",
+          "image": null
+        },
+        {
+          "id": "photo-cam-led-3",
+          "headline": "上位COB・本格的に取り組むなら",
+          "name": "GODOX VL150 II（150W COB LEDビデオライト）",
+          "badge": "pick",
+          "badgeLabel": "ハイエンド",
+          "amazonQuery": "GODOX VL150 II",
+          "extra": null,
+          "subgroup": "led",
+          "image": null
+        },
+        {
+          "id": "photo-cam-strobe-1",
+          "headline": "クリップオン定番・2.4G無線受信内蔵",
+          "name": "GODOX TT600 クリップオンストロボ（GN60・2.4G内蔵）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "GODOX TT600",
+          "extra": null,
+          "subgroup": "strobe",
+          "image": null
+        },
+        {
+          "id": "photo-cam-strobe-2",
+          "headline": "ワイヤレス発光に必須・カメラマウント別",
+          "name": "GODOX X2T ワイヤレスフラッシュトリガー（Sony / Canon / Nikon / FUJIFILM）",
+          "badge": "must",
+          "badgeLabel": "セット推奨",
+          "amazonQuery": "GODOX X2T トリガー",
+          "extra": "💡 TT600 と組み合わせてワイヤレス多灯ライティングが可能に。カメラのマウントに合うモデルを選んでください。",
+          "subgroup": "strobe",
+          "image": null
+        },
+        {
+          "id": "photo-cam-strobe-3",
+          "headline": "エントリー価格でストロボ入門",
+          "name": "Neewer TT560 クリップオンストロボ（マニュアル）",
+          "badge": "budget",
+          "badgeLabel": "コスパ◎",
+          "amazonQuery": "Neewer TT560",
+          "extra": null,
+          "subgroup": "strobe",
+          "image": null
+        },
+        {
+          "id": "photo-cam-booth-1",
+          "headline": "MG/PG対応・大型キットも収まる",
+          "name": "Neewer 撮影ブース 80cm（折りたたみ式・LEDなし）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "Neewer 撮影ブース 80cm",
+          "extra": null,
+          "subgroup": "booth",
+          "image": null
+        },
+        {
+          "id": "photo-cam-booth-2",
+          "headline": "一眼で撮るなら背景紙は大型を",
+          "name": "撮影背景紙 大型セット（黒・白・グレー）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "撮影 背景紙 大型 黒 白 グレー",
+          "extra": null,
+          "subgroup": "booth",
+          "image": null
+        },
+        {
+          "id": "photo-cam-booth-3",
+          "headline": "情景・ジオラマ表現に",
+          "name": "ジオラマシート（コンクリート・芝生・アスファルト柄）",
+          "badge": "pick",
+          "badgeLabel": "情景用",
+          "amazonQuery": "ジオラマシート コンクリート 芝生",
+          "extra": null,
+          "subgroup": "booth",
+          "image": null
+        },
+        {
+          "id": "photo-cam-tripod-1",
+          "headline": "一生もの・剛性と精度",
+          "name": "Manfrotto MT290XTA3 アルミ3段三脚",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "Manfrotto 290 アルミ 3段",
+          "extra": null,
+          "subgroup": "tripod",
+          "image": null
+        },
+        {
+          "id": "photo-cam-tripod-2",
+          "headline": "エントリー定番・コスパ高",
+          "name": "Velbon EX-440 4段三脚（自由雲台付き）",
+          "badge": "budget",
+          "badgeLabel": "コスパ◎",
+          "amazonQuery": "Velbon EX-440",
+          "extra": null,
+          "subgroup": "tripod",
+          "image": null
+        },
+        {
+          "id": "photo-cam-tripod-3",
+          "headline": "テーブル撮影の自由度UP",
+          "name": "俯瞰撮影用 デスククランプアーム（カメラ対応・重量耐性◎）",
+          "badge": "pick",
+          "badgeLabel": "俯瞰用",
+          "amazonQuery": "カメラ 俯瞰 クランプアーム",
+          "extra": null,
+          "subgroup": "tripod",
+          "image": null
+        },
+        {
+          "id": "photo-cam-acc-1",
+          "headline": "5枚の機能をこれ1つで",
+          "name": "レフ板 60cm 5in1（白・銀・金・黒・透過）",
+          "badge": "must",
+          "badgeLabel": "イチオシ",
+          "amazonQuery": "レフ板 60cm 5in1",
+          "extra": null,
+          "subgroup": "acc",
+          "image": null
+        },
+        {
+          "id": "photo-cam-acc-2",
+          "headline": "色再現の基準・WB設定に",
+          "name": "グレーカード（ホワイトバランス用・3枚セット）",
+          "badge": "pro",
+          "badgeLabel": "本格派",
+          "amazonQuery": "グレーカード ホワイトバランス 18%",
+          "extra": null,
+          "subgroup": "acc",
+          "image": null
+        }
+      ]
     }
   ]
 }
