@@ -67,10 +67,10 @@ const Y = "https://item-shopping.c.yimg.jp/i/j/";
 const IMAGE_MAP = {
   // 📱 スマホ
   "photo-sp-light-1":   Y + "mahy_b077z61tpn",                     // Neewer NL-660
-  "photo-sp-light-2":   Y + "jnh_hy8114he70-2tbnhs1",              // GODOX LEDM150
-  "photo-sp-light-3":   Y + "itempost_1-fullspec-2883",            // Neewer 18in リングライト
-  "photo-sp-booth-1":   Y + "gdoshop_5002940615-001",              // PULUZ 30cm
-  "photo-sp-booth-2":   Y + "microdirect_21kdsmvb0l-r-1",          // Neewer 40cm LP40
+  // "photo-sp-light-2": GODOX LEDM150 Yahooに該当なし
+  "photo-sp-light-3":   Y + "trade-journey_b00zl177po",            // Neewer 18in リングライト(再検索版)
+  "photo-sp-booth-1":   Y + "kirelab-net_rmnsf63b6bfa9d",          // PULUZ 30cm(再検索版)
+  // "photo-sp-booth-2": Neewer LP40 40cm Yahooに該当なし
   "photo-sp-booth-3":   Y + "333step_s-b07vkqyqq9-20260117",       // PVC 黒+白 60×130cm
   "photo-sp-tripod-1":  Y + "okaidoku44_wss-56vu2wrlqtx3",         // SmallRig三脚
   "photo-sp-tripod-2":  Y + "vitec_8024221643640-56e-ol",          // Manfrotto PIXI
@@ -89,7 +89,7 @@ const IMAGE_MAP = {
   "photo-cam-strobe-2n": Y + "y-sofmap_4961360038644",             // X2T-N Nikon
   "photo-cam-strobe-2f": Y + "trade-journey_b07sgbc28x",           // X2T-F Fuji
   "photo-cam-strobe-3": Y + "re-style5151_sr8-05-89",              // Neewer TT560
-  "photo-cam-booth-1":  Y + "stk-shop_77033651",                   // 80cm撮影テント
+  // "photo-cam-booth-1": Neewer 80cm撮影ブース Yahooに該当なし(別商品しか出ない)
   "photo-cam-booth-2":  Y + "bbest_bgc610",                        // 背景紙ロール(代用)
   // "photo-cam-booth-3": ジオラマシート 画像なし
   "photo-cam-tripod-1": Y + "vitec_8024221647761-56e-ol",          // Manfrotto MK290XTA3
