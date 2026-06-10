@@ -46,10 +46,10 @@ const ASIN_MAP = {
   "photo-cam-led-2":    "B0BW5YSY6K",
   "photo-cam-led-3":    "B0C5XH9VLD",
   "photo-cam-strobe-1": "B09H6WW88W",
-  "photo-cam-strobe-2":  "B07S62F223", // Canon
-  "photo-cam-strobe-2s": "B07TCGB4CD", // Sony
-  "photo-cam-strobe-2n": "B08462H8JK", // Nikon
-  "photo-cam-strobe-2f": "B084K5B2T1", // Fujifilm
+  "photo-cam-strobe-2":  "B07C51HZZP", // Xpro-C Canon (X2T後継・国内正規品)
+  "photo-cam-strobe-2s": "B07FJ3RZB9", // Xpro-S Sony (国内正規品)
+  "photo-cam-strobe-2n": "B077X6R9D7", // Xpro-N Nikon
+  "photo-cam-strobe-2f": "B078N7ZTWS", // Xpro-F Fujifilm
   "photo-cam-strobe-3": "B00OFLFD2U",
   "photo-cam-booth-1":  "B0BZ3WJ6J9",
   "photo-cam-booth-2":  "B00I4JO9TC",
@@ -84,10 +84,10 @@ const IMAGE_MAP = {
   // "photo-cam-led-2": GODOX SL60II-D 画像なし
   "photo-cam-led-3":    Y + "trade-journey_b085mzwmxt",            // GODOX VL150 II
   // "photo-cam-strobe-1": GODOX TT600 画像なし
-  "photo-cam-strobe-2":  Y + "trade-journey_b07s1skfnr",           // X2T-C Canon
-  "photo-cam-strobe-2s": Y + "syh_810",                            // X2T-S Sony
-  "photo-cam-strobe-2n": Y + "y-sofmap_4961360038644",             // X2T-N Nikon
-  "photo-cam-strobe-2f": Y + "trade-journey_b07sgbc28x",           // X2T-F Fuji
+  "photo-cam-strobe-2":  Y + "syh_272",                            // Xpro-C Canon
+  "photo-cam-strobe-2s": Y + "syh_375",                            // Xpro-S Sony
+  "photo-cam-strobe-2n": Y + "syh_273",                            // Xpro-N Nikon
+  // "photo-cam-strobe-2f": Xpro-F Yahoo該当なし（PA-API待ち）
   "photo-cam-strobe-3": Y + "re-style5151_sr8-05-89",              // Neewer TT560
   // "photo-cam-booth-1": Neewer 80cm撮影ブース Yahooに該当なし(別商品しか出ない)
   "photo-cam-booth-2":  Y + "bbest_bgc610",                        // 背景紙ロール(代用)

@@ -553,10 +553,10 @@
         {
           "id": "photo-cam-strobe-2",
           "headline": "Canon用・ワイヤレス発光に必須",
-          "name": "GODOX X2T-C ワイヤレスフラッシュトリガー（Canon EOS用）",
+          "name": "GODOX Xpro-C ワイヤレスフラッシュトリガー（Canon EOS用）",
           "badge": "must",
           "badgeLabel": "Canon",
-          "amazonQuery": "GODOX X2T-C トリガー Canon",
+          "amazonQuery": "GODOX Xpro-C トリガー Canon",
           "extra": "💡 TT600 と組み合わせてワイヤレス多灯ライティング。Canon EOS シリーズ用。",
           "subgroup": "strobe",
           "image": null
@@ -564,10 +564,10 @@
         {
           "id": "photo-cam-strobe-2s",
           "headline": "Sony用・ワイヤレス発光に必須",
-          "name": "GODOX X2T-S ワイヤレスフラッシュトリガー（Sony α用）",
+          "name": "GODOX Xpro-S ワイヤレスフラッシュトリガー（Sony α用）",
           "badge": "must",
           "badgeLabel": "Sony",
-          "amazonQuery": "GODOX X2T-S トリガー Sony",
+          "amazonQuery": "GODOX Xpro-S トリガー Sony",
           "extra": "💡 TT600 と組み合わせてワイヤレス多灯ライティング。Sony α シリーズ用。",
           "subgroup": "strobe",
           "image": null
@@ -575,10 +575,10 @@
         {
           "id": "photo-cam-strobe-2n",
           "headline": "Nikon用・ワイヤレス発光に必須",
-          "name": "GODOX X2T-N ワイヤレスフラッシュトリガー（Nikon用）",
+          "name": "GODOX Xpro-N ワイヤレスフラッシュトリガー（Nikon用）",
           "badge": "must",
           "badgeLabel": "Nikon",
-          "amazonQuery": "GODOX X2T-N トリガー Nikon",
+          "amazonQuery": "GODOX Xpro-N トリガー Nikon",
           "extra": "💡 TT600 と組み合わせてワイヤレス多灯ライティング。Nikon DSLR/Z シリーズ用。",
           "subgroup": "strobe",
           "image": null
@@ -586,10 +586,10 @@
         {
           "id": "photo-cam-strobe-2f",
           "headline": "FUJIFILM用・ワイヤレス発光に必須",
-          "name": "GODOX X2T-F ワイヤレスフラッシュトリガー（FUJIFILM X用）",
+          "name": "GODOX Xpro-F ワイヤレスフラッシュトリガー（FUJIFILM X用）",
           "badge": "must",
           "badgeLabel": "FUJIFILM",
-          "amazonQuery": "GODOX X2T-F トリガー FUJIFILM",
+          "amazonQuery": "GODOX Xpro-F トリガー FUJIFILM",
           "extra": "💡 TT600 と組み合わせてワイヤレス多灯ライティング。FUJIFILM X シリーズ用。",
           "subgroup": "strobe",
           "image": null
