@@ -47,8 +47,8 @@ const ASIN_MAP = {
   "photo-cam-led-3":    "B0C5XH9VLD",
   "photo-cam-strobe-1": "B09H6WW88W",
   "photo-cam-strobe-2":  "B07C51HZZP", // Xpro-C Canon (X2T後継・国内正規品)
-  "photo-cam-strobe-2s": "B07FJ3RZB9", // Xpro-S Sony (国内正規品)
-  "photo-cam-strobe-2n": "B077X6R9D7", // Xpro-N Nikon
+  "photo-cam-strobe-2s": "B07F82JYDJ", // Xpro-S Sony (Prime+在庫あり)
+  "photo-cam-strobe-2n": "B076JBD5T6", // Xpro-N Nikon (Prime・旧B077X6R9D7が404のため変更)
   "photo-cam-strobe-2f": "B078N7ZTWS", // Xpro-F Fujifilm
   "photo-cam-strobe-3": "B00OFLFD2U",
   "photo-cam-booth-1":  "B0BZ3WJ6J9",
