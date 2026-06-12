@@ -65,8 +65,11 @@
     font-size: 22px;
     letter-spacing: 3px;
     color: var(--text);
+    display: flex;
+    align-items: center;
   }
   .site-logo span { color: var(--accent); }
+  .site-logo img { height: 40px; width: auto; display: block; }
   .header-cta {
     background: var(--accent);
     color: #fff;
@@ -448,6 +451,7 @@
     color: var(--text2);
   }
   footer .logo span { color: var(--accent); }
+  footer .logo img { height: 56px; width: auto; display: block; }
   footer small { font-size: 11px; color: var(--text2); }
 
   @media (max-width: 640px) {
@@ -465,7 +469,7 @@
 
 <!-- HEADER -->
 <header class="site-header">
-  <div class="site-logo">TSUMI<span>.</span>TSUMI</div>
+  <div class="site-logo"><img src="/LOGO.png" alt="TSUMI TSUMI" /></div>
   <a href="https://tsumitsumi.vercel.app" class="header-cta">APP を開く</a>
 </header>
 
@@ -677,8 +681,8 @@
 
 <!-- FOOTER -->
 <footer>
-  <div class="logo">TSUMI<span>.</span>TSUMI</div>
-  <small>© 2025 TSUMI TSUMI</small>
+  <div class="logo"><img src="/LOGO.png" alt="TSUMI TSUMI" /></div>
+  <small>© 2026 TSUMI TSUMI</small>
 </footer>
 
 </body>
