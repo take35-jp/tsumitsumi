@@ -2833,7 +2833,7 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
 }
 
 // ---- 完成品アルバム ビューア（最大6枚のギャラリー・ライトボックス） ----
-function AlbumViewerModal({ kit, onClose, onShare }) {
+function AlbumViewerModal({ kit, onClose, onShare, onEdit, onDelete }) {
   const photos = getCompletedPhotos(kit);
   const [idx, setIdx] = useState(0);
   if (photos.length === 0) {
@@ -2841,6 +2841,12 @@ function AlbumViewerModal({ kit, onClose, onShare }) {
       <div style={xs.wrap}>
         <div style={xs.header}><span style={xs.title}>🏆 {kit.name}</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
         <div style={xs.empty}>完成写真がまだありません。<br/>キットを編集して完成写真を登録してください。</div>
+        {onEdit && (
+          <button onClick={() => onEdit(kit)}
+            style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            ✏️ 編集して完成写真を追加
+          </button>
+        )}
       </div>
     );
   }
@@ -2854,7 +2860,7 @@ function AlbumViewerModal({ kit, onClose, onShare }) {
         <button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
       {/* メイン写真（縦長端末でも溢れないよう高さ制限） */}
-      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1", maxHeight: "46vh" }}>
+      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1", maxHeight: "40vh" }}>
         <KitImage src={cur} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
         {photos.length > 1 && (<>
           <button onClick={() => go(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
@@ -2879,11 +2885,25 @@ function AlbumViewerModal({ kit, onClose, onShare }) {
         {kit.rating > 0 && <span style={{ fontSize: 13, color: "#fbbf24" }}>{"★".repeat(Math.min(5, kit.rating))}</span>}
         {kit.series && <span style={{ fontSize: 12, color: "#9ca3af" }}>{kit.series}</span>}
       </div>
-      {/* シェアボタン（Phase2で接続） */}
-      {onShare && (
-        <button onClick={() => onShare(kit)}
-          style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-          📸 この完成品をXでシェア
+      {/* 操作ボタン：編集（写真の追加削除・各項目）／シェア */}
+      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+        {onEdit && (
+          <button onClick={() => onEdit(kit)}
+            style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            ✏️ 編集
+          </button>
+        )}
+        {onShare && (
+          <button onClick={() => onShare(kit)}
+            style={{ flex: 1, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            📸 シェア
+          </button>
+        )}
+      </div>
+      {onDelete && (
+        <button onClick={() => onDelete(kit)}
+          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          🗑 このキットを削除
         </button>
       )}
     </div>
@@ -4471,7 +4491,11 @@ export default function App() {
       {albumKit && (
         <div style={s.overlay} onClick={() => setAlbumKit(null)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <AlbumViewerModal kit={albumKit} onClose={() => setAlbumKit(null)} onShare={(k) => { setAlbumKit(null); setShareKit(k); }} />
+            <AlbumViewerModal kit={albumKit}
+              onClose={() => setAlbumKit(null)}
+              onShare={(k) => { setAlbumKit(null); setShareKit(k); }}
+              onEdit={(k) => { setAlbumKit(null); handleEdit(k); }}
+              onDelete={(k) => { if (window.confirm(`「${k.name}」を削除しますか？\nこの操作は元に戻せません。`)) { setAlbumKit(null); handleDelete(k.id); } }} />
           </div>
         </div>
       )}
