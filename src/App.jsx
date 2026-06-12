@@ -2853,8 +2853,8 @@ function AlbumViewerModal({ kit, onClose, onShare }) {
         <span style={{ ...xs.title, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🏆 {kit.name}</span>
         <button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
-      {/* メイン写真 */}
-      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1" }}>
+      {/* メイン写真（縦長端末でも溢れないよう高さ制限） */}
+      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1", maxHeight: "46vh" }}>
         <KitImage src={cur} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
         {photos.length > 1 && (<>
           <button onClick={() => go(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
