@@ -2703,6 +2703,64 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
   );
 }
 
+// ---- 完成品アルバム ビューア（最大6枚のギャラリー・ライトボックス） ----
+function AlbumViewerModal({ kit, onClose, onShare }) {
+  const photos = getCompletedPhotos(kit);
+  const [idx, setIdx] = useState(0);
+  if (photos.length === 0) {
+    return (
+      <div style={xs.wrap}>
+        <div style={xs.header}><span style={xs.title}>🏆 {kit.name}</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
+        <div style={xs.empty}>完成写真がまだありません。<br/>キットを編集して完成写真を登録してください。</div>
+      </div>
+    );
+  }
+  const safeIdx = Math.min(idx, photos.length - 1);
+  const cur = photos[safeIdx];
+  const go = (d) => setIdx((i) => (Math.min(i, photos.length - 1) + d + photos.length) % photos.length);
+  return (
+    <div style={xs.wrap}>
+      <div style={xs.header}>
+        <span style={{ ...xs.title, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🏆 {kit.name}</span>
+        <button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button>
+      </div>
+      {/* メイン写真 */}
+      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1" }}>
+        <KitImage src={cur} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+        {photos.length > 1 && (<>
+          <button onClick={() => go(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
+          <button onClick={() => go(1)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>›</button>
+          <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{safeIdx + 1} / {photos.length}</div>
+        </>)}
+      </div>
+      {/* サムネイルストリップ */}
+      {photos.length > 1 && (
+        <div style={{ display: "flex", gap: 6, marginTop: 10, overflowX: "auto", paddingBottom: 4 }}>
+          {photos.map((url, i) => (
+            <div key={i} onClick={() => setIdx(i)}
+              style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${i === safeIdx ? "#22c55e" : "#e5e7eb"}`, cursor: "pointer" }}>
+              <KitImage src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
+          ))}
+        </div>
+      )}
+      {/* メタ情報 */}
+      <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        {kit.scale && <span style={{ fontSize: 12, fontWeight: 700, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "3px 10px" }}>{kit.scale}</span>}
+        {kit.rating > 0 && <span style={{ fontSize: 13, color: "#fbbf24" }}>{"★".repeat(Math.min(5, kit.rating))}</span>}
+        {kit.series && <span style={{ fontSize: 12, color: "#9ca3af" }}>{kit.series}</span>}
+      </div>
+      {/* シェアボタン（Phase2で接続） */}
+      {onShare && (
+        <button onClick={() => onShare(kit)}
+          style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+          📸 この完成品をXでシェア
+        </button>
+      )}
+    </div>
+  );
+}
+
 const xs = {
   wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 32px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
@@ -3055,6 +3113,7 @@ export default function App() {
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showAlbum, setShowAlbum] = useState(false);
+  const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
   const [myXId, setMyXId] = useState("");
   const [filterSeries, setFilterSeries] = useState("");
   const [filterRating, setFilterRating] = useState("");
@@ -3665,6 +3724,29 @@ export default function App() {
     </div>
   )), [filtered, bulkMode, bulkSelected, reorderMode]);
 
+  // 完成タブ用：完成品アルバムのサムネグリッド。タップでギャラリービューアを開く。
+  const albumCards = useMemo(() => filtered.map((kit) => {
+    const photos = getCompletedPhotos(kit);
+    const cover = photos[0] || kit.photoUrl;
+    return (
+      <div key={kit.id} onClick={() => setAlbumKit(kit)}
+        style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }}>
+        <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", position: "relative" }}>
+          {cover
+            ? <KitImage src={cover} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>}
+          {photos.length > 1 && (
+            <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20 }}>📷 {photos.length}</span>
+          )}
+          {/* 名前オーバーレイ */}
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "16px 8px 6px", background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))", color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{kit.name}</div>
+        </div>
+      </div>
+    );
+  }), [filtered]);
+  // 完成タブで通常リスト/グリッドの代わりにアルバムグリッドを出す条件
+  const albumMode = filter === "done" && !bulkMode && !reorderMode;
+
   // IDB 読込完了まではローディング表示（localStorage 由来の古い表示のチラつき防止）
   if (!hydrated) {
     return (
@@ -3864,7 +3946,13 @@ export default function App() {
             </button>
           </div>
         )}
-        {viewMode === "grid" && (
+        {/* 完成タブ：完成品アルバムグリッド（タップで6枚ギャラリー） */}
+        {albumMode && (
+          filtered.length === 0
+            ? <div style={{ textAlign: "center", padding: "40px 20px", color: "#9ca3af", fontSize: 13, lineHeight: 1.8 }}>完成済みのキットがありません。<br/>キットを「完成」にすると、ここに完成品アルバムが並びます。</div>
+            : <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>{albumCards}</div>
+        )}
+        {!albumMode && viewMode === "grid" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {gridCards}
           </div>
@@ -3950,7 +4038,7 @@ export default function App() {
             </div>
           );
         })()}
-        {viewMode === "list" && listCards}
+        {!albumMode && viewMode === "list" && listCards}
       </div>
 
       {/* フッター */}
@@ -4239,6 +4327,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowAlbum(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <AlbumShareModal kits={kits} rank={rank} myXId={myXId} setMyXId={setMyXId} onClose={() => setShowAlbum(false)} />
+          </div>
+        </div>
+      )}
+
+      {albumKit && (
+        <div style={s.overlay} onClick={() => setAlbumKit(null)}>
+          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <AlbumViewerModal kit={albumKit} onClose={() => setAlbumKit(null)} />
           </div>
         </div>
       )}
