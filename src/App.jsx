@@ -2369,15 +2369,20 @@ async function generateKitAlbumImage(kit, rank, opts = {}) {
   ctx.fillStyle = "#22c55e"; ctx.font = "bold 22px 'Arial'";
   ctx.textAlign = "right"; ctx.fillText("✓ 完成", W - 32, 64); ctx.textAlign = "left";
 
-  // キット名（最大2行）
-  ctx.fillStyle = "#fff"; ctx.font = "bold 46px 'Arial'";
+  // キット名（必ず1行・収まらなければフォント縮小、それでも長ければ末尾を…で省略）
   const name = kit.name || "";
-  const maxC = 22;
-  const nl1 = name.slice(0, maxC);
-  const nl2 = name.length > maxC ? name.slice(maxC, maxC * 2) : "";
-  ctx.fillText(nl1, 32, 150);
-  if (nl2) ctx.fillText(name.length > maxC * 2 ? nl2.slice(0, -1) + "…" : nl2, 32, 202);
-  const gridTop = nl2 ? 240 : 190;
+  const nameMaxW = W - 64; // 左右マージン32ずつ
+  let fs = 46;
+  ctx.font = `bold ${fs}px 'Arial'`;
+  while (ctx.measureText(name).width > nameMaxW && fs > 20) { fs -= 2; ctx.font = `bold ${fs}px 'Arial'`; }
+  let shownName = name;
+  if (ctx.measureText(shownName).width > nameMaxW) {
+    while (shownName.length > 1 && ctx.measureText(shownName + "…").width > nameMaxW) shownName = shownName.slice(0, -1);
+    shownName += "…";
+  }
+  ctx.fillStyle = "#fff";
+  ctx.fillText(shownName, 32, 152);
+  const gridTop = 188;
 
   // ※ シェア画像にはスケール・評価は載せず、キット名のみ表示（ユーザー要望）
 
@@ -3805,7 +3810,7 @@ export default function App() {
   )), [filtered]);
 
   const listCards = useMemo(() => filtered.map((kit, index) => (
-    <div key={kit.id} style={{ ...s.card, position: "relative", ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
+    <div key={kit.id} style={{ ...s.card, position: "relative", ...(kit.completed && filter === "done" && !bulkMode && !reorderMode ? { marginLeft: 14, borderLeft: "3px solid #bbf7d0" } : {}), ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
       if (bulkMode) { setBulkSelected(prev => { const n = new Set(prev); n.has(kit.id) ? n.delete(kit.id) : n.add(kit.id); return n; }); return; }
       if (!reorderMode) setDetail(kit);
     }}>
@@ -3854,9 +3859,15 @@ export default function App() {
             );
           })()}
         </div>
+        {kit.completed && filter === "done" && !bulkMode && !reorderMode && (
+          <button onClick={(e) => { e.stopPropagation(); setAlbumKit(kit); }}
+            style={{ marginTop: 8, alignSelf: "flex-start", padding: "5px 16px", background: "#f0fdf4", color: "#166534", border: "1.5px solid #bbf7d0", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+            📷 アルバム
+          </button>
+        )}
       </div>
     </div>
-  )), [filtered, bulkMode, bulkSelected, reorderMode]);
+  )), [filtered, bulkMode, bulkSelected, reorderMode, filter]);
 
   // 完成タブ用：完成品アルバムのサムネグリッド。タップでギャラリービューアを開く。
   const albumCards = useMemo(() => filtered.map((kit) => {
