@@ -2291,30 +2291,10 @@ async function generateAlbumImages(kits, rank, opts = {}) {
       const maxChars = Math.floor((cardW - 32) / 15);
       const l1 = name.slice(0, maxChars);
       const l2 = name.length > maxChars ? name.slice(maxChars, maxChars * 2) : "";
-      const nameY = y + cardH - (l2 ? 64 : 44);
+      // ※ スケール・評価は載せず、キット名のみ表示（ユーザー要望）
+      const nameY = y + cardH - (l2 ? 40 : 18);
       ctx.fillText(l1, x + 16, nameY);
       if (l2) ctx.fillText(l2.length === maxChars && name.length > maxChars * 2 ? l2.slice(0, -1) + "…" : l2, x + 16, nameY + 28);
-
-      // グレードバッジ＋評価
-      const badgeY = y + cardH - 30;
-      let bx = x + 16;
-      if (kit.scale) {
-        const { bg, text } = getScaleColor(kit.scale);
-        ctx.font = "bold 20px 'Arial'";
-        const bw = ctx.measureText(kit.scale).width + 20;
-        ctx.fillStyle = bg;
-        ctx.beginPath();
-        ctx.roundRect(bx, badgeY - 18, bw, 26, 5);
-        ctx.fill();
-        ctx.fillStyle = text;
-        ctx.fillText(kit.scale, bx + 10, badgeY);
-        bx += bw + 10;
-      }
-      if (kit.rating > 0) {
-        ctx.fillStyle = "#fbbf24";
-        ctx.font = "20px 'Arial'";
-        ctx.fillText("★".repeat(Math.min(5, kit.rating)), bx, badgeY);
-      }
     }
 
     // フッター
@@ -2399,15 +2379,7 @@ async function generateKitAlbumImage(kit, rank, opts = {}) {
   if (nl2) ctx.fillText(name.length > maxC * 2 ? nl2.slice(0, -1) + "…" : nl2, 32, 202);
   const gridTop = nl2 ? 240 : 190;
 
-  // グレード/評価
-  let bx = 32; const metaY = gridTop - 16;
-  if (kit.scale) {
-    const { bg, text } = getScaleColor(kit.scale);
-    ctx.font = "bold 22px 'Arial'"; const bw = ctx.measureText(kit.scale).width + 24;
-    ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(bx, metaY - 22, bw, 32, 6); ctx.fill();
-    ctx.fillStyle = text; ctx.fillText(kit.scale, bx + 12, metaY); bx += bw + 12;
-  }
-  if (kit.rating > 0) { ctx.fillStyle = "#fbbf24"; ctx.font = "26px 'Arial'"; ctx.fillText("★".repeat(Math.min(5, kit.rating)), bx, metaY); }
+  // ※ シェア画像にはスケール・評価は載せず、キット名のみ表示（ユーザー要望）
 
   // 写真グリッド
   const MARGIN = 32, GAP = 12, FOOTER = 56;
@@ -2833,18 +2805,24 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
 }
 
 // ---- 完成品アルバム ビューア（最大6枚のギャラリー・ライトボックス） ----
-function AlbumViewerModal({ kit, onClose, onShare, onEdit, onDelete }) {
+function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
   const photos = getCompletedPhotos(kit);
   const [idx, setIdx] = useState(0);
   if (photos.length === 0) {
     return (
       <div style={xs.wrap}>
-        <div style={xs.header}><span style={xs.title}>🏆 {kit.name}</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
+        <div style={xs.header}><span style={{ ...xs.title, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{kit.name}</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
         <div style={xs.empty}>完成写真がまだありません。<br/>キットを編集して完成写真を登録してください。</div>
         {onEdit && (
           <button onClick={() => onEdit(kit)}
             style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             ✏️ 編集して完成写真を追加
+          </button>
+        )}
+        {onUncomplete && (
+          <button onClick={() => onUncomplete(kit)}
+            style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            ↩️ 完成を解除
           </button>
         )}
       </div>
@@ -2856,7 +2834,7 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onDelete }) {
   return (
     <div style={xs.wrap}>
       <div style={xs.header}>
-        <span style={{ ...xs.title, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🏆 {kit.name}</span>
+        <span style={{ ...xs.title, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{kit.name}</span>
         <button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
       {/* メイン写真（縦長端末でも溢れないよう高さ制限） */}
@@ -2879,10 +2857,9 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onDelete }) {
           ))}
         </div>
       )}
-      {/* メタ情報 */}
+      {/* メタ情報（★は完成品では非表示） */}
       <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         {kit.scale && <span style={{ fontSize: 12, fontWeight: 700, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "3px 10px" }}>{kit.scale}</span>}
-        {kit.rating > 0 && <span style={{ fontSize: 13, color: "#fbbf24" }}>{"★".repeat(Math.min(5, kit.rating))}</span>}
         {kit.series && <span style={{ fontSize: 12, color: "#9ca3af" }}>{kit.series}</span>}
       </div>
       {/* 操作ボタン：編集（写真の追加削除・各項目）／シェア */}
@@ -2900,10 +2877,10 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onDelete }) {
           </button>
         )}
       </div>
-      {onDelete && (
-        <button onClick={() => onDelete(kit)}
-          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-          🗑 このキットを削除
+      {onUncomplete && (
+        <button onClick={() => onUncomplete(kit)}
+          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          ↩️ 完成を解除
         </button>
       )}
     </div>
@@ -3864,7 +3841,7 @@ export default function App() {
           ))}
         </div>
         <div style={s.cardBottom}>
-          {kit.rating > 0 && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
+          {kit.rating > 0 && !kit.completed && <span style={s.stars}>{"★".repeat(kit.rating)}{"☆".repeat(5 - kit.rating)}</span>}
           {kit.count > 1 && <span style={s.countBadge}>{kit.count}個</span>}
           {kit.condition && <span style={{ ...s.condBadge, ...getCondStyle(kit.condition) }}>{kit.condition}</span>}
           {(() => {
@@ -3902,7 +3879,8 @@ export default function App() {
     );
   }), [filtered]);
   // 完成タブで通常リスト/グリッドの代わりにアルバムグリッドを出す条件
-  const albumMode = filter === "done" && !bulkMode && !reorderMode;
+  // 完成タブ：サムネ(grid)表示のときだけアルバムグリッド。詳細(list)表示では通常の一覧（詳細モーダル）に。
+  const albumMode = filter === "done" && viewMode === "grid" && !bulkMode && !reorderMode;
 
   // IDB 読込完了まではローディング表示（localStorage 由来の古い表示のチラつき防止）
   if (!hydrated) {
@@ -4254,7 +4232,7 @@ export default function App() {
               <div style={s.modalTitle}>{detail.name}</div>
               {detail.completed && <div style={s.doneBadge}>✓ 完成済み</div>}
               <table style={s.table}><tbody>
-                {[["シリーズ", detail.series], ["スケール", detail.scale], ["希望小売価格", (() => { const ep = getEffectivePrice(detail); return ep > 0 ? `¥${ep.toLocaleString()}（税込）` : null; })()], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["合計金額", (() => { const ep = getEffectivePrice(detail); const cnt = detail.count || 1; return ep > 0 && cnt > 1 ? `¥${(ep*cnt).toLocaleString()}（${cnt}個×¥${ep.toLocaleString()}）` : null; })()], ["評価", detail.rating > 0 ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
+                {[["シリーズ", detail.series], ["スケール", detail.scale], ["希望小売価格", (() => { const ep = getEffectivePrice(detail); return ep > 0 ? `¥${ep.toLocaleString()}（税込）` : null; })()], ["購入日", detail.purchaseDate ? formatDate(detail.purchaseDate) : null], ["個数", detail.count > 1 ? `${detail.count}個` : null], ["合計金額", (() => { const ep = getEffectivePrice(detail); const cnt = detail.count || 1; return ep > 0 && cnt > 1 ? `¥${(ep*cnt).toLocaleString()}（${cnt}個×¥${ep.toLocaleString()}）` : null; })()], ["評価", (detail.rating > 0 && !detail.completed) ? "★".repeat(detail.rating) + "☆".repeat(5 - detail.rating) : null], ["状態", detail.condition ? (detail.conditionNote ? `${detail.condition}（${detail.conditionNote}）` : detail.condition) : null], ["JAN", detail.jan], ["メモ", detail.memo]]
                   .filter(([, v]) => v && v !== "—")
                   .map(([k, v]) => <tr key={k}><td style={s.td1}>{k}</td><td style={s.td2}>{v}</td></tr>)}
               </tbody></table>
@@ -4333,7 +4311,6 @@ export default function App() {
                 <button style={s.editBtn} onClick={() => handleEdit(detail)}>編集</button>
                 <button style={{ ...s.editBtn, background: '#3b82f6', color: '#fff' }} onClick={() => handleDuplicate(detail)}>複製</button>
                 <button style={{ ...s.editBtn, background: detail.completed ? '#9ca3af' : '#10b981' }} onClick={() => { toggleComplete(detail.id); setDetail(null); }}>{detail.completed ? '完成を解除' : '完成'}</button>
-                <button style={s.deleteBtn} onClick={() => handleDelete(detail.id)}>削除</button>
                 <button style={s.closeBtn} onClick={() => setDetail(null)}>閉じる</button>
               </div>
               {/* 広告（AdSense審査中は ADS_ENABLED=false で非表示） */}
@@ -4495,7 +4472,7 @@ export default function App() {
               onClose={() => setAlbumKit(null)}
               onShare={(k) => { setAlbumKit(null); setShareKit(k); }}
               onEdit={(k) => { setAlbumKit(null); handleEdit(k); }}
-              onDelete={(k) => { if (window.confirm(`「${k.name}」を削除しますか？\nこの操作は元に戻せません。`)) { setAlbumKit(null); handleDelete(k.id); } }} />
+              onUncomplete={(k) => { setAlbumKit(null); toggleComplete(k.id); }} />
           </div>
         </div>
       )}
@@ -4704,6 +4681,13 @@ export default function App() {
             <label style={s.label}>メモ</label>
             <textarea style={{ ...s.input, minHeight: 60, resize: "vertical" }} placeholder="自由にメモを残そう" value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
 
+            {/* 編集時のみ：このキットを削除（積みプラ・完成品とも編集の中に集約） */}
+            {editId !== null && (
+              <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => { if (window.confirm(`「${form.name}」を削除しますか？\nこの操作は元に戻せません。`)) { handleDelete(editId); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); } }}>
+                🗑 このキットを削除
+              </button>
+            )}
             <div style={{ height: 80 }} />
             <div style={{ position: "sticky", bottom: 0, background: "#fff", paddingTop: 10, paddingBottom: 16, marginTop: 8, borderTop: "1px solid #f0f0f0", display: "flex", gap: 10 }}>
               <button style={s.cancelBtn} onClick={() => setShowForm(false)}>キャンセル</button>
