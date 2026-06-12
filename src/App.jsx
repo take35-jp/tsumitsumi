@@ -3814,13 +3814,6 @@ export default function App() {
       if (bulkMode) { setBulkSelected(prev => { const n = new Set(prev); n.has(kit.id) ? n.delete(kit.id) : n.add(kit.id); return n; }); return; }
       if (!reorderMode) setDetail(kit);
     }}>
-      {kit.completed && !bulkMode && !reorderMode && (
-        <button onClick={(e) => { e.stopPropagation(); setShareKit(kit); }}
-          title="完成品をXでシェア"
-          style={{ position: "absolute", top: 6, right: 6, zIndex: 2, padding: "3px 9px", background: "#000", color: "#fff", border: "none", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}>
-          📸 シェア
-        </button>
-      )}
       {bulkMode && (
         <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {bulkSelected.has(kit.id) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
@@ -4289,9 +4282,19 @@ export default function App() {
                   </a>
                 </div>
               )}
-              {/* Amazonアソシエイト：JAN または商品名で Amazon 検索へ送客。
-                  譲る・売るの下に小さめサイズで配置（控えめなセカンダリ動線）。 */}
-              {makeAmazonAffUrl(detail) && (
+              {/* 完成品：Amazon送客の代わりに「📸 完成品をシェア」を表示 */}
+              {detail.completed && (
+                <div style={{ marginTop: 10 }}>
+                  <button
+                    onClick={() => { setDetail(null); setShareKit(detail); }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "11px", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                    📸 この完成品をXでシェア
+                  </button>
+                </div>
+              )}
+              {/* Amazonアソシエイト（未完成のみ）：JAN または商品名で Amazon 検索へ送客。
+                  譲る・売るの下に小さめサイズで配置（控えめなセカンダリ動線）。完成品には出さない。 */}
+              {!detail.completed && makeAmazonAffUrl(detail) && (
                 <div style={{ marginTop: 10 }}>
                   <a
                     href={makeAmazonAffUrl(detail)}
