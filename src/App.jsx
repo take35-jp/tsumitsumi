@@ -1319,7 +1319,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.30", date: "2026/05/30", isNew: true, items: ["積みプラ数のランクの上限を更新"] },
+    { ver: "v1.31", date: "2026/06/13", isNew: true, items: ["完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿。表紙＋ショーケース・称号入り）"] },
+    { ver: "v1.30", date: "2026/05/30", isNew: false, items: ["積みプラ数のランクの上限を更新"] },
     { ver: "v1.29", date: "2026/05/25", isNew: false, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
     { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
     { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
@@ -1554,10 +1555,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.30 */}
+          {/* v1.31 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.31</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿）
+            </div>
+          </div>
+          {/* v1.30 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.30</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/30</span>
             </div>
@@ -1573,16 +1584,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）
-            </div>
-          </div>
-          {/* v1.28 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.28</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・時間が経つと一部キットの登録画像が消えて「📦」マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）
             </div>
           </div>
         </div>
@@ -2055,6 +2056,266 @@ async function generateShareImages(kits, rank) {
   return blobs;
 }
 
+// ---- 完成アルバム画像生成（リッチ・完成写真を大きく見せる） ----
+// 表紙1枚 ＋ 2x2ショーケースページ。1080x1350(4:5)でX/Instagram映え。
+async function generateAlbumImages(kits, rank, opts = {}) {
+  const W = 1080, H = 1350;
+  const title = (opts.title || "完成コレクション").slice(0, 24);
+  // 新ロゴのブロック配色（ピラミッド型マーク描画用）
+  const LOGO_BLOCKS = ["#34b3a0", "#e6b52c", "#8e54b0", "#3f6fc6", "#d75a2b", "#3aa75d"];
+
+  const loadImage = async (src) => {
+    if (!src) return null;
+    if (isIdbBlobUrl(src)) {
+      const id = idbBlobUrlToId(src);
+      const blob = await kitsIdbPhotoGet(id);
+      if (!blob) return null;
+      const objectUrl = URL.createObjectURL(blob);
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(objectUrl); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(null); };
+        img.src = objectUrl;
+      });
+    }
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      if (src.startsWith("data:")) { img.src = src; }
+      else { img.crossOrigin = "anonymous"; img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`; }
+    });
+  };
+
+  // 完成写真を事前ロード
+  const imgCache = {};
+  await Promise.all(kits.map(async (k) => {
+    const src = k.completedPhotoUrl || k.photoUrl;
+    if (src) imgCache[k.id] = await loadImage(src);
+  }));
+
+  // 写真をセンタークロップで矩形に描く
+  const drawCover = (ctx, img, dx, dy, dw, dh) => {
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const scale = Math.max(dw / iw, dh / ih);
+    const w = iw * scale, h = ih * scale;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(dx, dy, dw, dh);
+    ctx.clip();
+    ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
+    ctx.restore();
+  };
+
+  // 新ロゴ風ブロックマーク（小さなピラミッド）を描く
+  const drawLogoMark = (ctx, cx, topY, unit) => {
+    const g = unit * 0.16; // gap
+    const positions = [
+      [0, 0],        // teal (top, centered)
+      [-1, 1], [1, 1], // yellow, purple
+      [-2, 2], [0, 2], [2, 2], // blue, orange, green （-2,0,2 を半ユニットずらして3個）
+    ];
+    // 実際の見た目: 上1・中2・下3。x位置を行ごとに中央寄せ
+    const rows = [[0], [0, 1], [0, 1, 2]];
+    let bi = 0;
+    rows.forEach((row, r) => {
+      const n = row.length;
+      row.forEach((_, i) => {
+        const x = cx + (i - (n - 1) / 2) * (unit + g);
+        const y = topY + r * (unit * 0.62 + g);
+        ctx.fillStyle = LOGO_BLOCKS[bi++ % LOGO_BLOCKS.length];
+        ctx.beginPath();
+        ctx.roundRect(x - unit / 2, y, unit, unit * 0.62, unit * 0.12);
+        ctx.fill();
+      });
+    });
+  };
+
+  const blobs = [];
+
+  // ===== 表紙 =====
+  {
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(0, 0, W, H);
+
+    // 背景コラージュ（完成写真2x2を薄く）
+    const bgKits = kits.filter(k => imgCache[k.id]).slice(0, 4);
+    if (bgKits.length > 0) {
+      const halfW = W / 2, halfH = H / 2;
+      bgKits.forEach((k, i) => {
+        const dx = (i % 2) * halfW, dy = Math.floor(i / 2) * halfH;
+        ctx.globalAlpha = 0.22;
+        drawCover(ctx, imgCache[k.id], dx, dy, halfW, halfH);
+        ctx.globalAlpha = 1;
+      });
+      // 暗くするオーバーレイ
+      ctx.fillStyle = "rgba(8,8,8,0.74)";
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // ロゴマーク
+    drawLogoMark(ctx, W / 2, 250, 92);
+    // ブランド名
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 40px 'Arial'";
+    ctx.textAlign = "center";
+    ctx.fillText("TSUMI TSUMI", W / 2, 560);
+
+    // タイトル
+    ctx.fillStyle = "#ff6b2b";
+    ctx.font = "bold 76px 'Arial'";
+    ctx.fillText(title, W / 2, 700);
+
+    // 完成数（巨大）
+    const total = kits.reduce((s, k) => s + (k.count || 1), 0);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 220px 'Arial'";
+    ctx.fillText(String(total), W / 2, 960);
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "bold 40px 'Arial'";
+    ctx.fillText("体 完成", W / 2, 1030);
+
+    // ランク称号チップ
+    if (rank && rank.label) {
+      ctx.font = "bold 34px 'Arial'";
+      const rw = ctx.measureText(rank.label).width + 56;
+      const rx = (W - rw) / 2, ry = 1090;
+      ctx.fillStyle = (rank.color || "#666") + "33";
+      ctx.beginPath();
+      ctx.roundRect(rx, ry, rw, 64, 32);
+      ctx.fill();
+      ctx.fillStyle = rank.color || "#aaa";
+      ctx.fillText(rank.label, W / 2, ry + 44);
+    }
+
+    // フッター
+    ctx.fillStyle = "#555";
+    ctx.font = "26px 'Arial'";
+    ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 60);
+    ctx.textAlign = "left";
+
+    blobs.push(await new Promise(r => canvas.toBlob(r, "image/png")));
+  }
+
+  // ===== ショーケース（2x2） =====
+  const PER = 4;
+  const HEADER = 84, FOOTER = 52, MARGIN = 24, GAP = 16;
+  const cardW = Math.floor((W - MARGIN * 2 - GAP) / 2);
+  const cardH = Math.floor((H - HEADER - FOOTER - MARGIN - GAP) / 2);
+
+  const pages = [];
+  for (let i = 0; i < kits.length; i += PER) pages.push(kits.slice(i, i + PER));
+
+  for (let p = 0; p < pages.length; p++) {
+    const pageKits = pages[p];
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(0, 0, W, H);
+
+    // ヘッダー
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ff6b2b";
+    ctx.font = "bold 34px 'Arial'";
+    ctx.fillText(title, MARGIN, 54);
+    ctx.fillStyle = "#555";
+    ctx.font = "22px 'Arial'";
+    ctx.textAlign = "right";
+    ctx.fillText("TSUMI TSUMI", W - MARGIN, 54);
+    if (pages.length > 1) {
+      ctx.fillStyle = "#444";
+      ctx.font = "20px 'Arial'";
+      ctx.textAlign = "center";
+      ctx.fillText(`${p + 1} / ${pages.length}`, W / 2, 54);
+    }
+
+    for (let i = 0; i < pageKits.length; i++) {
+      const kit = pageKits[i];
+      const col = i % 2, row = Math.floor(i / 2);
+      const x = MARGIN + col * (cardW + GAP);
+      const y = HEADER + row * (cardH + GAP);
+
+      // カード台座
+      ctx.fillStyle = "#161616";
+      ctx.beginPath();
+      ctx.roundRect(x, y, cardW, cardH, 14);
+      ctx.fill();
+
+      // 写真
+      const img = imgCache[kit.id];
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(x, y, cardW, cardH, 14);
+      ctx.clip();
+      if (img) {
+        drawCover(ctx, img, x, y, cardW, cardH);
+      } else {
+        ctx.fillStyle = "#1e1e1e";
+        ctx.fillRect(x, y, cardW, cardH);
+        ctx.fillStyle = "#444";
+        ctx.font = "60px 'Arial'";
+        ctx.textAlign = "center";
+        ctx.fillText("📦", x + cardW / 2, y + cardH / 2);
+      }
+      // 下部グラデーション（文字可読性）
+      const grad = ctx.createLinearGradient(0, y + cardH - 150, 0, y + cardH);
+      grad.addColorStop(0, "rgba(0,0,0,0)");
+      grad.addColorStop(1, "rgba(0,0,0,0.82)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y + cardH - 150, cardW, 150);
+      ctx.restore();
+
+      // キット名（最大2行）
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 26px 'Arial'";
+      const name = kit.name || "";
+      const maxChars = Math.floor((cardW - 32) / 15);
+      const l1 = name.slice(0, maxChars);
+      const l2 = name.length > maxChars ? name.slice(maxChars, maxChars * 2) : "";
+      const nameY = y + cardH - (l2 ? 64 : 44);
+      ctx.fillText(l1, x + 16, nameY);
+      if (l2) ctx.fillText(l2.length === maxChars && name.length > maxChars * 2 ? l2.slice(0, -1) + "…" : l2, x + 16, nameY + 28);
+
+      // グレードバッジ＋評価
+      const badgeY = y + cardH - 30;
+      let bx = x + 16;
+      if (kit.scale) {
+        const { bg, text } = getScaleColor(kit.scale);
+        ctx.font = "bold 20px 'Arial'";
+        const bw = ctx.measureText(kit.scale).width + 20;
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        ctx.roundRect(bx, badgeY - 18, bw, 26, 5);
+        ctx.fill();
+        ctx.fillStyle = text;
+        ctx.fillText(kit.scale, bx + 10, badgeY);
+        bx += bw + 10;
+      }
+      if (kit.rating > 0) {
+        ctx.fillStyle = "#fbbf24";
+        ctx.font = "20px 'Arial'";
+        ctx.fillText("★".repeat(Math.min(5, kit.rating)), bx, badgeY);
+      }
+    }
+
+    // フッター
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#444";
+    ctx.font = "22px 'Arial'";
+    ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 18);
+    ctx.textAlign = "left";
+
+    blobs.push(await new Promise(r => canvas.toBlob(r, "image/png")));
+  }
+
+  return blobs;
+}
+
 function XShareModal({ kits, myXId, setMyXId, onClose }) {
   const pending = kits.filter((k) => !k.completed);
   const [selected, setSelected] = useState(new Set());
@@ -2261,6 +2522,172 @@ DM→ @${id}` : "";
           <iframe src="/admax-banner.html" title="ad" loading="lazy" width="320" height="100" frameBorder="0" scrolling="no" style={{ border: "none", display: "inline-block", maxWidth: "100%" }} />
         </div>
       )}
+    </div>
+  );
+}
+
+// ---- 完成アルバム シェアモーダル（リッチ画像型・サーバー保存なし） ----
+function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
+  const completed = kits.filter((k) => k.completed);
+  const [selected, setSelected] = useState(new Set());
+  const [mode, setMode] = useState("all");
+  const [title, setTitle] = useState("完成コレクション");
+  const [generating, setGenerating] = useState(false);
+  const [generatedBlobs, setGeneratedBlobs] = useState([]);
+  const [generatedDataUrls, setGeneratedDataUrls] = useState([]);
+  const toggleSelect = (id) => setSelected((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+
+  const targetKits = mode === "all" ? completed : completed.filter((k) => selected.has(k.id));
+  const totalCount = targetKits.reduce((s, k) => s + (k.count || 1), 0);
+  const totalPages = 1 + Math.max(0, Math.ceil(targetKits.length / 4)); // 表紙 + ショーケース
+
+  const isMobileShare = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Android/i.test(navigator.userAgent || "");
+  const canNativeShareImages = typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function";
+
+  const buildTweet = () => {
+    const id = myXId.trim().replace(/^@/, "");
+    const idLine = id ? `DM→ @${id}\n\n` : "";
+    const rankLine = rank && rank.label ? `称号: ${rank.label}\n` : "";
+    return `完成したプラモを公開！🎉\n完成 ${totalCount}体\n${rankLine}${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
+  };
+
+  const blobToDataUrl = (blob) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result || "");
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(blob);
+  });
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setGeneratedBlobs([]);
+    setGeneratedDataUrls([]);
+    try {
+      const blobs = await generateAlbumImages(targetKits, rank, { title });
+      setGeneratedBlobs(blobs);
+      const dataUrls = await Promise.all(blobs.map(blobToDataUrl));
+      setGeneratedDataUrls(dataUrls);
+      if (!isMobileShare && blobs.length > 0) {
+        const url = URL.createObjectURL(blobs[0]);
+        const a = document.createElement("a");
+        a.href = url; a.download = `tsumitsumi_album_01.png`; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (e) {
+      alert("画像生成エラー: " + e.message);
+    }
+    setGenerating(false);
+  };
+
+  const handleNativeShare = async () => {
+    if (generatedBlobs.length === 0) return;
+    try {
+      const files = generatedBlobs.map((b, i) => new File([b], `tsumitsumi_album_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
+      if (navigator.canShare && !navigator.canShare({ files })) {
+        alert("このブラウザは画像の共有に対応していません。下の「保存」ボタンで個別に保存してください。");
+        return;
+      }
+      await navigator.share({ files, title: "TSUMITSUMI 完成アルバム", text: buildTweet() });
+    } catch (e) {
+      if (e && e.name !== "AbortError") alert("共有に失敗しました: " + (e.message || e));
+    }
+  };
+
+  const handleSaveOne = async (index) => {
+    const blob = generatedBlobs[index];
+    if (!blob) return;
+    const file = new File([blob], `tsumitsumi_album_${String(index + 1).padStart(2, "0")}.png`, { type: "image/png" });
+    if (canNativeShareImages && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = file.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  return (
+    <div style={xs.wrap}>
+      <div style={xs.header}><span style={xs.title}>📸 完成アルバムをシェア</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
+      {completed.length === 0 ? (
+        <div style={xs.empty}>完成済みのキットがありません。<br/>キットを「完成済み」にすると、完成写真でリッチなアルバムを作れます。</div>
+      ) : (<>
+        <label style={xs.label}>アルバムのタイトル</label>
+        <input style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", marginBottom: 14, boxSizing: "border-box" }}
+          placeholder="完成コレクション" value={title} maxLength={24} onChange={(e) => setTitle(e.target.value)} />
+
+        <label style={xs.label}>あなたのX ID（省略可）</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+          <span style={{ color: "#9ca3af", fontSize: 16 }}>@</span>
+          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+            placeholder="your_x_id" value={myXId} onChange={(e) => setMyXId(e.target.value.replace(/^@/, ""))} />
+        </div>
+        <div style={xs.modeRow}>
+          <button style={{ ...xs.modeBtn, ...(mode === "all" ? xs.modeBtnActive : {}) }} onClick={() => setMode("all")}>全部アルバム化</button>
+          <button style={{ ...xs.modeBtn, ...(mode === "select" ? xs.modeBtnActive : {}) }} onClick={() => setMode("select")}>選んで作成</button>
+        </div>
+        {mode === "select" && (
+          <div style={xs.kitList}>
+            {completed.map((k) => (
+              <div key={k.id} style={{ ...xs.kitRow, background: selected.has(k.id) ? "#f0fdf4" : "#fafafa", border: `1.5px solid ${selected.has(k.id) ? "#22c55e" : "#e5e7eb"}` }} onClick={() => toggleSelect(k.id)}>
+                <div style={{ ...xs.checkbox, background: selected.has(k.id) ? "#22c55e" : "#fff", border: `2px solid ${selected.has(k.id) ? "#22c55e" : "#d1d5db"}` }}>
+                  {selected.has(k.id) && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
+                </div>
+                {(k.completedPhotoUrl || k.photoUrl) && <KitImage src={k.completedPhotoUrl || k.photoUrl} style={xs.kitThumb} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={xs.kitName}>{k.name}</div>
+                  <div style={xs.kitMeta}>{k.scale || ""}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 6 }}>完成写真でアルバムを生成</div>
+          <div style={{ fontSize: 11, color: "#166534", marginBottom: 10 }}>
+            {targetKits.length}件 → 表紙＋ショーケース 計{totalPages}枚（1ページ4件・完成写真を大きく表示）
+          </div>
+          <button style={{ width: "100%", padding: "12px 0", background: (generating || targetKits.length === 0) ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: (generating || targetKits.length === 0) ? "default" : "pointer" }}
+            onClick={handleGenerate} disabled={generating || targetKits.length === 0}>
+            {generating ? "生成中..." : `アルバム画像を生成（${totalPages}枚）`}
+          </button>
+          {generatedBlobs.length > 0 && (
+            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
+                {generatedBlobs.length}枚のアルバム画像を生成しました
+              </div>
+              <div style={{ fontSize: 11, color: "#166534", lineHeight: 1.7, marginBottom: 10 }}>
+                📱 <b>スマホの方</b>：各画像の「💾 保存」ボタンで共有メニューから「画像を保存」を選んでください。<br/>
+                💻 <b>PCの方</b>：1枚目は自動ダウンロード済み。残りは「💾 保存」で個別に保存できます。
+              </div>
+              {canNativeShareImages && (
+                <button onClick={handleNativeShare}
+                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
+                  📤 全画像をまとめて共有（X等を選択）
+                </button>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                {generatedDataUrls.map((url, i) => (
+                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 8, padding: 8 }}>
+                    <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>{i === 0 ? "表紙" : `ショーケース ${i}`} / 全{generatedDataUrls.length}枚</div>
+                    <img src={url} alt={`album ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
+                    <button onClick={() => handleSaveOne(i)}
+                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
+                      💾 この画像を保存
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweet())}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                𝕏 Xを開いて投稿する（保存した画像を添付）
+              </a>
+            </div>
+          )}
+        </div>
+      </>)}
     </div>
   );
 }
@@ -2616,6 +3043,7 @@ export default function App() {
   const [showScanner, setShowScanner] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showAlbum, setShowAlbum] = useState(false);
   const [myXId, setMyXId] = useState("");
   const [filterSeries, setFilterSeries] = useState("");
   const [filterRating, setFilterRating] = useState("");
@@ -3239,6 +3667,7 @@ export default function App() {
               <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
             </svg>
           </button>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30, fontSize: 14 }} onClick={() => setShowAlbum(true)} title="完成アルバムをシェア">📸</button>
           <button style={{ ...s.shareBtn, width: 30, height: 30, fontSize: 13 }} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
       </div>
@@ -3769,6 +4198,14 @@ export default function App() {
         <div style={s.overlay} onClick={() => setShowShare(false)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
             <XShareModal kits={kits} myXId={myXId} setMyXId={setMyXId} onClose={() => setShowShare(false)} />
+          </div>
+        </div>
+      )}
+
+      {showAlbum && (
+        <div style={s.overlay} onClick={() => setShowAlbum(false)}>
+          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <AlbumShareModal kits={kits} rank={rank} myXId={myXId} setMyXId={setMyXId} onClose={() => setShowAlbum(false)} />
           </div>
         </div>
       )}

@@ -27,7 +27,8 @@
 
 ## 2. 現在のバージョン
 
-**v1.11（2026/05/03）**
+**v1.31（2026/06/13）**
+※ 下記の履歴リストは v1.11 までの記録。v1.12〜v1.30 はコード側 versions 配列が一次情報（CLAUDE.md側は未追従）。最新の追加のみ末尾に追記する運用。
 
 ### バージョニングルール
 - リリース時点（2026/5/1）= v1.00
@@ -48,6 +49,8 @@
 - **v1.09**: 金額編集が総額に反映されない不具合を修正（getEffectivePriceがkit.priceにフォールバックする際、編集フォームはretailPriceしか書き換えないため、クリアや0入力が無視されていた。handleEditでform.retailPriceにkit.priceを補填、handleSubmitでkit.price=form.retailPriceを同期）
 - **v1.10**: 上位ランク（600〜1000「天照大積ミ神」等）追加＋既存ラベル微調整／タグ編集モーダル新設（作成・編集・削除＋件数・希望小売価格合計表示、tagMasterListをlocalStorage永続化）／一括編集モードのタグ操作を「解除」ピル1つに集約（onDeleteMaster関連UIとhandleRemoveFromTagMaster削除）／並び順から「手動順」を削除しデフォルトを登録順に統一／ヘルプに「画像を整理して容量を節約」ボタンを追加（base64画像→Yahoo画像URL置換、警告confirmあり、completedPhotoUrlとJANなしは保護）
 - **v1.11**: ダークモード対応（CSSフィルタ方式：`filter: invert(1) hue-rotate(180deg)` でbody反転＋img/video/iframeを再反転）。`localStorage["tsumitsumi_theme"]`で永続化、初回はOSの`prefers-color-scheme`に従う。手動選択優先。フラッシュ防止のため`index.html`の`<head>`に同期スクリプトを置きReact描画前に`<html data-theme=...>`を適用。Appコンポーネント内のapply useEffectは初回マウントスキップで頭スクリプトの適用を上書きしない。トグルはHelpModal「使い方はコチラ」の右隣に配置
+- **（v1.12〜v1.30 は CLAUDE.md 未追従。コード側 versions 配列を参照）**
+- **v1.31**: 完成アルバムのXシェア機能を追加（サーバー保存なし・画像生成型）。`generateAlbumImages(kits, rank, opts)` で 1080x1350(4:5) の「表紙＋2x2ショーケース」PNGを生成し、完成写真を大きく表示。表紙に新ロゴ風ブロックマーク・タイトル・完成数・称号チップ。`AlbumShareModal`（📸ボタンで起動・XShareModalと別系統）。対象は `completed===true` のキットのみ（XShareは未完成のみ）。Web Share API対応端末はネイティブ共有、非対応は個別保存→X投稿導線。プライバシー方針は無変更（localStorage完結）
 
 ---
 
