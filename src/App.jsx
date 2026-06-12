@@ -1330,7 +1330,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.31", date: "2026/06/13", isNew: true, items: ["完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿。表紙＋ショーケース・称号入り）"] },
+    { ver: "v1.32", date: "2026/06/13", isNew: true, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「📸シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
+    { ver: "v1.31", date: "2026/06/13", isNew: false, items: ["完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿。表紙＋ショーケース・称号入り）"] },
     { ver: "v1.30", date: "2026/05/30", isNew: false, items: ["積みプラ数のランクの上限を更新"] },
     { ver: "v1.29", date: "2026/05/25", isNew: false, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
     { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
@@ -1566,10 +1567,22 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.31 */}
+          {/* v1.32 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.32</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・完成写真を最大6枚まで登録可能に<br/>
+              ・完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリー）<br/>
+              ・完成済みカードに「📸シェア」ボタンを追加（その完成品をXでシェア）
+            </div>
+          </div>
+          {/* v1.31 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.31</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
             </div>
@@ -1585,16 +1598,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・積みプラ数のランクの上限を更新
-            </div>
-          </div>
-          {/* v1.29 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.29</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/25</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）
             </div>
           </div>
         </div>
@@ -2327,6 +2330,110 @@ async function generateAlbumImages(kits, rank, opts = {}) {
   return blobs;
 }
 
+// ---- 単一キットの完成アルバム画像（最大6枚を1枚にレイアウト） ----
+async function generateKitAlbumImage(kit, rank, opts = {}) {
+  const W = 1080, H = 1350;
+  const photos = getCompletedPhotos(kit);
+  const LOGO_BLOCKS = ["#34b3a0", "#e6b52c", "#8e54b0", "#3f6fc6", "#d75a2b", "#3aa75d"];
+
+  const loadImage = async (src) => {
+    if (!src) return null;
+    if (isIdbBlobUrl(src)) {
+      const id = idbBlobUrlToId(src);
+      const blob = await kitsIdbPhotoGet(id);
+      if (!blob) return null;
+      const objectUrl = URL.createObjectURL(blob);
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(objectUrl); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(null); };
+        img.src = objectUrl;
+      });
+    }
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      if (src.startsWith("data:")) { img.src = src; }
+      else { img.crossOrigin = "anonymous"; img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`; }
+    });
+  };
+  const drawCover = (ctx, img, dx, dy, dw, dh) => {
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const scale = Math.max(dw / iw, dh / ih);
+    const w = iw * scale, h = ih * scale;
+    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+    ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h); ctx.restore();
+  };
+
+  const imgs = await Promise.all(photos.map(loadImage));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 0, W, H);
+
+  // ヘッダー：ロゴブロック小マーク + ブランド
+  const drawLogoMark = (cx, topY, unit) => {
+    const g = unit * 0.16, rows = [[0], [0, 1], [0, 1, 2]]; let bi = 0;
+    rows.forEach((row, r) => { const n = row.length; row.forEach((_, i) => {
+      const x = cx + (i - (n - 1) / 2) * (unit + g); const y = topY + r * (unit * 0.62 + g);
+      ctx.fillStyle = LOGO_BLOCKS[bi++ % LOGO_BLOCKS.length];
+      ctx.beginPath(); ctx.roundRect(x - unit / 2, y, unit, unit * 0.62, unit * 0.12); ctx.fill();
+    }); });
+  };
+  drawLogoMark(64, 36, 26);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#fff"; ctx.font = "bold 26px 'Arial'";
+  ctx.fillText("TSUMI TSUMI", 104, 64);
+  ctx.fillStyle = "#22c55e"; ctx.font = "bold 22px 'Arial'";
+  ctx.textAlign = "right"; ctx.fillText("✓ 完成", W - 32, 64); ctx.textAlign = "left";
+
+  // キット名（最大2行）
+  ctx.fillStyle = "#fff"; ctx.font = "bold 46px 'Arial'";
+  const name = kit.name || "";
+  const maxC = 22;
+  const nl1 = name.slice(0, maxC);
+  const nl2 = name.length > maxC ? name.slice(maxC, maxC * 2) : "";
+  ctx.fillText(nl1, 32, 150);
+  if (nl2) ctx.fillText(name.length > maxC * 2 ? nl2.slice(0, -1) + "…" : nl2, 32, 202);
+  const gridTop = nl2 ? 240 : 190;
+
+  // グレード/評価
+  let bx = 32; const metaY = gridTop - 16;
+  if (kit.scale) {
+    const { bg, text } = getScaleColor(kit.scale);
+    ctx.font = "bold 22px 'Arial'"; const bw = ctx.measureText(kit.scale).width + 24;
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(bx, metaY - 22, bw, 32, 6); ctx.fill();
+    ctx.fillStyle = text; ctx.fillText(kit.scale, bx + 12, metaY); bx += bw + 12;
+  }
+  if (kit.rating > 0) { ctx.fillStyle = "#fbbf24"; ctx.font = "26px 'Arial'"; ctx.fillText("★".repeat(Math.min(5, kit.rating)), bx, metaY); }
+
+  // 写真グリッド
+  const MARGIN = 32, GAP = 12, FOOTER = 56;
+  const areaTop = gridTop + 14, areaH = H - areaTop - FOOTER;
+  const n = imgs.length;
+  const cols = n <= 1 ? 1 : 2;
+  const rows = Math.max(1, Math.ceil(n / cols));
+  const cellW = Math.floor((W - MARGIN * 2 - GAP * (cols - 1)) / cols);
+  const cellH = Math.floor((areaH - GAP * (rows - 1)) / rows);
+  imgs.forEach((img, i) => {
+    const col = i % cols, row = Math.floor(i / cols);
+    const x = MARGIN + col * (cellW + GAP), y = areaTop + row * (cellH + GAP);
+    ctx.fillStyle = "#161616"; ctx.beginPath(); ctx.roundRect(x, y, cellW, cellH, 12); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.roundRect(x, y, cellW, cellH, 12); ctx.clip();
+    if (img) drawCover(ctx, img, x, y, cellW, cellH);
+    else { ctx.fillStyle = "#1e1e1e"; ctx.fillRect(x, y, cellW, cellH); ctx.fillStyle = "#444"; ctx.font = "48px 'Arial'"; ctx.textAlign = "center"; ctx.fillText("📦", x + cellW / 2, y + cellH / 2); ctx.textAlign = "left"; }
+    ctx.restore();
+  });
+
+  // フッター
+  ctx.textAlign = "center"; ctx.fillStyle = "#555"; ctx.font = "22px 'Arial'";
+  ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 18); ctx.textAlign = "left";
+
+  return [await new Promise(r => canvas.toBlob(r, "image/png"))];
+}
+
 function XShareModal({ kits, myXId, setMyXId, onClose }) {
   const pending = kits.filter((k) => !k.completed);
   const [selected, setSelected] = useState(new Set());
@@ -2538,19 +2645,21 @@ DM→ @${id}` : "";
 }
 
 // ---- 完成アルバム シェアモーダル（リッチ画像型・サーバー保存なし） ----
-function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
+function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = null }) {
+  const isSingle = !!singleKit;
   const completed = kits.filter((k) => k.completed);
   const [selected, setSelected] = useState(new Set());
   const [mode, setMode] = useState("all");
-  const [title, setTitle] = useState("完成コレクション");
+  const [title, setTitle] = useState(isSingle ? (singleKit.name || "完成品") : "完成コレクション");
   const [generating, setGenerating] = useState(false);
   const [generatedBlobs, setGeneratedBlobs] = useState([]);
   const [generatedDataUrls, setGeneratedDataUrls] = useState([]);
   const toggleSelect = (id) => setSelected((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
-  const targetKits = mode === "all" ? completed : completed.filter((k) => selected.has(k.id));
+  const targetKits = isSingle ? [singleKit] : (mode === "all" ? completed : completed.filter((k) => selected.has(k.id)));
   const totalCount = targetKits.reduce((s, k) => s + (k.count || 1), 0);
-  const totalPages = 1 + Math.max(0, Math.ceil(targetKits.length / 4)); // 表紙 + ショーケース
+  const singlePhotoCount = isSingle ? getCompletedPhotos(singleKit).length : 0;
+  const totalPages = isSingle ? 1 : 1 + Math.max(0, Math.ceil(targetKits.length / 4)); // 表紙 + ショーケース
 
   const isMobileShare = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Android/i.test(navigator.userAgent || "");
   const canNativeShareImages = typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function";
@@ -2558,6 +2667,10 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
   const buildTweet = () => {
     const id = myXId.trim().replace(/^@/, "");
     const idLine = id ? `DM→ @${id}\n\n` : "";
+    if (isSingle) {
+      const grade = singleKit.scale ? `（${singleKit.scale}）` : "";
+      return `完成しました！🎉\n${singleKit.name}${grade}\n\n${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
+    }
     const rankLine = rank && rank.label ? `称号: ${rank.label}\n` : "";
     return `完成したプラモを公開！🎉\n完成 ${totalCount}体\n${rankLine}${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
   };
@@ -2574,7 +2687,9 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
     setGeneratedBlobs([]);
     setGeneratedDataUrls([]);
     try {
-      const blobs = await generateAlbumImages(targetKits, rank, { title });
+      const blobs = isSingle
+        ? await generateKitAlbumImage(singleKit, rank, {})
+        : await generateAlbumImages(targetKits, rank, { title });
       setGeneratedBlobs(blobs);
       const dataUrls = await Promise.all(blobs.map(blobToDataUrl));
       setGeneratedDataUrls(dataUrls);
@@ -2619,13 +2734,23 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
 
   return (
     <div style={xs.wrap}>
-      <div style={xs.header}><span style={xs.title}>📸 完成アルバムをシェア</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
-      {completed.length === 0 ? (
+      <div style={xs.header}><span style={xs.title}>{isSingle ? "📸 完成品をシェア" : "📸 完成アルバムをシェア"}</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
+      {!isSingle && completed.length === 0 ? (
         <div style={xs.empty}>完成済みのキットがありません。<br/>キットを「完成済み」にすると、完成写真でリッチなアルバムを作れます。</div>
       ) : (<>
-        <label style={xs.label}>アルバムのタイトル</label>
-        <input style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", marginBottom: 14, boxSizing: "border-box" }}
-          placeholder="完成コレクション" value={title} maxLength={24} onChange={(e) => setTitle(e.target.value)} />
+        {isSingle ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "10px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10 }}>
+            {getCompletedPhotos(singleKit)[0] && <KitImage src={getCompletedPhotos(singleKit)[0]} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }} />}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{singleKit.name}</div>
+              <div style={{ fontSize: 11, color: "#166534" }}>完成写真 {singlePhotoCount} 枚を1枚の画像にまとめます</div>
+            </div>
+          </div>
+        ) : (<>
+          <label style={xs.label}>アルバムのタイトル</label>
+          <input style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", marginBottom: 14, boxSizing: "border-box" }}
+            placeholder="完成コレクション" value={title} maxLength={24} onChange={(e) => setTitle(e.target.value)} />
+        </>)}
 
         <label style={xs.label}>あなたのX ID（省略可）</label>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
@@ -2633,11 +2758,13 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
           <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
             placeholder="your_x_id" value={myXId} onChange={(e) => setMyXId(e.target.value.replace(/^@/, ""))} />
         </div>
+        {!isSingle && (
         <div style={xs.modeRow}>
           <button style={{ ...xs.modeBtn, ...(mode === "all" ? xs.modeBtnActive : {}) }} onClick={() => setMode("all")}>全部アルバム化</button>
           <button style={{ ...xs.modeBtn, ...(mode === "select" ? xs.modeBtnActive : {}) }} onClick={() => setMode("select")}>選んで作成</button>
         </div>
-        {mode === "select" && (
+        )}
+        {!isSingle && mode === "select" && (
           <div style={xs.kitList}>
             {completed.map((k) => (
               <div key={k.id} style={{ ...xs.kitRow, background: selected.has(k.id) ? "#f0fdf4" : "#fafafa", border: `1.5px solid ${selected.has(k.id) ? "#22c55e" : "#e5e7eb"}` }} onClick={() => toggleSelect(k.id)}>
@@ -2657,11 +2784,13 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose }) {
         <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 6 }}>完成写真でアルバムを生成</div>
           <div style={{ fontSize: 11, color: "#166534", marginBottom: 10 }}>
-            {targetKits.length}件 → 表紙＋ショーケース 計{totalPages}枚（1ページ4件・完成写真を大きく表示）
+            {isSingle
+              ? `完成写真 ${singlePhotoCount}枚 → 1枚の画像にまとめます`
+              : `${targetKits.length}件 → 表紙＋ショーケース 計${totalPages}枚（1ページ4件・完成写真を大きく表示）`}
           </div>
           <button style={{ width: "100%", padding: "12px 0", background: (generating || targetKits.length === 0) ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: (generating || targetKits.length === 0) ? "default" : "pointer" }}
             onClick={handleGenerate} disabled={generating || targetKits.length === 0}>
-            {generating ? "生成中..." : `アルバム画像を生成（${totalPages}枚）`}
+            {generating ? "生成中..." : (isSingle ? "画像を生成" : `アルバム画像を生成（${totalPages}枚）`)}
           </button>
           {generatedBlobs.length > 0 && (
             <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 8, padding: "12px 14px" }}>
@@ -3114,6 +3243,7 @@ export default function App() {
   const [showShare, setShowShare] = useState(false);
   const [showAlbum, setShowAlbum] = useState(false);
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
+  const [shareKit, setShareKit] = useState(null); // 単一キットの完成品シェア対象
   const [myXId, setMyXId] = useState("");
   const [filterSeries, setFilterSeries] = useState("");
   const [filterRating, setFilterRating] = useState("");
@@ -3678,10 +3808,17 @@ export default function App() {
   )), [filtered]);
 
   const listCards = useMemo(() => filtered.map((kit, index) => (
-    <div key={kit.id} style={{ ...s.card, ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
+    <div key={kit.id} style={{ ...s.card, position: "relative", ...(bulkMode && bulkSelected.has(kit.id) ? { border: "2px solid #4f8ef7", background: "#eff6ff" } : {}) }} onClick={() => {
       if (bulkMode) { setBulkSelected(prev => { const n = new Set(prev); n.has(kit.id) ? n.delete(kit.id) : n.add(kit.id); return n; }); return; }
       if (!reorderMode) setDetail(kit);
     }}>
+      {kit.completed && !bulkMode && !reorderMode && (
+        <button onClick={(e) => { e.stopPropagation(); setShareKit(kit); }}
+          title="完成品をXでシェア"
+          style={{ position: "absolute", top: 6, right: 6, zIndex: 2, padding: "3px 9px", background: "#000", color: "#fff", border: "none", borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}>
+          📸 シェア
+        </button>
+      )}
       {bulkMode && (
         <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {bulkSelected.has(kit.id) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
@@ -4334,7 +4471,15 @@ export default function App() {
       {albumKit && (
         <div style={s.overlay} onClick={() => setAlbumKit(null)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <AlbumViewerModal kit={albumKit} onClose={() => setAlbumKit(null)} />
+            <AlbumViewerModal kit={albumKit} onClose={() => setAlbumKit(null)} onShare={(k) => { setAlbumKit(null); setShareKit(k); }} />
+          </div>
+        </div>
+      )}
+
+      {shareKit && (
+        <div style={s.overlay} onClick={() => setShareKit(null)}>
+          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
+            <AlbumShareModal kits={kits} rank={rank} myXId={myXId} setMyXId={setMyXId} singleKit={shareKit} onClose={() => setShareKit(null)} />
           </div>
         </div>
       )}

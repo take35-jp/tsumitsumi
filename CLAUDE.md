@@ -27,7 +27,7 @@
 
 ## 2. 現在のバージョン
 
-**v1.31（2026/06/13）**
+**v1.32（2026/06/13）**
 ※ 下記の履歴リストは v1.11 までの記録。v1.12〜v1.30 はコード側 versions 配列が一次情報（CLAUDE.md側は未追従）。最新の追加のみ末尾に追記する運用。
 
 ### バージョニングルール
@@ -51,6 +51,7 @@
 - **v1.11**: ダークモード対応（CSSフィルタ方式：`filter: invert(1) hue-rotate(180deg)` でbody反転＋img/video/iframeを再反転）。`localStorage["tsumitsumi_theme"]`で永続化、初回はOSの`prefers-color-scheme`に従う。手動選択優先。フラッシュ防止のため`index.html`の`<head>`に同期スクリプトを置きReact描画前に`<html data-theme=...>`を適用。Appコンポーネント内のapply useEffectは初回マウントスキップで頭スクリプトの適用を上書きしない。トグルはHelpModal「使い方はコチラ」の右隣に配置
 - **（v1.12〜v1.30 は CLAUDE.md 未追従。コード側 versions 配列を参照）**
 - **v1.31**: 完成アルバムのXシェア機能を追加（サーバー保存なし・画像生成型）。`generateAlbumImages(kits, rank, opts)` で 1080x1350(4:5) の「表紙＋2x2ショーケース」PNGを生成し、完成写真を大きく表示。表紙に新ロゴ風ブロックマーク・タイトル・完成数・称号チップ。`AlbumShareModal`（📸ボタンで起動・XShareModalと別系統）。対象は `completed===true` のキットのみ（XShareは未完成のみ）。Web Share API対応端末はネイティブ共有、非対応は個別保存→X投稿導線。プライバシー方針は無変更（localStorage完結）
+- **v1.32**: 完成品アルバム機能（3段階）。①完成写真を最大6枚化：`completedPhotos[]` 配列追加、旧 `completedPhotoUrl` は表紙[0]として後方互換維持（`getCompletedPhotos(kit)` ヘルパーで吸収）。編集フォームを6枚グリッドUIに。`tryDeleteOrphanBlob` 等の孤児blob掃除を配列走査対応。②完成タブ刷新：`filter==="done" && !bulkMode && !reorderMode` のとき通常リスト/グリッドの代わりにアルバムサムネグリッド（`albumCards`）を表示。タップで `AlbumViewerModal`（最大6枚ライトボックス：メイン写真＋‹›送り＋カウンター＋サムネストリップ）。③per-kitシェア：完成済みカード（リスト）に「📸シェア」ボタン＋ビューア内シェア。`generateKitAlbumImage(kit, rank)` で1キットの最大6枚を1080x1350の1枚にグリッド配置。`AlbumShareModal` に `singleKit` プロップを追加してコレクション版と共用。実機プレビューで3枚注入→グリッド→ビューア→生成画像のピクセル検証済み
 
 ---
 
