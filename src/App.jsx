@@ -55,10 +55,21 @@ function getCompletedPhotos(kit) {
   return [];
 }
 
+// 画像なし／画像欠損時のプレースホルダ（絵文字を使わない細線アイコン）
+function PhotoPlaceholderIcon({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2.5" />
+      <circle cx="8.5" cy="8.5" r="1.6" />
+      <path d="M21 15l-4.5-4.5L5 21" />
+    </svg>
+  );
+}
+
 // 写真 src を解決するラッパー。"idb-blob:..." なら IDB から Blob を取り object URL 化。
 // それ以外（http / data: / 空）はそのまま <img> に流す。
 // src が idb-blob で IDB に Blob が無い場合（孤児化・データ消失）は、真っ白ではなく
-// 📦 プレースホルダを表示してユーザーに「画像が無い」状態を明示する。
+// プレースホルダを表示してユーザーに「画像が無い」状態を明示する。
 function KitImage({ src, style, alt, onError }) {
   const [resolved, setResolved] = useState(() => (src && !isIdbBlobUrl(src)) ? src : null);
   const [missing, setMissing] = useState(false); // idb-blob だが Blob が IDB に無い場合 true
@@ -85,8 +96,8 @@ function KitImage({ src, style, alt, onError }) {
     // Blob が見つからなかった場合（IDBから消失等）はプレースホルダを表示
     if (missing) {
       return (
-        <div style={{ ...style, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 22 }}>
-          <span title="画像データが見つかりません（再アップロードしてください）">📦</span>
+        <div style={{ ...style, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }} title="画像データが見つかりません（再アップロードしてください）">
+          <PhotoPlaceholderIcon size={24} />
         </div>
       );
     }
@@ -535,7 +546,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
               const raw = symbols[0].decode();
               if (raw && raw.length >= 8) {
                 done = true; // この tick チェーンを停止
-                setDebugInfo(`✅ ZBar検出: ${raw}`);
+                setDebugInfo(`ZBar検出: ${raw}`);
                 resolve(raw);
                 return;
               }
@@ -767,7 +778,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
     return (
       <div style={sc.wrap}>
         <div style={sc.header}>
-          <span style={sc.title}>📷 バーコードをスキャン</span>
+          <span style={sc.title}>バーコードをスキャン</span>
           <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
         </div>
         {error ? (
@@ -792,32 +803,32 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
   return (
     <div style={sc.wrap}>
       <div style={sc.header}>
-        <span style={sc.title}>📷 バーコードをスキャン</span>
+        <span style={sc.title}>バーコードをスキャン</span>
         <button style={sc.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
       {!imgSrc ? (
         <div>
           <div style={sc.shootBox} onClick={() => inputRef.current?.click()}>
-            <div style={{ fontSize: 44, marginBottom: 10 }}>📷</div>
+            <div style={{ fontSize: 44, marginBottom: 10 }}></div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>バーコードを撮影する</div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>タップしてカメラを起動</div>
           </div>
           <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 8, lineHeight: 1.8 }}>
-            💡 バーコード部分だけをアップで・明るい場所で撮影してください
+            バーコード部分だけをアップで・明るい場所で撮影してください
           </div>
         </div>
       ) : (
         <div>
           <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
-          {scanning && <div style={sc.scanningBox}>🔍 バーコードを解析中...</div>}
+          {scanning && <div style={sc.scanningBox}>バーコードを解析中...</div>}
           {error && (
             <div style={sc.errorBox}>
               <div style={{ whiteSpace: "pre-wrap", marginBottom: 10 }}>{error}</div>
-              <button style={sc.retakeBtn} onClick={handleRetake}>📷 撮り直す</button>
+              <button style={sc.retakeBtn} onClick={handleRetake}>撮り直す</button>
             </div>
           )}
           {!scanning && !error && (
-            <button style={sc.retakeBtn2} onClick={handleRetake}>📷 撮り直す</button>
+            <button style={sc.retakeBtn2} onClick={handleRetake}>撮り直す</button>
           )}
         </div>
       )}
@@ -848,7 +859,7 @@ function ManualInput({ onDetected }) {
   return (
     <div>
       <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, lineHeight: 1.7, background: "#f8f9fa", borderRadius: 10, padding: "10px 12px" }}>
-        <div style={{ fontWeight: 700, marginBottom: 4 }}>📱 バーコード数字のコピー方法</div>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>バーコード数字のコピー方法</div>
         <div>① カメラでバーコード<strong>下の数字</strong>を映す</div>
         <div>② 数字が認識されたらタップ→コピー</div>
         <div>③ 下の入力欄に貼り付けると自動検索</div>
@@ -900,7 +911,7 @@ function KitNameInput({ value, onChange, onSelect }) {
     n = n.replace(/\[[^\]]*\]/g, '');
     n = n.replace(/（[^）]*）/g, '');
     n = n.replace(/\([^)]*\)/g, '');
-    n = n.replace(/[★☆◆◇■□▲▼●○※†‡♪]/g, '');
+    n = n.replace(/[★☆◆◇■□▲▼●○※†‡]/g, '');
     // ノイズワード削除
     const noise = ['BANDAI SPIRITS', 'バンダイスピリッツ', 'バンダイ', 'BANDAI',
       'プラモデル', '色分け済み', '再販', '新品', '在庫品', '未開封'];
@@ -1047,7 +1058,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <span style={{ fontSize: 17, fontWeight: 700, color: "#111" }}>📋 リストから一括登録</span>
+          <span style={{ fontSize: 17, fontWeight: 700, color: "#111" }}>リストから一括登録</span>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#9ca3af" }}>×</button>
         </div>
 
@@ -1063,13 +1074,13 @@ function BrowseModal({ onBulkAdd, onClose }) {
           <button
             onClick={() => { setPage(1); search(1, browseQuery); }}
             style={{ padding: "10px 16px", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
-            🔍 検索
+            検索
           </button>
         </div>
 
         <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
-            ⚠ 注意：登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
+            注意：登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
           </div>
         </div>
 
@@ -1187,7 +1198,7 @@ function BackupModal({ kits, onImport, onClose }) {
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
-        <span style={hs.title}>💾 バックアップ</span>
+        <span style={hs.title}>バックアップ</span>
         <button style={hs.closeBtn} onClick={onClose}>✕</button>
       </div>
 
@@ -1199,7 +1210,7 @@ function BackupModal({ kits, onImport, onClose }) {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>📤 エクスポート（バックアップ）</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>エクスポート（バックアップ）</div>
           <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>現在の積みプラデータをJSONファイルとして保存します。iCloudやGoogleドライブに保存しておくと安心です。</div>
           <button
             style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
@@ -1209,7 +1220,7 @@ function BackupModal({ kits, onImport, onClose }) {
         </div>
 
         <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>📥 インポート（復元）</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>インポート（復元）</div>
           <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>バックアップファイルからデータを復元します。現在のデータは上書きされます。</div>
           <button
             style={{ width: "100%", padding: "12px 0", background: "#fff", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
@@ -1222,7 +1233,7 @@ function BackupModal({ kits, onImport, onClose }) {
 
       <div style={{ background: "#fff8e1", borderRadius: 10, padding: "12px 14px", marginTop: 4 }}>
         <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
-          ⚠️ <strong>注意：</strong>SafariとChromeなど、ブラウザの種類が異なるとデータは別々に保存されます。異なるブラウザへ移行する場合は、必ずエクスポートしてからインポートしてください。
+          <strong>注意：</strong>SafariとChromeなど、ブラウザの種類が異なるとデータは別々に保存されます。異なるブラウザへ移行する場合は、必ずエクスポートしてからインポートしてください。
         </div>
       </div>
 
@@ -1330,16 +1341,17 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.32", date: "2026/06/13", isNew: true, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「📸シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
+    { ver: "v1.33", date: "2026/06/13", isNew: true, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
+    { ver: "v1.32", date: "2026/06/13", isNew: false, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
     { ver: "v1.31", date: "2026/06/13", isNew: false, items: ["完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿。表紙＋ショーケース・称号入り）"] },
     { ver: "v1.30", date: "2026/05/30", isNew: false, items: ["積みプラ数のランクの上限を更新"] },
     { ver: "v1.29", date: "2026/05/25", isNew: false, items: ["キット詳細に「Amazonで関連商品を見る」ボタンを追加（運営費補填のためアフィリエイトリンクを利用）"] },
-    { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて 📦 マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
+    { ver: "v1.28", date: "2026/05/25", isNew: false, items: ["時間が経つと一部キットの登録画像が消えて マークだけ残る不具合の根本対策（ブラウザのストレージ永続化を要求）"] },
     { ver: "v1.27", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルした後にカメラが固まる問題を、スキャナーを一瞬閉じて再起動する方式で確実に解消"] },
     { ver: "v1.26", date: "2026/05/24", isNew: false, items: ["1回スキャンで登録済みJANをキャンセルしたあとカメラ画面が止まる不具合を修正（即時に再撮影できる）"] },
     { ver: "v1.25", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャン時の同一JAN確認ダイアログをアプリ内モーダル化（iOSでカメラが固まる不具合を解消）", "1回スキャンで登録済みJANを読み込んでキャンセルしたとき、既存キット詳細を開かずカメラ撮影に戻るよう変更"] },
-    { ver: "v1.24", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャンのフリーズ対策（並列WASMスキャン抑止・カメラ自動復帰）", "登録済み箱画像の保存先が壊れたときに「📦」プレースホルダを表示（真っ白にならないよう改善）"] },
-    { ver: "v1.23", date: "2026/05/24", isNew: false, items: ["スケール選択肢に「✏️ 自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「📦 プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
+    { ver: "v1.24", date: "2026/05/24", isNew: false, items: ["連続バーコードスキャンのフリーズ対策（並列WASMスキャン抑止・カメラ自動復帰）", "登録済み箱画像の保存先が壊れたときに「」プレースホルダを表示（真っ白にならないよう改善）"] },
+    { ver: "v1.23", date: "2026/05/24", isNew: false, items: ["スケール選択肢に「自由入力」を追加（独自表記やマイナースケールも登録可）", "称号行に「プラモを預ける」リンクを追加（トランクルームのご案内）", "Xシェアの複数ページ画像を全部保存できるよう改善（プレビュー表示・個別保存ボタン・対応端末で一括共有）", "Xシェアの「✕ 閉じる」ボタンを大きく押しやすく", "キット数が多い方の入力遅延・もたつきを大幅改善"] },
     { ver: "v1.22", date: "2026/05/20", isNew: false, items: ["完成写真を登録したキットはサムネイルに完成写真を優先表示", "運営費補填のためモーダル内に控えめなバナー広告を追加（共有・Xシェア・キット詳細・ヘルプ・バックアップ）"] },
     { ver: "v1.21", date: "2026/05/12", isNew: false, items: ["起動時に一瞬古い表示が出るチラつきを解消（読込完了までローディング表示）"] },
     { ver: "v1.20", date: "2026/05/12", isNew: false, items: ["重要: 再起動時に一部キットの画像が消えるデータ消失バグを修正（保存処理の初期化順序を改善）"] },
@@ -1361,12 +1373,12 @@ function AllVersionsModal({ onClose }) {
     { ver: "v1.03", date: "2026/05/01", isNew: false, items: ["価格訂正報告のバリデーションを強化"] },
     { ver: "v1.02", date: "2026/05/01", isNew: false, items: ["価格訂正報告画面にWeb検索ショートカットを追加"] },
     { ver: "v1.01", date: "2026/05/01", isNew: false, items: ["参考価格の自動取得機能を追加"] },
-    { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース 🎉", "バーコードスキャン登録", "キット一覧管理機能", "総額表示機能", "一括登録機能", "Xシェア画像生成", "情報誤り報告機能", "バックアップ機能", "グリッド・リスト表示"] },
+    { ver: "v1.00", date: "2026/05/01", isNew: false, items: ["TSUMITSUMI 正式リリース", "バーコードスキャン登録", "キット一覧管理機能", "総額表示機能", "一括登録機能", "Xシェア画像生成", "情報誤り報告機能", "バックアップ機能", "グリッド・リスト表示"] },
   ];
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
-        <span style={hs.title}>📋 すべての更新履歴</span>
+        <span style={hs.title}>すべての更新履歴</span>
         <button style={hs.closeBtn} onClick={onClose}>✕</button>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1440,7 +1452,7 @@ function StorageGauge({ kits }) {
       </div>
       {pct >= 80 && (
         <div style={{ marginTop: 8, color, fontSize: 12 }}>
-          ⚠️ 容量が逼迫しています。古いキットや画像の削除を検討してください。
+          容量が逼迫しています。古いキットや画像の削除を検討してください。
         </div>
       )}
       <div style={{ marginTop: 6, fontSize: 11, color: '#9ca3af' }}>
@@ -1454,30 +1466,30 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
-        <span style={hs.title}>❓ ヘルプ・使い方</span>
+        <span style={hs.title}>ヘルプ・使い方</span>
         <button style={hs.closeBtn} onClick={onClose}>✕</button>
       </div>
 
         <div style={hs.section}>
           <div style={{ display: "flex", gap: 8 }}>
             <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, padding: "14px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              📖 使い方はコチラ →
+              使い方はコチラ →
             </a>
             <button
               onClick={onToggleTheme}
               type="button"
               aria-label={theme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}
               style={{ flexShrink: 0, padding: "14px 16px", background: "#fef3c7", border: "1.5px solid #fcd34d", borderRadius: 10, color: "#78350f", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>
-              {theme === "dark" ? "☀️ ライト" : "🌙 ダーク"}
+              {theme === "dark" ? "ライト" : "ダーク"}
             </button>
           </div>
         </div>
       <div style={hs.section}>
-        <div style={hs.sectionTitle}>💾 保存容量</div>
+        <div style={hs.sectionTitle}>保存容量</div>
         <div style={hs.desc}><StorageGauge kits={kits} /></div>
       </div>
       <div style={hs.section}>
-        <div style={hs.sectionTitle}>🗜️ 写真を新形式に変換（容量節約）</div>
+        <div style={hs.sectionTitle}>写真を新形式に変換（容量節約）</div>
         <div style={hs.desc}>
           古い形式（base64）で保存された写真を新形式（Blob）に変換します。<br/>
           容量が約30%節約され、写真は同じものが見られます。
@@ -1502,19 +1514,19 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         </button>
       </div>
       <div style={hs.section}>
-        <div style={hs.sectionTitle}>⚠ データについての注意</div>
+        <div style={hs.sectionTitle}>データについての注意</div>
         <div style={hs.item}><span style={hs.warn}>!</span>データはブラウザ内に保存されます</div>
         <div style={hs.item}><span style={hs.warn}>!</span>Safariの「履歴とデータを消去」でデータが消えます</div>
         <div style={hs.item}><span style={hs.warn}>!</span>SafariとChromeなど別ブラウザ間でデータは共有されません</div>
         <div style={hs.item}><span style={hs.warn}>!</span>機種変更・初期化の際はデータが引き継がれません</div>
       </div>
       <div style={hs.section}>
-        <div style={hs.sectionTitle}>💾 データのバックアップ・機種変更</div>
+        <div style={hs.sectionTitle}>データのバックアップ・機種変更</div>
         <div style={hs.desc}>データはブラウザ内にのみ保存されるため、機種変更や初期化の前にバックアップをお取りください。</div>
         <div style={hs.item}><span style={hs.num}>1</span>画面右上の「⋯」メニュー（または設定）から「エクスポート」をタップ</div>
         <div style={hs.item}><span style={hs.num}>2</span>ダウンロードされたJSONファイルをiCloudやGoogleドライブに保存</div>
         <div style={hs.item}><span style={hs.num}>3</span>新しい端末で同じURLを開き、「インポート」からファイルを読み込む</div>
-        <div style={hs.tip}>💡 定期的にエクスポートしておくと安心です</div>
+        <div style={hs.tip}>定期的にエクスポートしておくと安心です</div>
       </div>
       <div style={{ textAlign: "center", paddingTop: 8 }}>
         <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 12 }}>お問い合わせ・バグ報告はこちら</div>
@@ -1530,7 +1542,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       {/* TIPS記事一覧（更新履歴の直前に配置・新しい記事は配列の先頭に追加していく） */}
       <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>📚 プラモ製作 TIPS</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>プラモ製作 TIPS</span>
           <a href="/tips/" target="_blank" rel="noopener noreferrer"
             style={{ fontSize: 11, color: "#4f8ef7", textDecoration: "underline" }}>
             すべて見る →
@@ -1559,7 +1571,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       {/* バージョン履歴（最下部・直近3件） */}
       <div style={{ marginTop: 24, borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>📋 更新履歴</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>更新履歴</span>
           <button
             style={{ fontSize: 11, color: "#4f8ef7", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
             onClick={() => window.__showAllVersions && window.__showAllVersions()}>
@@ -1567,17 +1579,28 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.32 */}
+          {/* v1.33 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.33</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・アプリ画面のデザインを刷新（アイコン・絵文字を整理してスタイリッシュに）<br/>
+              ・画面最上段の完成アルバム共有ボタンを削除
+            </div>
+          </div>
+          {/* v1.32 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.32</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・完成写真を最大6枚まで登録可能に<br/>
               ・完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリー）<br/>
-              ・完成済みカードに「📸シェア」ボタンを追加（その完成品をXでシェア）
+              ・完成済みカードに「シェア」ボタンを追加（その完成品をXでシェア）
             </div>
           </div>
           {/* v1.31 */}
@@ -1590,21 +1613,11 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               ・完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿）
             </div>
           </div>
-          {/* v1.30 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.30</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/05/30</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・積みプラ数のランクの上限を更新
-            </div>
-          </div>
         </div>
       </div>
 
       <div style={hs.section}>
-        <div style={hs.sectionTitle}>🔒 プライバシーポリシー</div>
+        <div style={hs.sectionTitle}>プライバシーポリシー</div>
         <div style={hs.desc}>本サービスのプライバシーポリシー、アフィリエイト広告に関する表記、免責事項は別ページにまとめています。</div>
         <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>プライバシーポリシーを開く →</a>
         <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, textAlign: "center" }}>当サイトはアフィリエイト広告を利用しています</div>
@@ -1638,7 +1651,7 @@ const hs = {
 // ---- App Share Modal ----
 function AppShareModal({ onClose }) {
   const url = "https://tsumitsumi.vercel.app";
-  const text = "積みプラ管理アプリ「TSUMI TSUMI」🗂️\nバーコードスキャンで簡単登録！\n#積みプラ #ツミツミ #TSUMITSUMI";
+  const text = "積みプラ管理アプリ「TSUMI TSUMI」\nバーコードスキャンで簡単登録！\n#積みプラ #ツミツミ #TSUMITSUMI";
   const [copied, setCopied] = useState(false);
 
   const copyUrl = async () => {
@@ -1659,7 +1672,7 @@ function AppShareModal({ onClose }) {
 
   const buttons = [
     {
-      label: "🔗 URLをコピー",
+      label: "URLをコピー",
       sub: copied ? "コピーしました！" : url,
       color: "#111",
       action: copyUrl,
@@ -1671,7 +1684,7 @@ function AppShareModal({ onClose }) {
       action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + "\n" + url)}`, "_blank"),
     },
     {
-      label: "📱 共有メニューを開く",
+      label: "共有メニューを開く",
       sub: "LINEやメールなど",
       color: "#4f8ef7",
       action: shareNative,
@@ -1682,11 +1695,11 @@ function AppShareModal({ onClose }) {
   return (
     <div style={as.wrap}>
       <div style={as.header}>
-        <span style={as.title}>🗂️ TSUMI TSUMIを共有</span>
+        <span style={as.title}>TSUMI TSUMIを共有</span>
         <button style={as.closeBtn} onClick={onClose}>✕</button>
       </div>
       <div style={as.appCard}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>📦</div>
+        <div style={{ fontSize: 36, marginBottom: 8 }}></div>
         <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: 2 }}>TSUMI TSUMI</div>
         <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>PLASTIC MODEL TRACKER</div>
         <div style={{ fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 }}>
@@ -1792,7 +1805,7 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
   return (
     <div style={hs.wrap}>
       <div style={hs.header}>
-        <span style={hs.title}>🏷️ タグ編集</span>
+        <span style={hs.title}>タグ編集</span>
         <button style={hs.closeBtn} onClick={onClose}>✕</button>
       </div>
 
@@ -2273,7 +2286,7 @@ async function generateAlbumImages(kits, rank, opts = {}) {
         ctx.fillStyle = "#444";
         ctx.font = "60px 'Arial'";
         ctx.textAlign = "center";
-        ctx.fillText("📦", x + cardW / 2, y + cardH / 2);
+        ctx.fillText("", x + cardW / 2, y + cardH / 2);
       }
       // 下部グラデーション（文字可読性）
       const grad = ctx.createLinearGradient(0, y + cardH - 150, 0, y + cardH);
@@ -2400,7 +2413,7 @@ async function generateKitAlbumImage(kit, rank, opts = {}) {
     ctx.fillStyle = "#161616"; ctx.beginPath(); ctx.roundRect(x, y, cellW, cellH, 12); ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.roundRect(x, y, cellW, cellH, 12); ctx.clip();
     if (img) drawCover(ctx, img, x, y, cellW, cellH);
-    else { ctx.fillStyle = "#1e1e1e"; ctx.fillRect(x, y, cellW, cellH); ctx.fillStyle = "#444"; ctx.font = "48px 'Arial'"; ctx.textAlign = "center"; ctx.fillText("📦", x + cellW / 2, y + cellH / 2); ctx.textAlign = "left"; }
+    else { ctx.fillStyle = "#1e1e1e"; ctx.fillRect(x, y, cellW, cellH); ctx.fillStyle = "#444"; ctx.font = "48px 'Arial'"; ctx.textAlign = "center"; ctx.fillText("", x + cellW / 2, y + cellH / 2); ctx.textAlign = "left"; }
     ctx.restore();
   });
 
@@ -2573,13 +2586,13 @@ DM→ @${id}` : "";
                 {generatedCount}枚の画像を生成しました
               </div>
               <div style={{ fontSize: 11, color: "#166534", lineHeight: 1.7, marginBottom: 10 }}>
-                📱 <b>スマホの方</b>：各画像の下の「💾 保存」ボタンで共有メニューから「画像を保存」を選んでください。<br/>
-                💻 <b>PCの方</b>：1枚目は自動ダウンロード済み。残りは「💾 保存」ボタンで個別に保存できます。
+                <b>スマホの方</b>：各画像の下の「保存」ボタンで共有メニューから「画像を保存」を選んでください。<br/>
+                <b>PCの方</b>：1枚目は自動ダウンロード済み。残りは「保存」ボタンで個別に保存できます。
               </div>
               {canNativeShareImages && (
                 <button onClick={handleNativeShare}
                   style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
-                  📤 全画像をまとめて共有（X等を選択）
+                  全画像をまとめて共有（X等を選択）
                 </button>
               )}
               {/* 各ページのプレビュー＋個別保存（data URL 利用で iOS でも確実に表示） */}
@@ -2590,7 +2603,7 @@ DM→ @${id}` : "";
                     <img src={url} alt={`page ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
                     <button onClick={() => handleSaveOne(i)}
                       style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
-                      💾 画像 {i + 1} を保存
+                      画像 {i + 1} を保存
                     </button>
                   </div>
                 ))}
@@ -2646,10 +2659,10 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
     const idLine = id ? `DM→ @${id}\n\n` : "";
     if (isSingle) {
       const grade = singleKit.scale ? `（${singleKit.scale}）` : "";
-      return `完成しました！🎉\n${singleKit.name}${grade}\n\n${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
+      return `完成しました！\n${singleKit.name}${grade}\n\n${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
     }
     const rankLine = rank && rank.label ? `称号: ${rank.label}\n` : "";
-    return `完成したプラモを公開！🎉\n完成 ${totalCount}体\n${rankLine}${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
+    return `完成したプラモを公開！\n完成 ${totalCount}体\n${rankLine}${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
   };
 
   const blobToDataUrl = (blob) => new Promise((resolve) => {
@@ -2711,7 +2724,7 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
 
   return (
     <div style={xs.wrap}>
-      <div style={xs.header}><span style={xs.title}>{isSingle ? "📸 完成品をシェア" : "📸 完成アルバムをシェア"}</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
+      <div style={xs.header}><span style={xs.title}>{isSingle ? "完成品をシェア" : "完成アルバムをシェア"}</span><button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button></div>
       {!isSingle && completed.length === 0 ? (
         <div style={xs.empty}>完成済みのキットがありません。<br/>キットを「完成済み」にすると、完成写真でリッチなアルバムを作れます。</div>
       ) : (<>
@@ -2775,13 +2788,13 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
                 {generatedBlobs.length}枚のアルバム画像を生成しました
               </div>
               <div style={{ fontSize: 11, color: "#166534", lineHeight: 1.7, marginBottom: 10 }}>
-                📱 <b>スマホの方</b>：各画像の「💾 保存」ボタンで共有メニューから「画像を保存」を選んでください。<br/>
-                💻 <b>PCの方</b>：1枚目は自動ダウンロード済み。残りは「💾 保存」で個別に保存できます。
+                <b>スマホの方</b>：各画像の「保存」ボタンで共有メニューから「画像を保存」を選んでください。<br/>
+                <b>PCの方</b>：1枚目は自動ダウンロード済み。残りは「保存」で個別に保存できます。
               </div>
               {canNativeShareImages && (
                 <button onClick={handleNativeShare}
                   style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
-                  📤 全画像をまとめて共有（X等を選択）
+                  全画像をまとめて共有（X等を選択）
                 </button>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
@@ -2791,7 +2804,7 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
                     <img src={url} alt={`album ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
                     <button onClick={() => handleSaveOne(i)}
                       style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
-                      💾 この画像を保存
+                      この画像を保存
                     </button>
                   </div>
                 ))}
@@ -2821,13 +2834,13 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         {onEdit && (
           <button onClick={() => onEdit(kit)}
             style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            ✏️ 編集して完成写真を追加
+            編集して完成写真を追加
           </button>
         )}
         {onUncomplete && (
           <button onClick={() => onUncomplete(kit)}
             style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            ↩️ 完成を解除
+            完成を解除
           </button>
         )}
       </div>
@@ -2872,20 +2885,20 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         {onEdit && (
           <button onClick={() => onEdit(kit)}
             style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            ✏️ 編集
+            編集
           </button>
         )}
         {onShare && (
           <button onClick={() => onShare(kit)}
             style={{ flex: 1, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            📸 シェア
+            シェア
           </button>
         )}
       </div>
       {onUncomplete && (
         <button onClick={() => onUncomplete(kit)}
           style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-          ↩️ 完成を解除
+          完成を解除
         </button>
       )}
     </div>
@@ -3026,10 +3039,10 @@ function PriceReportModal({ target, onClose }) {
   return (
     <div style={s.overlay} onClick={onClose}>
       <div style={s.formModal} onClick={(e) => e.stopPropagation()}>
-        <div style={s.formTitle}>⚠️ 情報の誤りを報告</div>
+        <div style={s.formTitle}>情報の誤りを報告</div>
         {done ? (
           <div style={{ textAlign: "center", padding: "30px 0" }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>✅</div>
+            <div style={{ fontSize: 36, marginBottom: 12 }}></div>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: "#111" }}>ご報告ありがとうございました</div>
             <div style={{ fontSize: 12, color: "#6b7280" }}>運営にて確認いたします</div>
           </div>
@@ -3039,7 +3052,7 @@ function PriceReportModal({ target, onClose }) {
               {target.photoUrl ? (
                 <KitImage src={target.photoUrl} style={{ width: 50, height: 50, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 50, height: 50, borderRadius: 6, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}>📦</div>
+                <div style={{ width: 50, height: 50, borderRadius: 6, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}></div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#111", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{target.name || "(商品名不明)"}</div>
@@ -3057,7 +3070,7 @@ function PriceReportModal({ target, onClose }) {
                   const q = `${target.jan || target.name || ""} 希望小売価格`.trim();
                   window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank", "noopener,noreferrer");
                 }}>
-                🔍 Webで検索（JAN＋希望小売価格）
+                Webで検索（JAN＋希望小売価格）
               </button>
             )}
             <label style={s.label}>正しい価格(税込)<span style={{ fontWeight: 400, color: "#9ca3af", marginLeft: 6 }}>※どちらか必須</span></label>
@@ -3068,7 +3081,7 @@ function PriceReportModal({ target, onClose }) {
             {errMsg && (<div style={{ marginTop: 10, padding: "8px 12px", background: "#fee2e2", color: "#b91c1c", borderRadius: 8, fontSize: 12 }}>{errMsg}</div>)}
             <div style={s.formBtns}>
               <button style={s.cancelBtn} onClick={onClose} disabled={submitting}>キャンセル</button>
-              <button style={s.saveBtn} onClick={handleSubmit} disabled={submitting}>{submitting ? "送信中..." : "📤 報告を送信"}</button>
+              <button style={s.saveBtn} onClick={handleSubmit} disabled={submitting}>{submitting ? "送信中..." : "報告を送信"}</button>
             </div>
           </>
         )}
@@ -3160,7 +3173,7 @@ export default function App() {
 
   // 永続化ストレージ要求：iOS Safari は使われていないサイトの IndexedDB を
   // 約7日で勝手に削除する仕様があり、キットの参考画像（idb-blob:）が消えて
-  // 📦 プレースホルダだけ残る現象の原因になる。ホーム画面追加済みの PWA や
+  // プレースホルダだけ残る現象の原因になる。ホーム画面追加済みの PWA や
   // 高エンゲージメントのサイトは自動で許可されるため、プロンプトは通常出ない。
   // 失敗・未対応ブラウザでは何も起こらない（=既存挙動と同じ）。
   useEffect(() => {
@@ -3243,7 +3256,6 @@ export default function App() {
   const [showScanner, setShowScanner] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
-  const [showAlbum, setShowAlbum] = useState(false);
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
   const [shareKit, setShareKit] = useState(null); // 単一キットの完成品シェア対象
   const [myXId, setMyXId] = useState("");
@@ -3467,9 +3479,9 @@ export default function App() {
     }
     const estSec = Math.ceil(targets.length * 1);
     const ok = window.confirm(
-      "⚠️ 警告\n\n" +
+      "警告\n\n" +
       targets.length + "件のキットの「ユーザー登録画像」を削除し、JANに紐づくデフォルトの画像URLに置き換えます。\n\n" +
-      "⛔ 削除した画像は元に戻せません（バックアップからのみ復元可）\n\n" +
+      "削除した画像は元に戻せません（バックアップからのみ復元可）\n\n" +
       "【処理内容】\n" +
       "・JANあり + ユーザー登録画像 → デフォルトの画像URLに置換\n" +
       "・JANなしの画像 / 完成写真 → そのまま残す\n" +
@@ -3508,7 +3520,7 @@ export default function App() {
     }
     setImageResetLoading(false);
     setImageResetProgress({ current: 0, total: 0 });
-    alert("✅ 完了\n\n更新: " + updated + "件\nデフォルトの画像なし: " + notFound + "件\n失敗: " + failed + "件");
+    alert("完了\n\n更新: " + updated + "件\nデフォルトの画像なし: " + notFound + "件\n失敗: " + failed + "件");
   };
 
   // Phase 4.C.3: 既存の base64 写真を Blob (IDB) に移行して容量を節約する
@@ -3549,7 +3561,7 @@ export default function App() {
     }
     setMigrateLoading(false);
     setMigrateProgress({ current: 0, total: 0 });
-    alert("✅ 完了\n\n変換: " + migrated + "件\n失敗: " + failed + "件");
+    alert("完了\n\n変換: " + migrated + "件\n失敗: " + failed + "件");
   };
 
   const handleEdit = (kit) => { setForm({ ...kit, completedPhotos: getCompletedPhotos(kit), retailPrice: kit.retailPrice || kit.price || "" }); setEditId(kit.id); setShowForm(true); setDetail(null); };
@@ -3667,7 +3679,7 @@ export default function App() {
   };
 
   const handleWant = (kit) => {
-    const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします🙏 #積みプラ #ツミツミ #TSUMITSUMI`;
+    const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします#積みプラ #ツミツミ #TSUMITSUMI`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -3799,7 +3811,7 @@ export default function App() {
     <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
       {(kit.completedPhotoUrl || kit.photoUrl)
         ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
-        : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>
+        : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}><PhotoPlaceholderIcon size={32} /></div>
       }
       <div style={{ padding: "6px 6px 8px" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#111", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.3 }}>{kit.name}</div>
@@ -3827,7 +3839,7 @@ export default function App() {
             onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }} disabled={index === filtered.length - 1}>▼</button>
         </div>
       )}
-      {(kit.completedPhotoUrl || kit.photoUrl) ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={s.thumb} /> : <div style={s.thumbPh}>📦</div>}
+      {(kit.completedPhotoUrl || kit.photoUrl) ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={s.thumb} /> : <div style={{ ...s.thumbPh, display: "flex", alignItems: "center", justifyContent: "center" }}><PhotoPlaceholderIcon size={24} /></div>}
       <div style={s.cardBody}>
         <div style={s.cardName}>{kit.name}</div>
         <div style={s.cardMeta}>
@@ -3855,7 +3867,7 @@ export default function App() {
         {kit.completed && filter === "done" && !bulkMode && !reorderMode && (
           <button onClick={(e) => { e.stopPropagation(); setAlbumKit(kit); }}
             style={{ marginTop: 8, alignSelf: "flex-start", padding: "5px 16px", background: "#f0fdf4", color: "#166534", border: "1.5px solid #bbf7d0", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-            📷 アルバム
+            アルバム
           </button>
         )}
       </div>
@@ -3872,9 +3884,9 @@ export default function App() {
         <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", position: "relative" }}>
           {cover
             ? <KitImage src={cover} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>📦</div>}
+            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><PhotoPlaceholderIcon size={32} /></div>}
           {photos.length > 1 && (
-            <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20 }}>📷 {photos.length}</span>
+            <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20 }}>{photos.length}枚</span>
           )}
           {/* 名前オーバーレイ */}
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "16px 8px 6px", background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))", color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{kit.name}</div>
@@ -3906,14 +3918,25 @@ export default function App() {
           <div style={s.headerSub}>PLASTIC MODEL TRACKER</div>
         </div>
         <div style={{ display: "flex", gap: 5, alignItems: "center", flexShrink: 0 }}>
-          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowSearch(v => !v)}>🔍</button>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowSearch(v => !v)} title="検索">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.5" y2="16.5" />
+            </svg>
+          </button>
           <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowBackup(true)} title="バックアップ">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" />
               <path d="M12 8v8M8 12l4 4 4-4" />
             </svg>
           </button>
-          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowHelp(true)}>❓</button>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowHelp(true)} title="ヘルプ">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9.2 9.2a2.8 2.8 0 015.4 1c0 1.8-2.6 2.2-2.6 4" />
+              <line x1="12" y1="17.5" x2="12" y2="17.51" />
+            </svg>
+          </button>
           <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowAppShare(true)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M8 10L12 6L16 10" />
@@ -3921,7 +3944,6 @@ export default function App() {
               <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
             </svg>
           </button>
-          <button style={{ ...s.searchIconBtn, width: 30, height: 30, fontSize: 14 }} onClick={() => setShowAlbum(true)} title="完成アルバムをシェア">📸</button>
           <button style={{ ...s.shareBtn, width: 30, height: 30, fontSize: 13 }} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
       </div>
@@ -3931,7 +3953,7 @@ export default function App() {
         <span style={{ fontSize: 11, color: "#9ca3af" }}>登録数 {totalKits}</span>
         <a href="/gears.html" target="_blank" rel="noopener noreferrer"
           style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "#9a3412", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 20, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap" }}>
-          🛠 おすすめ定番アイテム
+          おすすめ定番アイテム
         </a>
       </div>
 
@@ -3955,7 +3977,7 @@ export default function App() {
       {/* 総額バー：タブ（積みプラ/完成/総計）に応じて表示を切替 */}
       {!bulkMode && (() => {
         const displayPrice = filter === "done" ? donePrice : filter === "all" ? totalPrice : pendingPrice;
-        const displayLabel = filter === "done" ? "💴 完成品の総額" : filter === "all" ? "💴 総計" : "💴 積みプラ総額";
+        const displayLabel = filter === "done" ? "完成品の総額" : filter === "all" ? "総計" : "積みプラ総額";
         const displayColor = filter === "done" ? "#22c55e" : filter === "all" ? "#111" : "#ef4444";
         return (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "6px 16px" }}>
@@ -4043,13 +4065,13 @@ export default function App() {
         })()}
       </div>
 
-      {scanLoading && <div style={s.loadingBar}>🔍 商品情報を検索中...</div>}
+      {scanLoading && <div style={s.loadingBar}>商品情報を検索中...</div>}
 
       <div style={s.list}>
         {filtered.length === 0 && (
           <div style={s.empty}>
             {kits.length === 0
-              ? <><div style={{ fontSize: 40, marginBottom: 12 }}>📦</div><div>右下のボタンからキットを登録しよう</div></>
+              ? <><div style={{ fontSize: 40, marginBottom: 12 }}></div><div>右下のボタンからキットを登録しよう</div></>
               : "該当するキットがありません"}
           </div>
         )}
@@ -4081,7 +4103,7 @@ export default function App() {
             </button>
             <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #111", borderRadius: 20, background: "#111", color: "#fff", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setShowTagEditor(true)}>
-              🏷️ タグ編集
+              タグ編集
             </button>
           </div>
         )}
@@ -4112,7 +4134,7 @@ export default function App() {
               <div style={{ display: "flex", alignItems: "center", padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <span style={{ fontSize: 12, color: "#6b7280", flex: 1 }}>{bulkSelected.size}件選択中</span>
                 <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
-                  onClick={handleBulkDelete}>🗑 削除</button>
+                  onClick={handleBulkDelete}>削除</button>
               </div>
               {/* 状態 */}
               <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
@@ -4153,7 +4175,7 @@ export default function App() {
               {/* タグ */}
               <div style={{ padding: "10px 16px" }}>
 <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>タグ名タップ→選択キットに追加 ／ 解除→選択キットから外す</div>
-                {bulkSelected.size === 0 && <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 6 }}>⚠ タグ名タップはキット選択後に有効になります</div>}
+                {bulkSelected.size === 0 && <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 6 }}>タグ名タップはキット選択後に有効になります</div>}
                 {allExistingTags.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
                     {allExistingTags.map(t => (
@@ -4199,7 +4221,7 @@ export default function App() {
           z-index は右下の FAB（50）より下げて、スキャン/手動登録の操作を邪魔しないようにする。 */}
       <a href="/storage.html" target="_blank" rel="noopener noreferrer"
         style={{ position: "fixed", bottom: 24, left: 16, zIndex: 40, fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 20, padding: "6px 12px", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-        📦 プラモを預ける
+        プラモを預ける
       </a>
 
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
@@ -4209,11 +4231,14 @@ export default function App() {
             <button
               style={{ background: "rgba(0,0,0,0.5)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", fontSize: 10, padding: "2px 8px", borderRadius: 20, cursor: "pointer" }}
               onClick={() => { setContinuousScan(v => !v); }}>
-              {continuousScan ? "🔁 連続ON" : "1回のみ"}
+              {continuousScan ? "連続ON" : "1回のみ"}
             </button>
           </div>
-          <button style={{ ...s.fab, background: "#000", padding: 0, overflow: "hidden" }} onClick={() => setShowScanner(true)}>
-            <img src="/camera-icon.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="スキャン" />
+          <button style={{ ...s.fab, background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowScanner(true)} title="バーコードでスキャン登録">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
+              <line x1="7" y1="12" x2="17" y2="12" />
+            </svg>
           </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -4244,7 +4269,7 @@ export default function App() {
                 <button
                   style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: "4px 0" }}
                   onClick={() => setReportTarget({ name: detail.name, jan: detail.jan, retailPrice: detail.retailPrice, price: detail.price, photoUrl: detail.photoUrl })}>
-                  ⚠️ 情報の誤りを報告
+                  情報の誤りを報告
                 </button>
               </div>
               {detail.tags?.length > 0 && (
@@ -4260,7 +4285,7 @@ export default function App() {
               {!detail.completed && (
                 <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
                   <button style={{ ...s.wantBtn, marginTop: 0, width: "auto", flex: 1 }} onClick={() => handleWant(detail)}>
-                    🙋 これを作ってくれる人に譲りたい！とポストする
+                    これを作ってくれる人に譲りたい！とポストする
                   </button>
                   <a href="/sell.html" target="_blank" rel="noopener noreferrer"
                     style={{
@@ -4278,17 +4303,17 @@ export default function App() {
                       alignItems: "center",
                       justifyContent: "center",
                     }}>
-                    💰 積みを売る
+                    積みを売る
                   </a>
                 </div>
               )}
-              {/* 完成品：Amazon送客の代わりに「📸 完成品をシェア」を表示 */}
+              {/* 完成品：Amazon送客の代わりに「完成品をシェア」を表示 */}
               {detail.completed && (
                 <div style={{ marginTop: 10 }}>
                   <button
                     onClick={() => { setDetail(null); setShareKit(detail); }}
                     style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "11px", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                    📸 この完成品をXでシェア
+                    この完成品をXでシェア
                   </button>
                 </div>
               )}
@@ -4314,7 +4339,7 @@ export default function App() {
                       fontWeight: 700,
                       textDecoration: "none",
                     }}>
-                    🛒 Amazonで関連商品を見る
+                    Amazonで関連商品を見る
                   </a>
                   <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "center", marginTop: 3, lineHeight: 1.5 }}>
                     ※ Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています
@@ -4349,7 +4374,7 @@ export default function App() {
           <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 360, padding: 20, boxShadow: "0 10px 40px rgba(0,0,0,0.3)", boxSizing: "border-box" }}
             onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 10 }}>
-              ⚠️ このJANは既に{dupConfirm.where}です
+              このJANは既に{dupConfirm.where}です
             </div>
             <div style={{ fontSize: 13, color: "#374151", marginBottom: 16, padding: "10px 12px", background: "#f9fafb", borderRadius: 8, lineHeight: 1.5, wordBreak: "break-all" }}>
               「{dupConfirm.kit?.name || dupConfirm.kit?.jan || "（名称なし）"}」
@@ -4380,7 +4405,7 @@ export default function App() {
             {continuousScan && continuousQueue.length > 0 && (
               <div style={{ background: "#fff", padding: "12px 16px", borderTop: "1px solid #f0f0f0" }}>
                 <div style={{ fontSize: 12, color: "#374151", marginBottom: 8, fontWeight: 700 }}>
-                  📦 スキャン済み {continuousQueue.length}件
+                  スキャン済み {continuousQueue.length}件
                 </div>
                 <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
                   {continuousQueue.map((k, i) => (
@@ -4471,13 +4496,6 @@ export default function App() {
         </div>
       )}
 
-      {showAlbum && (
-        <div style={s.overlay} onClick={() => setShowAlbum(false)}>
-          <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
-            <AlbumShareModal kits={kits} rank={rank} myXId={myXId} setMyXId={setMyXId} onClose={() => setShowAlbum(false)} />
-          </div>
-        </div>
-      )}
 
       {albumKit && (
         <div style={s.overlay} onClick={() => setAlbumKit(null)}>
@@ -4530,7 +4548,7 @@ export default function App() {
               onChange={(e) => setForm((f) => ({ ...f, series: e.target.value === "__custom__" ? "" : e.target.value }))}>
               <option value="">選択してください</option>
               {SERIES_OPTIONS.map((o) => <option key={o}>{o}</option>)}
-              <option value="__custom__">✏️ 自由入力...</option>
+              <option value="__custom__">自由入力...</option>
             </select>
             {!SERIES_OPTIONS.includes(form.series) && (
               <input style={{ ...s.input, marginTop: 6 }} placeholder="シリーズ名を自由に入力" value={form.series}
@@ -4559,7 +4577,7 @@ export default function App() {
                       alert("取得できませんでした。手動で入力してください。");
                     }
                   }}>
-                  🔄 自動取得
+                  自動取得
                 </button>
               )}
             </div>
@@ -4574,7 +4592,7 @@ export default function App() {
                   type="button"
                   style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: "2px 0" }}
                   onClick={() => setReportTarget({ name: form.name, jan: form.jan, retailPrice: form.retailPrice, price: form.price, photoUrl: form.photoUrl })}>
-                  ⚠️ この価格・情報の誤りを報告
+                  この価格・情報の誤りを報告
                 </button>
               </div>
             )}
@@ -4585,7 +4603,7 @@ export default function App() {
               onChange={(e) => setForm((f) => ({ ...f, scale: e.target.value === "__custom__" ? "" : e.target.value }))}>
               <option value="">選択してください</option>
               {SCALE_OPTIONS.map((o) => <option key={o}>{o}</option>)}
-              <option value="__custom__">✏️ 自由入力...</option>
+              <option value="__custom__">自由入力...</option>
             </select>
             {!SCALE_OPTIONS.includes(form.scale) && (
               <input style={{ ...s.input, marginTop: 6 }} placeholder="スケールを自由に入力（例: 1/8、1/144 などの独自表記も可）"
@@ -4620,7 +4638,7 @@ export default function App() {
             <div style={{ position: "relative" }}>
               <div style={s.photoArea} onClick={() => fileRef.current.click()}>
                 {form.photoUrl ? <KitImage src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
-                  : <span style={{ color: "#9ca3af", fontSize: 14 }}>📷 タップして写真を選択</span>}
+                  : <span style={{ color: "#9ca3af", fontSize: 14 }}>タップして写真を選択</span>}
               </div>
               {form.photoUrl && (
                 <button style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
@@ -4645,7 +4663,7 @@ export default function App() {
                   {photos.length < MAX_COMPLETED_PHOTOS && (
                     <div onClick={() => completedFileRef.current.click()}
                       style={{ width: 88, height: 88, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fafafa", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 11, cursor: "pointer", textAlign: "center", lineHeight: 1.4 }}>
-                      <span style={{ fontSize: 22 }}>🏆</span>追加<br/>{photos.length}/{MAX_COMPLETED_PHOTOS}
+                      <span style={{ fontSize: 22 }}></span>追加<br/>{photos.length}/{MAX_COMPLETED_PHOTOS}
                     </div>
                   )}
                 </div>
@@ -4688,7 +4706,7 @@ export default function App() {
                     }
                   } catch { alert("照合に失敗しました"); }
                 }}>
-                🔍 マスタ照合
+                マスタ照合
               </button>
             </div>
 
@@ -4699,7 +4717,7 @@ export default function App() {
             {editId !== null && (
               <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => { if (window.confirm(`「${form.name}」を削除しますか？\nこの操作は元に戻せません。`)) { handleDelete(editId); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); } }}>
-                🗑 このキットを削除
+                このキットを削除
               </button>
             )}
             <div style={{ height: 80 }} />
