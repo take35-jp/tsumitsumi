@@ -1341,7 +1341,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.33", date: "2026/06/13", isNew: true, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
+    { ver: "v1.34", date: "2026/06/13", isNew: true, items: ["キット削除時に「本当に削除しますか？」の確認ダイアログを表示するように（誤操作による削除を防止）"] },
+    { ver: "v1.33", date: "2026/06/13", isNew: false, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
     { ver: "v1.32", date: "2026/06/13", isNew: false, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
     { ver: "v1.31", date: "2026/06/13", isNew: false, items: ["完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿。表紙＋ショーケース・称号入り）"] },
     { ver: "v1.30", date: "2026/05/30", isNew: false, items: ["積みプラ数のランクの上限を更新"] },
@@ -1579,10 +1580,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.33 */}
+          {/* v1.34 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.34</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・キット削除時に「本当に削除しますか？」の確認ダイアログを表示（誤操作による削除を防止）
+            </div>
+          </div>
+          {/* v1.33 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.33</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
             </div>
@@ -1601,16 +1612,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               ・完成写真を最大6枚まで登録可能に<br/>
               ・完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリー）<br/>
               ・完成済みカードに「シェア」ボタンを追加（その完成品をXでシェア）
-            </div>
-          </div>
-          {/* v1.31 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.31</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿）
             </div>
           </div>
         </div>
@@ -3273,6 +3274,7 @@ export default function App() {
   const [showTagEditor, setShowTagEditor] = useState(false);
   const [theme, setTheme] = useState("light");
   const [reportTarget, setReportTarget] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // 削除確認ダイアログ対象 { id, name } | null
   const [continuousScan, setContinuousScan] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false); // 一括取得中フラグ
   const [priceProgress, setPriceProgress] = useState({ current: 0, total: 0 }); // 進捗
@@ -4716,7 +4718,7 @@ export default function App() {
             {/* 編集時のみ：このキットを削除（積みプラ・完成品とも編集の中に集約） */}
             {editId !== null && (
               <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                onClick={() => { if (window.confirm(`「${form.name}」を削除しますか？\nこの操作は元に戻せません。`)) { handleDelete(editId); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); } }}>
+                onClick={() => setConfirmDelete({ id: editId, name: form.name })}>
                 このキットを削除
               </button>
             )}
@@ -4731,6 +4733,29 @@ export default function App() {
 
       {reportTarget && (
         <PriceReportModal target={reportTarget} onClose={() => setReportTarget(null)} />
+      )}
+
+      {confirmDelete && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+          onClick={() => setConfirmDelete(null)}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 340, padding: "24px 20px 18px", boxSizing: "border-box", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#111", textAlign: "center", marginBottom: 8 }}>本当に削除しますか？</div>
+            <div style={{ fontSize: 13, color: "#6b7280", textAlign: "center", lineHeight: 1.6, marginBottom: 20 }}>
+              「{confirmDelete.name || "このキット"}」を削除します。<br />この操作は元に戻せません。
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => setConfirmDelete(null)}>
+                いいえ
+              </button>
+              <button style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => { handleDelete(confirmDelete.id); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); setConfirmDelete(null); }}>
+                はい、削除
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

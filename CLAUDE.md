@@ -27,7 +27,7 @@
 
 ## 2. 現在のバージョン
 
-**v1.33（2026/06/13）**
+**v1.34（2026/06/13）**
 ※ 下記の履歴リストは v1.11 までの記録。v1.12〜v1.30 はコード側 versions 配列が一次情報（CLAUDE.md側は未追従）。最新の追加のみ末尾に追記する運用。
 
 ### バージョニングルール
@@ -53,6 +53,7 @@
 - **v1.31**: 完成アルバムのXシェア機能を追加（サーバー保存なし・画像生成型）。`generateAlbumImages(kits, rank, opts)` で 1080x1350(4:5) の「表紙＋2x2ショーケース」PNGを生成し、完成写真を大きく表示。表紙に新ロゴ風ブロックマーク・タイトル・完成数・称号チップ。`AlbumShareModal`（📸ボタンで起動・XShareModalと別系統）。対象は `completed===true` のキットのみ（XShareは未完成のみ）。Web Share API対応端末はネイティブ共有、非対応は個別保存→X投稿導線。プライバシー方針は無変更（localStorage完結）
 - **v1.33**: アプリUIのスタイリッシュ化。App.jsx から装飾的な色付き絵文字・カメラ系絵文字を一括除去（`local-tools` 不使用、node string-replace で strip。機能的な記号 ✕✓★☆→←↑↓☰⊞＋𝕏▲▼ は維持）。ヘッダーの 🔍/❓ は SVG アイコン化済み（ユーザー先行作業）。画面最上段の「📸 完成アルバムをシェア」ボタン（`setShowAlbum`）を削除し、孤立した `showAlbum` state とモーダルも撤去（コレクション共有は廃止。完成品の共有は詳細モーダル/アルバムビューアの単体シェア `shareKit` 経由に集約）。LP/TIPS（public/配下のHTML）は対象外で絵文字維持。
 - **v1.32**: 完成品アルバム機能（3段階）。①完成写真を最大6枚化：`completedPhotos[]` 配列追加、旧 `completedPhotoUrl` は表紙[0]として後方互換維持（`getCompletedPhotos(kit)` ヘルパーで吸収）。編集フォームを6枚グリッドUIに。`tryDeleteOrphanBlob` 等の孤児blob掃除を配列走査対応。②完成タブ刷新：`filter==="done" && !bulkMode && !reorderMode` のとき通常リスト/グリッドの代わりにアルバムサムネグリッド（`albumCards`）を表示。タップで `AlbumViewerModal`（最大6枚ライトボックス：メイン写真＋‹›送り＋カウンター＋サムネストリップ）。③per-kitシェア：完成済みカード（リスト）に「📸シェア」ボタン＋ビューア内シェア。`generateKitAlbumImage(kit, rank)` で1キットの最大6枚を1080x1350の1枚にグリッド配置。`AlbumShareModal` に `singleKit` プロップを追加してコレクション版と共用。実機プレビューで3枚注入→グリッド→ビューア→生成画像のピクセル検証済み
+- **v1.34**: キット削除の確認ダイアログをアプリ内モーダル化。従来は編集フォームの「このキットを削除」ボタンで `window.confirm`（ネイティブ）を出していたが、v1.33 のスタイリッシュ化方針に合わせ、アプリ内の専用 Yes/No モーダルに置き換え。`confirmDelete` state（`{ id, name } | null`）を追加。削除ボタンは `setConfirmDelete({ id: editId, name: form.name })` を呼ぶだけにし、App 末尾（`reportTarget` モーダルの直後）に確認モーダルを描画。「本当に削除しますか？」＋キット名＋「この操作は元に戻せません」、ボタンは「いいえ」（グレー）／「はい、削除」（赤 #ef4444）。「はい」で `handleDelete`→フォームリセット→モーダル閉じ。オーバーレイ/背景クリックでキャンセル可。
 
 ---
 
