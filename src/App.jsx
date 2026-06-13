@@ -47,10 +47,10 @@ async function kitsIdbPhotoDelete(id) {
 // 完成写真の取得（後方互換）。新形式 completedPhotos[] があればそれ、
 // 無ければ旧形式 completedPhotoUrl(単一) を1枚アルバムとして返す。最大6枚。
 const MAX_COMPLETED_PHOTOS = 6;
-// 完成写真はXシェア画像・アルバムビューアの主役なので高解像度で保存する（メインのサムネ用写真は320pxのまま）
+// 完成写真はXシェア画像・アルバムビューアの主役。IDBには原本を無圧縮で保存する。
+// 以下はIDB保存に失敗したとき限定の base64 フォールバック用設定（localStorageに収めるため圧縮）。
 const COMPLETED_PHOTO_MAXPX = 1440;
 const COMPLETED_PHOTO_QUALITY = 0.82;
-const COMPLETED_PHOTO_MAXBYTES = 450000; // Blob（IDB保存）の上限。約300〜450KB/枚
 const COMPLETED_PHOTO_MAXCHARS = 620000; // base64フォールバック（localStorage）の上限。≒450KB binary
 function getCompletedPhotos(kit) {
   if (kit && Array.isArray(kit.completedPhotos) && kit.completedPhotos.length) {
@@ -1346,7 +1346,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.35", date: "2026/06/13", isNew: true, items: ["完成品アルバムのXシェア画像を高解像度化（完成写真を長辺1440pxで保存し、シェア画像も2倍の高精細に）"] },
+    { ver: "v1.35", date: "2026/06/13", isNew: true, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
     { ver: "v1.34", date: "2026/06/13", isNew: false, items: ["キット削除時に「本当に削除しますか？」の確認ダイアログを表示するように（誤操作による削除を防止）"] },
     { ver: "v1.33", date: "2026/06/13", isNew: false, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
     { ver: "v1.32", date: "2026/06/13", isNew: false, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
@@ -1594,7 +1594,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・完成品アルバムのXシェア画像を高解像度化（完成写真を長辺1440pxで保存し、シェア画像も2倍の高精細に）
+              ・完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）
             </div>
           </div>
           {/* v1.34 */}
@@ -3436,11 +3436,11 @@ export default function App() {
     if (room <= 0) { alert(`完成写真は最大${MAX_COMPLETED_PHOTOS}枚までです`); return; }
     const added = [];
     for (const file of files.slice(0, room)) {
-      const blob = await compressImageToBlob(file, COMPLETED_PHOTO_MAXPX, COMPLETED_PHOTO_QUALITY, COMPLETED_PHOTO_MAXBYTES);
-      if (!blob) continue;
       const photoId = makePhotoId();
-      const ok = await kitsIdbPhotoSet(photoId, blob);
+      // 完成写真は圧縮せず原本のまま IDB に保存（最高画質。Xシェア・アルバムの主役なので）
+      const ok = await kitsIdbPhotoSet(photoId, file);
       if (ok) { added.push(idToIdbBlobUrl(photoId)); }
+      // IDB保存失敗時のみ localStorage 用に圧縮（原本は大きすぎて localStorage に入らないため）
       else { const base64 = await compressImageToBase64(file, COMPLETED_PHOTO_MAXPX, COMPLETED_PHOTO_QUALITY, COMPLETED_PHOTO_MAXCHARS); if (base64) added.push(base64); }
     }
     if (added.length === 0) return;
