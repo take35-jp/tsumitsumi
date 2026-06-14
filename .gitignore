@@ -9,3 +9,9 @@ local-tools/.env
 local-tools/.env.*
 local-tools/asin-matches.json
 local-tools/asin-review.csv
+
+# local-tools generated artifacts (logs / scratch outputs)
+local-tools/*.log
+local-tools/paint-asin-results.json
+local-tools/paint-review.txt
+local-tools/*.out
