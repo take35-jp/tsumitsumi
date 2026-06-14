@@ -1651,7 +1651,7 @@ const hs = {
 // ---- App Share Modal ----
 function AppShareModal({ onClose }) {
   const url = "https://tsumitsumi.vercel.app";
-  const text = "積みプラ管理アプリ「TSUMI TSUMI」\nバーコードスキャンで簡単登録！\n#積みプラ #ツミツミ #TSUMITSUMI";
+  const text = "積みプラ管理アプリ「TSUMI TSUMI」\nバーコードスキャンで簡単登録！\n#TSUMITSUMI #ツミツミ";
   const [copied, setCopied] = useState(false);
 
   const copyUrl = async () => {
@@ -2436,13 +2436,9 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
   const totalPages = Math.max(1, Math.ceil(targetKits.length / 68));
 
   const buildTweet = () => {
-    const id = myXId.trim().replace(/^@/, "");
-    const idLine = id ? `DM→ @${id}
-
-` : "";
     return `積みプラ ${targetKits.length}件 を公開中！
 
-${idLine}#積みプラ #ツミツミ #TSUMITSUMI`;
+#TSUMITSUMI #ツミツミ`;
   };
 
   // モバイル判定（iOS Safari では <a download> がプレビュー画面を開き、戻ると LP に飛ぶ問題を回避）
@@ -2530,13 +2526,10 @@ ${idLine}#積みプラ #ツミツミ #TSUMITSUMI`;
   };
 
   const buildTweetForImage = (count, pages) => {
-    const id = myXId.trim().replace(/^@/, "");
-    const idLine = id ? `
-DM→ @${id}` : "";
     const pageNote = pages > 1 ? `（全${pages}枚）` : "";
-    return `積みプラ ${count}件 を公開中！${pageNote}${idLine}
+    return `積みプラ ${count}件 を公開中！${pageNote}
 
-#積みプラ #ツミツミ #TSUMITSUMI`;
+#TSUMITSUMI #ツミツミ`;
   };
 
   return (
@@ -2655,14 +2648,12 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
   const canNativeShareImages = typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function";
 
   const buildTweet = () => {
-    const id = myXId.trim().replace(/^@/, "");
-    const idLine = id ? `DM→ @${id}\n\n` : "";
     if (isSingle) {
       const grade = singleKit.scale ? `（${singleKit.scale}）` : "";
-      return `完成しました！\n${singleKit.name}${grade}\n\n${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
+      return `完成しました！\n${singleKit.name}${grade}\n\n#TSUMITSUMI #ツミツミ`;
     }
     const rankLine = rank && rank.label ? `称号: ${rank.label}\n` : "";
-    return `完成したプラモを公開！\n完成 ${totalCount}体\n${rankLine}${idLine}#完成 #ガンプラ #プラモ完成 #ツミツミ #TSUMITSUMI`;
+    return `完成したプラモを公開！\n完成 ${totalCount}体\n${rankLine}#TSUMITSUMI #ツミツミ`;
   };
 
   const blobToDataUrl = (blob) => new Promise((resolve) => {
@@ -3679,7 +3670,7 @@ export default function App() {
   };
 
   const handleWant = (kit) => {
-    const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします#積みプラ #ツミツミ #TSUMITSUMI`;
+    const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします #TSUMITSUMI #ツミツミ`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
