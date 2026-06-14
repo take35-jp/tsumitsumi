@@ -156,8 +156,8 @@ function chunk(arr, n) {
         if (r) {
           const img = r.images?.primary?.large?.url || r.images?.primary?.medium?.url;
           if (img) { product.image = img; okCount++; }
-          const price = r.offersV2?.listings?.[0]?.price?.amount;
-          if (price) product.price = String(price);
+          const price = r.offersV2?.listings?.[0]?.price?.money?.amount;
+          if (price != null) product.price = String(price);
         } else {
           failCount++;
         }

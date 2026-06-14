@@ -233,9 +233,12 @@
       const thumbHtml = p.image
         ? `<a href="${url}" target="_blank" rel="nofollow noopener noreferrer sponsored" class="product-thumb"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name || "")}" loading="lazy" /></a>`
         : `<div class="product-thumb"><span class="no-img">📦</span></div>`;
-      // 価格表示。Amazon側で頻繁に変動するため正確値はAmazon側で確認してもらう旨を付記。
-      const priceHtml = p.price
-        ? `<div class="product-price"><span class="yen">${escapeHtml(p.price)}</span><span class="note">※Amazonで最新価格をご確認ください</span></div>`
+      // 価格表示。数値なら ¥ + カンマ区切りに整形。Amazon側で頻繁に変動するため正確値はAmazon側で確認してもらう旨を付記。
+      const priceDisp = (p.price != null && /^\d+$/.test(String(p.price)))
+        ? "¥" + Number(p.price).toLocaleString("ja-JP")
+        : (p.price ? escapeHtml(p.price) : null);
+      const priceHtml = priceDisp
+        ? `<div class="product-price"><span class="yen">${priceDisp}</span><span class="note">※Amazonで最新価格をご確認ください</span></div>`
         : "";
       return `
         <div class="product-card">
