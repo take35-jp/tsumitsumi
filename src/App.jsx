@@ -47,6 +47,11 @@ async function kitsIdbPhotoDelete(id) {
 // 完成写真の取得（後方互換）。新形式 completedPhotos[] があればそれ、
 // 無ければ旧形式 completedPhotoUrl(単一) を1枚アルバムとして返す。最大6枚。
 const MAX_COMPLETED_PHOTOS = 6;
+// 完成写真はXシェア画像・アルバムビューアの主役。IDBには原本を無圧縮で保存する。
+// 以下はIDB保存に失敗したとき限定の base64 フォールバック用設定（localStorageに収めるため圧縮）。
+const COMPLETED_PHOTO_MAXPX = 1440;
+const COMPLETED_PHOTO_QUALITY = 0.82;
+const COMPLETED_PHOTO_MAXCHARS = 620000; // base64フォールバック（localStorage）の上限。≒450KB binary
 function getCompletedPhotos(kit) {
   if (kit && Array.isArray(kit.completedPhotos) && kit.completedPhotos.length) {
     return kit.completedPhotos.filter(Boolean).slice(0, MAX_COMPLETED_PHOTOS);
@@ -227,8 +232,8 @@ const makeEmptyForm = () => ({
   condition: "", conditionNote: "", tags: [],
 });
 
-// 画像をBase64に圧縮変換（最大800px・JPEG品質0.7）
-function compressImageToBase64(file, maxPx = 320, quality = 0.5) {
+// 画像をBase64に圧縮変換（既定は長辺320px・JPEG品質0.5・約50KB相当。maxChars で上限調整可）
+function compressImageToBase64(file, maxPx = 320, quality = 0.5, maxChars = 68000) {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -243,10 +248,10 @@ function compressImageToBase64(file, maxPx = 320, quality = 0.5) {
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      // 目標50KB以下になるまで品質を下げる
+      // 目標サイズ（maxChars）以下になるまで品質を下げる
       let result = canvas.toDataURL("image/jpeg", quality);
       let q = quality;
-      while (result.length > 68000 && q > 0.2) {
+      while (result.length > maxChars && q > 0.2) {
         q -= 0.05;
         result = canvas.toDataURL("image/jpeg", q);
       }
@@ -257,8 +262,8 @@ function compressImageToBase64(file, maxPx = 320, quality = 0.5) {
   });
 }
 
-// 画像を Blob に圧縮変換（base64 版と同じロジック・サイズ約30%軽い）
-function compressImageToBlob(file, maxPx = 320, quality = 0.5) {
+// 画像を Blob に圧縮変換（base64 版と同じロジック・サイズ約30%軽い。maxBytes で上限調整可）
+function compressImageToBlob(file, maxPx = 320, quality = 0.5, maxBytes = 51000) {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -275,8 +280,8 @@ function compressImageToBlob(file, maxPx = 320, quality = 0.5) {
       const toBlob = (q) => new Promise((r) => canvas.toBlob((b) => r(b), "image/jpeg", q));
       let q = quality;
       let blob = await toBlob(q);
-      // base64 で 68000 char 上限 ≒ 51000 bytes binary
-      while (blob && blob.size > 51000 && q > 0.2) {
+      // maxBytes 以下になるまで品質を下げる
+      while (blob && blob.size > maxBytes && q > 0.2) {
         q -= 0.05;
         blob = await toBlob(q);
       }
@@ -1341,7 +1346,9 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.33", date: "2026/06/13", isNew: true, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
+    { ver: "v1.35", date: "2026/06/13", isNew: true, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
+    { ver: "v1.34", date: "2026/06/13", isNew: false, items: ["キット削除時に「本当に削除しますか？」の確認ダイアログを表示するように（誤操作による削除を防止）"] },
+    { ver: "v1.33", date: "2026/06/13", isNew: false, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
     { ver: "v1.32", date: "2026/06/13", isNew: false, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
     { ver: "v1.31", date: "2026/06/13", isNew: false, items: ["完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿。表紙＋ショーケース・称号入り）"] },
     { ver: "v1.30", date: "2026/05/30", isNew: false, items: ["積みプラ数のランクの上限を更新"] },
@@ -1579,38 +1586,36 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.33 */}
+          {/* v1.35 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.35</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）
+            </div>
+          </div>
+          {/* v1.34 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.34</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・キット削除時に「本当に削除しますか？」の確認ダイアログを表示（誤操作による削除を防止）
+            </div>
+          </div>
+          {/* v1.33 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.33</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・アプリ画面のデザインを刷新（アイコン・絵文字を整理してスタイリッシュに）<br/>
               ・画面最上段の完成アルバム共有ボタンを削除
-            </div>
-          </div>
-          {/* v1.32 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.32</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・完成写真を最大6枚まで登録可能に<br/>
-              ・完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリー）<br/>
-              ・完成済みカードに「シェア」ボタンを追加（その完成品をXでシェア）
-            </div>
-          </div>
-          {/* v1.31 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.31</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・完成済みキットの「完成アルバム」シェア機能を追加（完成写真を大きく見せるリッチな画像を生成してXに投稿）
             </div>
           </div>
         </div>
@@ -2326,6 +2331,7 @@ async function generateAlbumImages(kits, rank, opts = {}) {
 // ---- 単一キットの完成アルバム画像（最大6枚を1枚にレイアウト） ----
 async function generateKitAlbumImage(kit, rank, opts = {}) {
   const W = 1080, H = 1350;
+  const SCALE = 2; // 出力解像度を2倍に（2160x2700）。レイアウト計算は論理座標(W/H)のまま
   const photos = getCompletedPhotos(kit);
   const LOGO_BLOCKS = ["#34b3a0", "#e6b52c", "#8e54b0", "#3f6fc6", "#d75a2b", "#3aa75d"];
 
@@ -2362,8 +2368,10 @@ async function generateKitAlbumImage(kit, rank, opts = {}) {
   const imgs = await Promise.all(photos.map(loadImage));
 
   const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
+  canvas.width = W * SCALE; canvas.height = H * SCALE;
   const ctx = canvas.getContext("2d");
+  ctx.scale(SCALE, SCALE); // 以降は論理座標(W/H)で描画。画素は2倍で出力される
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
   ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 0, W, H);
 
   // ヘッダー：ロゴブロック小マーク + ブランド
@@ -3264,6 +3272,7 @@ export default function App() {
   const [showTagEditor, setShowTagEditor] = useState(false);
   const [theme, setTheme] = useState("light");
   const [reportTarget, setReportTarget] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // 削除確認ダイアログ対象 { id, name } | null
   const [continuousScan, setContinuousScan] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false); // 一括取得中フラグ
   const [priceProgress, setPriceProgress] = useState({ current: 0, total: 0 }); // 進捗
@@ -3418,12 +3427,12 @@ export default function App() {
     if (room <= 0) { alert(`完成写真は最大${MAX_COMPLETED_PHOTOS}枚までです`); return; }
     const added = [];
     for (const file of files.slice(0, room)) {
-      const blob = await compressImageToBlob(file);
-      if (!blob) continue;
       const photoId = makePhotoId();
-      const ok = await kitsIdbPhotoSet(photoId, blob);
+      // 完成写真は圧縮せず原本のまま IDB に保存（最高画質。Xシェア・アルバムの主役なので）
+      const ok = await kitsIdbPhotoSet(photoId, file);
       if (ok) { added.push(idToIdbBlobUrl(photoId)); }
-      else { const base64 = await compressImageToBase64(file); if (base64) added.push(base64); }
+      // IDB保存失敗時のみ localStorage 用に圧縮（原本は大きすぎて localStorage に入らないため）
+      else { const base64 = await compressImageToBase64(file, COMPLETED_PHOTO_MAXPX, COMPLETED_PHOTO_QUALITY, COMPLETED_PHOTO_MAXCHARS); if (base64) added.push(base64); }
     }
     if (added.length === 0) return;
     setForm((f) => {
@@ -4707,7 +4716,7 @@ export default function App() {
             {/* 編集時のみ：このキットを削除（積みプラ・完成品とも編集の中に集約） */}
             {editId !== null && (
               <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                onClick={() => { if (window.confirm(`「${form.name}」を削除しますか？\nこの操作は元に戻せません。`)) { handleDelete(editId); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); } }}>
+                onClick={() => setConfirmDelete({ id: editId, name: form.name })}>
                 このキットを削除
               </button>
             )}
@@ -4722,6 +4731,29 @@ export default function App() {
 
       {reportTarget && (
         <PriceReportModal target={reportTarget} onClose={() => setReportTarget(null)} />
+      )}
+
+      {confirmDelete && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+          onClick={() => setConfirmDelete(null)}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 340, padding: "24px 20px 18px", boxSizing: "border-box", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#111", textAlign: "center", marginBottom: 8 }}>本当に削除しますか？</div>
+            <div style={{ fontSize: 13, color: "#6b7280", textAlign: "center", lineHeight: 1.6, marginBottom: 20 }}>
+              「{confirmDelete.name || "このキット"}」を削除します。<br />この操作は元に戻せません。
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => setConfirmDelete(null)}>
+                いいえ
+              </button>
+              <button style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => { handleDelete(confirmDelete.id); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); setConfirmDelete(null); }}>
+                はい、削除
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
