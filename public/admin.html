@@ -717,10 +717,13 @@
     <!-- TAB: 工具カタログ管理 -->
     <div class="tab-panel" id="tab-gears">
       <div style="background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:14px; margin-bottom:16px;">
-        <div style="font-size:13px; font-weight:700; color:#9a3412; margin-bottom:6px;">🛠 工具カタログ管理（Supabase 連動）</div>
+        <div style="font-size:13px; font-weight:700; color:#9a3412; margin-bottom:6px;">🛠 工具カタログ管理（Supabase 連動 ／ PA-API自動取得）</div>
         <div style="font-size:12px; color:#9a3412; line-height:1.7;">
           <code>/gears.html</code> に表示される商品を編集できます。「💾 Supabaseに保存」を押すと即座に本番に反映されます。<br/>
-          念のため定期的に「⬇ JSONバックアップ」でリポジトリに <code>public/gears.json</code> のスナップショットを取っておくと安心です（Supabase が落ちた時のフォールバック用）。
+          <b>運用のキモ：商品ごとに「ASIN」を登録すれば、画像・価格は Amazon PA-API が自動取得します。</b>
+          PCの日次タスク「TSUMITSUMI Price Refresh」（毎朝7:00）が全ASINの画像・価格を最新化するので、<b>画像URL／価格は基本ふれなくてOK</b>（手入力はAPIで取れない時の上書き用）。<br/>
+          ・新規商品：ASINを入れて保存 → 次回の自動更新で画像・価格が入る（すぐ反映したい時は手元で <code>node local-tools/paapi-refresh-prices.js --apply</code>）<br/>
+          ・念のため定期的に「⬇ JSONバックアップ」で <code>public/gears.json</code> のスナップショットを取っておくと安心（Supabase障害時のフォールバック用）。
         </div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
@@ -3888,17 +3891,17 @@ function showMsg(id, text, type) {
                     <div style="font-size:10px; color:#9a3412; margin-top:2px;">https://www.amazon.co.jp/.../dp/<b>ASIN</b>/... の形式を認識します</div>
                   </div>
 
-                  <label style="font-weight:700;">ASIN</label>
-                  <input type="text" value="${gearsEsc(p.asin || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'asin', this.value || null); gearsUpdateLinkPreview(this)" placeholder="例: B000WLOO04（10文字）。空欄なら検索リンクにフォールバック" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px; font-family:monospace;" />
+                  <label style="font-weight:700; color:#15803d;">ASIN 🔑</label>
+                  <input type="text" value="${gearsEsc(p.asin || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'asin', this.value || null); gearsUpdateLinkPreview(this)" placeholder="例: B000WLOO04（10文字）。これを入れれば画像・価格はPA-APIが自動取得。空欄なら検索リンクにフォールバック" style="padding:5px 8px; border:1.5px solid #86efac; border-radius:4px; font-family:monospace; background:#f0fdf4;" />
 
                   <label style="font-size:10px; color:#9ca3af; padding-top:2px;">生成URL</label>
                   <div class="link-preview" style="font-size:10px; color:#9ca3af; word-break:break-all; line-height:1.4;">${gearsLinkPreviewText(p)}</div>
 
-                  <label style="font-weight:700; color:#b91c1c;">価格表示</label>
-                  <input type="text" value="${gearsEsc(p.price || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'price', this.value || null)" placeholder="例: ¥1,980 / ¥2,000前後 / ¥1,500〜3,000（空欄なら非表示）" style="padding:5px 8px; border:1px solid #fecaca; border-radius:4px; background:#fef2f2;" />
+                  <label style="font-weight:700; color:#b91c1c;">価格 <span style="font-weight:400; color:#9ca3af;">🔄PA-API自動</span></label>
+                  <input type="text" value="${gearsEsc(p.price || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'price', this.value || null)" placeholder="通常は空欄でOK（ASINからPA-APIが自動取得・日次更新）。上書きしたい時だけ入力" style="padding:5px 8px; border:1px solid #fecaca; border-radius:4px; background:#fef2f2;" />
 
-                  <label>商品画像URL</label>
-                  <input type="text" value="${gearsEsc(p.image || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'image', this.value); gearsRefreshThumb(this)" placeholder="https://m.media-amazon.com/images/I/...jpg" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
+                  <label>画像URL <span style="font-weight:400; color:#9ca3af;">🔄PA-API自動</span></label>
+                  <input type="text" value="${gearsEsc(p.image || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'image', this.value); gearsRefreshThumb(this)" placeholder="通常は空欄でOK（ASINからPA-APIが自動取得）。上書き時のみ https://m.media-amazon.com/images/I/...jpg" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
 
                   <label>ヘッドライン</label>
                   <input type="text" value="${gearsEsc(p.headline || "")}" oninput="gearsField(${sIdx}, ${pIdx}, 'headline', this.value)" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:4px;" />
