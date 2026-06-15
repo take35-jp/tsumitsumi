@@ -451,6 +451,10 @@
       <button class="filter-pill" data-cat="color" data-val="fluorescent">蛍光</button>
     </div>
     <div class="filter-row">
+      <span class="filter-label">形状</span>
+      <button class="filter-pill" data-cat="form" data-val="spray">スプレー缶</button>
+    </div>
+    <div class="filter-row">
       <span class="filter-label">仕上げ</span>
       <button class="filter-pill" data-cat="finish" data-val="gloss">光沢</button>
       <button class="filter-pill" data-cat="finish" data-val="semi">半光沢</button>
@@ -1345,7 +1349,9 @@ const MFR_NAMES = { gsi: "GSI クレオス", gaia: "ガイアノーツ", tamiya:
 const MFR_ORDER = ["gsi", "gaia", "tamiya", "finishers"];
 const FINISH_LABEL = { gloss: "光沢", semi: "半光沢", flat: "つや消し" };
 
-const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set() };
+const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set(), form: new Set() };
+// スプレー(缶)判定：lineup または検索語に「スプレー」を含むもの
+const isSpray = (p) => /スプレー|spray/i.test(`${p.lineup || ""} ${p.q || ""}`);
 let viewMode = "color"; // "color" | "mfr"
 
 function escapeHtml(s) {
@@ -1488,6 +1494,7 @@ function render() {
     if (FILTERS.type.size > 0 && !FILTERS.type.has(p.type)) return false;
     if (FILTERS.color.size > 0 && !FILTERS.color.has(p.color)) return false;
     if (FILTERS.finish.size > 0 && !FILTERS.finish.has(p.finish)) return false;
+    if (FILTERS.form.has("spray") && !isSpray(p)) return false;
     return true;
   });
 
