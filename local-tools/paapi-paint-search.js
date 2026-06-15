@@ -33,6 +33,7 @@ const ARGV = process.argv.slice(2);
 const SAMPLE = ARGV.includes("--sample") ? parseInt(ARGV[ARGV.indexOf("--sample") + 1], 10) : null;
 const ALL = ARGV.includes("--all");
 const UPSERT = ARGV.includes("--upsert");
+const RETRY = ARGV.includes("--retry-unmatched"); // asin_map に未登録の商品だけ、複数クエリで再検索
 
 const REPO_ROOT = path.resolve(__dirname, "..");
 const PAINT_HTML = path.join(REPO_ROOT, "public/paint/index.html");
@@ -87,6 +88,18 @@ function buildQuery(p) {
   if (p.q && String(p.q).trim()) return String(p.q).trim();
   const brand = MFR_NAMES[p.mfr] || p.mfr || "";
   return [brand, p.lineup, p.name, p.code].filter(Boolean).join(" ").trim();
+}
+
+// 再マッチ用：複数のクエリ候補（コード密着で取りこぼすケースを救済）
+function buildQueries(p) {
+  const brand = MFR_NAMES[p.mfr] || p.mfr || "";
+  const qs = [];
+  if (p.q && String(p.q).trim()) qs.push(String(p.q).trim());
+  qs.push([brand, p.lineup, p.name].filter(Boolean).join(" ").trim());       // ブランド+ラインナップ+色（コード無し）
+  qs.push([brand, p.name, p.code].filter(Boolean).join(" ").trim());         // ブランド+色+コード
+  qs.push([p.lineup, p.name].filter(Boolean).join(" ").trim());              // ラインナップ+色
+  qs.push([brand, p.name].filter(Boolean).join(" ").trim());                 // ブランド+色のみ
+  return [...new Set(qs.filter((q) => q && q.length >= 2))];
 }
 
 function scoreCandidate(p, item) {
@@ -160,9 +173,20 @@ async function upsertAsinMap(rows) {
     for (let i = 0; i < SAMPLE; i++) picked.push(items[Math.floor(i * step)]);
     items = picked;
     log(`サンプル ${items.length} 件（等間隔抽出）`);
-  } else if (!ALL && !SAMPLE) {
-    log("フラグ未指定。--sample N か --all を指定してください。");
+  } else if (!ALL && !SAMPLE && !RETRY) {
+    log("フラグ未指定。--sample N / --all / --retry-unmatched のいずれかを指定してください。");
     return;
+  }
+
+  // 再マッチ：asin_map に既に登録済みの key はスキップ（未マッチのみ対象）
+  if (RETRY) {
+    const er = await fetch(`${SUPABASE_URL}/rest/v1/asin_map?select=key`, {
+      headers: { apikey: SERVICE_ROLE, Authorization: "Bearer " + SERVICE_ROLE } });
+    const existing = er.ok ? await er.json() : [];
+    const have = new Set(existing.map((r) => r.key));
+    const before = items.length;
+    items = items.filter(({ p, ns }) => !have.has(makeKey(p, ns)));
+    log(`未マッチのみ対象: ${items.length} / ${before}（既存 ${have.size} 件はスキップ）`);
   }
 
   const tok = await getToken();
@@ -170,17 +194,26 @@ async function upsertAsinMap(rows) {
 
   const results = [];
   let high = 0, med = 0, low = 0, none = 0;
+  let searchCount = 0;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   for (let i = 0; i < items.length; i++) {
     const { p, ns } = items[i];
-    const q = buildQuery(p);
-    let row = { key: makeKey(p, ns), ns, query: q, mfr: p.mfr, code: p.code, name: p.name };
+    const queries = RETRY ? buildQueries(p) : [buildQuery(p)];
+    let row = { key: makeKey(p, ns), ns, query: queries[0], mfr: p.mfr, code: p.code, name: p.name };
+    let best = null, usedQ = queries[0];
     try {
-      const cands = await search(tok, q);
-      let best = null;
-      for (const c of cands) {
-        const sc = scoreCandidate(p, c);
-        if (!best || sc.score > best.sc.score) best = { c, sc };
+      for (const q of queries) {
+        if (searchCount > 0) await sleep(1200); // 全search呼び出し間 1 TPS安全マージン
+        searchCount++;
+        let cands;
+        try { cands = await search(tok, q); } catch (e) { continue; }
+        for (const c of cands) {
+          const sc = scoreCandidate(p, c);
+          if (!best || sc.score > best.sc.score) { best = { c, sc }; usedQ = q; }
+        }
+        if (best && best.sc.score >= 7) break; // 高信頼が出たら打ち切り
       }
+      row.query = usedQ;
       if (best && best.sc.score >= 4) {
         const c = best.c;
         const conf = best.sc.score >= 7 ? "high" : "medium";
@@ -202,7 +235,6 @@ async function upsertAsinMap(rows) {
     }
     results.push(row);
     if ((i + 1) % 20 === 0 || i === items.length - 1) log(`  進捗 ${i + 1}/${items.length} (high:${high} med:${med} low:${low} err:${none})`);
-    if (i < items.length - 1) await new Promise((r) => setTimeout(r, 1300)); // 1 TPS安全マージン
   }
 
   fs.writeFileSync(OUT_JSON, JSON.stringify(results, null, 2), "utf8");

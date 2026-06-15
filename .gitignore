@@ -15,3 +15,6 @@ local-tools/*.log
 local-tools/paint-asin-results.json
 local-tools/paint-review.txt
 local-tools/*.out
+
+local-tools/retry-safe.json
+local-tools/*.out
