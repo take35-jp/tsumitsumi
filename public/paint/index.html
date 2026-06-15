@@ -1333,6 +1333,19 @@ const FINISH_LABEL = { gloss: "光沢", semi: "半光沢", flat: "つや消し" 
 const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set() };
 let viewMode = "color"; // "color" | "mfr"
 
+// 管理ツールのオーバーレイ（非表示=欠番削除 / 名前上書き）。paint_overrides テーブルから読む。
+const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
+let OVERRIDES = {}; // key -> { hidden, name_override }
+const ovr = (p) => OVERRIDES[makeKey(p, 'paint')] || {};
+const dispName = (p) => { const o = ovr(p); return (o.name_override && String(o.name_override).trim()) ? o.name_override : p.name; };
+async function loadOverrides() {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/paint_overrides?select=key,hidden,name_override`, { headers: { apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON }, cache: "no-store" });
+    if (r.ok) { const rows = await r.json(); OVERRIDES = {}; rows.forEach(x => OVERRIDES[x.key] = x); }
+  } catch (e) {}
+}
+
 function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
@@ -1354,8 +1367,9 @@ function buildUrl(p) {
 }
 
 function renderCard(p) {
+  const nm = dispName(p);
   const imgHtml = p.image
-    ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
+    ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(nm)}" loading="lazy" />`
     : "📦";
   return `
     <div class="paint-card" data-product-id="${escapeHtml(makeKey(p, 'paint'))}">
@@ -1365,7 +1379,7 @@ function renderCard(p) {
           <span class="paint-brand mfr-${escapeHtml(p.mfr)}">${escapeHtml(MFR_NAMES[p.mfr])}</span>
           <span class="paint-code">${escapeHtml(p.code)}</span>
         </div>
-        <div class="paint-name">${escapeHtml(p.name)}</div>
+        <div class="paint-name">${escapeHtml(nm)}</div>
         <div class="paint-meta">${escapeHtml(p.lineup)} · ${FINISH_LABEL[p.finish] || ""}</div>
         <div class="paint-price"${p.price ? "" : ' style="display:none;"'}>${p.price ? escapeHtml(p.price) : ""}</div>
         <a class="paint-amazon" href="${buildUrl(p)}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
@@ -1469,6 +1483,7 @@ function renderByMfrAxis(list) {
 
 function render() {
   const list = PAINTS.filter(p => {
+    if (ovr(p).hidden) return false; // 管理ツールで非表示(欠番削除)
     if (FILTERS.mfr.size > 0 && !FILTERS.mfr.has(p.mfr)) return false;
     if (FILTERS.type.size > 0 && !FILTERS.type.has(p.type)) return false;
     if (FILTERS.color.size > 0 && !FILTERS.color.has(p.color)) return false;
@@ -1526,7 +1541,8 @@ document.querySelectorAll(".view-pill[data-view]").forEach(btn => {
   btn.addEventListener("click", () => setViewMode(btn.dataset.view));
 });
 
-render();
+// オーバーレイ(非表示/改名)を読み込んでから初回描画
+loadOverrides().then(render);
 </script>
 
 <!-- asin_map から画像・ASIN直リンクを商品カードに注入 -->

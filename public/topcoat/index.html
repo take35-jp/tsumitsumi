@@ -564,6 +564,19 @@ const MFR_ORDER    = ["gsi", "gaia", "tamiya", "finishers"];
 
 const FILTERS = { mfr:new Set(), finish:new Set(), form:new Set(), type:new Set(), uv:new Set() };
 
+// 管理ツールのオーバーレイ（非表示=欠番削除 / 名前上書き）
+const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGZ3bWNkdG5ndmljcmNqeXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjE2MzMsImV4cCI6MjA5MTU5NzYzM30.ErodQvDmHyBiZuosHAFHWgFutznCreiS4Npx7XFcqtc";
+let OVERRIDES = {};
+const ovr = (p) => OVERRIDES[makeKey(p, 'topcoat')] || {};
+const dispName = (p) => { const o = ovr(p); return (o.name_override && String(o.name_override).trim()) ? o.name_override : p.name; };
+async function loadOverrides() {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/paint_overrides?select=key,hidden,name_override`, { headers: { apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON }, cache: "no-store" });
+    if (r.ok) { const rows = await r.json(); OVERRIDES = {}; rows.forEach(x => OVERRIDES[x.key] = x); }
+  } catch (e) {}
+}
+
 function escapeHtml(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 // 安定キー生成（local-tools/asin-crossref.js と同じアルゴリズム）
 function makeKey(p, ns) {
@@ -588,7 +601,7 @@ function renderCard(p){
           ${p.uv ? '<span class="pc-uv">UVカット</span>' : ""}
         </div>
         <div class="pc-code">${escapeHtml(p.code)}</div>
-        <div class="pc-name">${escapeHtml(p.name)}</div>
+        <div class="pc-name">${escapeHtml(dispName(p))}</div>
         <div class="pc-meta">${escapeHtml(p.lineup)} · ${TYPE_LABEL[p.type]}</div>
         <a class="pc-amazon" href="${buildUrl(p)}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
@@ -597,6 +610,7 @@ function renderCard(p){
 
 function render(){
   const list = ITEMS.filter(p =>
+    !ovr(p).hidden &&
     (FILTERS.mfr.size===0    || FILTERS.mfr.has(p.mfr)) &&
     (FILTERS.finish.size===0 || FILTERS.finish.has(p.finish)) &&
     (FILTERS.form.size===0   || FILTERS.form.has(p.form)) &&
@@ -644,7 +658,7 @@ function resetFilters(){
 document.querySelectorAll(".filter-pill[data-cat]").forEach(btn => {
   btn.addEventListener("click", () => toggleFilter(btn.dataset.cat, btn.dataset.val, btn));
 });
-render();
+loadOverrides().then(render);
 </script>
 
 <!-- asin_map から画像・ASIN直リンクを商品カードに注入 -->
