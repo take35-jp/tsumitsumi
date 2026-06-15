@@ -273,6 +273,7 @@
       <button class="tab-btn" onclick="switchTab('excel')">📊 Excel入出力</button>
       <button class="tab-btn" onclick="switchTab('reports')">📨 報告キュー <span id="reports-badge" class="reports-badge" style="display:none;">0</span></button>
       <button class="tab-btn" onclick="switchTab('gears')">🛠 工具カタログ</button>
+      <button class="tab-btn" onclick="switchTab('paintfix')">🎨 塗料/TC補完</button>
     </div>
 
     <!-- TAB: Yahoo検索 -->
@@ -737,6 +738,25 @@
       <div id="gears-editor"><div style="padding:40px; text-align:center; color:#9ca3af;">読み込み中…</div></div>
     </div>
 
+    <!-- TAB: 塗料/トップコート 直リンク補完 -->
+    <div class="tab-panel" id="tab-paintfix">
+      <div style="background:#eff6ff; border:1.5px solid #bfdbfe; border-radius:10px; padding:14px; margin-bottom:14px;">
+        <div style="font-size:13px; font-weight:700; color:#1e40af; margin-bottom:6px;">🎨 塗料大全・トップコート大全 直リンク補完</div>
+        <div style="font-size:12px; color:#1e3a8a; line-height:1.7;">
+          画像・直リンクが付いていない商品（📦＋検索リンク）に、Amazonの <b>ASIN</b>（または商品ページURL）を手入力して直リンク化できます。<br/>
+          保存すると <code>asin_map</code> に登録され、<b>画像・価格は翌朝の自動更新</b>（または手元で <code>node local-tools/paapi-refresh-prices.js --apply</code>）で取得されます。<br/>
+          ⚠ 初回のみ <code>local-tools/asin-map-allow-anon-write.sql</code> を Supabase SQL Editor で実行してください（asin_mapへの書き込み許可）。
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+        <label style="font-size:12px;"><input type="checkbox" id="pfx-unmatched" checked onchange="paintfixRender()"> 未マッチのみ表示</label>
+        <input type="text" id="pfx-search" placeholder="商品名・コード・メーカーで検索" oninput="paintfixRender()" style="flex:1; min-width:200px; padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+        <button onclick="paintfixLoad()" style="padding:6px 12px; background:#9ca3af; color:#fff; border:none; border-radius:6px; cursor:pointer;">🔄 再読込</button>
+        <span style="font-size:12px; color:#6b7280;">該当 <b id="pfx-count">—</b> 件</span>
+      </div>
+      <div id="paintfix-list"><div style="padding:20px; text-align:center; color:#9ca3af;">「🎨 塗料/TC補完」タブを開くと読み込みます</div></div>
+    </div>
+
   </div>
 </div>
 
@@ -773,14 +793,101 @@ function logout() {
 // ---- TABS ----
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['search','direct','master','excel','reports','gears'][i] === name);
+    b.classList.toggle('active', ['search','direct','master','excel','reports','gears','paintfix'][i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach((p, i) => {
-    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears'][i] === `tab-${name}`);
+    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears','tab-paintfix'][i] === `tab-${name}`);
   });
   if (name === 'master') loadMaster();
   if (name === 'reports') loadReports();
   if (name === 'gears') gearsReload();
+  if (name === 'paintfix') paintfixLoad();
+}
+
+// ---- 塗料/トップコート 直リンク補完 ----
+const PFX = { products: [], asinMap: {} };
+function pfxEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function pfxId(key){ return key.replace(/[^a-zA-Z0-9]/g,'_'); }
+function pfxKey(p, ns){
+  const s = `${p.mfr||''}|${p.lineup||''}|${p.code||''}|${p.name||''}`;
+  let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h=h&h; }
+  return `${ns}-${p.mfr||'x'}-${Math.abs(h).toString(36)}`;
+}
+function pfxExtract(html, name){
+  const m = html.match(new RegExp('const '+name+'\\s*=\\s*\\[([\\s\\S]*?)\\n\\s*\\];'));
+  if (!m) return [];
+  try { return eval('['+m[1]+']'); } catch(e){ return []; }
+}
+async function paintfixLoad(){
+  const root = document.getElementById('paintfix-list');
+  root.innerHTML = '<div style="padding:20px; text-align:center; color:#9ca3af;">読み込み中…</div>';
+  try {
+    const [paintHtml, tcHtml] = await Promise.all([
+      fetch('/paint/index.html?ts='+Date.now()).then(r=>r.text()),
+      fetch('/topcoat/index.html?ts='+Date.now()).then(r=>r.text()),
+    ]);
+    const paints = pfxExtract(paintHtml, 'PAINTS').map(p=>({ ...p, ns:'paint' }));
+    const tcs    = pfxExtract(tcHtml, 'ITEMS').map(p=>({ ...p, ns:'topcoat' }));
+    PFX.products = [...paints, ...tcs].map(p=>({ ...p, key: pfxKey(p, p.ns) }));
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/asin_map?select=key,asin,source&limit=5000`, { headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY } });
+    const rows = r.ok ? await r.json() : [];
+    PFX.asinMap = {}; rows.forEach(x=>{ PFX.asinMap[x.key]=x; });
+    paintfixRender();
+  } catch(e){ root.innerHTML = '<div style="color:#dc2626; padding:20px;">読み込み失敗: '+pfxEsc(String(e))+'</div>'; }
+}
+function paintfixRender(){
+  const root = document.getElementById('paintfix-list');
+  if (!PFX.products.length){ root.innerHTML = '<div style="padding:20px; color:#9ca3af;">データなし。再読込してください。</div>'; return; }
+  const onlyUn = document.getElementById('pfx-unmatched').checked;
+  const kw = (document.getElementById('pfx-search').value||'').trim().toLowerCase();
+  let list = PFX.products;
+  if (onlyUn) list = list.filter(p => !PFX.asinMap[p.key] || !PFX.asinMap[p.key].asin);
+  if (kw) list = list.filter(p => `${p.ns} ${p.mfr} ${p.lineup} ${p.code} ${p.name}`.toLowerCase().includes(kw));
+  document.getElementById('pfx-count').textContent = list.length;
+  const shown = list.slice(0, 400);
+  root.innerHTML = shown.map(p=>{
+    const a = PFX.asinMap[p.key] || {};
+    const cur = a.asin ? ('現在: '+pfxEsc(a.asin)+(a.source?' ('+pfxEsc(a.source)+')':'')) : '未マッチ（検索リンクのまま）';
+    return `<div style="border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; margin-bottom:6px; display:grid; grid-template-columns:1fr 220px 70px; gap:10px; align-items:center; background:${a.asin?'#fff':'#fffbeb'};">
+      <div style="font-size:12px; min-width:0;">
+        <b>${pfxEsc(p.name)}</b> <span style="color:#9ca3af;">[${pfxEsc(p.ns)}/${pfxEsc(p.mfr)}/${pfxEsc(p.lineup)}/${pfxEsc(p.code)}]</span>
+        <div style="font-size:10px; color:${a.asin?'#15803d':'#b45309'};">${cur}</div>
+      </div>
+      <input type="text" id="pfx-asin-${pfxId(p.key)}" value="${pfxEsc(a.asin||'')}" placeholder="ASIN または Amazon URL" oninput="pfxAutoAsin(this)" style="padding:4px 6px; border:1px solid #d1d5db; border-radius:4px; font-family:monospace; font-size:11px;" />
+      <button onclick="pfxSave('${pfxEsc(p.key)}','${pfxId(p.key)}')" style="padding:5px 8px; background:#16a34a; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer;">保存</button>
+    </div>`;
+  }).join('');
+  if (list.length > shown.length) root.innerHTML += `<div style="color:#9ca3af; font-size:12px; padding:8px;">…他 ${list.length-shown.length} 件（検索で絞り込んでください）</div>`;
+}
+function pfxAutoAsin(inp){
+  if (/amazon/i.test(inp.value)){
+    const m = inp.value.match(/\/(?:dp|gp\/product|d)\/([A-Z0-9]{10})/i);
+    if (m) inp.value = m[1].toUpperCase();
+  }
+}
+async function pfxSave(key, id){
+  const inp = document.getElementById('pfx-asin-'+id);
+  let v = (inp.value||'').trim();
+  const m = v.match(/\/(?:dp|gp\/product|d)\/([A-Z0-9]{10})/i);
+  if (m) v = m[1];
+  if (!/^[A-Z0-9]{10}$/i.test(v)){ alert('ASINは10文字の英数字、またはAmazon商品ページURLを入力してください。'); return; }
+  const asin = v.toUpperCase();
+  const prod = PFX.products.find(p=>p.key===key) || {};
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/asin_map?on_conflict=key`, {
+      method:'POST',
+      headers:{ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{ key, asin, title: prod.name||null, confidence:'manual', source:'manual', last_checked_at:new Date().toISOString() }]),
+    });
+    if (!r.ok){
+      const t = await r.text();
+      alert('保存失敗 HTTP '+r.status+'\n'+t.slice(0,140)+(r.status===401||r.status===403?'\n\n※ asin_mapへの書き込みが未許可です。\nlocal-tools/asin-map-allow-anon-write.sql を Supabase SQL Editor で実行してください。':''));
+      return;
+    }
+    PFX.asinMap[key] = { key, asin, source:'manual' };
+    inp.style.background = '#dcfce7';
+    paintfixRender();
+  } catch(e){ alert('保存エラー: '+e); }
 }
 
 // ---- REORDER NAME ----
