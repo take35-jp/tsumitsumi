@@ -451,10 +451,6 @@
       <button class="filter-pill" data-cat="color" data-val="fluorescent">蛍光</button>
     </div>
     <div class="filter-row">
-      <span class="filter-label">形状</span>
-      <button class="filter-pill" data-cat="form" data-val="spray">スプレー缶</button>
-    </div>
-    <div class="filter-row">
       <span class="filter-label">仕上げ</span>
       <button class="filter-pill" data-cat="finish" data-val="gloss">光沢</button>
       <button class="filter-pill" data-cat="finish" data-val="semi">半光沢</button>
@@ -637,8 +633,6 @@ const PAINTS = [
   { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-515", name:"Mr.サーフェイサー 1200 ビン",          finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1200 ビン" },
   { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-525", name:"Mr.サーフェイサー 1500 ホワイト ビン",  finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1500 ホワイト ビン" },
   { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-526", name:"Mr.サーフェイサー 1500 ブラック ビン",  finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1500 ブラック ビン" },
-  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-503", name:"Mr.サーフェイサー 1000 スプレー",       finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1000 スプレー" },
-  { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-513", name:"Mr.サーフェイサー 1200 スプレー",       finish:"semi", color:"surfacer", q:"Mr.サーフェイサー 1200 スプレー" },
   { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-541", name:"Mr.フィニッシングサーフェイサー 1500 ホワイト",       finish:"semi", color:"surfacer", q:"Mr.フィニッシングサーフェイサー 1500 ホワイト" },
   { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-542", name:"Mr.フィニッシングサーフェイサー 1500 ブラック",       finish:"semi", color:"surfacer", q:"Mr.フィニッシングサーフェイサー 1500 ブラック" },
   { mfr:"gsi", lineup:"Mr.サーフェイサー", type:"lacquer", code:"B-543", name:"Mr.フィニッシングサーフェイサー 1500 オキサイドレッド", finish:"semi", color:"surfacer", q:"Mr.フィニッシングサーフェイサー 1500 オキサイドレッド" },
@@ -1140,8 +1134,6 @@ const PAINTS = [
   { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87160", name:"タミヤ ファインサーフェイサーL オキサイドレッド", finish:"flat", color:"surfacer", q:"タミヤ ファインサーフェイサーL オキサイドレッド" },
   { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87046", name:"タミヤ ファインサーフェイサーL ホワイト", finish:"flat", color:"surfacer", q:"タミヤ ファインサーフェイサーL ホワイト" },
   { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87148", name:"タミヤ ファインサーフェイサーL ピンク", finish:"flat", color:"surfacer", q:"タミヤ ファインサーフェイサーL ピンク" },
-  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87026", name:"タミヤ サーフェイサースプレー グレイ",   finish:"flat", color:"surfacer", q:"タミヤ サーフェイサースプレー グレイ 87026" },
-  { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87044", name:"タミヤ サーフェイサースプレー ホワイト", finish:"flat", color:"surfacer", q:"タミヤ サーフェイサースプレー ホワイト" },
   { mfr:"tamiya", lineup:"タミヤ サーフェイサー", type:"lacquer", code:"87064", name:"タミヤ メタルプライマー",               finish:"flat", color:"surfacer", q:"タミヤ メタルプライマー 87064" },
 
   // ===== タミヤ エナメル =====
@@ -1200,17 +1192,6 @@ const PAINTS = [
   { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-83", name:"調色用イエロー",       finish:"gloss", color:"yellow", q:"タミヤ ラッカー LP-83 調色用イエロー" },
   { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", type:"lacquer", code:"LP-84", name:"カモフラージュグレイ", finish:"flat",  color:"gray",   q:"タミヤ ラッカー LP-84 カモフラージュグレイ" },
 
-  // ===== タミヤ PS(ポリカーボネート用スプレー) =====
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-1",  name:"ホワイト",    finish:"gloss", color:"white", q:"タミヤ ポリカーボネートスプレー PS-1 ホワイト" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-2",  name:"レッド",      finish:"gloss", color:"red",   q:"タミヤ ポリカーボネートスプレー PS-2 レッド" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-5",  name:"ブラック",    finish:"gloss", color:"black", q:"タミヤ ポリカーボネートスプレー PS-5 ブラック" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-6",  name:"イエロー",    finish:"gloss", color:"yellow", q:"タミヤ ポリカーボネートスプレー PS-6 イエロー" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-12", name:"シルバー",    finish:"gloss", color:"metal", q:"タミヤ ポリカーボネートスプレー PS-12 シルバー" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-13", name:"ゴールド",    finish:"gloss", color:"metal", q:"タミヤ ポリカーボネートスプレー PS-13 ゴールド" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-23", name:"ガンメタル",  finish:"gloss", color:"metal", q:"タミヤ ポリカーボネートスプレー PS-23 ガンメタル" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-31", name:"スモーク",    finish:"gloss", color:"black", q:"タミヤ ポリカーボネートスプレー PS-31 スモーク" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-32", name:"コルサグレイ", finish:"gloss", color:"gray",  q:"タミヤ ポリカーボネートスプレー PS-32 コルサグレイ" },
-  { mfr:"tamiya", lineup:"タミヤPS(ポリカ用)", type:"lacquer", code:"PS-34", name:"ブライトレッド", finish:"gloss", color:"red",  q:"タミヤ ポリカーボネートスプレー PS-34 ブライトレッド" },
 
   // ===== フィニッシャーズ ファンデーション（下塗り） =====
   { mfr:"finishers", lineup:"Finisher's ファンデーション", type:"urethane", code:"001", name:"ファンデーションホワイト",   finish:"semi", color:"white", q:"Finisher's 001 ファンデーションホワイト" },
@@ -1349,9 +1330,7 @@ const MFR_NAMES = { gsi: "GSI クレオス", gaia: "ガイアノーツ", tamiya:
 const MFR_ORDER = ["gsi", "gaia", "tamiya", "finishers"];
 const FINISH_LABEL = { gloss: "光沢", semi: "半光沢", flat: "つや消し" };
 
-const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set(), form: new Set() };
-// スプレー(缶)判定：lineup または検索語に「スプレー」を含むもの
-const isSpray = (p) => /スプレー|spray/i.test(`${p.lineup || ""} ${p.q || ""}`);
+const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set() };
 let viewMode = "color"; // "color" | "mfr"
 
 function escapeHtml(s) {
@@ -1494,7 +1473,6 @@ function render() {
     if (FILTERS.type.size > 0 && !FILTERS.type.has(p.type)) return false;
     if (FILTERS.color.size > 0 && !FILTERS.color.has(p.color)) return false;
     if (FILTERS.finish.size > 0 && !FILTERS.finish.has(p.finish)) return false;
-    if (FILTERS.form.has("spray") && !isSpray(p)) return false;
     return true;
   });
 
