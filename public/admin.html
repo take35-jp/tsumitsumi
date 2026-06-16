@@ -274,6 +274,7 @@
       <button class="tab-btn" onclick="switchTab('reports')">📨 報告キュー <span id="reports-badge" class="reports-badge" style="display:none;">0</span></button>
       <button class="tab-btn" onclick="switchTab('gears')">🛠 工具カタログ</button>
       <button class="tab-btn" onclick="switchTab('paintfix')">🎨 塗料/TC補完</button>
+      <button class="tab-btn" onclick="switchTab('tips')">📝 TIPS編集</button>
     </div>
 
     <!-- TAB: Yahoo検索 -->
@@ -758,6 +759,45 @@
       <div id="paintfix-list"><div style="padding:20px; text-align:center; color:#9ca3af;">「🎨 塗料/TC補完」タブを開くと読み込みます</div></div>
     </div>
 
+    <!-- TAB: TIPS編集 -->
+    <div class="tab-panel" id="tab-tips">
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:14px; font-size:12px; color:#1e40af; line-height:1.7;">
+        📝 <b>TIPS記事エディタ</b>：記事を選んで本文HTMLを編集 → 右のプレビューで確認 → 「保存」でGitHubにコミット（約1〜2分で本番反映）。<br>
+        ※ 初回のみ Vercel の環境変数に <code>GITHUB_TOKEN</code>（リポジトリ Contents 書込権限）と <code>TIPS_EDIT_SECRET</code>（保存用の合言葉）の設定が必要です。ヘッダー・広告・ナビ・フッターは自動で保持され、<code>&lt;article&gt;</code> の中身だけを編集します。
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+        <select id="tips-select" style="flex:1; min-width:220px; padding:8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+          <option value="">記事を選択…</option>
+        </select>
+        <button onclick="tipsLoadArticle()" style="padding:8px 16px; background:#2563eb; color:#fff; border:none; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">読み込み</button>
+        <button onclick="tipsReloadList()" style="padding:8px 12px; background:#fff; color:#374151; border:1px solid #d1d5db; border-radius:6px; font-size:13px; cursor:pointer;">↻ 一覧更新</button>
+      </div>
+
+      <div id="tips-meta" style="font-size:12px; color:#6b7280; margin-bottom:8px;"></div>
+
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:300px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:4px;">本文HTML（&lt;article&gt; の中身）</div>
+          <textarea id="tips-editor" oninput="tipsRenderPreview()" spellcheck="false"
+            style="width:100%; height:520px; box-sizing:border-box; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; padding:10px; border:1px solid #d1d5db; border-radius:6px; resize:vertical;"
+            placeholder="記事を読み込むとここに本文HTMLが入ります"></textarea>
+        </div>
+        <div style="flex:1; min-width:300px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:4px;">プレビュー（実際のページ表示）</div>
+          <iframe id="tips-preview" sandbox="allow-same-origin allow-scripts"
+            style="width:100%; height:520px; box-sizing:border-box; border:1px solid #d1d5db; border-radius:6px; background:#fff;"></iframe>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px;">
+        <input id="tips-secret" type="password" placeholder="合言葉（TIPS_EDIT_SECRET）" autocomplete="off"
+          style="padding:8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; min-width:220px;">
+        <button onclick="tipsSave()" id="tips-save-btn" style="padding:9px 18px; background:#16a34a; color:#fff; border:none; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">💾 保存（GitHubへコミット）</button>
+        <span id="tips-status" style="font-size:12px; color:#6b7280; align-self:center;"></span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -794,15 +834,110 @@ function logout() {
 // ---- TABS ----
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['search','direct','master','excel','reports','gears','paintfix'][i] === name);
+    b.classList.toggle('active', ['search','direct','master','excel','reports','gears','paintfix','tips'][i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach((p, i) => {
-    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears','tab-paintfix'][i] === `tab-${name}`);
+    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears','tab-paintfix','tab-tips'][i] === `tab-${name}`);
   });
   if (name === 'master') loadMaster();
   if (name === 'reports') loadReports();
   if (name === 'gears') gearsReload();
   if (name === 'paintfix') paintfixLoad();
+  if (name === 'tips') tipsInit();
+}
+
+// ================= TIPS 記事エディタ =================
+// 記事の <article> 中身だけを編集し、ヘッダー/広告/ナビ/フッターは元のまま保持する。
+// 保存は /api/tips-save 経由で GitHub にコミット（Vercel 自動再デプロイで本番反映）。
+let tipsBefore = "", tipsAfter = "", tipsPath = "", tipsLoaded = false;
+
+async function tipsInit() {
+  const sel = document.getElementById('tips-select');
+  if (sel && sel.options.length <= 1) await tipsReloadList();
+}
+
+async function tipsReloadList() {
+  const sel = document.getElementById('tips-select');
+  if (!sel) return;
+  setTipsStatus('一覧を取得中…');
+  try {
+    const r = await fetch('/sitemap.xml?ts=' + Date.now());
+    const xml = await r.text();
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+    const tips = locs
+      .map(u => u.replace(/^https?:\/\/[^/]+/, ''))
+      .filter(u => /^\/tips\/[A-Za-z0-9_-]+\.html$/.test(u))
+      .sort();
+    sel.innerHTML = '<option value="">記事を選択…</option>' +
+      tips.map(u => `<option value="${u}">${u.replace('/tips/', '').replace('.html', '')}</option>`).join('');
+    setTipsStatus(tips.length + '件の記事を検出');
+  } catch (e) {
+    setTipsStatus('一覧取得に失敗: ' + e.message);
+  }
+}
+
+async function tipsLoadArticle() {
+  const sel = document.getElementById('tips-select');
+  const url = sel.value;
+  if (!url) { alert('記事を選択してください'); return; }
+  setTipsStatus('読み込み中…');
+  try {
+    const r = await fetch(url + '?ts=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const html = await r.text();
+    const open = html.indexOf('<article');
+    const gt = open >= 0 ? html.indexOf('>', open) : -1;
+    const close = html.lastIndexOf('</article>');
+    if (open < 0 || gt < 0 || close < 0 || close < gt) throw new Error('<article> が見つかりません');
+    tipsBefore = html.slice(0, gt + 1);
+    tipsAfter = html.slice(close);
+    tipsPath = 'public' + url; // /tips/x.html -> public/tips/x.html
+    tipsLoaded = true;
+    document.getElementById('tips-editor').value = html.slice(gt + 1, close).trim();
+    document.getElementById('tips-meta').textContent = '編集中: ' + tipsPath + '（ヘッダー/広告/ナビ/フッターは保持されます）';
+    tipsRenderPreview();
+    setTipsStatus('読み込み完了');
+  } catch (e) {
+    tipsLoaded = false;
+    setTipsStatus('読み込み失敗: ' + e.message);
+  }
+}
+
+function tipsRenderPreview() {
+  if (!tipsLoaded) return;
+  const body = document.getElementById('tips-editor').value;
+  document.getElementById('tips-preview').srcdoc = tipsBefore + body + tipsAfter;
+}
+
+async function tipsSave() {
+  if (!tipsLoaded) { alert('先に記事を読み込んでください'); return; }
+  const secret = document.getElementById('tips-secret').value.trim();
+  if (!secret) { alert('合言葉（TIPS_EDIT_SECRET）を入力してください'); return; }
+  const full = tipsBefore + document.getElementById('tips-editor').value + tipsAfter;
+  if (!confirm(tipsPath + ' を保存して GitHub にコミットします。よろしいですか？\n（約1〜2分で本番反映されます）')) return;
+  const btn = document.getElementById('tips-save-btn');
+  btn.disabled = true;
+  setTipsStatus('コミット中…');
+  try {
+    const r = await fetch('/api/tips-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: tipsPath, content: full, secret })
+    });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    setTipsStatus('✅ コミット完了。約1〜2分で本番反映されます。');
+  } catch (e) {
+    setTipsStatus('❌ 保存失敗: ' + e.message);
+    alert('保存失敗: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function setTipsStatus(msg) {
+  const el = document.getElementById('tips-status');
+  if (el) el.textContent = msg;
 }
 
 // ---- 塗料/トップコート 直リンク補完 ----

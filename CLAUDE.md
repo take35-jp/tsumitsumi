@@ -17,7 +17,7 @@
 - **プライバシーポリシー**: https://tsumitsumi.vercel.app/privacy.html
 - **GitHub**: https://github.com/take35-jp/tsumitsumi
 - **公式X**: @tsumitsumi_pla
-- **ホスティング**: Vercel（Hobby Plan、Function 12個まで。現在11個で運用中）
+- **ホスティング**: Vercel（Hobby Plan、Function 12個まで。現在12個＝上限。これ以上増やすには統合/削除が必要）
 - **DB**: Supabase（PostgreSQL）
 - **Supabase URL**: https://oxtfwmcdtngvicrcjyue.supabase.co
 - **正式リリース日**: 2026/5/1
@@ -70,7 +70,7 @@ tsumitsumi/
 │   ├── manual.html      # 取扱説明書
 │   ├── privacy.html     # プライバシーポリシー
 │   └── ...
-├── api/                 # Vercel Functions（11個）
+├── api/                 # Vercel Functions（12個＝上限）
 │   ├── search.js
 │   ├── admin-search.js
 │   ├── browse.js
@@ -155,7 +155,7 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 
 ---
 
-## 7. APIエンドポイント一覧（Vercel Function 11個）
+## 7. APIエンドポイント一覧（Vercel Function 12個＝上限）
 
 | エンドポイント | 用途 | メモ |
 |---|---|---|
@@ -170,6 +170,7 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 | `/api/seed-maker` | メーカー別シード | |
 | `/api/auto-seed` | 月次cron | |
 | `/api/rakuten-books` | 楽天本API | 価格用途では不採用 |
+| `/api/tips-save` | TIPS記事をGitHubへコミット | admin「📝 TIPS編集」専用。`GITHUB_TOKEN`/`TIPS_EDIT_SECRET` 必須。書込先は `public/tips/*.html` に限定 |
 
 ---
 
@@ -199,12 +200,15 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 
 ## 9. admin.html（管理ツール）の機能
 
-5タブ構成:
+8タブ構成:
 1. **🔍 Yahoo検索から登録**: 自動一括登録（緑エリア）+ 手動検索
 2. **✏️ 直接入力**: JAN/商品名/メーカー/シリーズ/スケール/画像URL
 3. **📋 マスタ一覧**: 検索・インライン編集・削除・一括処理
 4. **📊 Excel入出力**: エクスポート（件数・並び順指定可）+ インポート（JAN突合UPSERT）
 5. **📨 報告キュー**: 価格訂正報告の管理（未対応バッジ赤丸表示）
+6. **🛠 工具カタログ**: Supabase の gears_catalog 編集（PA-API/ASIN中心）
+7. **🎨 塗料/TC補完**: 未マッチ商品にASIN手入力で直リンク化（asin_map）
+8. **📝 TIPS編集**: `public/tips/*.html` の `<article>` 本文をブラウザ編集→ライブプレビュー→`/api/tips-save` 経由でGitHubコミット（自動再デプロイ）。記事一覧は sitemap.xml から取得。保存に合言葉(`TIPS_EDIT_SECRET`)入力が必要。本文以外（ヘッダー/広告/ナビ/フッター）は元のまま保持する方式。
 
 ### マスタ一覧タブの一括処理ボタン（5つ）
 - 📷 画像なし商品の画像を一括取得（青）
@@ -242,6 +246,9 @@ REFERER=https://tsumitsumi.vercel.app/
 SUPABASE_URL=https://oxtfwmcdtngvicrcjyue.supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...
 YAHOO_CLIENT_ID=...  # /api/search、/api/admin-search で使用
+GITHUB_TOKEN=...        # /api/tips-save 用。リポジトリ Contents read/write 権限のトークン
+TIPS_EDIT_SECRET=...    # /api/tips-save 用。admin「TIPS編集」で保存時に入力する合言葉
+# GITHUB_REPO（省略時 take35-jp/tsumitsumi）/ GITHUB_BRANCH（省略時 main）も任意で指定可
 ```
 
 ### 楽天新API（openapi.rakuten.co.jp）の注意
@@ -316,7 +323,7 @@ YAHOO_CLIENT_ID=...  # /api/search、/api/admin-search で使用
 - Supabase クエリで `_=タイムスタンプ` を使うとフィルタ判定でエラー → `ts=...` などを使う
 
 ### Vercel 関連
-- Hobby Plan の Function 上限 = 12個。現在11個で運用中（余裕は1個）
+- Hobby Plan の Function 上限 = 12個。**現在12個で上限到達**（余裕ゼロ）。新規追加には既存の統合/削除が必要
 - Function を増やすときは何かを統合・削除する必要あり
 
 ### ビルド・デプロイ
