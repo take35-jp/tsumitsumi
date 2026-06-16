@@ -3215,6 +3215,9 @@ export default function App() {
     })();
   }, []);
 
+  // バックグラウンド価格自動取得の結果トースト（「総額が勝手に増える」誤解を防ぐ説明用）
+  const [priceAutoToast, setPriceAutoToast] = useState(null);
+
   // 希望小売価格が未取得のキットにバックグラウンドで自動取得
   // 注意:マスタDBからのみ取得する。Yahooからの自動取得は転売価格混入のため行わない
   //
@@ -3237,6 +3240,7 @@ export default function App() {
     }).slice(0, PER_SESSION);
     if (targets.length === 0) return;
     let cancelled = false;
+    let fetchedCount = 0;
     (async () => {
       for (const kit of targets) {
         if (cancelled) break;
@@ -3244,6 +3248,7 @@ export default function App() {
           const r = await fetch(`/api/price?jan=${kit.jan}`);
           const d = await r.json();
           if (d && d.price && !cancelled) {
+            fetchedCount++;
             setKits(prev => prev.map(k => k.id === kit.id ? { ...k, retailPrice: String(d.price) } : k));
           }
         } catch {}
@@ -3252,6 +3257,11 @@ export default function App() {
       }
       if (!cancelled) {
         try { localStorage.setItem(PRICE_ATTEMPTED_KEY, JSON.stringify(attempted)); } catch {}
+        // 総額が変わった理由を明示（誤解防止）。取得できた時だけ表示し数秒で消える
+        if (fetchedCount > 0) {
+          setPriceAutoToast(`希望小売価格を ${fetchedCount}件 自動取得しました（総額に反映）`);
+          setTimeout(() => { if (!cancelled) setPriceAutoToast(null); }, 7000);
+        }
       }
     })();
     return () => { cancelled = true; };
@@ -4245,6 +4255,14 @@ export default function App() {
         </div>
         <div style={{ fontSize: 10, color: "#cbd5e1" }}>© 2026 TSUMI TSUMI</div>
       </div>
+
+      {/* バックグラウンド価格自動取得の通知トースト（総額が増えた理由の説明） */}
+      {priceAutoToast && (
+        <div style={{ position: "fixed", bottom: 92, left: "50%", transform: "translateX(-50%)", zIndex: 60, maxWidth: "92%", background: "#1e293b", color: "#fff", borderRadius: 10, padding: "10px 14px", fontSize: 12, fontWeight: 600, boxShadow: "0 4px 16px rgba(0,0,0,0.28)", display: "flex", alignItems: "center", gap: 12 }}>
+          <span>{priceAutoToast}</span>
+          <span onClick={() => setPriceAutoToast(null)} style={{ cursor: "pointer", opacity: 0.7, flexShrink: 0 }}>✕</span>
+        </div>
+      )}
 
       {/* フロート式「プラモを預ける」リンク。トップから移動して左下に常駐させる。
           z-index は右下の FAB（50）より下げて、スキャン/手動登録の操作を邪魔しないようにする。 */}
