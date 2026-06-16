@@ -3102,22 +3102,53 @@ export default function App() {
   // hydrated: IDB 読込完了フラグ（UI 制御用）。完了までローディング表示にし、
   // localStorage 由来の古いスナップショットが一瞬チラつくのを防ぐ。
   const [hydrated, setHydrated] = useState(false);
-  // Phase 4.B: localStorage は best-effort のキャッシュ扱い。失敗は黙殺（IDB が主保存先）
+  // --- 永続化（堅牢版）---
+  // 巨大データで「保存の追い越し」「タブ間の読み戻し競合」が起き、編集（個数など）が消える/
+  // 総額が揺れる問題への対策:
+  //   1) 連続編集をデバウンスして1回にまとめる（巨大配列の全件書き込みを減らす）
+  //   2) 書き込みを直列化（前の保存完了を待つ＝追い越しによる巻き戻し防止）
+  //   3) タブ間通知(BroadcastChannel)は「保存完了後」に送る（他タブが最新を読む）
+  //   4) タブを閉じる/バックグラウンド化する直前に未保存分を即フラッシュ（取りこぼし防止）
+  const suppressBroadcastRef = useRef(false); // 受信由来の setKits を再ブロードキャストしない
+  const broadcastChannelRef = useRef(null);
+  const latestKitsRef = useRef(kits);
+  const saveTimerRef = useRef(null);
+  const saveChainRef = useRef(Promise.resolve());
+  useEffect(() => { latestKitsRef.current = kits; }, [kits]);
+
+  const flushSave = () => {
+    if (!hydratedRef.current) return;
+    if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null; }
+    const snapshot = latestKitsRef.current;
+    const wasSuppressed = suppressBroadcastRef.current;
+    suppressBroadcastRef.current = false;
+    // 直列化：前の保存が終わってから次を実行（idbSet の追い越しを防止）
+    saveChainRef.current = saveChainRef.current.then(async () => {
+      try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(snapshot)); } catch (e) {}
+      await kitsIdbSave(snapshot);
+      // 保存が完了してから他タブへ通知（他タブが古いIDBを読み戻すのを防ぐ）
+      if (!wasSuppressed) { try { broadcastChannelRef.current?.postMessage({ type: 'kits-changed' }); } catch (e) {} }
+    }).catch(() => {});
+    return saveChainRef.current;
+  };
+
+  // kits 変更をデバウンスして保存（連続編集を1回にまとめる）
   useEffect(() => {
     if (!hydratedRef.current) return;
-    try { localStorage.setItem("tsumitsumi_kits", JSON.stringify(kits)); } catch (e) {}
-  }, [kits]);
-  // Phase 4.B: kits の主保存先は IDB。localStorage の 5MB を超えても問題なし
-  useEffect(() => {
-    if (!hydratedRef.current) return;
-    kitsIdbSave(kits);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(flushSave, 500);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [kits]);
 
-  // Phase 4.A: マルチタブ同期。BroadcastChannel で他タブの kits 変更を受信し IDB から再読込
-  // - suppressBroadcastRef: 受信時の setKits で再ブロードキャストするのを防ぐ（無限ループ防止）
-  // - 初回マウントの save effect 発火もスキップ（最初の load と被るため）
-  const suppressBroadcastRef = useRef(true);
-  const broadcastChannelRef = useRef(null);
+  // タブを閉じる/離れる直前に未保存分を確実に書き込む
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === 'hidden') flushSave(); };
+    window.addEventListener('pagehide', flushSave);
+    document.addEventListener('visibilitychange', onHide);
+    return () => { window.removeEventListener('pagehide', flushSave); document.removeEventListener('visibilitychange', onHide); };
+  }, []);
+
+  // マルチタブ同期：他タブの変更通知を受けて IDB から最新を再読込
   useEffect(() => {
     if (typeof BroadcastChannel === 'undefined') return;
     const ch = new BroadcastChannel('tsumitsumi-kits');
@@ -3125,7 +3156,7 @@ export default function App() {
       if (ev && ev.data && ev.data.type === 'kits-changed') {
         const fresh = await kitsIdbLoad();
         if (Array.isArray(fresh)) {
-          suppressBroadcastRef.current = true;
+          suppressBroadcastRef.current = true; // 受信由来の更新は再通知しない（ループ防止）
           setKits(fresh);
         }
       }
@@ -3136,12 +3167,6 @@ export default function App() {
       broadcastChannelRef.current = null;
     };
   }, []);
-  useEffect(() => {
-    const wasSuppressed = suppressBroadcastRef.current;
-    suppressBroadcastRef.current = false;
-    if (wasSuppressed) return;
-    try { broadcastChannelRef.current?.postMessage({ type: 'kits-changed' }); } catch (e) {}
-  }, [kits]);
 
   // Phase 2: マウント時に IDB から読み込み、データがあれば state を上書き。
   // - lazy init で localStorage から即時表示済みなので「真っ白」は起きない
