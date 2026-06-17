@@ -992,11 +992,15 @@ function paintfixRender(){
     const o = PFX.overrides[p.key] || {};
     const cur = a.asin ? ('現在: '+pfxEsc(a.asin)+(a.source?' ('+pfxEsc(a.source)+')':'')) : '未マッチ（検索リンクのまま）';
     const dispName = (o.name_override && String(o.name_override).trim()) ? o.name_override : p.name;
+    const brandTerm = ({gsi:'GSIクレオス', gaia:'ガイアノーツ', tamiya:'タミヤ', finishers:'フィニッシャーズ'})[p.mfr] || '';
+    const amazonUrl = a.asin
+      ? `https://www.amazon.co.jp/dp/${encodeURIComponent(a.asin)}/?tag=tsumitsumi232-22`
+      : `https://www.amazon.co.jp/s?k=${encodeURIComponent([brandTerm, dispName, p.code].filter(Boolean).join(' '))}&tag=tsumitsumi232-22`;
     const nameHtml = o.hidden
       ? `<s style="color:#9ca3af;">${pfxEsc(dispName)}</s> <span style="color:#dc2626; font-weight:700;">[非表示中]</span>`
       : `<b>${pfxEsc(dispName)}</b>${o.name_override?' <span style="color:#7c3aed;">[改名]</span>':''}`;
     const id = pfxId(p.key), kEsc = pfxEsc(p.key);
-    return `<div style="border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; margin-bottom:6px; display:grid; grid-template-columns:1fr 200px 188px; gap:10px; align-items:center; background:${o.hidden?'#fef2f2':(a.asin?'#fff':'#fffbeb')};">
+    return `<div style="border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; margin-bottom:6px; display:grid; grid-template-columns:1fr 190px 188px 44px; gap:10px; align-items:center; background:${o.hidden?'#fef2f2':(a.asin?'#fff':'#fffbeb')};">
       <div style="font-size:12px; min-width:0;">
         ${nameHtml} <span style="color:#9ca3af;">[${pfxEsc(p.ns)}/${pfxEsc(p.mfr)}/${pfxEsc(p.lineup)}/${pfxEsc(p.code)}]</span>
         <div style="font-size:10px; color:${a.asin?'#15803d':'#b45309'};">${cur}</div>
@@ -1007,6 +1011,7 @@ function paintfixRender(){
         <button onclick="pfxRename('${kEsc}')" title="表示名を変更" style="padding:5px 7px; background:#7c3aed; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer;">✏改名</button>
         <button onclick="pfxHide('${kEsc}', ${o.hidden?'false':'true'})" title="${o.hidden?'再表示する':'一覧から非表示(欠番削除)'}" style="padding:5px 7px; background:${o.hidden?'#0ea5e9':'#dc2626'}; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer;">${o.hidden?'↺復元':'🗑削除'}</button>
       </div>
+      <a href="${amazonUrl}" target="_blank" rel="noopener" title="${a.asin?'Amazon商品ページを開く':'Amazonで検索してASINを探す'}" style="display:flex; align-items:center; justify-content:center; text-decoration:none; padding:6px 0; background:#ff9900; color:#111; border-radius:4px; font-size:15px;">${a.asin?'🛒':'🔍'}</a>
     </div>`;
   }).join('');
   if (list.length > shown.length) root.innerHTML += `<div style="color:#9ca3af; font-size:12px; padding:8px;">…他 ${list.length-shown.length} 件（検索で絞り込んでください）</div>`;
