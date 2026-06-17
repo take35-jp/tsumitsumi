@@ -984,8 +984,9 @@ function paintfixRender(){
   if (onlyHidden) list = list.filter(p => (PFX.overrides[p.key]||{}).hidden);
   else if (onlyUn) list = list.filter(p => !PFX.asinMap[p.key] || !PFX.asinMap[p.key].asin);
   if (kw) list = list.filter(p => `${p.ns} ${p.mfr} ${p.lineup} ${p.code} ${p.name}`.toLowerCase().includes(kw));
-  document.getElementById('pfx-count').textContent = list.length;
-  const shown = list.slice(0, 400);
+  const matched = PFX.products.filter(p => PFX.asinMap[p.key] && PFX.asinMap[p.key].asin).length;
+  document.getElementById('pfx-count').textContent = `${list.length}（全${PFX.products.length}・マッチ済${matched}・未マッチ${PFX.products.length - matched}）`;
+  const shown = list.slice(0, 1200);
   root.innerHTML = shown.map(p=>{
     const a = PFX.asinMap[p.key] || {};
     const o = PFX.overrides[p.key] || {};
