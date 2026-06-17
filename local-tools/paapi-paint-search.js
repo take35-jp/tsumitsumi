@@ -118,6 +118,11 @@ function scoreCandidate(p, item) {
   const pType = paintType(`${p.lineup} ${p.name}`);
   const cType = paintType(item?.itemInfo?.title?.displayValue);
   if (pType && cType && pType !== cType) { s -= 5; reasons.push("type-mismatch"); }
+  // スプレー缶は塗料大全(ビン/エアブラシ)対象外 → 強く減点（ビン版を優先）
+  const rawTitle = item?.itemInfo?.title?.displayValue || "";
+  if (/スプレー/.test(rawTitle)) { s -= 6; reasons.push("spray-x"); }
+  // 溶剤・うすめ液・洗浄液・工具は塗料ではない → 強く減点
+  if (/溶剤|うすめ液|薄め液|シンナー|クリーナー|ブラシマスター|リムーバー|マスキング|筆|ツール|溶液/.test(rawTitle)) { s -= 6; reasons.push("nonpaint-x"); }
   return { score: s, reasons };
 }
 
