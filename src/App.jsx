@@ -1346,7 +1346,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.35", date: "2026/06/13", isNew: true, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
+    { ver: "v1.36", date: "2026/06/16", isNew: true, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
+    { ver: "v1.35", date: "2026/06/13", isNew: false, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
     { ver: "v1.34", date: "2026/06/13", isNew: false, items: ["キット削除時に「本当に削除しますか？」の確認ダイアログを表示するように（誤操作による削除を防止）"] },
     { ver: "v1.33", date: "2026/06/13", isNew: false, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
     { ver: "v1.32", date: "2026/06/13", isNew: false, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
@@ -1586,10 +1587,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.35 */}
+          {/* v1.36 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.36</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有）
+            </div>
+          </div>
+          {/* v1.35 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.35</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
             </div>
@@ -1605,17 +1616,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・キット削除時に「本当に削除しますか？」の確認ダイアログを表示（誤操作による削除を防止）
-            </div>
-          </div>
-          {/* v1.33 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.33</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・アプリ画面のデザインを刷新（アイコン・絵文字を整理してスタイリッシュに）<br/>
-              ・画面最上段の完成アルバム共有ボタンを削除
             </div>
           </div>
         </div>
@@ -3713,9 +3713,58 @@ export default function App() {
     setKits(importedKits);
   };
 
-  const handleWant = (kit) => {
+  // 譲る/シェア用に、キットの表示画像（completedPhotoUrl || photoUrl）を Blob で取得する。
+  // idb-blob: / data: / http(s) のいずれにも対応（http は CORS 回避のため image-proxy 経由）。
+  const getKitImageBlob = async (kit) => {
+    const src = (kit && (kit.completedPhotoUrl || kit.photoUrl)) || "";
+    if (!src) return null;
+    try {
+      if (isIdbBlobUrl(src)) return await kitsIdbPhotoGet(idbBlobUrlToId(src));
+      if (src.startsWith("data:")) return await (await fetch(src)).blob();
+      const r = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`);
+      if (r.ok) return await r.blob();
+    } catch (e) {}
+    return null;
+  };
+
+  const handleWant = async (kit) => {
     const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします #TSUMITSUMI #ツミツミ`;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+    const intentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+
+    // 画像を File 化（取得できれば）
+    let file = null;
+    try {
+      const blob = await getKitImageBlob(kit);
+      if (blob && blob.size > 0) {
+        const isPng = (blob.type || "").includes("png");
+        file = new File([blob], `tsumitsumi_${kit.jan || "kit"}.${isPng ? "png" : "jpg"}`, { type: blob.type || "image/jpeg" });
+      }
+    } catch (e) {}
+
+    // スマホ等：Web Share API で「画像つき」共有 → 共有シートから X を選ぶとそのまま画像が添付される
+    if (file && typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // ユーザーがキャンセル
+        // それ以外（活性切れ等）は下のフォールバックへ
+      }
+    }
+
+    // フォールバック（PC・画像共有非対応端末）：X の投稿インテントは画像を自動添付できないため、
+    // 画像をダウンロードしておき（手動添付できるように）テキスト投稿画面を開く。
+    if (file) {
+      try {
+        const url = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      } catch (e) {}
+    }
+    window.open(intentUrl, "_blank");
   };
 
   const handleBulkSetField = (field, value) => {

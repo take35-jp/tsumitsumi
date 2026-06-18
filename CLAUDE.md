@@ -27,7 +27,7 @@
 
 ## 2. 現在のバージョン
 
-**v1.35（2026/06/13）**
+**v1.36（2026/06/16）**
 ※ 下記の履歴リストは v1.11 までの記録。v1.12〜v1.30 はコード側 versions 配列が一次情報（CLAUDE.md側は未追従）。最新の追加のみ末尾に追記する運用。
 
 ### バージョニングルール
@@ -55,6 +55,7 @@
 - **v1.32**: 完成品アルバム機能（3段階）。①完成写真を最大6枚化：`completedPhotos[]` 配列追加、旧 `completedPhotoUrl` は表紙[0]として後方互換維持（`getCompletedPhotos(kit)` ヘルパーで吸収）。編集フォームを6枚グリッドUIに。`tryDeleteOrphanBlob` 等の孤児blob掃除を配列走査対応。②完成タブ刷新：`filter==="done" && !bulkMode && !reorderMode` のとき通常リスト/グリッドの代わりにアルバムサムネグリッド（`albumCards`）を表示。タップで `AlbumViewerModal`（最大6枚ライトボックス：メイン写真＋‹›送り＋カウンター＋サムネストリップ）。③per-kitシェア：完成済みカード（リスト）に「📸シェア」ボタン＋ビューア内シェア。`generateKitAlbumImage(kit, rank)` で1キットの最大6枚を1080x1350の1枚にグリッド配置。`AlbumShareModal` に `singleKit` プロップを追加してコレクション版と共用。実機プレビューで3枚注入→グリッド→ビューア→生成画像のピクセル検証済み
 - **v1.34**: キット削除の確認ダイアログをアプリ内モーダル化。従来は編集フォームの「このキットを削除」ボタンで `window.confirm`（ネイティブ）を出していたが、v1.33 のスタイリッシュ化方針に合わせ、アプリ内の専用 Yes/No モーダルに置き換え。`confirmDelete` state（`{ id, name } | null`）を追加。削除ボタンは `setConfirmDelete({ id: editId, name: form.name })` を呼ぶだけにし、App 末尾（`reportTarget` モーダルの直後）に確認モーダルを描画。「本当に削除しますか？」＋キット名＋「この操作は元に戻せません」、ボタンは「いいえ」（グレー）／「はい、削除」（赤 #ef4444）。「はい」で `handleDelete`→フォームリセット→モーダル閉じ。オーバーレイ/背景クリックでキャンセル可。
 - **v1.35**: 完成品アルバムのXシェア画像を高画質化。①完成写真を**無圧縮（原本のまま）でIDBに保存**：`handleCompletedPhoto` が `kitsIdbPhotoSet(photoId, file)` に原本Blobをそのまま渡す（リサイズ・再エンコードなし）。IDB保存に失敗したときだけ localStorage 用に base64 圧縮フォールバック（`COMPLETED_PHOTO_MAXPX=1440 / QUALITY=0.82 / MAXCHARS=620000`）。メインのサムネ用 `handlePhoto` は320px圧縮のまま据え置き＝容量節約。`compressImageToBlob`/`compressImageToBase64` には `maxBytes`/`maxChars` 引数を追加済み（既定値そのままで後方互換）。②`generateKitAlbumImage` に `SCALE=2` を導入：キャンバスを `W*2 x H*2`（2160x2700）にして `ctx.scale(2,2)`、レイアウト計算は論理座標(1080x1350)のまま。`imageSmoothingQuality="high"`。※既存の完成写真は旧解像度のままで、再登録した写真から原本画質になる。アルバムビューア（ライトボックス）も自動的に高精細化。⚠️原本保存のため1枚あたり数MBになり得る（IDBは余裕があるが端末クォータ次第）。
+- **v1.36**: 「これを作ってくれる方に譲りたい！」（`handleWant`・詳細モーダルの未完成キット用ボタン）のXシェアにキット画像を添付。X の intent/tweet URL は画像を自動添付できないため、Web Share API 方式に変更。`getKitImageBlob(kit)` でキットの表示画像（`completedPhotoUrl || photoUrl`、idb-blob/data/httpいずれも対応・httpは image-proxy 経由）を Blob 取得→`File` 化し、`navigator.canShare({files})` 対応端末（主にスマホ）では `navigator.share({files,text})` で画像つき共有（共有シートからX選択でそのまま添付）。非対応（PC等）や活性切れ時は、画像を自動ダウンロード（手動添付用）してから従来どおりテキストの投稿インテントを開くフォールバック。`handleWant` は async 化。
 
 ---
 
