@@ -5297,14 +5297,10 @@ export default function App() {
               <line x1="12" y1="17.5" x2="12" y2="17.51" />
             </svg>
           </button>
-          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowAppShare(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 10L12 6L16 10" />
-              <line x1="12" y1="6" x2="12" y2="17" />
-              <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
-            </svg>
+          <button style={{ ...s.shareBtn, width: 30, height: 30, fontSize: 13 }} onClick={() => setShowShare(true)} title="Xでシェア">𝕏</button>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30, padding: 0, overflow: "hidden" }} onClick={() => setShowModelerAlbum(true)} title="モデラーズアルバム">
+            <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ width: 30, height: 30, objectFit: "cover", display: "block" }} />
           </button>
-          <button style={{ ...s.shareBtn, width: 30, height: 30, fontSize: 13 }} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
       </div>
 
