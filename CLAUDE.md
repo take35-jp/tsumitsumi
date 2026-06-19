@@ -27,7 +27,7 @@
 
 ## 2. 現在のバージョン
 
-**v1.43（2026/06/20）**
+**v1.44（2026/06/20）**
 ※ 下記の履歴リストは v1.11 までの記録。v1.12〜v1.30 はコード側 versions 配列が一次情報（CLAUDE.md側は未追従）。最新の追加のみ末尾に追記する運用。
 
 ### バージョニングルール
@@ -64,6 +64,7 @@
 - **v1.41**: モデラーズアルバムの**サムネ縮小表示**で軽量化（※一覧からの削除✕ボタンも一旦入れたがユーザー要望で撤去。削除は従来どおり編集画面の DELETE のみ）。モジュールに `MaThumb`（idb-blob を縮小 dataURL 化して表示するコンポーネント）＋`makeThumbDataUrl`（canvas で `maxPx` に縮小→`toDataURL("image/jpeg",q)`）＋`enqueueThumb`（生成を **Promise チェーンで直列化**＝同時デコードを1枚ずつに抑え瞬間メモリを抑制）＋`maThumbCache`（`id:maxPx`→dataURL のセッションキャッシュ）を追加。一覧cover・閲覧グリッド・編集グリッド・シェア選択グリッドの `KitImage` を `MaThumb maxPx={480}` に置換（原本の等倍デコードをやめてメモリ枯渇クラッシュを回避）。**ライトボックス（拡大）とシェア画像生成（`maLoadImage`）は従来どおり原本**を使うので画質は無劣化。これで v1.40 の残課題（写真の多いアルバムでのクラッシュ）に対処。
 - **v1.42**: モデラーズアルバムの一覧ヘッダーに「**このアプリを共有**」ボタンを追加（バックアップ(DL)アイコンの左、HELPの並び）。`ModelerAlbum` 内に `maShareApp()` を新設し、share-nodes 風 SVG アイコンの `ma.ghost` ボタンから起動。共有先 URL は `https://tsumitsumi.vercel.app/?modeler`（専用アイコン/名称で直接アルバムが開く導線）、テキストは `あなたの作品をカンタンにアルバム化。新作投稿も楽チン。ビフォー・アフターも作れちゃう。Webアプリ「モデラーズアルバム」\n#モデラーズアルバム #TSUMITSUMI`。`navigator.share` 対応端末（主にスマホ）はネイティブ共有シート、非対応（PC等）は `navigator.clipboard.writeText` で URL コピー＋alert、clipboard も不可なら X intent にフォールバック。実機(headless)で配置順 `[共有][バックアップ][HELP][ロゴ]`・コピー動作・ビルド通過を確認済み。
 - **v1.43**: モデラーズアルバムの一覧（list）画面**左下に「TIPS」「TOOLS」のリンクボタンを縦並びで追加**。TSUMITSUMI本体の「プラモを預ける」と同じ `position:fixed; bottom; left` の左下フロート方式。リンク先は TIPS→`/tips/`、TOOLS→`/gears.html`（いずれも別タブ）。スタイルは `ma.corner`（白地・黒枠・`fontSize:10`・`minWidth:58`・letter-spacing 広め）でB&Wミニマルに馴染ませ、やや小さめ＝目立たせない。list返却ブロック末尾（`renderBackup()` 直後）に配置し、view/edit画面には出ない。実機で左下fixed・縦並び・同幅・リンク先を確認済み。
+- **v1.44**: モデラーズアルバムに**初回アクセス時の案内ポップアップ**を追加（「ホーム画面追加推奨！「HELP」から操作方法をしっかり読んでねっ！」）。`ModelerAlbum` に `maIntro` state ＋ `MA_INTRO_KEY="tsumitsumi_modeler_intro_seen"` を新設。マウント時の useEffect で `localStorage` にフラグが無ければ `setMaIntro(true)`、`dismissIntro()`（OKボタン or 背景タップ）でフラグ"1"を保存して閉じる＝**1端末1回のみ**表示。`renderIntro()` は中央配置のオーバーレイ（`position:fixed; inset:0; zIndex:500`・半透明黒背景）＋白地黒枠カード（`WELCOME`ラベル＋本文＋`ma.black`のOKボタン）でB&Wミニマルに統一。ポップアップを閉じてもアルバム自体は開いたまま。list返却ブロックで `{renderIntro()}` を描画。実機で「初回表示→OKで閉じてフラグ保存→2回目以降は非表示」を検証済み。
 
 ---
 

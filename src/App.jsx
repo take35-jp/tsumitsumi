@@ -1411,7 +1411,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.43", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加（プラモTIPS・おすすめ定番アイテムへ）"] },
+    { ver: "v1.44", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加とHELPの確認を案内・1回のみ表示）"] },
+    { ver: "v1.43", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加（プラモTIPS・おすすめ定番アイテムへ）"] },
     { ver: "v1.42", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左。対応端末は共有シート、PCはURLコピー）"] },
     { ver: "v1.41", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
     { ver: "v1.40", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
@@ -1659,10 +1660,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.43 */}
+          {/* v1.44 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.44</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加・HELP確認の案内）
+            </div>
+          </div>
+          {/* v1.43 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.43</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
             </div>
@@ -1678,16 +1689,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左）
-            </div>
-          </div>
-          {/* v1.41 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.41</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化）
             </div>
           </div>
         </div>
@@ -3166,6 +3167,7 @@ const MA_FONT = "'Helvetica Neue', 'Inter', 'Segoe UI', 'Noto Sans JP', system-u
 const MA_TAGS = "#モデラーズアルバム #TSUMITSUMI"; // モデラーズアルバムのXシェア既定ハッシュタグ
 const MAX_ALBUM_PHOTOS = 30;
 const MA_LS_KEY = "tsumitsumi_modeler_albums";
+const MA_INTRO_KEY = "tsumitsumi_modeler_intro_seen"; // 初回アクセス時の案内ポップアップを1回だけ出すためのフラグ
 
 function fmtYM(ym) {
   if (!ym) return "";
@@ -3529,6 +3531,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [shareSelect, setShareSelect] = useState(null); // 写真選択 { album, sel:number[] }（最大16枚）
   const [baSelect, setBaSelect] = useState(null); // ビフォーアフター { album, sel:[before,after], comment }
   const [maHelp, setMaHelp] = useState(false); // 取扱説明書（使い方）表示
+  const [maIntro, setMaIntro] = useState(false); // 初回アクセス時の案内ポップアップ
   const [maBackup, setMaBackup] = useState(false); // バックアップ画面表示
   const [maBusy, setMaBusy] = useState(false); // バックアップ作成/復元中のロード表示
   const [bkReady, setBkReady] = useState(null); // 作成済みバックアップ { url, name, sizeMB }（タップ直後にDL）
@@ -3543,7 +3546,9 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       const s = JSON.parse(localStorage.getItem(MA_LS_KEY) || "[]");
       if (Array.isArray(s)) setAlbums(s.map(a => ({ ...a, photos: maNormPhotos(a.photos) }))); // 旧データ（文字列）を {url,caption} へ移行
     } catch (e) {}
+    try { if (!localStorage.getItem(MA_INTRO_KEY)) setMaIntro(true); } catch (e) {} // 初回アクセスのみ案内ポップアップ
   }, []);
+  const dismissIntro = () => { try { localStorage.setItem(MA_INTRO_KEY, "1"); } catch (e) {} setMaIntro(false); };
   useEffect(() => {
     if (!savedRef.current) { savedRef.current = true; return; } // 初回マウントの保存はスキップ
     try { localStorage.setItem(MA_LS_KEY, JSON.stringify(albums)); } catch (e) {}
@@ -4098,6 +4103,22 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     );
   };
 
+  // ---- 初回アクセス時の案内ポップアップ ----
+  const renderIntro = () => {
+    if (!maIntro) return null;
+    return (
+      <div onClick={dismissIntro} style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 22, fontFamily: MA_FONT }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", border: "2px solid #111", maxWidth: 340, width: "100%", padding: "26px 22px 22px", textAlign: "center", boxSizing: "border-box" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.34em", color: "#999", marginBottom: 14 }}>WELCOME</div>
+          <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.95, color: "#111" }}>
+            ホーム画面追加推奨！<br />「HELP」から操作方法を<br />しっかり読んでねっ！
+          </div>
+          <button onClick={dismissIntro} style={{ ...ma.black, width: "100%", marginTop: 20, padding: "13px" }}>OK</button>
+        </div>
+      </div>
+    );
+  };
+
   // ---- バックアップ ----
   const renderBackup = () => {
     if (!maBackup) return null;
@@ -4308,6 +4329,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         {renderShareResult()}
         {renderHelp()}
         {renderBackup()}
+        {renderIntro()}
         {/* 左下フロート：TSUMITSUMI本体の「プラモを預ける」と同じ配置方式。やや小さめ・目立たせない。 */}
         <div style={{ position: "fixed", bottom: 20, left: 14, zIndex: 40, display: "flex", flexDirection: "column", gap: 6 }}>
           <a href="/tips/" target="_blank" rel="noopener noreferrer" style={ma.corner}>TIPS</a>
