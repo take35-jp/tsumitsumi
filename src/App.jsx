@@ -4030,7 +4030,12 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             </div>
           ) : (
             <div style={ma.grid}>
-              {albums.map(a => {
+              {[...albums].sort((a, b) => {
+                const ya = a.createdYM || "", yb = b.createdYM || "";
+                if (ya === yb) return 0;
+                if (!ya) return 1; if (!yb) return -1; // 制作年月なしは末尾
+                return yb < ya ? -1 : 1; // 制作年月の新しい順（降順）
+              }).map(a => {
                 const ph = maNormPhotos(a.photos);
                 const cover = ph[a.cover || 0] || ph[0];
                 return (
