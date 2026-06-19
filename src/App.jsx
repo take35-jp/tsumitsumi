@@ -3092,6 +3092,7 @@ function PriceReportModal({ target, onClose }) {
 
 // ============== MODELERS ALBUM（モデラーのポートフォリオ：端末内・高画質・白黒ミニマル） ==============
 const MA_FONT = "'Helvetica Neue', 'Inter', 'Segoe UI', 'Noto Sans JP', system-ui, sans-serif";
+const MA_TAGS = "#モデラーズアルバム #TSUMITSUMI #ツミツミ #プラモデル"; // モデラーズアルバムのXシェア既定ハッシュタグ
 const MAX_ALBUM_PHOTOS = 30;
 const MA_LS_KEY = "tsumitsumi_modeler_albums";
 
@@ -3522,7 +3523,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       const file = new File([blob], `modelers_ba_${(album && album.id) || "x"}.png`, { type: "image/png" });
       const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(blob); });
       setBaSelect(null);
-      setShareResult({ files: [file], urls: [url], text: `${comment ? comment.trim() + "\n" : ""}#TSUMITSUMI #ツミツミ #プラモデル` });
+      setShareResult({ files: [file], urls: [url], text: `${comment ? comment.trim() + "\n" : ""}${MA_TAGS}` });
     } catch (e) { alert("生成に失敗しました: " + (e.message || e)); }
     finally { setSharing(false); }
   };
@@ -3562,13 +3563,13 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       const files = blobs.map((b, i) => new File([b], `modelers_${album.id}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
       const urls = await Promise.all(blobs.map(b => new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); })));
       setShareSelect(null);
-      setShareResult({ files, urls, text: `「${album.title || "作品"}」\n#TSUMITSUMI #ツミツミ #プラモデル` });
+      setShareResult({ files, urls, text: `「${album.title || "作品"}」\n${MA_TAGS}` });
     } catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
     finally { setSharing(false); }
   };
   const sharePhoto = async (a, photo) => {
     setSharing(true);
-    try { const blob = await generateModelerPhotoImage(photo, a); await maShareImage(blob, `modelers_photo.png`, `${(photo.caption || "").trim() || a.title || "作品"}\n#TSUMITSUMI #ツミツミ`); }
+    try { const blob = await generateModelerPhotoImage(photo, a); await maShareImage(blob, `modelers_photo.png`, `${(photo.caption || "").trim() || a.title || "作品"}\n${MA_TAGS}`); }
     catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
     finally { setSharing(false); }
   };
