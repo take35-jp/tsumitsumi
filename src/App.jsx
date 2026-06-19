@@ -1257,10 +1257,10 @@ function BackupModal({ kits, onImport, onClose }) {
 // ---- Bulk Tag Badge ----
 function BulkTagBadge({ tag, onApply, onRemove }) {
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 20, padding: "3px 4px 3px 10px", fontSize: 11, fontWeight: 600, userSelect: "none", WebkitUserSelect: "none" }}>
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 0, padding: "3px 4px 3px 10px", fontSize: 11, fontWeight: 600, userSelect: "none", WebkitUserSelect: "none" }}>
       <span onClick={onApply} style={{ color: "#166534", cursor: "pointer" }}>#{tag}</span>
       <button onClick={onRemove} title="選択キットから外す"
-        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 20, padding: "0 8px", background: "#ef4444", borderRadius: 20, color: "#fff", fontSize: 10, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 20, padding: "0 8px", background: "#ef4444", borderRadius: 0, color: "#fff", fontSize: 10, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
         解除
       </button>
     </div>
@@ -1295,7 +1295,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
               display: "inline-flex", alignItems: "center", gap: 6,
               background: "#f0fdf4",
               color: "#166534",
-              borderRadius: 20, padding: "5px 6px 5px 12px", fontSize: 13, fontWeight: 600,
+              borderRadius: 0, padding: "5px 6px 5px 12px", fontSize: 13, fontWeight: 600,
               userSelect: "none", WebkitUserSelect: "none",
             }}
           >
@@ -1346,7 +1346,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.37", date: "2026/06/16", isNew: true, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
+    { ver: "v1.38", date: "2026/06/19", isNew: true, items: ["タグ・称号・状態バッジなどのラベルの枠を角丸から長方形デザインに変更"] },
+    { ver: "v1.37", date: "2026/06/16", isNew: false, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
     { ver: "v1.36", date: "2026/06/16", isNew: false, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
     { ver: "v1.35", date: "2026/06/13", isNew: false, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
     { ver: "v1.34", date: "2026/06/13", isNew: false, items: ["キット削除時に「本当に削除しますか？」の確認ダイアログを表示するように（誤操作による削除を防止）"] },
@@ -1588,10 +1589,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.37 */}
+          {/* v1.38 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.38</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・タグ・称号・状態バッジなどのラベルの枠を長方形デザインに変更
+            </div>
+          </div>
+          {/* v1.37 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.37</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
             </div>
@@ -1607,16 +1618,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有）
-            </div>
-          </div>
-          {/* v1.35 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.35</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）
             </div>
           </div>
         </div>
@@ -4916,7 +4917,7 @@ export default function App() {
           {kit.scale && <span style={s.badge}>{kit.scale}</span>}
           {kit.completed && <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700, marginLeft: 6 }}>✓ 完成済み</span>}
           {kit.tags?.length > 0 && kit.tags.map(tag => (
-            <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
+            <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
           ))}
         </div>
         <div style={s.cardBottom}>
@@ -4955,7 +4956,7 @@ export default function App() {
             ? <KitImage src={cover} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><PhotoPlaceholderIcon size={32} /></div>}
           {photos.length > 1 && (
-            <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20 }}>{photos.length}枚</span>
+            <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 0 }}>{photos.length}枚</span>
           )}
           {/* 名前オーバーレイ */}
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "16px 8px 6px", background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))", color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{kit.name}</div>
@@ -5018,7 +5019,7 @@ export default function App() {
       </div>
 
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 16px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto" }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>{rank.label}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 0, padding: "3px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>登録数 {totalKits}</span>
         <a href="/tips/" target="_blank" rel="noopener noreferrer"
           style={{ marginLeft: "auto", flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 12, padding: "3px 8px", textDecoration: "none", whiteSpace: "nowrap", lineHeight: 1.2 }}>
@@ -5132,7 +5133,7 @@ export default function App() {
                 const active = filterTags.includes(tag);
                 return (
                   <button key={tag}
-                    style={{ background: active ? "#166534" : "#f0fdf4", color: active ? "#fff" : "#166534", border: `1.5px solid ${active ? "#166534" : "#bbf7d0"}`, borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                    style={{ background: active ? "#166534" : "#f0fdf4", color: active ? "#fff" : "#166534", border: `1.5px solid ${active ? "#166534" : "#bbf7d0"}`, borderRadius: 0, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
                     onClick={() => setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}>
                     #{tag}
                   </button>
@@ -5366,7 +5367,7 @@ export default function App() {
                   <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 6 }}>タグ</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {detail.tags.map(tag => (
-                      <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>#{tag}</span>
+                      <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>#{tag}</span>
                     ))}
                   </div>
                 </div>
@@ -5880,11 +5881,11 @@ const s = {
   cardBody: { flex: 1, minWidth: 0 },
   cardName: { fontSize: 13, fontWeight: 700, color: "#111", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 },
   cardMeta: { fontSize: 12, color: "#6b7280", marginTop: 3, display: "flex", gap: 6, alignItems: "center" },
-  badge: { background: "#f3f4f6", borderRadius: 4, padding: "1px 6px", fontSize: 11, color: "#374151" },
+  badge: { background: "#f3f4f6", borderRadius: 0, padding: "1px 6px", fontSize: 11, color: "#374151" },
   cardBottom: { display: "flex", gap: 8, marginTop: 6, alignItems: "center" },
   stars: { fontSize: 13, color: "#f59e0b", letterSpacing: 1 },
-  countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "2px 8px", fontWeight: 600 },
-  condBadge: { fontSize: 10, borderRadius: 20, padding: "2px 8px", fontWeight: 600 },
+  countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
+  condBadge: { fontSize: 10, borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
   checkBtn: { width: 32, height: 32, borderRadius: "50%", border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
   fab: { width: 56, height: 56, borderRadius: "50%", color: "#fff", border: "none", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" },
@@ -5892,7 +5893,7 @@ const s = {
   modalPhoto: { width: "100%", maxHeight: 220, objectFit: "contain", borderRadius: "20px 20px 0 0" },
   modalBody: { padding: "20px 20px 32px" },
   modalTitle: { fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 6 },
-  doneBadge: { display: "inline-block", background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "2px 12px", fontSize: 12, fontWeight: 600, marginBottom: 12 },
+  doneBadge: { display: "inline-block", background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "2px 12px", fontSize: 12, fontWeight: 600, marginBottom: 12 },
   table: { width: "100%", borderCollapse: "collapse", marginTop: 12 },
   td1: { padding: "6px 0", fontSize: 12, color: "#9ca3af", width: 80, verticalAlign: "top" },
   td2: { padding: "6px 0", fontSize: 14, color: "#111" },
