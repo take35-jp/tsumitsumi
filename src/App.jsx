@@ -3384,6 +3384,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [baSelect, setBaSelect] = useState(null); // ビフォーアフター { album, sel:[before,after], comment }
   const [maHelp, setMaHelp] = useState(false); // 取扱説明書（使い方）表示
   const [maBackup, setMaBackup] = useState(false); // バックアップ画面表示
+  const [maBusy, setMaBusy] = useState(false); // バックアップ作成/復元中のロード表示
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
@@ -3547,6 +3548,8 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
 
   // バックアップ：全アルバム＋写真(高画質)を1つのJSONに書き出し／復元（ツミツミ本体と同方式）
   const maExport = async () => {
+    setMaBusy(true);
+    await new Promise(r => setTimeout(r, 30)); // ロード画面を先に描画
     try {
       const out = [];
       for (const a of albums) {
@@ -3569,11 +3572,14 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       el.click(); setTimeout(() => URL.revokeObjectURL(u), 1500);
       alert("バックアップファイルをダウンロードしました。");
     } catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
+    finally { setMaBusy(false); }
   };
   const maImport = async (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = "";
     if (!file) return;
+    setMaBusy(true);
+    await new Promise(r => setTimeout(r, 30));
     try {
       const data = JSON.parse(await file.text());
       const arr = data.albums || (Array.isArray(data) ? data : null);
@@ -3598,6 +3604,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       setMaBackup(false);
       alert(`${restored.length}件のアルバムをインポートしました。`);
     } catch (e) { alert("インポートに失敗しました。正しいバックアップファイルを選択してください。"); }
+    finally { setMaBusy(false); }
   };
 
   // ビフォーアフター：BEFORE/AFTER の写真を直接アップロード（アルバムからは選ばない）
@@ -3907,6 +3914,14 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           </div>
           <div style={{ fontSize: 11, color: "#999", lineHeight: 1.7 }}>※ データは端末内のみに保存されます。Safari／Chromeなどブラウザが違うと別データになります。移行時は必ずエクスポート→インポートしてください。</div>
         </div>
+        {maBusy && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "rgba(255,255,255,0.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, fontFamily: MA_FONT }}>
+            <style>{"@keyframes maspin{to{transform:rotate(360deg)}}"}</style>
+            <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: "50%", animation: "maspin 0.8s linear infinite" }} />
+            <div style={{ fontSize: 13, letterSpacing: "0.18em", color: "#111", fontWeight: 800 }}>データ作成中…</div>
+            <div style={{ fontSize: 11, color: "#888", letterSpacing: "0.04em" }}>写真が多いと少し時間がかかります</div>
+          </div>
+        )}
       </div>
     );
   };
