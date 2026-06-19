@@ -81,7 +81,13 @@ async function fetchGearsCatalog() {
   if (!r.ok) throw new Error(`gears_catalog fetch failed: ${r.status}`);
   const rows = await r.json();
   if (!rows[0] || !rows[0].data) return [];
-  const products = (rows[0].data.sections || []).flatMap(s => s.products || []);
+  // 各商品にセクションタイトルを添付（カテゴリ判定用）
+  const products = [];
+  for (const s of (rows[0].data.sections || [])) {
+    for (const p of (s.products || [])) {
+      products.push({ ...p, _section: s.title || '' });
+    }
+  }
   return products;
 }
 
@@ -114,52 +120,151 @@ async function upsertAsinMap(rows) {
   return total;
 }
 
-// ---------- マッチングロジック ----------
+// ---------- マッチングロジック (厳格版 v3) ----------
+// 設計方針:
+//   1. gears は「塗料系セクション」のみを対象 (工具/接着剤を除外)
+//   2. メーカー一致を必須 (gsi の塗料が gaia の商品にマッチしない)
+//   3. 商品固有キーワード (NAZCA・メカサフ・エヴォ等) の一致が必要
+//   4. 色が両者に検出できる場合、一致しないマッチを拒否 (バリエーション識別)
+//   5. specific token は重複排除して数える
+
+// 色や粒度を表すだけのジェネリック語（これだけのマッチは無効）
+const GENERIC_TOKENS = new Set([
+  'ホワイト','ブラック','グレー','シルバー','ゴールド','レッド','ブルー','イエロー',
+  'グリーン','ピンク','オレンジ','パープル','ブラウン','クリア','クリアー','クリヤー',
+  'メタリック','光沢','半光沢','つや消し','フラット','セミグロス','透明','色',
+  'ステンレス','アルミ','カッパー','ブロンズ','ダーク','ライト',
+  'カラー','塗料','スプレー',
+]).values ? new Set([
+  'ホワイト','ブラック','グレー','シルバー','ゴールド','レッド','ブルー','イエロー',
+  'グリーン','ピンク','オレンジ','パープル','ブラウン','クリア','クリアー','クリヤー',
+  'メタリック','光沢','半光沢','つや消し','フラット','セミグロス','透明','色',
+  'ステンレス','アルミ','カッパー','ブロンズ','ダーク','ライト',
+  'カラー','塗料','スプレー',
+]) : new Set();
+
+// メーカートークン定義
+const MFR_TOKENS = {
+  gsi:       ['gsi', 'クレオス', 'mr.', 'mrカラー', 'mr.カラー', 'creos'],
+  gaia:      ['ガイア', 'ガイアノーツ', 'gaia', 'gaianotes'],
+  tamiya:    ['タミヤ', 'tamiya'],
+  finishers: ['finisher', 'フィニッシャー'],
+};
+
+function isPaintSection(sectionTitle) {
+  const t = normalize(sectionTitle);
+  return t.includes('塗料') || t.includes('サーフェイサー') || t.includes('溶剤')
+      || t.includes('クリア') || t.includes('うすめ液');
+}
+
+// 色判定: 商品名から「特定の色」を抽出。一般色のみ・別商品を区別するための識別子。
+// 長い色名から先にチェック (オキサイドレッド を レッド に誤ヒットさせないため)
+const COLOR_WORDS_JP = [
+  'オキサイドレッド','シャンパンゴールド','スーパーヘヴィ','メタルブラック',
+  'ピンクサフ','ピンク','ホワイト','ブラック','グレー','シルバー','ゴールド',
+  'レッド','ブルー','イエロー','グリーン','オレンジ','パープル','ブラウン',
+  'カッパー','ブロンズ','ヘヴィ','ライト','プレミアム',
+];
+function detectColor(text) {
+  const norm = normalize(text);
+  for (const c of COLOR_WORDS_JP) {
+    if (norm.includes(normalize(c))) return c;
+  }
+  return null;
+}
+
+function isMfrMatch(productMfr, gearsName) {
+  const tokens = MFR_TOKENS[productMfr] || [];
+  const gn = normalize(gearsName);
+  return tokens.some(t => gn.includes(normalize(t)));
+}
+
+// 「商品固有キーワード」を product から抽出
+// (商品名から、ジェネリック語を除いた、識別力のあるトークン)
+function extractSpecificTokens(productName) {
+  // カタカナ・英数の塊で分割
+  const chunks = productName
+    .replace(/[（）()「」【】［\]/・,。 　]/g, ' ')
+    .split(/\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length >= 2);
+  return chunks.filter(c => !GENERIC_TOKENS.has(c));
+}
+
 function findMatch(product, gearsWithAsin) {
   const pName   = normalize(product.name);
   const pCode   = normalize(product.code);
-  const pMfr    = normalize(product.mfr);
   const pLineup = normalize(product.lineup);
+
+  // 商品固有キーワード（重複排除）
+  const specificRaw = extractSpecificTokens(product.name)
+    .concat(extractSpecificTokens(product.lineup))
+    .map(normalize)
+    .filter(t => t.length >= 3);
+  const specific = [...new Set(specificRaw)];
+
+  // ソース側の色（バリエーション識別用）
+  const sourceColor = detectColor(product.name + ' ' + product.lineup);
 
   let best = null;
 
   for (const g of gearsWithAsin) {
+    // 1. セクションフィルター
+    if (!isPaintSection(g._section)) continue;
+
+    // 2. メーカー一致を必須
+    if (!isMfrMatch(product.mfr, g.name)) continue;
+
     const gName = normalize(g.name);
 
+    // 3. 色がソース両方に検出できる場合、一致を必須にする
+    const targetColor = detectColor(g.name);
+    if (sourceColor && targetColor && sourceColor !== targetColor) {
+      continue; // 色違いは別バリエーション → マッチ拒否
+    }
+
     let score = 0;
-    let reasons = [];
+    let reasons = ['mfr'];
 
-    // メーカー名チェック（弱マッチでも判別に使う）
-    const mfrTokens = {
-      gsi: ['gsi', 'クレオス', 'mr.', 'mrカラー', 'mr.カラー'],
-      gaia: ['ガイア', 'ガイアノーツ', 'gaia'],
-      tamiya: ['タミヤ', 'tamiya'],
-      finishers: ['finisher', 'フィニッシャー'],
-    };
-    const tokens = mfrTokens[product.mfr] || [];
-    const mfrHit = tokens.some(t => gName.includes(normalize(t)));
-    if (mfrHit) { score += 2; reasons.push('mfr'); }
-
-    // コードヒット（商品コード一致は強シグナル）
+    // 4. コード一致（強い）
     if (pCode && pCode.length >= 2 && gName.includes(pCode)) {
       score += 5; reasons.push('code');
     }
 
-    // 商品名 prefix マッチ
-    if (pName.length >= 4) {
-      const head = pName.slice(0, Math.min(10, pName.length));
-      if (gName.includes(head)) { score += 4; reasons.push('name-head'); }
-      // 全名一致
-      if (gName.includes(pName)) { score += 2; reasons.push('name-full'); }
+    // 5. 商品固有キーワードの一致（必須・最低1つ）
+    let specificHits = 0;
+    for (const s of specific) {
+      if (gName.includes(s)) specificHits++;
+    }
+    if (specificHits === 0) continue;
+    score += specificHits * 3;
+    reasons.push(`spec×${specificHits}`);
+
+    // 6. 色一致ボーナス（両者で同じ色が検出できた場合）
+    if (sourceColor && targetColor && sourceColor === targetColor) {
+      score += 5;
+      reasons.push('color:' + sourceColor);
     }
 
-    // ラインナップキーワード
-    const lineupKeys = ['サーフェイサー', 'クリア', 'プレミアム', 'GX', 'メタル', 'カラー'];
-    for (const k of lineupKeys) {
-      if (pLineup.includes(normalize(k)) && gName.includes(normalize(k))) { score += 1; }
+    // 7. 名前 prefix
+    if (pName.length >= 6) {
+      const head = pName.slice(0, 8);
+      const headRaw = product.name.slice(0, 4);
+      const isGenericHead = GENERIC_TOKENS.has(headRaw);
+      if (gName.includes(head)) {
+        score += isGenericHead ? 1 : 3;
+        reasons.push(isGenericHead ? 'head(generic)' : 'head');
+      }
     }
 
-    if (score >= 6 && (!best || score > best.score)) {
+    // 8. ソース側のみ色が検出される(=色違いバリエーション)で、ターゲットに色なし → 不一致扱いで減点
+    //    例: 「ピンクサフ」← gears「メカサフ ライト」(ライトはCOLOR_WORDS_JPに入れたので targetColor検出される)
+    if (sourceColor && !targetColor) {
+      score -= 2;
+      reasons.push('no-target-color');
+    }
+
+    if (score >= 9 && (!best || score > best.score)) {
       best = { gears: g, score, reasons };
     }
   }
@@ -167,7 +272,7 @@ function findMatch(product, gearsWithAsin) {
   if (!best) return null;
   return {
     gears: best.gears,
-    confidence: best.score >= 9 ? 'high' : 'medium',
+    confidence: best.score >= 13 ? 'high' : 'medium',
     reason: best.reasons.join('+'),
     score: best.score,
   };
