@@ -3779,6 +3779,17 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         <div style={{ ...ma.body, maxWidth: 720 }}>
           <p style={P}>モデラーズアルバムは、あなたの作品を高画質で記録・展示するためのポートフォリオです。写真や情報は<b>すべてこの端末内に保存</b>され、サーバーには送信されません。</p>
 
+          <div style={{ border: "2px solid #111", padding: "13px 15px", margin: "16px 0 8px", background: "#fafafa" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", marginBottom: 7 }}>はじめに：必ずホーム画面に追加してください</div>
+            <div style={{ fontSize: 12.5, lineHeight: 2, color: "#333" }}>
+              快適に使うため、<b>この画面を必ずホーム画面に追加</b>してからご利用ください。<br />
+              <b>iPhone（Safari）</b>：画面下の<b>共有ボタン</b>→「<b>ホーム画面に追加</b>」。<br />
+              <b>Android（Chrome）</b>：メニュー（⋮）→「<b>ホーム画面に追加</b>」。<br />
+              追加すると「Modelers Album」専用アイコンで、アプリのように起動できます。<br />
+              ※データは追加したこのアプリ内に保存されます。万一に備え、下記10のバックアップも必ず併用してください。
+            </div>
+          </div>
+
           <div style={H2}>1. アルバムを作る</div>
           <p style={P}>トップ右上の「NEW ALBUM」から作成します。作品名／作成年月／タグ／制作コメントを登録し、「SAVE」で保存。一覧のカバーをタップで閲覧、右上「EDIT」で再編集できます。</p>
 
@@ -3810,11 +3821,18 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <div style={H2}>9. ビフォーアフター画像</div>
           <p style={P}>トップの「Before After作成」→ BEFORE と AFTER の写真を<b>アップロード</b>＋コメント入力 → X向けの<b>横長1枚</b>の比較画像を生成します。</p>
 
-          <div style={H2}>10. 保存とデータについて</div>
+          <div style={H2}>10. バックアップ（保存・復元）</div>
+          <ul style={UL}>
+            <li style={LI}>トップ右上の<b>ダウンロードアイコン</b>（HELPの左）からバックアップ画面を開けます。</li>
+            <li style={LI}>「エクスポート」で<b>全アルバム＋写真を1つのJSONファイル</b>に書き出し。iCloudやGoogleドライブに保管しておくと安心です。</li>
+            <li style={LI}>機種変更・ブラウザ移行のときは、新しい環境で「インポート」して復元します（現在のデータは上書き）。</li>
+            <li style={LI}>※写真が多いとファイルはかなり大きくなります。</li>
+          </ul>
+
+          <div style={H2}>11. 保存とデータについて</div>
           <ul style={UL}>
             <li style={LI}>データは<b>この端末内のみ</b>に保存されます（プライバシー重視）。</li>
-            <li style={LI}>ブラウザのキャッシュ削除や機種変更で<b>消える可能性</b>があります。大切な写真は元データを別途保管してください。</li>
-            <li style={LI}>現在バックアップ（書き出し）には未対応です。</li>
+            <li style={LI}>ブラウザのキャッシュ削除や機種変更で<b>消える可能性</b>があります。<b>定期的にバックアップ（上記10）</b>を取ることを強くおすすめします。</li>
           </ul>
           <div style={{ height: 30 }} />
         </div>
