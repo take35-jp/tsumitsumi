@@ -3444,26 +3444,24 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     setDraft(d => (d ? { ...d, tags: d.tags.filter(x => x !== t) } : d));
   };
 
-  // ビフォーアフター：BEFORE→AFTER の順に2枚選択
-  const startBeforeAfter = (a) => {
-    if (maNormPhotos(a.photos).length < 2) { alert("写真が2枚以上必要です"); return; }
-    setBaSelect({ album: a, sel: [], comment: "" });
+  // ビフォーアフター：BEFORE/AFTER の写真を直接アップロード（アルバムからは選ばない）
+  const startBeforeAfter = (a) => setBaSelect({ album: a, beforeUrl: null, afterUrl: null, comment: "" });
+  const onBaPick = async (key, e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(file); });
+    if (!url) { alert("画像の読み込みに失敗しました"); return; }
+    setBaSelect(s => (s ? { ...s, [key]: url } : s));
   };
-  const toggleBaSel = (i) => setBaSelect(s => {
-    if (!s) return s;
-    if (s.sel.includes(i)) return { ...s, sel: s.sel.filter(x => x !== i) };
-    if (s.sel.length >= 2) { alert("BEFOREとAFTERの2枚です（変更は選択を外してから）"); return s; }
-    return { ...s, sel: [...s.sel, i] };
-  });
   const doBeforeAfter = async () => {
-    if (!baSelect || baSelect.sel.length < 2) { alert("BEFORE・AFTERの2枚を選んでください"); return; }
-    const { album, sel, comment } = baSelect;
-    const ph = maNormPhotos(album.photos);
+    if (!baSelect || !baSelect.beforeUrl || !baSelect.afterUrl) { alert("BEFORE・AFTERの両方をアップロードしてください"); return; }
+    const { album, beforeUrl, afterUrl, comment } = baSelect;
     setSharing(true);
     try {
-      const blob = await generateBeforeAfterImage(ph[sel[0]], ph[sel[1]], comment);
+      const blob = await generateBeforeAfterImage({ url: beforeUrl }, { url: afterUrl }, comment);
       if (!blob) { alert("画像の生成に失敗しました"); return; }
-      const file = new File([blob], `modelers_ba_${album.id}.png`, { type: "image/png" });
+      const file = new File([blob], `modelers_ba_${(album && album.id) || "x"}.png`, { type: "image/png" });
       const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(blob); });
       setBaSelect(null);
       setShareResult({ files: [file], urls: [url], text: `${comment ? comment.trim() + "\n" : ""}#TSUMITSUMI #ツミツミ #プラモデル` });
@@ -3644,35 +3642,36 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     );
   };
 
-  // ---- ビフォーアフター（2枚選択＋コメント） ----
+  // ---- ビフォーアフター（BEFORE/AFTER を直接アップロード＋コメント） ----
   const renderBeforeAfter = () => {
     if (!baSelect) return null;
-    const { album, sel, comment } = baSelect;
-    const ph = maNormPhotos(album.photos);
+    const { beforeUrl, afterUrl, comment } = baSelect;
+    const slot = (label, key, url) => (
+      <label style={{ flex: 1, minWidth: 130 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", marginBottom: 6 }}>{label}</div>
+        <div style={{ aspectRatio: "1/1", border: "1px dashed #111", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer" }}>
+          {url ? <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <span style={{ fontSize: 11, color: "#888", letterSpacing: "0.08em" }}>画像をアップロード</span>}
+        </div>
+        <input type="file" accept="image/*" onChange={(e) => onBaPick(key, e)} style={{ display: "none" }} />
+      </label>
+    );
     return (
       <div style={{ ...ma.wrap, zIndex: 420 }}>
         <div style={ma.bar}>
           <button style={ma.ghost} onClick={() => setBaSelect(null)}>CANCEL</button>
-          <button style={ma.black} onClick={doBeforeAfter} disabled={sharing || sel.length < 2}>{sharing ? "..." : "作成してシェア"}</button>
+          <button style={ma.black} onClick={doBeforeAfter} disabled={sharing || !beforeUrl || !afterUrl}>{sharing ? "..." : "作成してシェア"}</button>
         </div>
         <div style={ma.body}>
-          <div style={{ fontSize: 12, color: "#555", lineHeight: 1.9, marginBottom: 14 }}>
-            写真を2枚タップ。1枚目が <b style={{ color: "#111" }}>BEFORE</b>、2枚目が <b style={{ color: "#111" }}>AFTER</b> になります（横長1枚の比較画像をXサイズで生成）。
+          <div style={{ fontSize: 12, color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
+            <b style={{ color: "#111" }}>BEFORE</b> と <b style={{ color: "#111" }}>AFTER</b> の写真をアップロード。横長1枚の比較画像（Xサイズ）を生成します。
+          </div>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            {slot("BEFORE", "beforeUrl", beforeUrl)}
+            {slot("AFTER", "afterUrl", afterUrl)}
           </div>
           <label style={ma.label}>コメント（画像ヘッダーに表示）</label>
-          <input style={{ ...ma.input, marginBottom: 18 }} value={comment} onChange={e => setBaSelect(s => ({ ...s, comment: e.target.value }))} placeholder="例：全塗装でディテールアップ" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
-            {ph.map((p, i) => {
-              const k = sel.indexOf(i);
-              const on = k >= 0;
-              return (
-                <div key={i} onClick={() => toggleBaSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: on ? "2px solid #111" : "2px solid #eee", opacity: on ? 1 : 0.55 }}>
-                  <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  {on && <div style={{ position: "absolute", top: 4, left: 4, padding: "2px 7px", background: "#111", color: "#fff", fontSize: 9, fontWeight: 800, letterSpacing: "0.08em" }}>{k === 0 ? "BEFORE" : "AFTER"}</div>}
-                </div>
-              );
-            })}
-          </div>
+          <input style={ma.input} value={comment} onChange={e => setBaSelect(s => ({ ...s, comment: e.target.value }))} placeholder="例：全塗装でディテールアップ" />
         </div>
       </div>
     );
@@ -3733,7 +3732,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         <div style={ma.bar}>
           <button style={ma.ghost} onClick={() => { setViewId(null); setMode("list"); }}>BACK</button>
           <div style={{ display: "flex", gap: 8 }}>
-            {maNormPhotos(a.photos).length >= 2 && <button style={ma.ghost} onClick={() => startBeforeAfter(a)}>B / A</button>}
+            <button style={ma.ghost} onClick={() => startBeforeAfter(a)}>Before After作成</button>
             {maNormPhotos(a.photos).length > 0 && <button style={ma.black} onClick={() => shareAlbum(a)} disabled={sharing}>{sharing ? "..." : "Share ALL"}</button>}
             <button style={ma.ghost} onClick={() => startEdit(a)}>EDIT</button>
           </div>
