@@ -3107,13 +3107,23 @@ function maNormPhotos(arr) {
 }
 async function maLoadImage(src) {
   if (!src) return null;
+  let url = src;
   if (isIdbBlobUrl(src)) {
     const blob = await kitsIdbPhotoGet(idbBlobUrlToId(src));
     if (!blob) return null;
-    const url = URL.createObjectURL(blob);
-    return await new Promise(res => { const im = new Image(); im.onload = () => { URL.revokeObjectURL(url); res(im); }; im.onerror = () => { URL.revokeObjectURL(url); res(null); }; im.src = url; });
+    // objectURL の revoke タイミング問題（端末によりcanvas描画前に無効化され画像が抜ける）を避けるため dataURL 化
+    url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || null); fr.onerror = () => res(null); fr.readAsDataURL(blob); });
+    if (!url) return null;
+  } else if (!src.startsWith("data:")) {
+    url = `/api/image-proxy?url=${encodeURIComponent(src)}`;
   }
-  return await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); if (src.startsWith("data:")) im.src = src; else { im.crossOrigin = "anonymous"; im.src = `/api/image-proxy?url=${encodeURIComponent(src)}`; } });
+  return await new Promise(res => {
+    const im = new Image();
+    if (typeof url === "string" && url.startsWith("http")) im.crossOrigin = "anonymous";
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = url;
+  });
 }
 function maDrawCover(ctx, img, dx, dy, dw, dh) {
   if (!img) { ctx.fillStyle = "#ececec"; ctx.fillRect(dx, dy, dw, dh); return; }
@@ -3367,7 +3377,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", color: "#fff" }}>
           <span style={{ fontSize: 11, letterSpacing: "0.2em", fontFamily: MA_FONT }}>{i + 1} / {photos.length}</span>
           <div style={{ display: "flex", gap: 8 }}>
-            {album && <button onClick={() => sharePhoto(album, cur)} disabled={sharing} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer", fontFamily: MA_FONT }}>{sharing ? "..." : "SHARE"}</button>}
+            {album && <button onClick={() => sharePhoto(album, cur)} disabled={sharing} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer", fontFamily: MA_FONT, whiteSpace: "nowrap" }}>{sharing ? "..." : "Share this pic"}</button>}
             <button onClick={() => setLightbox(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer", fontFamily: MA_FONT }}>CLOSE</button>
           </div>
         </div>
@@ -3440,7 +3450,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         <div style={ma.bar}>
           <button style={ma.ghost} onClick={() => { setViewId(null); setMode("list"); }}>BACK</button>
           <div style={{ display: "flex", gap: 8 }}>
-            {maNormPhotos(a.photos).length > 0 && <button style={ma.black} onClick={() => shareAlbum(a)} disabled={sharing}>{sharing ? "..." : "SHARE"}</button>}
+            {maNormPhotos(a.photos).length > 0 && <button style={ma.black} onClick={() => shareAlbum(a)} disabled={sharing}>{sharing ? "..." : "Share ALL"}</button>}
             <button style={ma.ghost} onClick={() => startEdit(a)}>EDIT</button>
           </div>
         </div>
