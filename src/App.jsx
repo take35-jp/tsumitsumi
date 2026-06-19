@@ -3258,6 +3258,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [tagInput, setTagInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [shareResult, setShareResult] = useState(null); // アルバム全体シェア結果 { files, urls, text }
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
@@ -3399,11 +3400,23 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     setDraft(d => (d ? { ...d, tags: d.tags.filter(x => x !== t) } : d));
   };
 
+  // 1ファイル保存（共有シート→保存／非対応はDL）。ユーザー操作ごとなので確実
+  const saveOne = async (file) => {
+    if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try { const u = URL.createObjectURL(file); const a = document.createElement("a"); a.href = u; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); } catch (e) {}
+  };
   const shareAlbum = async (a) => {
     if (!maNormPhotos(a.photos).length) { alert("写真がありません"); return; }
     setSharing(true);
-    try { const blobs = await generateModelerAlbumImages(a); await maShareImages(blobs, `modelers_${a.id}`, `「${a.title || "作品"}」\n#TSUMITSUMI #ツミツミ #プラモデル`); }
-    catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
+    try {
+      const blobs = (await generateModelerAlbumImages(a)).filter(Boolean);
+      if (!blobs.length) { alert("画像の生成に失敗しました"); return; }
+      const files = blobs.map((b, i) => new File([b], `modelers_${a.id}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
+      const urls = await Promise.all(blobs.map(b => new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); })));
+      setShareResult({ files, urls, text: `「${a.title || "作品"}」\n#TSUMITSUMI #ツミツミ #プラモデル` });
+    } catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
     finally { setSharing(false); }
   };
   const sharePhoto = async (a, photo) => {
@@ -3473,6 +3486,35 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             <button onClick={() => go(1)} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 44, height: 44, fontSize: 22, cursor: "pointer" }}>›</button>
           </div>
         )}
+      </div>
+    );
+  };
+
+  // ---- アルバム全体シェアの結果（全画像をプレビュー→1枚ずつ確実に保存） ----
+  const renderShareResult = () => {
+    if (!shareResult) return null;
+    const { files, urls, text } = shareResult;
+    let canAll = false;
+    try { canAll = typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files }); } catch (e) { canAll = false; }
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 420, background: "rgba(0,0,0,0.94)", overflowY: "auto", padding: "16px 16px 40px", fontFamily: MA_FONT }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ color: "#fff", fontSize: 12, letterSpacing: "0.18em" }}>{files.length} IMAGES</span>
+          <button onClick={() => setShareResult(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer" }}>CLOSE</button>
+        </div>
+        <div style={{ color: "#bbb", fontSize: 11, lineHeight: 1.8, marginBottom: 14 }}>各画像を「保存」してXに投稿してください（Xは1投稿あたり画像4枚まで）。{canAll ? "下の「まとめて共有」も使えます。" : ""}</div>
+        {canAll && <button onClick={async () => { try { await navigator.share({ files, text }); } catch (e) {} }} style={{ width: "100%", padding: "13px", background: "#fff", color: "#111", border: "none", fontSize: 12, fontWeight: 800, letterSpacing: "0.18em", cursor: "pointer", marginBottom: 16 }}>まとめて共有 / SHARE ALL</button>}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
+          {urls.map((u, i) => (
+            <div key={i}>
+              {u && <img src={u} alt="" style={{ width: "100%", display: "block", border: "1px solid #333" }} />}
+              <button onClick={() => saveOne(files[i])} style={{ width: "100%", marginTop: 6, padding: "9px", background: "#111", color: "#fff", border: "1px solid #fff", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", cursor: "pointer" }}>{i + 1} / {files.length}　保存 SAVE</button>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginTop: 18 }}>
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" style={{ color: "#fff", fontSize: 12, letterSpacing: "0.1em", textDecoration: "underline" }}>Xを開く（投稿テキスト）</a>
+        </div>
       </div>
     );
   };
@@ -3560,6 +3602,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           })()}
         </div>
         {renderLightbox()}
+        {renderShareResult()}
       </div>
     );
   }
