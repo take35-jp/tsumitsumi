@@ -3743,15 +3743,17 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       <div style={ma.wrap}>
         <div style={ma.bar}>
           <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <img src="/LOGO.png" alt="TSUMI TSUMI" style={{ height: 30, width: "auto", display: "block" }} />
+            <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ height: 40, width: "auto", display: "block" }} />
             <div>
               <div style={ma.brand}>MODELERS ALBUM</div>
               <div style={ma.sub}>PORTFOLIO</div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <button style={ma.ghost} onClick={() => setMaHelp(true)}>HELP</button>
-            <button style={ma.ghost} onClick={onClose}>CLOSE</button>
+            <a href="/" title="ツミツミへ" style={{ display: "flex", alignItems: "center" }}>
+              <img src="/LOGO.png" alt="TSUMI TSUMI" style={{ height: 28, width: "auto", display: "block" }} />
+            </a>
           </div>
         </div>
         <div style={ma.body}>
