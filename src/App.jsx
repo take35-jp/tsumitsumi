@@ -3132,6 +3132,23 @@ function maDrawCover(ctx, img, dx, dy, dw, dh) {
   ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
   ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h); ctx.restore();
 }
+// 写真領域の下部にコメント帯（半透明黒＋白文字・1行省略）を重ねる
+function maCaptionBand(ctx, text, x, y, w, h, fontSize) {
+  const cap = (text || "").trim();
+  if (!cap) return;
+  ctx.font = `600 ${fontSize}px ${MA_FONT}`;
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  const padX = Math.round(fontSize * 0.7);
+  const maxW = w - padX * 2;
+  let shown = cap;
+  if (ctx.measureText(shown).width > maxW) {
+    while (shown.length > 1 && ctx.measureText(shown + "…").width > maxW) shown = shown.slice(0, -1);
+    shown += "…";
+  }
+  const bandH = Math.round(fontSize * 1.9);
+  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(x, y + h - bandH, w, bandH);
+  ctx.fillStyle = "#fff"; ctx.fillText(shown, x + padX, y + h - Math.round(bandH * 0.34));
+}
 function maWrap(ctx, text, maxW) {
   const out = [];
   (text || "").split(/\n/).forEach(line => {
@@ -3201,8 +3218,9 @@ async function maRenderAlbumPage(album, group, page, total) {
     if (total > 1) { ctx.fillStyle = "#999"; ctx.font = `600 16px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`1 / ${total}`, W - M, 44); ctx.textAlign = "left"; }
     ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(M, HEADER - 2); ctx.lineTo(W - M, HEADER - 2); ctx.stroke();
     maDrawCover(ctx, imgs[0], 0, HEADER, W, COVER_H);
+    maCaptionBand(ctx, group[0] && group[0].caption, 0, HEADER, W, COVER_H, 30);
     const rowY = HEADER + COVER_H + GAP, rowH = H - rowY - 56, cellW = (W - GAP * 2) / 3;
-    for (let i = 0; i < 3; i++) maDrawCover(ctx, imgs[i + 1] || null, i * (cellW + GAP), rowY, cellW, rowH);
+    for (let i = 0; i < 3; i++) { const cx = i * (cellW + GAP); maDrawCover(ctx, imgs[i + 1] || null, cx, rowY, cellW, rowH); if (imgs[i + 1]) maCaptionBand(ctx, group[i + 1] && group[i + 1].caption, cx, rowY, cellW, rowH, 18); }
   } else {
     const H1 = 92, FOOT = 44;
     let t = album.title || "UNTITLED"; ctx.font = `800 26px ${MA_FONT}`;
@@ -3211,7 +3229,7 @@ async function maRenderAlbumPage(album, group, page, total) {
     ctx.fillStyle = "#999"; ctx.font = `600 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`${page + 1} / ${total}`, W - M, 56); ctx.textAlign = "left";
     ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M, H1 - 1); ctx.lineTo(W - M, H1 - 1); ctx.stroke();
     const gridY = H1 + 10, gridH = H - gridY - FOOT, g = 8, cw = (W - g) / 2, chh = (gridH - g) / 2;
-    for (let i = 0; i < 4; i++) { const col = i % 2, row = Math.floor(i / 2); maDrawCover(ctx, imgs[i] || null, col * (cw + g), gridY + row * (chh + g), cw, chh); }
+    for (let i = 0; i < 4; i++) { const col = i % 2, row = Math.floor(i / 2), cx = col * (cw + g), cy = gridY + row * (chh + g); maDrawCover(ctx, imgs[i] || null, cx, cy, cw, chh); if (imgs[i]) maCaptionBand(ctx, group[i] && group[i].caption, cx, cy, cw, chh, 23); }
   }
   ctx.fillStyle = "#999"; ctx.font = `600 19px ${MA_FONT}`; ctx.textAlign = "center";
   ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 20); ctx.textAlign = "left";
