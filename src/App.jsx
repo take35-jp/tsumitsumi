@@ -3303,6 +3303,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [shareResult, setShareResult] = useState(null); // シェア結果 { files, urls, text }
   const [shareSelect, setShareSelect] = useState(null); // 写真選択 { album, sel:number[] }（最大16枚）
   const [baSelect, setBaSelect] = useState(null); // ビフォーアフター { album, sel:[before,after], comment }
+  const [maHelp, setMaHelp] = useState(false); // 取扱説明書（使い方）表示
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
@@ -3677,6 +3678,65 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     );
   };
 
+  // ---- 取扱説明書（使い方） ----
+  const renderHelp = () => {
+    if (!maHelp) return null;
+    const H2 = { fontSize: 13, fontWeight: 800, letterSpacing: "0.12em", margin: "26px 0 8px", paddingBottom: 6, borderBottom: "1px solid #111", color: "#111" };
+    const P = { fontSize: 13, lineHeight: 1.95, color: "#333", margin: "0 0 6px" };
+    const UL = { margin: 0, paddingLeft: "1.3em" };
+    const LI = { fontSize: 13, lineHeight: 1.9, color: "#333" };
+    return (
+      <div style={{ ...ma.wrap, zIndex: 430 }}>
+        <div style={ma.bar}>
+          <div><div style={ma.brand}>使い方 / HELP</div><div style={ma.sub}>MODELERS ALBUM</div></div>
+          <button style={ma.ghost} onClick={() => setMaHelp(false)}>CLOSE</button>
+        </div>
+        <div style={{ ...ma.body, maxWidth: 720 }}>
+          <p style={P}>モデラーズアルバムは、あなたの作品を高画質で記録・展示するためのポートフォリオです。写真や情報は<b>すべてこの端末内に保存</b>され、サーバーには送信されません。</p>
+
+          <div style={H2}>1. アルバムを作る</div>
+          <p style={P}>トップ右上の「NEW ALBUM」から作成します。作品名／作成年月／タグ／制作コメントを登録し、「SAVE」で保存。一覧のカバーをタップで閲覧、右上「EDIT」で再編集できます。</p>
+
+          <div style={H2}>2. 写真を追加する（高画質）</div>
+          <ul style={UL}>
+            <li style={LI}>編集画面の「ADD」から追加（1アルバム最大30枚）。</li>
+            <li style={LI}>写真は<b>圧縮せず原本のまま</b>保存するので高画質です。</li>
+            <li style={LI}>各写真下部の「表紙にする」で<b>表紙（COVER）</b>を指定できます。</li>
+          </ul>
+
+          <div style={H2}>3. 写真を並べ替える</div>
+          <p style={P}>編集画面で写真を<b>長押し</b>すると浮き上がり、動かして離した位置へ移動できます。左上の「‹ ›」ボタンでも前後に動かせます。</p>
+
+          <div style={H2}>4. 写真ごとにコメント</div>
+          <p style={P}>編集画面で各写真の下に入力欄があります。閲覧時・拡大時・写真単体のシェア画像にも表示されます。</p>
+
+          <div style={H2}>5. タグ</div>
+          <p style={P}>編集画面でタグの付与・新規追加ができます。「タグを編集」を押すと、タグ名の<b>改名</b>（タップ）と<b>削除</b>（✕）が可能です（すべてのアルバム・キットに反映されます）。</p>
+
+          <div style={H2}>6. 写真を拡大して見る</div>
+          <p style={P}>閲覧画面で写真をタップすると全画面表示。さらに<b>画像をタップで等倍ズーム</b>（細部確認）、左右の「‹ ›」で送れます。</p>
+
+          <div style={H2}>7. Xにシェアする（写真1枚）</div>
+          <p style={P}>拡大画面の「Share this pic」で、その写真を<b>コメント入りヘッダー付き</b>の画像にしてXへ投稿できます。</p>
+
+          <div style={H2}>8. Xにシェアする（アルバム）</div>
+          <p style={P}>閲覧画面の「Share ALL」→ シェアする写真を<b>最大16枚</b>選択（選んだ順・先頭が表紙）→ <b>4枚ずつ・最大4画像＝1投稿分</b>を生成します。先頭画像は表紙を大きく、作品名・完成年月・コメント入り。生成後にプレビューから保存／まとめて共有できます。</p>
+
+          <div style={H2}>9. ビフォーアフター画像</div>
+          <p style={P}>トップの「Before After作成」→ BEFORE と AFTER の写真を<b>アップロード</b>＋コメント入力 → X向けの<b>横長1枚</b>の比較画像を生成します。</p>
+
+          <div style={H2}>10. 保存とデータについて</div>
+          <ul style={UL}>
+            <li style={LI}>データは<b>この端末内のみ</b>に保存されます（プライバシー重視）。</li>
+            <li style={LI}>ブラウザのキャッシュ削除や機種変更で<b>消える可能性</b>があります。大切な写真は元データを別途保管してください。</li>
+            <li style={LI}>現在バックアップ（書き出し）には未対応です。</li>
+          </ul>
+          <div style={{ height: 30 }} />
+        </div>
+      </div>
+    );
+  };
+
   // ---- 一覧 ----
   if (mode === "list") {
     return (
@@ -3689,7 +3749,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
               <div style={ma.sub}>PORTFOLIO</div>
             </div>
           </div>
-          <button style={ma.ghost} onClick={onClose}>CLOSE</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={ma.ghost} onClick={() => setMaHelp(true)}>HELP</button>
+            <button style={ma.ghost} onClick={onClose}>CLOSE</button>
+          </div>
         </div>
         <div style={ma.body}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
@@ -3725,6 +3788,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         {renderLightbox()}
         {renderBeforeAfter()}
         {renderShareResult()}
+        {renderHelp()}
       </div>
     );
   }
