@@ -3566,19 +3566,39 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     if (!ph.length) { alert("写真がありません"); return; }
     const ci = Math.min(a.cover || 0, ph.length - 1);
     const order = [ci, ...ph.map((_, i) => i).filter(i => i !== ci)];
-    setShareSelect({ album: a, sel: order.slice(0, MAX_SHARE_PHOTOS) });
+    setShareSelect({ album: a, sel: order.slice(0, MAX_SHARE_PHOTOS), large: [] });
   };
   const toggleShareSel = (i) => setShareSelect(s => {
     if (!s) return s;
-    if (s.sel.includes(i)) return { ...s, sel: s.sel.filter(x => x !== i) };
+    if (s.sel.includes(i)) return { ...s, sel: s.sel.filter(x => x !== i), large: (s.large || []).filter(x => x !== i) };
     if (s.sel.length >= MAX_SHARE_PHOTOS) { alert(`1投稿は最大${MAX_SHARE_PHOTOS}枚までです`); return s; }
     return { ...s, sel: [...s.sel, i] };
   });
+  // 各画像(4枚組)の「大」を直接トグル。1組につき1枚（同組の既存「大」は外す）。同じ写真を再タップでOFF(既定=組の先頭に戻る)
+  const toggleShareLarge = (i) => setShareSelect(s => {
+    if (!s) return s;
+    const order = s.sel.indexOf(i);
+    if (order < 0) return s; // 未選択は対象外
+    const gStart = Math.floor(order / 4) * 4;
+    const groupMembers = s.sel.slice(gStart, gStart + 4);
+    const cur = (s.large || []).find(x => groupMembers.includes(x));
+    let large = (s.large || []).filter(x => !groupMembers.includes(x)); // その組の指定を一旦クリア
+    if (cur !== i) large = [...large, i]; // 別写真→大に設定（同じならOFFのままクリア）
+    return { ...s, large };
+  });
   const doShareSelected = async () => {
     if (!shareSelect) return;
-    const { album, sel } = shareSelect;
+    const { album, sel, large = [] } = shareSelect;
     const ph = maNormPhotos(album.photos);
-    const chosen = sel.map(i => ph[i]).filter(Boolean);
+    // 4枚組ごとに「大」を先頭へ並べ替え（未指定は先頭のまま）
+    const ordered = [];
+    for (let k = 0; k < sel.length; k += 4) {
+      const g = sel.slice(k, k + 4);
+      const lead = g.find(idx => large.includes(idx));
+      if (lead != null) ordered.push(lead, ...g.filter(idx => idx !== lead));
+      else ordered.push(...g);
+    }
+    const chosen = ordered.map(i => ph[i]).filter(Boolean);
     if (!chosen.length) { alert("写真を選択してください"); return; }
     setSharing(true);
     try {
@@ -3694,9 +3714,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   // ---- シェアする写真の選択（最大16枚＝1投稿分） ----
   const renderShareSelect = () => {
     if (!shareSelect) return null;
-    const { album, sel } = shareSelect;
+    const { album, sel, large = [] } = shareSelect;
     const ph = maNormPhotos(album.photos);
     const imgN = Math.ceil(sel.length / 4);
+    const bigOf = (order) => { const gs = Math.floor(order / 4) * 4; const g = sel.slice(gs, gs + 4); const ex = g.find(idx => large.includes(idx)); return ex != null ? ex : g[0]; };
     return (
       <div style={{ ...ma.wrap, zIndex: 420 }}>
         <div style={ma.bar}>
@@ -3706,19 +3727,25 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         <div style={ma.body}>
           <div style={{ fontSize: 12, letterSpacing: "0.04em", color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
             シェアする写真を選択（最大{MAX_SHARE_PHOTOS}枚＝1投稿分）。<b>4枚ごとに1画像</b>になり、各画像は「大きい1枚＋小さい3枚」。<br />
-            <b style={{ color: "#111" }}>「大」</b>が付いた写真（各組の先頭）が大きく表示されます。順番をタップで選び直すと「大」も変わります。<br />
+            写真の<b style={{ color: "#111" }}>右側の「大」</b>をタップすると、その写真を大きく表示できます（1画像につき1枚）。<br />
             選択 <b style={{ color: "#111" }}>{sel.length}</b> / {MAX_SHARE_PHOTOS}　→　生成画像 {imgN} 枚
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
             {ph.map((p, i) => {
               const order = sel.indexOf(i);
               const on = order >= 0;
-              const isFeatured = on && order % 4 === 0; // 各4枚組の先頭＝大きく表示
+              const isBig = on && bigOf(order) === i; // この組で大きく表示される写真
               return (
-                <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: isFeatured ? "3px solid #111" : (on ? "2px solid #111" : "2px solid #eee"), opacity: on ? 1 : 0.55 }}>
+                <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: isBig ? "3px solid #111" : (on ? "2px solid #111" : "2px solid #eee"), opacity: on ? 1 : 0.55 }}>
                   <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", background: "#111", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
-                  {isFeatured && <div style={{ position: "absolute", top: 4, right: 4, padding: "1px 6px", background: "#fff", color: "#111", fontSize: 10, fontWeight: 800, letterSpacing: "0.06em", border: "1px solid #111" }}>大</div>}
+                  {on && (
+                    <button onClick={(e) => { e.stopPropagation(); toggleShareLarge(i); }}
+                      title="大きく表示する写真にする"
+                      style={{ position: "absolute", top: 0, right: 0, height: "100%", width: "40%", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: 5 }}>
+                      <span style={{ padding: "2px 8px", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", background: isBig ? "#111" : "rgba(255,255,255,0.85)", color: isBig ? "#fff" : "#111", border: "1px solid #111" }}>大</span>
+                    </button>
+                  )}
                 </div>
               );
             })}
