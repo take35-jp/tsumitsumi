@@ -3140,15 +3140,21 @@ function maCaptionBand(ctx, text, x, y, w, h, fontSize) {
   ctx.font = `600 ${fontSize}px ${MA_FONT}`;
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
   const padX = Math.round(fontSize * 0.7);
-  const maxW = w - padX * 2;
-  let shown = cap;
-  if (ctx.measureText(shown).width > maxW) {
-    while (shown.length > 1 && ctx.measureText(shown + "…").width > maxW) shown = shown.slice(0, -1);
-    shown += "…";
+  const padY = Math.round(fontSize * 0.5);
+  const lineH = Math.round(fontSize * 1.32);
+  let lines = maWrap(ctx, cap, w - padX * 2); // 折り返して全文
+  const maxLines = Math.max(1, Math.floor((h - padY * 2) / lineH)); // セルに物理的に収まる最大行数
+  if (lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(last + "…").width > w - padX * 2) last = last.slice(0, -1);
+    lines[maxLines - 1] = last + "…";
   }
-  const bandH = Math.round(fontSize * 1.9);
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(x, y + h - bandH, w, bandH);
-  ctx.fillStyle = "#fff"; ctx.fillText(shown, x + padX, y + h - Math.round(bandH * 0.34));
+  const bandH = lines.length * lineH + padY * 2;
+  ctx.fillStyle = "rgba(0,0,0,0.62)"; ctx.fillRect(x, y + h - bandH, w, bandH);
+  ctx.fillStyle = "#fff";
+  let ty = y + h - bandH + padY + Math.round(fontSize * 0.92);
+  for (const ln of lines) { ctx.fillText(ln, x + padX, ty); ty += lineH; }
 }
 function maWrap(ctx, text, maxW) {
   const out = [];
@@ -3198,7 +3204,6 @@ async function maRenderAlbumPage(album, group, page, total) {
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
   ctx.textBaseline = "alphabetic";
   if (page === 0) {
-    const HEADER = 244, COVER_H = 632;
     try { ctx.letterSpacing = "4px"; } catch (e) {}
     ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`;
     ctx.fillText("MODELERS ALBUM", M, 44);
@@ -3217,21 +3222,21 @@ async function maRenderAlbumPage(album, group, page, total) {
       let y = 182; for (const ln of lines) { ctx.fillText(ln, M, y); y += 28; }
     }
     if (total > 1) { ctx.fillStyle = "#999"; ctx.font = `600 16px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`1 / ${total}`, W - M, 44); ctx.textAlign = "left"; }
-    ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(M, HEADER - 2); ctx.lineTo(W - M, HEADER - 2); ctx.stroke();
-    maDrawCover(ctx, imgs[0], 0, HEADER, W, COVER_H);
-    maCaptionBand(ctx, group[0] && group[0].caption, 0, HEADER, W, COVER_H, 30);
-    const rowY = HEADER + COVER_H + GAP, rowH = H - rowY - 56, cellW = (W - GAP * 2) / 3;
-    for (let i = 0; i < 3; i++) { const cx = i * (cellW + GAP); maDrawCover(ctx, imgs[i + 1] || null, cx, rowY, cellW, rowH); if (imgs[i + 1]) maCaptionBand(ctx, group[i + 1] && group[i + 1].caption, cx, rowY, cellW, rowH, 18); }
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(M, 242); ctx.lineTo(W - M, 242); ctx.stroke();
   } else {
-    const H1 = 92, FOOT = 44;
     let t = album.title || "UNTITLED"; ctx.font = `800 26px ${MA_FONT}`;
     while (ctx.measureText(t).width > W - 2 * M - 90 && t.length > 1) t = t.slice(0, -1);
     ctx.fillStyle = "#111"; ctx.fillText(t, M, 56);
     ctx.fillStyle = "#999"; ctx.font = `600 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`${page + 1} / ${total}`, W - M, 56); ctx.textAlign = "left";
-    ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M, H1 - 1); ctx.lineTo(W - M, H1 - 1); ctx.stroke();
-    const gridY = H1 + 10, gridH = H - gridY - FOOT, g = 8, cw = (W - g) / 2, chh = (gridH - g) / 2;
-    for (let i = 0; i < 4; i++) { const col = i % 2, row = Math.floor(i / 2), cx = col * (cw + g), cy = gridY + row * (chh + g); maDrawCover(ctx, imgs[i] || null, cx, cy, cw, chh); if (imgs[i]) maCaptionBand(ctx, group[i] && group[i].caption, cx, cy, cw, chh, 23); }
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M, 90); ctx.lineTo(W - M, 90); ctx.stroke();
   }
+  // 共通レイアウト：特集（大）1枚 ＋ サムネ3枚（全ページ共通。先頭が大きい1枚）
+  const headerH = page === 0 ? 244 : 92;
+  const FOOT = 56, areaTop = headerH, areaH = H - areaTop - FOOT;
+  const coverH = Math.round(areaH * 0.65), rowY = areaTop + coverH + GAP, rowH = areaH - coverH - GAP, cellW = (W - GAP * 2) / 3;
+  maDrawCover(ctx, imgs[0], 0, areaTop, W, coverH);
+  if (imgs[0]) maCaptionBand(ctx, group[0] && group[0].caption, 0, areaTop, W, coverH, 30);
+  for (let i = 0; i < 3; i++) { const cx = i * (cellW + GAP); maDrawCover(ctx, imgs[i + 1] || null, cx, rowY, cellW, rowH); if (imgs[i + 1]) maCaptionBand(ctx, group[i + 1] && group[i + 1].caption, cx, rowY, cellW, rowH, 18); }
   ctx.fillStyle = "#999"; ctx.font = `600 19px ${MA_FONT}`; ctx.textAlign = "center";
   ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 20); ctx.textAlign = "left";
   return await new Promise(r => canvas.toBlob(r, "image/png"));
@@ -3700,17 +3705,20 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         </div>
         <div style={ma.body}>
           <div style={{ fontSize: 12, letterSpacing: "0.04em", color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
-            シェアする写真を選択（最大{MAX_SHARE_PHOTOS}枚＝1投稿分）。選んだ順に並び、先頭が表紙（大）になります。<br />
-            選択 <b style={{ color: "#111" }}>{sel.length}</b> / {MAX_SHARE_PHOTOS}　→　生成画像 {imgN} 枚（4枚で1画像）
+            シェアする写真を選択（最大{MAX_SHARE_PHOTOS}枚＝1投稿分）。<b>4枚ごとに1画像</b>になり、各画像は「大きい1枚＋小さい3枚」。<br />
+            <b style={{ color: "#111" }}>「大」</b>が付いた写真（各組の先頭）が大きく表示されます。順番をタップで選び直すと「大」も変わります。<br />
+            選択 <b style={{ color: "#111" }}>{sel.length}</b> / {MAX_SHARE_PHOTOS}　→　生成画像 {imgN} 枚
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
             {ph.map((p, i) => {
               const order = sel.indexOf(i);
               const on = order >= 0;
+              const isFeatured = on && order % 4 === 0; // 各4枚組の先頭＝大きく表示
               return (
-                <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: on ? "2px solid #111" : "2px solid #eee", opacity: on ? 1 : 0.55 }}>
+                <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: isFeatured ? "3px solid #111" : (on ? "2px solid #111" : "2px solid #eee"), opacity: on ? 1 : 0.55 }}>
                   <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", borderRadius: 0, background: "#111", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
+                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", background: "#111", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
+                  {isFeatured && <div style={{ position: "absolute", top: 4, right: 4, padding: "1px 6px", background: "#fff", color: "#111", fontSize: 10, fontWeight: 800, letterSpacing: "0.06em", border: "1px solid #111" }}>大</div>}
                 </div>
               );
             })}
