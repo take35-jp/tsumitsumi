@@ -3762,7 +3762,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
                     <button onClick={(e) => { e.stopPropagation(); toggleShareLarge(i); }}
                       title="大きく表示する写真にする"
                       style={{ position: "absolute", top: 0, right: 0, height: "100%", width: "40%", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: 5 }}>
-                      <span style={{ padding: "2px 8px", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", background: isBig ? "#111" : "rgba(255,255,255,0.85)", color: isBig ? "#fff" : "#111", border: "1px solid #111" }}>大</span>
+                      <span style={{ padding: "2px 8px", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", background: isBig ? "#2563eb" : "rgba(255,255,255,0.85)", color: isBig ? "#fff" : "#111", border: `1px solid ${isBig ? "#2563eb" : "#111"}` }}>大</span>
                     </button>
                   )}
                 </div>
