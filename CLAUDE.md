@@ -27,7 +27,7 @@
 
 ## 2. 現在のバージョン
 
-**v1.36（2026/06/16）**
+**v1.37（2026/06/16）**
 ※ 下記の履歴リストは v1.11 までの記録。v1.12〜v1.30 はコード側 versions 配列が一次情報（CLAUDE.md側は未追従）。最新の追加のみ末尾に追記する運用。
 
 ### バージョニングルール
@@ -56,6 +56,7 @@
 - **v1.34**: キット削除の確認ダイアログをアプリ内モーダル化。従来は編集フォームの「このキットを削除」ボタンで `window.confirm`（ネイティブ）を出していたが、v1.33 のスタイリッシュ化方針に合わせ、アプリ内の専用 Yes/No モーダルに置き換え。`confirmDelete` state（`{ id, name } | null`）を追加。削除ボタンは `setConfirmDelete({ id: editId, name: form.name })` を呼ぶだけにし、App 末尾（`reportTarget` モーダルの直後）に確認モーダルを描画。「本当に削除しますか？」＋キット名＋「この操作は元に戻せません」、ボタンは「いいえ」（グレー）／「はい、削除」（赤 #ef4444）。「はい」で `handleDelete`→フォームリセット→モーダル閉じ。オーバーレイ/背景クリックでキャンセル可。
 - **v1.35**: 完成品アルバムのXシェア画像を高画質化。①完成写真を**無圧縮（原本のまま）でIDBに保存**：`handleCompletedPhoto` が `kitsIdbPhotoSet(photoId, file)` に原本Blobをそのまま渡す（リサイズ・再エンコードなし）。IDB保存に失敗したときだけ localStorage 用に base64 圧縮フォールバック（`COMPLETED_PHOTO_MAXPX=1440 / QUALITY=0.82 / MAXCHARS=620000`）。メインのサムネ用 `handlePhoto` は320px圧縮のまま据え置き＝容量節約。`compressImageToBlob`/`compressImageToBase64` には `maxBytes`/`maxChars` 引数を追加済み（既定値そのままで後方互換）。②`generateKitAlbumImage` に `SCALE=2` を導入：キャンバスを `W*2 x H*2`（2160x2700）にして `ctx.scale(2,2)`、レイアウト計算は論理座標(1080x1350)のまま。`imageSmoothingQuality="high"`。※既存の完成写真は旧解像度のままで、再登録した写真から原本画質になる。アルバムビューア（ライトボックス）も自動的に高精細化。⚠️原本保存のため1枚あたり数MBになり得る（IDBは余裕があるが端末クォータ次第）。
 - **v1.36**: 「これを作ってくれる方に譲りたい！」（`handleWant`・詳細モーダルの未完成キット用ボタン）のXシェアにキット画像を添付。X の intent/tweet URL は画像を自動添付できないため、Web Share API 方式に変更。`getKitImageBlob(kit)` でキットの表示画像（`completedPhotoUrl || photoUrl`、idb-blob/data/httpいずれも対応・httpは image-proxy 経由）を Blob 取得→`File` 化し、`navigator.canShare({files})` 対応端末（主にスマホ）では `navigator.share({files,text})` で画像つき共有（共有シートからX選択でそのまま添付）。非対応（PC等）や活性切れ時は、画像を自動ダウンロード（手動添付用）してから従来どおりテキストの投稿インテントを開くフォールバック。`handleWant` は async 化。
+- **v1.37**: 「モデラーズアルバム」新設（モデラーのポートフォリオ）。モジュールレベルの新コンポーネント `ModelerAlbum`（白黒ミニマル・サンセリフ `MA_FONT`・絵文字なし）を追加し、App から `showModelerAlbum` state＋ヘッダー下の黒帯ボタンで全画面起動。**完全に端末内**：アルバム配列は localStorage `tsumitsumi_modeler_albums`、写真は**原本無圧縮で IDB 保存**（既存の `kitsIdbPhotoSet/Get/Delete`・`idToIdbBlobUrl` を流用、`KitImage` で表示）。1アルバム最大30枚（`MAX_ALBUM_PHOTOS`）。基本項目＝作品名／作成年月(`<input type=month>`)／自由タグ（`tagMasterList` を App から受け取り共有・新規タグはマスタにも追加）／制作コメント。一覧＝カバーのサムネグリッド、閲覧＝B&W詳細＋サムネ→タップで全画面ライトボックス（`‹›`送り＋タップで等倍ズーム。index.html の `user-scalable=no` でピンチ不可のため自前ズーム）。表紙は任意の写真を指定可。**注意**：`removePhoto` は IDB blob を即削除しない（編集キャンセル時の画像破損防止）。実体削除はアルバムごと削除（`deleteAlbum`）時のみ＝removeした写真のblobは軽微な孤児として残る。バックアップ（Excel/CSV）には未対応・端末依存。将来の公開URL（サーバー保存）は未実装で拡張余地。
 
 ---
 

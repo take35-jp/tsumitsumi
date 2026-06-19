@@ -1346,7 +1346,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.36", date: "2026/06/16", isNew: true, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
+    { ver: "v1.37", date: "2026/06/16", isNew: true, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
+    { ver: "v1.36", date: "2026/06/16", isNew: false, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
     { ver: "v1.35", date: "2026/06/13", isNew: false, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
     { ver: "v1.34", date: "2026/06/13", isNew: false, items: ["キット削除時に「本当に削除しますか？」の確認ダイアログを表示するように（誤操作による削除を防止）"] },
     { ver: "v1.33", date: "2026/06/13", isNew: false, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
@@ -1587,10 +1588,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.36 */}
+          {/* v1.37 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.37</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存・作成年月/タグ/コメント記録・タップで拡大。白黒ミニマルなデザイン
+            </div>
+          </div>
+          {/* v1.36 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.36</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
             </div>
@@ -1606,16 +1617,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）
-            </div>
-          </div>
-          {/* v1.34 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.34</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・キット削除時に「本当に削除しますか？」の確認ダイアログを表示（誤操作による削除を防止）
             </div>
           </div>
         </div>
@@ -3089,6 +3090,277 @@ function PriceReportModal({ target, onClose }) {
   );
 }
 
+// ============== MODELERS ALBUM（モデラーのポートフォリオ：端末内・高画質・白黒ミニマル） ==============
+const MA_FONT = "'Helvetica Neue', 'Inter', 'Segoe UI', 'Noto Sans JP', system-ui, sans-serif";
+const MAX_ALBUM_PHOTOS = 30;
+const MA_LS_KEY = "tsumitsumi_modeler_albums";
+
+function fmtYM(ym) {
+  if (!ym) return "";
+  const m = /^(\d{4})-(\d{2})$/.exec(ym);
+  return m ? `${m[1]}.${m[2]}` : ym;
+}
+
+function ModelerAlbum({ onClose, tagMasterList, setTagMasterList }) {
+  const [albums, setAlbums] = useState([]);
+  const [mode, setMode] = useState("list"); // "list" | "edit" | "view"
+  const [draft, setDraft] = useState(null);  // 編集中アルバム
+  const [viewId, setViewId] = useState(null); // 閲覧中アルバム id
+  const [lightbox, setLightbox] = useState(null); // { photos:[], i:number, zoom:bool }
+  const [tagInput, setTagInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const savedRef = useRef(false);
+
+  useEffect(() => {
+    try { const s = JSON.parse(localStorage.getItem(MA_LS_KEY) || "[]"); if (Array.isArray(s)) setAlbums(s); } catch (e) {}
+  }, []);
+  useEffect(() => {
+    if (!savedRef.current) { savedRef.current = true; return; } // 初回マウントの保存はスキップ
+    try { localStorage.setItem(MA_LS_KEY, JSON.stringify(albums)); } catch (e) {}
+  }, [albums]);
+
+  const viewing = viewId ? albums.find(a => a.id === viewId) : null;
+
+  const startNew = () => { setDraft({ id: makePhotoId(), title: "", createdYM: "", tags: [], comment: "", photos: [], cover: 0, createdAt: Date.now(), updatedAt: Date.now() }); setTagInput(""); setMode("edit"); };
+  const startEdit = (a) => { setDraft({ ...a, tags: [...(a.tags || [])], photos: [...(a.photos || [])] }); setTagInput(""); setMode("edit"); };
+
+  const addPhotos = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length || !draft) return;
+    const room = MAX_ALBUM_PHOTOS - draft.photos.length;
+    if (room <= 0) { alert(`写真は1アルバム最大${MAX_ALBUM_PHOTOS}枚までです`); return; }
+    setBusy(true);
+    const added = [];
+    for (const f of files.slice(0, room)) {
+      const id = makePhotoId();
+      const ok = await kitsIdbPhotoSet(id, f); // 原本を無圧縮で IDB に保存（高画質）
+      if (ok) added.push(idToIdbBlobUrl(id));
+    }
+    setBusy(false);
+    if (added.length) setDraft(d => ({ ...d, photos: [...d.photos, ...added].slice(0, MAX_ALBUM_PHOTOS) }));
+    else alert("写真の保存に失敗しました（端末の空き容量をご確認ください）");
+  };
+
+  const removePhoto = (idx) => {
+    // 注意：ここでは IDB の blob を即削除しない（編集をキャンセルした場合に元アルバムの画像が壊れるため）。
+    // 実体の削除はアルバムごと削除する deleteAlbum 時のみ行う。
+    setDraft(d => {
+      const photos = d.photos.filter((_, i) => i !== idx);
+      let cover = d.cover || 0;
+      if (idx === cover) cover = 0; else if (idx < cover) cover -= 1;
+      return { ...d, photos, cover: Math.min(cover, Math.max(0, photos.length - 1)) };
+    });
+  };
+
+  const addNewTag = (raw) => {
+    const t = (raw == null ? tagInput : raw).trim();
+    if (!t) return;
+    setDraft(d => (d.tags.includes(t) ? d : { ...d, tags: [...d.tags, t] }));
+    if (!tagMasterList.includes(t)) setTagMasterList(prev => [...prev, t]);
+    setTagInput("");
+  };
+  const toggleTag = (t) => setDraft(d => ({ ...d, tags: d.tags.includes(t) ? d.tags.filter(x => x !== t) : [...d.tags, t] }));
+
+  const saveDraft = () => {
+    if (!draft) return;
+    if (!draft.title.trim()) { alert("作品名を入力してください"); return; }
+    const a = { ...draft, title: draft.title.trim(), updatedAt: Date.now() };
+    setAlbums(prev => {
+      const i = prev.findIndex(x => x.id === a.id);
+      if (i >= 0) { const c = [...prev]; c[i] = a; return c; }
+      return [a, ...prev];
+    });
+    setMode("list"); setDraft(null);
+  };
+
+  const deleteAlbum = (a) => {
+    if (!window.confirm(`「${a.title || "無題"}」を削除しますか？\nこの操作は元に戻せません。`)) return;
+    (a.photos || []).forEach(u => { if (isIdbBlobUrl(u)) kitsIdbPhotoDelete(idbBlobUrlToId(u)); });
+    setAlbums(prev => prev.filter(x => x.id !== a.id));
+    setMode("list"); setDraft(null); setViewId(null);
+  };
+
+  const ma = {
+    wrap: { position: "fixed", inset: 0, zIndex: 300, background: "#fff", color: "#111", fontFamily: MA_FONT, overflowY: "auto", WebkitOverflowScrolling: "touch" },
+    bar: { position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#fff", borderBottom: "1px solid #111" },
+    brand: { fontSize: 14, fontWeight: 800, letterSpacing: "0.24em", margin: 0 },
+    sub: { fontSize: 8, letterSpacing: "0.34em", color: "#999", marginTop: 3 },
+    ghost: { background: "none", border: "1px solid #111", color: "#111", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", cursor: "pointer", borderRadius: 0, whiteSpace: "nowrap" },
+    black: { background: "#111", border: "1px solid #111", color: "#fff", padding: "11px 20px", fontSize: 11, fontWeight: 700, letterSpacing: "0.16em", cursor: "pointer", borderRadius: 0 },
+    body: { padding: "20px 18px 60px", maxWidth: 940, margin: "0 auto" },
+    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 },
+    label: { display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888", marginBottom: 6, textTransform: "uppercase" },
+    input: { width: "100%", boxSizing: "border-box", border: "none", borderBottom: "1px solid #111", padding: "8px 2px", fontSize: 16, fontFamily: MA_FONT, color: "#111", background: "transparent", outline: "none" },
+  };
+
+  // ---- 拡大ライトボックス ----
+  const renderLightbox = () => {
+    if (!lightbox) return null;
+    const { photos, i, zoom } = lightbox;
+    const go = (d) => setLightbox(lb => ({ ...lb, i: (lb.i + d + photos.length) % photos.length, zoom: false }));
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "#000", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", color: "#fff" }}>
+          <span style={{ fontSize: 11, letterSpacing: "0.2em", fontFamily: MA_FONT }}>{i + 1} / {photos.length}</span>
+          <button onClick={() => setLightbox(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer", fontFamily: MA_FONT }}>CLOSE</button>
+        </div>
+        <div style={{ flex: 1, overflow: zoom ? "auto" : "hidden", display: "flex", alignItems: zoom ? "flex-start" : "center", justifyContent: zoom ? "flex-start" : "center", position: "relative" }}>
+          <KitImage src={photos[i]} style={zoom ? { width: "auto", maxWidth: "none", height: "auto", cursor: "zoom-out", display: "block" } : { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", cursor: "zoom-in", display: "block" }} />
+          <div onClick={() => setLightbox(lb => ({ ...lb, zoom: !lb.zoom }))} style={{ position: "absolute", inset: 0 }} title="タップで拡大/縮小" />
+        </div>
+        {photos.length > 1 && !zoom && (
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", pointerEvents: "none" }}>
+            <button onClick={() => go(-1)} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 44, height: 44, fontSize: 22, cursor: "pointer" }}>‹</button>
+            <button onClick={() => go(1)} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 44, height: 44, fontSize: 22, cursor: "pointer" }}>›</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ---- 一覧 ----
+  if (mode === "list") {
+    return (
+      <div style={ma.wrap}>
+        <div style={ma.bar}>
+          <div>
+            <div style={ma.brand}>MODELERS ALBUM</div>
+            <div style={ma.sub}>PORTFOLIO</div>
+          </div>
+          <button style={ma.ghost} onClick={onClose}>CLOSE</button>
+        </div>
+        <div style={ma.body}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+            <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "#888" }}>{albums.length} WORKS</span>
+            <button style={ma.black} onClick={startNew}>NEW ALBUM</button>
+          </div>
+          {albums.length === 0 ? (
+            <div style={{ textAlign: "center", color: "#aaa", padding: "80px 0", fontSize: 13, letterSpacing: "0.1em", lineHeight: 2 }}>
+              作品アルバムがありません<br />「NEW ALBUM」から作成しましょう
+            </div>
+          ) : (
+            <div style={ma.grid}>
+              {albums.map(a => {
+                const cover = (a.photos || [])[a.cover || 0] || (a.photos || [])[0];
+                return (
+                  <div key={a.id} onClick={() => { setViewId(a.id); setMode("view"); }} style={{ cursor: "pointer" }}>
+                    <div style={{ width: "100%", aspectRatio: "1/1", background: "#111", overflow: "hidden", position: "relative" }}>
+                      {cover ? <KitImage src={cover} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 10, letterSpacing: "0.2em" }}>NO IMAGE</div>}
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title || "UNTITLED"}</div>
+                    <div style={{ fontSize: 10, color: "#999", letterSpacing: "0.14em", marginTop: 2 }}>{fmtYM(a.createdYM)}{a.createdYM && (a.photos || []).length ? "  /  " : ""}{(a.photos || []).length ? `${a.photos.length} PHOTOS` : ""}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {renderLightbox()}
+      </div>
+    );
+  }
+
+  // ---- 閲覧 ----
+  if (mode === "view" && viewing) {
+    const a = viewing;
+    return (
+      <div style={ma.wrap}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => { setViewId(null); setMode("list"); }}>BACK</button>
+          <button style={ma.ghost} onClick={() => startEdit(a)}>EDIT</button>
+        </div>
+        <div style={ma.body}>
+          <div style={{ fontSize: 10, letterSpacing: "0.3em", color: "#999" }}>{fmtYM(a.createdYM)}</div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "0.02em", margin: "6px 0 14px", lineHeight: 1.25 }}>{a.title || "UNTITLED"}</h1>
+          {(a.tags || []).length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+              {a.tags.map(t => <span key={t} style={{ border: "1px solid #111", padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>{t}</span>)}
+            </div>
+          )}
+          {a.comment && <p style={{ fontSize: 14, lineHeight: 1.9, color: "#333", whiteSpace: "pre-wrap", margin: "0 0 22px", paddingBottom: 22, borderBottom: "1px solid #eee" }}>{a.comment}</p>}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+            {(a.photos || []).map((p, i) => (
+              <div key={i} onClick={() => setLightbox({ photos: a.photos, i, zoom: false })} style={{ aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", cursor: "zoom-in" }}>
+                <KitImage src={p} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </div>
+            ))}
+          </div>
+          {(a.photos || []).length === 0 && <div style={{ color: "#bbb", fontSize: 12, padding: "40px 0", textAlign: "center" }}>写真がありません</div>}
+        </div>
+        {renderLightbox()}
+      </div>
+    );
+  }
+
+  // ---- 編集 ----
+  if (mode === "edit" && draft) {
+    const masterTags = [...new Set([...(tagMasterList || []), ...draft.tags])];
+    return (
+      <div style={ma.wrap}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => { setMode(viewId ? "view" : "list"); setDraft(null); }}>CANCEL</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            {albums.some(x => x.id === draft.id) && <button style={{ ...ma.ghost, borderColor: "#c00", color: "#c00" }} onClick={() => deleteAlbum(draft)}>DELETE</button>}
+            <button style={ma.black} onClick={saveDraft}>SAVE</button>
+          </div>
+        </div>
+        <div style={ma.body}>
+          <div style={{ marginBottom: 22 }}>
+            <label style={ma.label}>作品名 / Title</label>
+            <input style={ma.input} value={draft.title} onChange={e => setDraft(d => ({ ...d, title: e.target.value }))} placeholder="例：RX-78-2 ガンダム" />
+          </div>
+          <div style={{ marginBottom: 22, maxWidth: 220 }}>
+            <label style={ma.label}>作成年月 / Date</label>
+            <input type="month" style={ma.input} value={draft.createdYM} onChange={e => setDraft(d => ({ ...d, createdYM: e.target.value }))} />
+          </div>
+          <div style={{ marginBottom: 22 }}>
+            <label style={ma.label}>タグ / Tags</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {masterTags.map(t => {
+                const on = draft.tags.includes(t);
+                return <button key={t} onClick={() => toggleTag(t)} style={{ border: "1px solid #111", padding: "4px 11px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", cursor: "pointer", background: on ? "#111" : "#fff", color: on ? "#fff" : "#111" }}>{t}</button>;
+              })}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input style={{ ...ma.input, flex: 1 }} value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addNewTag(); } }} placeholder="新しいタグを追加" />
+              <button style={ma.ghost} onClick={() => addNewTag()}>ADD</button>
+            </div>
+          </div>
+          <div style={{ marginBottom: 26 }}>
+            <label style={ma.label}>制作コメント / Notes</label>
+            <textarea value={draft.comment} onChange={e => setDraft(d => ({ ...d, comment: e.target.value }))} placeholder="制作のこだわり・使用塗料・反省点など自由に" style={{ width: "100%", boxSizing: "border-box", minHeight: 90, border: "1px solid #111", padding: "10px", fontSize: 14, lineHeight: 1.7, fontFamily: MA_FONT, resize: "vertical", outline: "none" }} />
+          </div>
+          <div>
+            <label style={ma.label}>写真 / Photos（最大{MAX_ALBUM_PHOTOS}枚・高画質のまま保存）</label>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
+              {draft.photos.map((p, i) => (
+                <div key={i} style={{ position: "relative", aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", border: (draft.cover || 0) === i ? "2px solid #111" : "2px solid transparent" }}>
+                  <KitImage src={p} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <button onClick={() => removePhoto(i)} style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}>✕</button>
+                  <button onClick={() => setDraft(d => ({ ...d, cover: i }))} style={{ position: "absolute", bottom: 0, left: 0, right: 0, border: "none", background: (draft.cover || 0) === i ? "#111" : "rgba(0,0,0,0.55)", color: "#fff", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", padding: "3px 0", cursor: "pointer" }}>{(draft.cover || 0) === i ? "COVER" : "表紙にする"}</button>
+                </div>
+              ))}
+              {draft.photos.length < MAX_ALBUM_PHOTOS && (
+                <label style={{ aspectRatio: "1/1", border: "1px dashed #111", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11, letterSpacing: "0.1em", color: "#111", gap: 4 }}>
+                  <span style={{ fontSize: 22, fontWeight: 300 }}>+</span>
+                  <span>{busy ? "保存中…" : "ADD"}</span>
+                  <span style={{ fontSize: 9, color: "#999" }}>{draft.photos.length}/{MAX_ALBUM_PHOTOS}</span>
+                  <input type="file" accept="image/*" multiple onChange={addPhotos} style={{ display: "none" }} disabled={busy} />
+                </label>
+              )}
+            </div>
+          </div>
+        </div>
+        {renderLightbox()}
+      </div>
+    );
+  }
+
+  return null;
+}
+
 // ---- Main App ----
 export default function App() {
   const [kits, setKits] = useState(() => {
@@ -3291,6 +3563,7 @@ export default function App() {
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
+  const [showModelerAlbum, setShowModelerAlbum] = useState(false); // モデラーズアルバム（ポートフォリオ）表示
   const [shareKit, setShareKit] = useState(null); // 単一キットの完成品シェア対象
   const [myXId, setMyXId] = useState("");
   const [filterSeries, setFilterSeries] = useState("");
@@ -4045,6 +4318,12 @@ export default function App() {
         </a>
       </div>
 
+      <button onClick={() => setShowModelerAlbum(true)}
+        style={{ display: bulkMode ? "none" : "flex", alignItems: "center", justifyContent: "center", gap: 12, width: "100%", boxSizing: "border-box", padding: "11px 16px", background: "#111", color: "#fff", border: "none", cursor: "pointer", fontFamily: "'Helvetica Neue', 'Inter', 'Noto Sans JP', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: "0.28em" }}>
+        MODELERS ALBUM
+        <span style={{ fontSize: 9, letterSpacing: "0.2em", color: "#9ca3af", fontWeight: 600 }}>PORTFOLIO ›</span>
+      </button>
+
       {showSearch && !bulkMode && (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "10px 16px" }}>
           <input autoFocus
@@ -4603,6 +4882,13 @@ export default function App() {
               onUncomplete={(k) => { setAlbumKit(null); toggleComplete(k.id); }} />
           </div>
         </div>
+      )}
+
+      {showModelerAlbum && (
+        <ModelerAlbum
+          onClose={() => setShowModelerAlbum(false)}
+          tagMasterList={tagMasterList}
+          setTagMasterList={setTagMasterList} />
       )}
 
       {shareKit && (
