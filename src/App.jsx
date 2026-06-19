@@ -3281,6 +3281,16 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   };
   const toggleTag = (t) => setDraft(d => ({ ...d, tags: d.tags.includes(t) ? d.tags.filter(x => x !== t) : [...d.tags, t] }));
   const setCaption = (i, caption) => setDraft(d => ({ ...d, photos: d.photos.map((p, idx) => (idx === i ? { ...p, caption } : p)) }));
+  // 写真の並べ替え（‹ ›で前後に1つ移動）。表紙(cover)indexも追従させる
+  const movePhoto = (i, dir) => setDraft(d => {
+    const j = i + dir;
+    if (j < 0 || j >= d.photos.length) return d;
+    const photos = [...d.photos];
+    [photos[i], photos[j]] = [photos[j], photos[i]];
+    let cover = d.cover || 0;
+    if (cover === i) cover = j; else if (cover === j) cover = i;
+    return { ...d, photos, cover };
+  });
 
   // タグの改名・削除（マスタ＋全アルバム＋全キットへ反映＝アプリ全体で統一）
   const renameTag = (oldT, rawNew) => {
@@ -3528,6 +3538,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
                 <div key={i}>
                   <div style={{ position: "relative", aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", border: (draft.cover || 0) === i ? "2px solid #111" : "2px solid transparent" }}>
                     <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <div style={{ position: "absolute", top: 4, left: 4, display: "flex", gap: 4 }}>
+                      <button onClick={() => movePhoto(i, -1)} disabled={i === 0} style={{ width: 24, height: 24, border: "none", borderRadius: "50%", background: i === 0 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === 0 ? "default" : "pointer" }} title="前へ">‹</button>
+                      <button onClick={() => movePhoto(i, 1)} disabled={i === draft.photos.length - 1} style={{ width: 24, height: 24, border: "none", borderRadius: "50%", background: i === draft.photos.length - 1 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === draft.photos.length - 1 ? "default" : "pointer" }} title="後ろへ">›</button>
+                    </div>
                     <button onClick={() => removePhoto(i)} style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}>✕</button>
                     <button onClick={() => setDraft(d => ({ ...d, cover: i }))} style={{ position: "absolute", bottom: 0, left: 0, right: 0, border: "none", background: (draft.cover || 0) === i ? "#111" : "rgba(0,0,0,0.55)", color: "#fff", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", padding: "3px 0", cursor: "pointer" }}>{(draft.cover || 0) === i ? "COVER" : "表紙にする"}</button>
                   </div>
