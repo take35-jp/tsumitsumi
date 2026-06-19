@@ -3415,42 +3415,61 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     if (e.button != null && e.button !== 0) return;
     if (e.target.closest && e.target.closest("button")) return; // ✕/‹›/表紙ボタンの操作は除外
     const r = dragRef.current;
-    r.from = i; r.sx = e.clientX; r.sy = e.clientY; r.pid = e.pointerId; r.node = e.currentTarget; r.active = false;
+    r.from = i; r.sx = e.clientX; r.sy = e.clientY; r.active = false;
     clearTimeout(r.timer);
     r.timer = setTimeout(() => {
       r.active = true;
-      try { r.node.setPointerCapture(r.pid); } catch (_) {}
       try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
       setDragView({ x: r.sx, y: r.sy, url: p.url });
+      // 発動後は window に非passiveのtouchmove等を張り、スクロールを止めつつ指に追従させる
+      const move = (ev) => {
+        if (ev.cancelable) ev.preventDefault();
+        const pt = ev.touches ? ev.touches[0] : ev;
+        if (pt) setDragView(v => (v ? { ...v, x: pt.clientX, y: pt.clientY } : v));
+      };
+      const end = (ev) => {
+        const pt = ev.changedTouches ? ev.changedTouches[0] : ev;
+        finishPhotoDrag(pt ? pt.clientX : r.sx, pt ? pt.clientY : r.sy);
+      };
+      r.move = move; r.end = end;
+      window.addEventListener("touchmove", move, { passive: false });
+      window.addEventListener("mousemove", move);
+      window.addEventListener("touchend", end);
+      window.addEventListener("mouseup", end);
+      window.addEventListener("touchcancel", end);
     }, 260);
   };
   const onPhotoPointerMove = (e) => {
     const r = dragRef.current;
-    if (!r.active) {
-      if (r.timer && (Math.abs(e.clientX - r.sx) > 10 || Math.abs(e.clientY - r.sy) > 10)) { clearTimeout(r.timer); r.timer = null; r.from = -1; }
-      return;
+    // 発動前に動いたらスクロール扱い＝長押しキャンセル（発動後の追従は window 側で処理）
+    if (!r.active && r.timer && (Math.abs(e.clientX - r.sx) > 10 || Math.abs(e.clientY - r.sy) > 10)) {
+      clearTimeout(r.timer); r.timer = null; r.from = -1;
     }
-    e.preventDefault();
-    setDragView(v => (v ? { ...v, x: e.clientX, y: e.clientY } : v));
   };
-  const onPhotoPointerUp = (e) => {
+  const onPhotoPointerUp = () => {
     const r = dragRef.current;
-    if (r.timer) { clearTimeout(r.timer); r.timer = null; }
+    if (!r.active && r.timer) { clearTimeout(r.timer); r.timer = null; r.from = -1; } // タップ（発動前）だけ後始末。発動後は window の end が処理
+  };
+  const finishPhotoDrag = (x, y) => {
+    const r = dragRef.current;
+    if (r.move) { window.removeEventListener("touchmove", r.move, { passive: false }); window.removeEventListener("mousemove", r.move); }
+    if (r.end) { window.removeEventListener("touchend", r.end); window.removeEventListener("mouseup", r.end); window.removeEventListener("touchcancel", r.end); }
     if (r.active) {
-      const from = r.from, to = photoCellIndexAt(e.clientX, e.clientY);
+      const from = r.from, to = photoCellIndexAt(x, y);
       if (from >= 0 && to >= 0 && to !== from) {
         setDraft(d => {
           const photos = [...d.photos];
           const coverUrl = (photos[d.cover || 0] || {}).url;
           const [moved] = photos.splice(from, 1);
           photos.splice(to, 0, moved);
-          let cover = photos.findIndex(x => x.url === coverUrl);
+          let cover = photos.findIndex(z => z.url === coverUrl);
           if (cover < 0) cover = 0;
           return { ...d, photos, cover };
         });
       }
     }
-    r.active = false; r.from = -1; r.node = null;
+    if (r.timer) { clearTimeout(r.timer); r.timer = null; }
+    r.active = false; r.from = -1; r.move = null; r.end = null;
     setDragView(null);
   };
 
