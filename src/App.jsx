@@ -3552,21 +3552,24 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     setMaBusy(true);
     await new Promise(r => setTimeout(r, 30)); // ロード画面を先に描画
     try {
-      const out = [];
-      for (const a of albums) {
+      // メモリ節約：巨大な単一JSON文字列を作らず、アルバムごとに分割して Blob のパーツにする
+      const parts = [`{"version":1,"type":"modeler_albums","exportedAt":${JSON.stringify(new Date().toISOString())},"albums":[`];
+      for (let ai = 0; ai < albums.length; ai++) {
+        const a = albums[ai];
         const photos = [];
         for (const p of maNormPhotos(a.photos)) {
-          let url = p.url;
-          if (isIdbBlobUrl(url)) {
-            const b = await kitsIdbPhotoGet(idbBlobUrlToId(url));
-            url = b ? await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); }) : "";
+          let u = p.url;
+          if (isIdbBlobUrl(u)) {
+            const b = await kitsIdbPhotoGet(idbBlobUrlToId(u));
+            u = b ? await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); }) : "";
           }
-          if (url) photos.push({ url, caption: p.caption || "" });
+          if (u) photos.push({ url: u, caption: p.caption || "" });
         }
-        out.push({ ...a, photos });
+        parts.push((ai ? "," : "") + JSON.stringify({ ...a, photos }));
+        await new Promise(r => setTimeout(r, 0)); // GC/描画に余裕を与える（メモリ超過での再読み込み回避）
       }
-      const data = JSON.stringify({ version: 1, type: "modeler_albums", exportedAt: new Date().toISOString(), albums: out }, null, 2);
-      const blob = new Blob([data], { type: "application/json" });
+      parts.push("]}");
+      const blob = new Blob(parts, { type: "application/json" });
       // 重い作成と保存(ダウンロード)を分離。保存はボタンのタップ直後に実行する（iOSが遅延DLを遷移扱いして戻る問題を回避）
       const objUrl = URL.createObjectURL(blob);
       setBkReady({ url: objUrl, name: `modelers_album_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) });
