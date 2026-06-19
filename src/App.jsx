@@ -111,6 +111,71 @@ function KitImage({ src, style, alt, onError }) {
   return <img src={resolved} style={style} alt={alt || ""} onError={onError} />;
 }
 
+// ====== サムネイル（縮小表示）======
+// 一覧/グリッドで原本（無圧縮・数MB）をそのまま等倍デコードすると、枚数が多いと
+// メモリを食い尽くしてクラッシュ（特に iOS のホーム画面アプリ）。
+// 縮小した dataURL を作って表示し、生成はキューで1枚ずつ直列化（瞬間メモリを抑制）。
+const maThumbCache = new Map(); // key: "<id>:<maxPx>" -> dataURL
+let maThumbQueue = Promise.resolve();
+function enqueueThumb(fn) {
+  const run = maThumbQueue.then(fn, fn);
+  maThumbQueue = run.then(() => {}, () => {});
+  return run;
+}
+async function makeThumbDataUrl(blob, maxPx, quality) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+    const iw = img.naturalWidth || 1, ih = img.naturalHeight || 1;
+    const scale = Math.min(1, maxPx / Math.max(iw, ih));
+    const w = Math.max(1, Math.round(iw * scale)), h = Math.max(1, Math.round(ih * scale));
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const ctx = c.getContext("2d"); ctx.imageSmoothingQuality = "high"; ctx.drawImage(img, 0, 0, w, h);
+    return c.toDataURL("image/jpeg", quality);
+  } finally { URL.revokeObjectURL(url); }
+}
+// idb-blob の写真は縮小サムネで表示。http/data: はそのまま流す（既に軽い/外部）。
+function MaThumb({ src, maxPx = 480, quality = 0.7, style, alt }) {
+  const [resolved, setResolved] = useState(() => (src && !isIdbBlobUrl(src)) ? src : null);
+  const [missing, setMissing] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setMissing(false);
+    if (!src) { setResolved(null); return; }
+    if (!isIdbBlobUrl(src)) { setResolved(src); return; }
+    const id = idbBlobUrlToId(src);
+    const key = id + ":" + maxPx;
+    if (maThumbCache.has(key)) { setResolved(maThumbCache.get(key)); return; }
+    setResolved(null);
+    enqueueThumb(async () => {
+      if (cancelled) return;
+      const blob = await kitsIdbPhotoGet(id);
+      if (cancelled) return;
+      if (!blob) { setMissing(true); return; }
+      try {
+        const dataUrl = await makeThumbDataUrl(blob, maxPx, quality);
+        if (cancelled) return;
+        maThumbCache.set(key, dataUrl);
+        setResolved(dataUrl);
+      } catch (e) {
+        if (!cancelled) setMissing(true); // 縮小失敗時は無理に原本を出さない（メモリ保護）
+      }
+    });
+    return () => { cancelled = true; };
+  }, [src, maxPx, quality]);
+  if (!resolved) {
+    if (missing) {
+      return (
+        <div style={{ ...style, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }} title="画像データが見つかりません（再アップロードしてください）">
+          <PhotoPlaceholderIcon size={24} />
+        </div>
+      );
+    }
+    return <div style={{ ...style, background: "#f1f1f1" }} />; // 読み込み中
+  }
+  return <img src={resolved} style={style} alt={alt || ""} loading="lazy" />;
+}
+
 const SERIES_OPTIONS = [
   // ── バンダイ ガンプラ ──
   "ガンプラ",
@@ -824,7 +889,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
         </div>
       ) : (
         <div>
-          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
+          <img src={imgSrc} style={{ width: "100%", borderRadius: 0, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
           {scanning && <div style={sc.scanningBox}>バーコードを解析中...</div>}
           {error && (
             <div style={sc.errorBox}>
@@ -863,17 +928,17 @@ function ManualInput({ onDetected }) {
 
   return (
     <div>
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, lineHeight: 1.7, background: "#f8f9fa", borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, lineHeight: 1.7, background: "#f8f9fa", borderRadius: 0, padding: "10px 12px" }}>
         <div style={{ fontWeight: 700, marginBottom: 4 }}>バーコード数字のコピー方法</div>
         <div>① カメラでバーコード<strong>下の数字</strong>を映す</div>
         <div>② 数字が認識されたらタップ→コピー</div>
         <div>③ 下の入力欄に貼り付けると自動検索</div>
       </div>
       <div style={{ display: "flex", gap: 8, paddingBottom: 8 }}>
-        <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+        <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none" }}
           placeholder="JANコード（13桁）" inputMode="numeric" value={val}
           onChange={handleChange} onPaste={handlePaste} />
-        <button style={{ padding: "10px 16px", background: val.length >= 8 ? "#111" : "#d1d5db", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: val.length >= 8 ? "pointer" : "default" }}
+        <button style={{ padding: "10px 16px", background: val.length >= 8 ? "#111" : "#d1d5db", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 600, cursor: val.length >= 8 ? "pointer" : "default" }}
           onClick={() => val.length >= 8 && onDetected(val)}>検索</button>
       </div>
     </div>
@@ -881,22 +946,22 @@ function ManualInput({ onDetected }) {
 }
 
 const sc = {
-  wrap: { background: "#fff", borderRadius: "0 0 20px 20px", width: "100%", maxWidth: 480, padding: "20px 20px 28px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 28px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
-  closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
-  videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
+  closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 0, fontWeight: 600 },
+  videoWrap: { position: "relative", background: "#111", borderRadius: 0, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
   dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-  frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)" },
+  frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 0, boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)" },
   hint: { position: "absolute", bottom: 28, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12 },
   tapHint: { position: "absolute", bottom: 10, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600 },
-  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
-  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
-  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
-  retakeBtn: { display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
+  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 0, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
+  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
+  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 0, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
+  retakeBtn: { display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
-  dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
+  dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 0, padding: "3px 12px", margin: "0 auto" },
 };
 
 // ---- Kit Name Input with Suggestions ----
@@ -982,7 +1047,7 @@ function KitNameInput({ value, onChange, onSelect }) {
               {item.photoUrl && <KitImage src={item.photoUrl} style={suggS.thumb} />}
               <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
                 {item.scale && (
-                  <span style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: 6, padding: "1px 7px", fontSize: 10, fontWeight: 700, marginBottom: 3 }}>
+                  <span style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: 0, padding: "1px 7px", fontSize: 10, fontWeight: 700, marginBottom: 3 }}>
                     {item.scale}
                   </span>
                 )}
@@ -999,10 +1064,10 @@ function KitNameInput({ value, onChange, onSelect }) {
 }
 
 const suggS = {
-  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
-  list: { background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4, overflow: "hidden" },
+  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
+  list: { background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4, overflow: "hidden" },
   item: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0" },
-  thumb: { width: 40, height: 40, objectFit: "cover", borderRadius: 6, flexShrink: 0 },
+  thumb: { width: 40, height: 40, objectFit: "cover", borderRadius: 0, flexShrink: 0 },
   name: { fontSize: 13, color: "#111", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   scale: { fontSize: 11, color: "#4f8ef7", fontWeight: 600, marginTop: 2 },
 };
@@ -1061,7 +1126,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }}>
+      <div style={{ background: "#fff", borderRadius: 0, padding: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <span style={{ fontSize: 17, fontWeight: 700, color: "#111" }}>リストから一括登録</span>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#9ca3af" }}>×</button>
@@ -1074,16 +1139,16 @@ function BrowseModal({ onBulkAdd, onClose }) {
             onChange={(e) => setBrowseQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); search(1, browseQuery); } }}
             placeholder="例: バンダイ HG ガンダム（スペース区切りでAND検索）"
-            style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1.5px solid #d1d5db", fontSize: 14 }}
+            style={{ flex: 1, padding: "10px 12px", borderRadius: 0, border: "1.5px solid #d1d5db", fontSize: 14 }}
           />
           <button
             onClick={() => { setPage(1); search(1, browseQuery); }}
-            style={{ padding: "10px 16px", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+            style={{ padding: "10px 16px", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
             検索
           </button>
         </div>
 
-        <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
+        <div style={{ background: "#fff8e1", borderRadius: 0, padding: "10px 14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
             注意：登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
           </div>
@@ -1102,8 +1167,8 @@ function BrowseModal({ onBulkAdd, onClose }) {
                 const key = getKey(item);
                 const isSelected = !!selectedItems[key];
                 return (
-                  <div key={key} onClick={() => toggleSelect(item)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: isSelected ? "#dcfce7" : "#fff", border: "1.5px solid", borderColor: isSelected ? "#22c55e" : "#e5e7eb", borderRadius: 10, marginBottom: 6, cursor: "pointer" }}>
-                    {item.image_url && <img src={item.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 6 }} />}
+                  <div key={key} onClick={() => toggleSelect(item)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: isSelected ? "#dcfce7" : "#fff", border: "1.5px solid", borderColor: isSelected ? "#22c55e" : "#e5e7eb", borderRadius: 0, marginBottom: 6, cursor: "pointer" }}>
+                    {item.image_url && <img src={item.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
                       {item.scale && <div style={{ fontSize: 11, color: "#6b7280" }}>{item.scale}</div>}
@@ -1117,18 +1182,18 @@ function BrowseModal({ onBulkAdd, onClose }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 8 }}>
               <button
                 disabled={page <= 1}
-                style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: page <= 1 ? "#f3f4f6" : "#fff", borderRadius: 8, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1 }}
+                style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: page <= 1 ? "#f3f4f6" : "#fff", borderRadius: 0, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1 }}
                 onClick={() => { const p = page - 1; setPage(p); search(p); }}>← 前へ</button>
               <span style={{ fontSize: 12, color: "#9ca3af" }}>{page} / {Math.ceil(total / 20) || 1} ページ ({total}件)</span>
               {page * 20 < total && (
-                <button style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: "#fff", borderRadius: 8, fontSize: 13, cursor: "pointer" }}
+                <button style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: "#fff", borderRadius: 0, fontSize: 13, cursor: "pointer" }}
                   onClick={() => { const p = page + 1; setPage(p); search(p); }}>次へ →</button>
               )}
             </div>
 
             {/* 一括登録ボタン */}
             {selectedCount > 0 && (
-              <button style={{ width: "100%", padding: "14px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ width: "100%", padding: "14px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
                 onClick={handleBulkAdd}>
                 ✓ {selectedCount}件をまとめて登録
               </button>
@@ -1208,27 +1273,27 @@ function BackupModal({ kits, onImport, onClose }) {
       </div>
 
       {msg && (
-        <div style={{ background: msgType === "ok" ? "#f0fdf4" : "#fee2e2", color: msgType === "ok" ? "#166534" : "#b91c1c", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16, wordBreak: "break-word" }}>
+        <div style={{ background: msgType === "ok" ? "#f0fdf4" : "#fee2e2", color: msgType === "ok" ? "#166534" : "#b91c1c", borderRadius: 0, padding: "10px 14px", fontSize: 13, marginBottom: 16, wordBreak: "break-word" }}>
           {msg}
         </div>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
+        <div style={{ background: "#f8f9fa", borderRadius: 0, padding: "16px" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>エクスポート（バックアップ）</div>
           <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>現在の積みプラデータをJSONファイルとして保存します。iCloudやGoogleドライブに保存しておくと安心です。</div>
           <button
-            style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+            style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
             onClick={handleExport}>
             ダウンロード（{kits.length}件）
           </button>
         </div>
 
-        <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
+        <div style={{ background: "#f8f9fa", borderRadius: 0, padding: "16px" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>インポート（復元）</div>
           <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>バックアップファイルからデータを復元します。現在のデータは上書きされます。</div>
           <button
-            style={{ width: "100%", padding: "12px 0", background: "#fff", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+            style={{ width: "100%", padding: "12px 0", background: "#fff", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
             onClick={() => fileRef.current.click()}>
             ファイルを選択
           </button>
@@ -1236,7 +1301,7 @@ function BackupModal({ kits, onImport, onClose }) {
         </div>
       </div>
 
-      <div style={{ background: "#fff8e1", borderRadius: 10, padding: "12px 14px", marginTop: 4 }}>
+      <div style={{ background: "#fff8e1", borderRadius: 0, padding: "12px 14px", marginTop: 4 }}>
         <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
           <strong>注意：</strong>SafariとChromeなど、ブラウザの種類が異なるとデータは別々に保存されます。異なるブラウザへ移行する場合は、必ずエクスポートしてからインポートしてください。
         </div>
@@ -1257,10 +1322,10 @@ function BackupModal({ kits, onImport, onClose }) {
 // ---- Bulk Tag Badge ----
 function BulkTagBadge({ tag, onApply, onRemove }) {
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 20, padding: "3px 4px 3px 10px", fontSize: 11, fontWeight: 600, userSelect: "none", WebkitUserSelect: "none" }}>
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 0, padding: "3px 4px 3px 10px", fontSize: 11, fontWeight: 600, userSelect: "none", WebkitUserSelect: "none" }}>
       <span onClick={onApply} style={{ color: "#166534", cursor: "pointer" }}>#{tag}</span>
       <button onClick={onRemove} title="選択キットから外す"
-        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 20, padding: "0 8px", background: "#ef4444", borderRadius: 20, color: "#fff", fontSize: 10, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 20, padding: "0 8px", background: "#ef4444", borderRadius: 0, color: "#fff", fontSize: 10, fontWeight: 700, border: "none", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
         解除
       </button>
     </div>
@@ -1287,7 +1352,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
     : allTags.filter(t => !tags.includes(t)).slice(0, 5);
 
   return (
-    <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", background: "#fafafa" }}>
+    <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 0, padding: "8px 10px", background: "#fafafa" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: tags.length > 0 ? 8 : 0 }}>
         {tags.map(tag => (
           <span key={tag}
@@ -1295,7 +1360,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
               display: "inline-flex", alignItems: "center", gap: 6,
               background: "#f0fdf4",
               color: "#166534",
-              borderRadius: 20, padding: "5px 6px 5px 12px", fontSize: 13, fontWeight: 600,
+              borderRadius: 0, padding: "5px 6px 5px 12px", fontSize: 13, fontWeight: 600,
               userSelect: "none", WebkitUserSelect: "none",
             }}
           >
@@ -1307,7 +1372,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
               style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 24, height: 24, minWidth: 24, minHeight: 24,
-                background: "#ef4444", border: "none", borderRadius: "50%",
+                background: "#ef4444", border: "none", borderRadius: 0,
                 color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer",
                 flexShrink: 0, lineHeight: 1, padding: 0,
                 touchAction: "manipulation",
@@ -1321,7 +1386,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
           {suggestions.map(t => (
             <button key={t} onClick={() => addTag(t)}
-              style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 20, padding: "2px 10px", fontSize: 11, color: "#374151", cursor: "pointer" }}>
+              style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 0, padding: "2px 10px", fontSize: 11, color: "#374151", cursor: "pointer" }}>
               ＋{t}
             </button>
           ))}
@@ -1336,7 +1401,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(input); } }}
         />
         <button
-          style={{ background: "#111", color: "#fff", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
+          style={{ background: "#111", color: "#fff", border: "none", borderRadius: 0, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
           onClick={() => addTag(input)}>追加</button>
       </div>
     </div>
@@ -1346,7 +1411,13 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.35", date: "2026/06/13", isNew: true, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
+    { ver: "v1.41", date: "2026/06/19", isNew: true, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
+    { ver: "v1.40", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
+    { ver: "v1.39", date: "2026/06/19", isNew: false, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
+    { ver: "v1.38", date: "2026/06/19", isNew: false, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
+    { ver: "v1.37", date: "2026/06/16", isNew: false, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
+    { ver: "v1.36", date: "2026/06/16", isNew: false, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
+    { ver: "v1.35", date: "2026/06/13", isNew: false, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
     { ver: "v1.34", date: "2026/06/13", isNew: false, items: ["キット削除時に「本当に削除しますか？」の確認ダイアログを表示するように（誤操作による削除を防止）"] },
     { ver: "v1.33", date: "2026/06/13", isNew: false, items: ["アプリ画面のデザインを刷新（装飾的なアイコン・絵文字を整理してスタイリッシュに）", "画面最上段の完成アルバム共有ボタンを削除（共有は完成品の詳細から）"] },
     { ver: "v1.32", date: "2026/06/13", isNew: false, items: ["完成写真を最大6枚まで登録可能に", "完成タブを「完成品アルバム」に刷新（サムネをタップで写真ギャラリーを表示）", "完成済みキットのカードに「シェア」ボタンを追加（その完成品の写真を1枚の画像にまとめてXシェア）"] },
@@ -1390,9 +1461,9 @@ function AllVersionsModal({ onClose }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {versions.map((v, i) => (
-          <div key={v.ver} style={{ background: v.isNew ? "#f0fdf4" : "#fafafa", border: `1px solid ${v.isNew ? "#bbf7d0" : "#e5e7eb"}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div key={v.ver} style={{ background: v.isNew ? "#f0fdf4" : "#fafafa", border: `1px solid ${v.isNew ? "#bbf7d0" : "#e5e7eb"}`, borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              {v.isNew && <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>}
+              {v.isNew && <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>}
               <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{v.ver}</span>
               <span style={{ fontSize: 11, color: "#9ca3af" }}>{v.date}</span>
             </div>
@@ -1454,7 +1525,7 @@ function StorageGauge({ kits }) {
       <div style={{ marginBottom: 8 }}>
         使用中: {fmt(info.used)} / 約 {fmt(info.max)} ({pct < 1 ? '<1' : pct}%)
       </div>
-      <div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ height: 8, background: '#1f2937', borderRadius: 0, overflow: 'hidden' }}>
         <div style={{ width: Math.max(pct, 0.5) + '%', height: '100%', background: color, transition: 'width 0.3s' }} />
       </div>
       {pct >= 80 && (
@@ -1479,14 +1550,14 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
 
         <div style={hs.section}>
           <div style={{ display: "flex", gap: 8 }}>
-            <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, padding: "14px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, padding: "14px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
               使い方はコチラ →
             </a>
             <button
               onClick={onToggleTheme}
               type="button"
               aria-label={theme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}
-              style={{ flexShrink: 0, padding: "14px 16px", background: "#fef3c7", border: "1.5px solid #fcd34d", borderRadius: 10, color: "#78350f", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>
+              style={{ flexShrink: 0, padding: "14px 16px", background: "#fef3c7", border: "1.5px solid #fcd34d", borderRadius: 0, color: "#78350f", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>
               {theme === "dark" ? "ライト" : "ダーク"}
             </button>
           </div>
@@ -1506,7 +1577,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           onClick={onMigratePhotos}
           disabled={migrateLoading || migrateTargetCount === 0}
           style={{
-            width: "100%", padding: "10px 16px", border: "none", borderRadius: 10,
+            width: "100%", padding: "10px 16px", border: "none", borderRadius: 0,
             background: migrateLoading || migrateTargetCount === 0 ? "#e5e7eb" : "#111",
             color: migrateLoading || migrateTargetCount === 0 ? "#9ca3af" : "#fff",
             fontSize: 13, fontWeight: 700,
@@ -1541,7 +1612,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           href="https://x.com/tsumitsumi_pla"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 20, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 0, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
           𝕏 @tsumitsumi_pla
         </a>
       </div>
@@ -1563,7 +1634,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             { title: "【保存版】ガンプラ初心者が最初に揃える工具5選", desc: "1万円以下で全部そろえる、本当に必要な工具を厳選", url: "/tips/beginner-tools.html", date: "2026/05/27" },
           ].map((t, i) => (
             <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", padding: "10px 12px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, textDecoration: "none", color: "#111" }}>
+              style={{ display: "block", padding: "10px 12px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 0, textDecoration: "none", color: "#111" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#9a3412", marginBottom: 2 }}>{t.title}</div>
               <div style={{ fontSize: 11, color: "#9a3412", opacity: 0.85, lineHeight: 1.5 }}>{t.desc}</div>
               <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>{t.date} 公開</div>
@@ -1586,36 +1657,36 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.35 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          {/* v1.41 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.35</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.41</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）
+              ・モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化）
             </div>
           </div>
-          {/* v1.34 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          {/* v1.40 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.34</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.40</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・キット削除時に「本当に削除しますか？」の確認ダイアログを表示（誤操作による削除を防止）
+              ・モデラーズアルバムのバックアップ復元（ZIP取り込み）で写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）
             </div>
           </div>
-          {/* v1.33 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          {/* v1.39 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.33</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/13</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.39</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・アプリ画面のデザインを刷新（アイコン・絵文字を整理してスタイリッシュに）<br/>
-              ・画面最上段の完成アルバム共有ボタンを削除
+              ・「モデラーズアルバム」を正式公開（画面右上のロゴボタンから起動）<br/>
+              ・画面右上のシェア系ボタンを「Xでシェア」に一本化
             </div>
           </div>
         </div>
@@ -1624,7 +1695,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       <div style={hs.section}>
         <div style={hs.sectionTitle}>プライバシーポリシー</div>
         <div style={hs.desc}>本サービスのプライバシーポリシー、アフィリエイト広告に関する表記、免責事項は別ページにまとめています。</div>
-        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>プライバシーポリシーを開く →</a>
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 0, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>プライバシーポリシーを開く →</a>
         <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, textAlign: "center" }}>当サイトはアフィリエイト広告を利用しています</div>
       </div>
 
@@ -1640,7 +1711,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
 }
 
 const hs = {
-  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" },
@@ -1648,9 +1719,9 @@ const hs = {
   sectionTitle: { fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 10 },
   desc: { fontSize: 13, color: "#6b7280", lineHeight: 1.7, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" },
   item: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "#374151", marginBottom: 6, lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "anywhere" },
-  num: { minWidth: 20, height: 20, background: "#111", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
-  warn: { minWidth: 20, height: 20, background: "#f59e0b", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
-  tip: { fontSize: 12, color: "#4f8ef7", background: "#eff6ff", borderRadius: 8, padding: "6px 10px", marginTop: 8, wordBreak: "break-word", overflowWrap: "anywhere", boxSizing: "border-box", whiteSpace: "normal", display: "block" },
+  num: { minWidth: 20, height: 20, background: "#111", color: "#fff", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
+  warn: { minWidth: 20, height: 20, background: "#f59e0b", color: "#fff", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
+  tip: { fontSize: 12, color: "#4f8ef7", background: "#eff6ff", borderRadius: 0, padding: "6px 10px", marginTop: 8, wordBreak: "break-word", overflowWrap: "anywhere", boxSizing: "border-box", whiteSpace: "normal", display: "block" },
 };
 
 // ---- App Share Modal ----
@@ -1731,12 +1802,12 @@ function AppShareModal({ onClose }) {
 }
 
 const as = {
-  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
   title: { fontSize: 16, fontWeight: 700, color: "#111" },
   closeBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" },
-  appCard: { background: "#f8f9fa", borderRadius: 16, padding: "20px", textAlign: "center", marginBottom: 20 },
-  btn: { width: "100%", padding: "14px 16px", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", textAlign: "left" },
+  appCard: { background: "#f8f9fa", borderRadius: 0, padding: "20px", textAlign: "center", marginBottom: 20 },
+  btn: { width: "100%", padding: "14px 16px", color: "#fff", border: "none", borderRadius: 0, cursor: "pointer", textAlign: "left" },
 };
 
 // ---- タグ編集モーダル ----
@@ -1818,14 +1889,14 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
         <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>新しいタグを作成</div>
         <div style={{ display: "flex", gap: 6 }}>
           <input
-            style={{ flex: 1, border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
+            style={{ flex: 1, border: "1.5px solid #e5e7eb", borderRadius: 0, padding: "6px 10px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
             placeholder="タグ名（例：プレバン限定品）"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addNewTag(); } }}
           />
           <button
-            style={{ background: "#111", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+            style={{ background: "#111", color: "#fff", border: "none", borderRadius: 0, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
             onClick={addNewTag}>＋作成</button>
         </div>
       </div>
@@ -1838,21 +1909,21 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {tagUsage.map(([tag, { count, totalPrice }]) => (
-            <div key={tag} style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
+            <div key={tag} style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 0, padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
               {editingTag === tag ? (
                 <>
                   <input
-                    style={{ flex: 1, border: "1.5px solid #4f8ef7", borderRadius: 6, padding: "4px 8px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
+                    style={{ flex: 1, border: "1.5px solid #4f8ef7", borderRadius: 0, padding: "4px 8px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveEdit(tag); } else if (e.key === "Escape") cancelEdit(); }}
                     autoFocus
                   />
                   <button
-                    style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 0, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
                     onClick={() => saveEdit(tag)}>保存</button>
                   <button
-                    style={{ background: "#fff", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#fff", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: 0, padding: "4px 10px", fontSize: 11, cursor: "pointer", flexShrink: 0 }}
                     onClick={cancelEdit}>取消</button>
                 </>
               ) : (
@@ -1861,10 +1932,10 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
                     #{tag}<span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{count}件{totalPrice > 0 ? ` ¥${totalPrice.toLocaleString()}` : ""}</span>
                   </span>
                   <button
-                    style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 0, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
                     onClick={() => startEdit(tag)}>編集</button>
                   <button
-                    style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 0, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
                     onClick={() => deleteTag(tag, count)}>削除</button>
                 </>
               )}
@@ -2547,7 +2618,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
         <label style={xs.label}>あなたのX ID（省略可）</label>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
           <span style={{ color: "#9ca3af", fontSize: 16 }}>@</span>
-          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none" }}
             placeholder="your_x_id" value={myXId} onChange={(e) => setMyXId(e.target.value.replace(/^@/, ""))} />
         </div>
         <div style={xs.modeRow}>
@@ -2572,17 +2643,17 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
         )}
 
         {/* 画像生成セクション */}
-        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px", marginBottom: 12 }}>
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 6 }}>画像を生成してシェア</div>
           <div style={{ fontSize: 11, color: "#166534", marginBottom: 10 }}>
             {targetKits.length}件 → 画像{totalPages}枚（1枚あたり最大68件）
           </div>
-          <button style={{ width: "100%", padding: "12px 0", background: generating ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: generating ? "default" : "pointer" }}
+          <button style={{ width: "100%", padding: "12px 0", background: generating ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: generating ? "default" : "pointer" }}
             onClick={handleGenerateImages} disabled={generating}>
             {generating ? "生成中..." : `画像を生成してダウンロード（${totalPages}枚）`}
           </button>
           {generatedCount > 0 && (
-            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 0, padding: "12px 14px" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
                 {generatedCount}枚の画像を生成しました
               </div>
@@ -2592,18 +2663,18 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
               </div>
               {canNativeShareImages && (
                 <button onClick={handleNativeShare}
-                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
+                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
                   全画像をまとめて共有（X等を選択）
                 </button>
               )}
               {/* 各ページのプレビュー＋個別保存（data URL 利用で iOS でも確実に表示） */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                 {generatedDataUrls.map((url, i) => (
-                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 8, padding: 8 }}>
+                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 0, padding: 8 }}>
                     <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>画像 {i + 1} / {generatedDataUrls.length}</div>
-                    <img src={url} alt={`page ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
+                    <img src={url} alt={`page ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 0, marginBottom: 6 }} />
                     <button onClick={() => handleSaveOne(i)}
-                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
+                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
                       画像 {i + 1} を保存
                     </button>
                   </div>
@@ -2611,7 +2682,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
               </div>
               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweetForImage(targetKits.length, generatedCount))}`}
                 target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
                 𝕏 Xを開いて投稿する（保存した画像を添付）
               </a>
             </div>
@@ -2619,7 +2690,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
         </div>
 
         {/* テキストのみ投稿 */}
-        <button style={{ width: "100%", padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+        <button style={{ width: "100%", padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
           onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweet())}`, "_blank")}>
           𝕏 テキストのみ投稿
         </button>
@@ -2728,8 +2799,8 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
         <div style={xs.empty}>完成済みのキットがありません。<br/>キットを「完成済み」にすると、完成写真でリッチなアルバムを作れます。</div>
       ) : (<>
         {isSingle ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "10px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10 }}>
-            {getCompletedPhotos(singleKit)[0] && <KitImage src={getCompletedPhotos(singleKit)[0]} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }} />}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "10px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0 }}>
+            {getCompletedPhotos(singleKit)[0] && <KitImage src={getCompletedPhotos(singleKit)[0]} style={{ width: 48, height: 48, borderRadius: 0, objectFit: "cover" }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{singleKit.name}</div>
               <div style={{ fontSize: 11, color: "#166534" }}>完成写真 {singlePhotoCount} 枚を1枚の画像にまとめます</div>
@@ -2737,14 +2808,14 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
           </div>
         ) : (<>
           <label style={xs.label}>アルバムのタイトル</label>
-          <input style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", marginBottom: 14, boxSizing: "border-box" }}
+          <input style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none", marginBottom: 14, boxSizing: "border-box" }}
             placeholder="完成コレクション" value={title} maxLength={24} onChange={(e) => setTitle(e.target.value)} />
         </>)}
 
         <label style={xs.label}>あなたのX ID（省略可）</label>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
           <span style={{ color: "#9ca3af", fontSize: 16 }}>@</span>
-          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none" }}
             placeholder="your_x_id" value={myXId} onChange={(e) => setMyXId(e.target.value.replace(/^@/, ""))} />
         </div>
         {!isSingle && (
@@ -2770,19 +2841,19 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
           </div>
         )}
 
-        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px", marginBottom: 12 }}>
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 6 }}>完成写真でアルバムを生成</div>
           <div style={{ fontSize: 11, color: "#166534", marginBottom: 10 }}>
             {isSingle
               ? `完成写真 ${singlePhotoCount}枚 → 1枚の画像にまとめます`
               : `${targetKits.length}件 → 表紙＋ショーケース 計${totalPages}枚（1ページ4件・完成写真を大きく表示）`}
           </div>
-          <button style={{ width: "100%", padding: "12px 0", background: (generating || targetKits.length === 0) ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: (generating || targetKits.length === 0) ? "default" : "pointer" }}
+          <button style={{ width: "100%", padding: "12px 0", background: (generating || targetKits.length === 0) ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: (generating || targetKits.length === 0) ? "default" : "pointer" }}
             onClick={handleGenerate} disabled={generating || targetKits.length === 0}>
             {generating ? "生成中..." : (isSingle ? "画像を生成" : `アルバム画像を生成（${totalPages}枚）`)}
           </button>
           {generatedBlobs.length > 0 && (
-            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 0, padding: "12px 14px" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
                 {generatedBlobs.length}枚のアルバム画像を生成しました
               </div>
@@ -2792,17 +2863,17 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
               </div>
               {canNativeShareImages && (
                 <button onClick={handleNativeShare}
-                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
+                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
                   全画像をまとめて共有（X等を選択）
                 </button>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                 {generatedDataUrls.map((url, i) => (
-                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 8, padding: 8 }}>
+                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 0, padding: 8 }}>
                     <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>{i === 0 ? "表紙" : `ショーケース ${i}`} / 全{generatedDataUrls.length}枚</div>
-                    <img src={url} alt={`album ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
+                    <img src={url} alt={`album ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 0, marginBottom: 6 }} />
                     <button onClick={() => handleSaveOne(i)}
-                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
+                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
                       この画像を保存
                     </button>
                   </div>
@@ -2810,7 +2881,7 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
               </div>
               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweet())}`}
                 target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
                 𝕏 Xを開いて投稿する（保存した画像を添付）
               </a>
             </div>
@@ -2832,13 +2903,13 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         <div style={xs.empty}>完成写真がまだありません。<br/>キットを編集して完成写真を登録してください。</div>
         {onEdit && (
           <button onClick={() => onEdit(kit)}
-            style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             編集して完成写真を追加
           </button>
         )}
         {onUncomplete && (
           <button onClick={() => onUncomplete(kit)}
-            style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
             完成を解除
           </button>
         )}
@@ -2855,12 +2926,12 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         <button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
       {/* メイン写真（縦長端末でも溢れないよう高さ制限） */}
-      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1", maxHeight: "40vh" }}>
+      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1", maxHeight: "40vh" }}>
         <KitImage src={cur} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
         {photos.length > 1 && (<>
-          <button onClick={() => go(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
-          <button onClick={() => go(1)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>›</button>
-          <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{safeIdx + 1} / {photos.length}</div>
+          <button onClick={() => go(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: 0, border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
+          <button onClick={() => go(1)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: 0, border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>›</button>
+          <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 0 }}>{safeIdx + 1} / {photos.length}</div>
         </>)}
       </div>
       {/* サムネイルストリップ */}
@@ -2868,7 +2939,7 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         <div style={{ display: "flex", gap: 6, marginTop: 10, overflowX: "auto", paddingBottom: 4 }}>
           {photos.map((url, i) => (
             <div key={i} onClick={() => setIdx(i)}
-              style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${i === safeIdx ? "#22c55e" : "#e5e7eb"}`, cursor: "pointer" }}>
+              style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 0, overflow: "hidden", border: `2px solid ${i === safeIdx ? "#22c55e" : "#e5e7eb"}`, cursor: "pointer" }}>
               <KitImage src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           ))}
@@ -2876,27 +2947,27 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
       )}
       {/* メタ情報（★は完成品では非表示） */}
       <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        {kit.scale && <span style={{ fontSize: 12, fontWeight: 700, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "3px 10px" }}>{kit.scale}</span>}
+        {kit.scale && <span style={{ fontSize: 12, fontWeight: 700, background: "#f3f4f6", color: "#374151", borderRadius: 0, padding: "3px 10px" }}>{kit.scale}</span>}
         {kit.series && <span style={{ fontSize: 12, color: "#9ca3af" }}>{kit.series}</span>}
       </div>
       {/* 操作ボタン：編集（写真の追加削除・各項目）／シェア */}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         {onEdit && (
           <button onClick={() => onEdit(kit)}
-            style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             編集
           </button>
         )}
         {onShare && (
           <button onClick={() => onShare(kit)}
-            style={{ flex: 1, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             シェア
           </button>
         )}
       </div>
       {onUncomplete && (
         <button onClick={() => onUncomplete(kit)}
-          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
           完成を解除
         </button>
       )}
@@ -2905,25 +2976,25 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
 }
 
 const xs = {
-  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 32px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 32px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
-  closeBtn: { background: "#f3f4f6", border: "1.5px solid #e5e7eb", fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#111", padding: "10px 18px", borderRadius: 22, minHeight: 40, whiteSpace: "nowrap" },
+  closeBtn: { background: "#f3f4f6", border: "1.5px solid #e5e7eb", fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#111", padding: "10px 18px", borderRadius: 0, minHeight: 40, whiteSpace: "nowrap" },
   label: { display: "block", fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 6 },
   empty: { textAlign: "center", color: "#bbb", padding: "32px 0", fontSize: 14 },
   modeRow: { display: "flex", gap: 8, marginBottom: 14 },
-  modeBtn: { flex: 1, padding: "8px 0", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#6b7280" },
+  modeBtn: { flex: 1, padding: "8px 0", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#6b7280" },
   modeBtnActive: { background: "#111", color: "#fff", border: "1.5px solid #111" },
   kitList: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14, maxHeight: 220, overflowY: "auto" },
-  kitRow: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, cursor: "pointer" },
-  checkbox: { width: 20, height: 20, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  kitThumb: { width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 },
+  kitRow: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 0, cursor: "pointer" },
+  checkbox: { width: 20, height: 20, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  kitThumb: { width: 36, height: 36, borderRadius: 0, objectFit: "cover", flexShrink: 0 },
   kitName: { fontSize: 13, fontWeight: 600, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   kitMeta: { fontSize: 11, color: "#9ca3af", marginTop: 2 },
-  previewBox: { background: "#f8f9fa", borderRadius: 10, padding: "12px 14px", marginBottom: 14 },
+  previewBox: { background: "#f8f9fa", borderRadius: 0, padding: "12px 14px", marginBottom: 14 },
   previewLabel: { fontSize: 11, color: "#9ca3af", fontWeight: 600, marginBottom: 6 },
   previewText: { fontSize: 12, color: "#374151", whiteSpace: "pre-wrap", lineHeight: 1.6 },
-  tweetBtn: { width: "100%", padding: "14px 0", background: "#000", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" },
+  tweetBtn: { width: "100%", padding: "14px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 700, cursor: "pointer" },
 };
 
 // ---- Price Report Modal ----
@@ -3047,11 +3118,11 @@ function PriceReportModal({ target, onClose }) {
           </div>
         ) : (
           <>
-            <div style={{ background: "#f8f9fa", borderRadius: 10, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ background: "#f8f9fa", borderRadius: 0, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 12, alignItems: "center" }}>
               {target.photoUrl ? (
-                <KitImage src={target.photoUrl} style={{ width: 50, height: 50, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                <KitImage src={target.photoUrl} style={{ width: 50, height: 50, borderRadius: 0, objectFit: "cover", flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 50, height: 50, borderRadius: 6, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}></div>
+                <div style={{ width: 50, height: 50, borderRadius: 0, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}></div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#111", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{target.name || "(商品名不明)"}</div>
@@ -3064,7 +3135,7 @@ function PriceReportModal({ target, onClose }) {
             {(target.jan || target.name) && (
               <button
                 type="button"
-                style={{ width: "100%", padding: "10px 0", marginBottom: 14, background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                style={{ width: "100%", padding: "10px 0", marginBottom: 14, background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 0, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
                 onClick={() => {
                   const q = `${target.jan || target.name || ""} 希望小売価格`.trim();
                   window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank", "noopener,noreferrer");
@@ -3077,7 +3148,7 @@ function PriceReportModal({ target, onClose }) {
             <label style={s.label}>コメント(任意・200文字以内)</label>
             <textarea style={{ ...s.input, minHeight: 70, fontFamily: "inherit", resize: "vertical" }} placeholder="情報源(公式サイト等)・補足情報など" value={comment} maxLength={200} onChange={(e) => setComment(e.target.value)} />
             <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "right", marginTop: 2 }}>{comment.length}/200</div>
-            {errMsg && (<div style={{ marginTop: 10, padding: "8px 12px", background: "#fee2e2", color: "#b91c1c", borderRadius: 8, fontSize: 12 }}>{errMsg}</div>)}
+            {errMsg && (<div style={{ marginTop: 10, padding: "8px 12px", background: "#fee2e2", color: "#b91c1c", borderRadius: 0, fontSize: 12 }}>{errMsg}</div>)}
             <div style={s.formBtns}>
               <button style={s.cancelBtn} onClick={onClose} disabled={submitting}>キャンセル</button>
               <button style={s.saveBtn} onClick={handleSubmit} disabled={submitting}>{submitting ? "送信中..." : "報告を送信"}</button>
@@ -3087,6 +3158,1280 @@ function PriceReportModal({ target, onClose }) {
       </div>
     </div>
   );
+}
+
+// ============== MODELERS ALBUM（モデラーのポートフォリオ：端末内・高画質・白黒ミニマル） ==============
+const MA_FONT = "'Helvetica Neue', 'Inter', 'Segoe UI', 'Noto Sans JP', system-ui, sans-serif";
+const MA_TAGS = "#モデラーズアルバム #TSUMITSUMI"; // モデラーズアルバムのXシェア既定ハッシュタグ
+const MAX_ALBUM_PHOTOS = 30;
+const MA_LS_KEY = "tsumitsumi_modeler_albums";
+
+function fmtYM(ym) {
+  if (!ym) return "";
+  const m = /^(\d{4})-(\d{2})$/.exec(ym);
+  return m ? `${m[1]}.${m[2]}` : ym;
+}
+
+// モデラーズアルバム：写真は {url, caption} で保持（旧データ＝文字列は移行）
+function maNormPhotos(arr) {
+  return (Array.isArray(arr) ? arr : []).map(p => (typeof p === "string" ? { url: p, caption: "" } : { url: (p && p.url) || "", caption: (p && p.caption) || "" })).filter(p => p.url);
+}
+async function maLoadImage(src) {
+  if (!src) return null;
+  let url = src;
+  if (isIdbBlobUrl(src)) {
+    const blob = await kitsIdbPhotoGet(idbBlobUrlToId(src));
+    if (!blob) return null;
+    // objectURL の revoke タイミング問題（端末によりcanvas描画前に無効化され画像が抜ける）を避けるため dataURL 化
+    url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || null); fr.onerror = () => res(null); fr.readAsDataURL(blob); });
+    if (!url) return null;
+  } else if (!src.startsWith("data:")) {
+    url = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+  }
+  return await new Promise(res => {
+    const im = new Image();
+    if (typeof url === "string" && url.startsWith("http")) im.crossOrigin = "anonymous";
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = url;
+  });
+}
+function maDrawCover(ctx, img, dx, dy, dw, dh) {
+  if (!img) { ctx.fillStyle = "#ececec"; ctx.fillRect(dx, dy, dw, dh); return; }
+  const iw = img.naturalWidth, ih = img.naturalHeight, s = Math.max(dw / iw, dh / ih), w = iw * s, h = ih * s;
+  ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+  ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h); ctx.restore();
+}
+// cover を基準にズーム(z≥1)＋位置(ox,oy∈[0,1])で描画（BaAdjust のプレビューと同じ計算）
+function maDrawTransformed(ctx, img, dx, dy, dw, dh, t) {
+  if (!img) { ctx.fillStyle = "#ececec"; ctx.fillRect(dx, dy, dw, dh); return; }
+  const z = (t && t.z) || 1, ox = (t && t.ox != null) ? t.ox : 0.5, oy = (t && t.oy != null) ? t.oy : 0.5;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const s = Math.max(dw / iw, dh / ih) * z, w = iw * s, h = ih * s;
+  ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+  ctx.drawImage(img, dx - (w - dw) * ox, dy - (h - dh) * oy, w, h); ctx.restore();
+}
+// 写真領域の下部にコメント帯（半透明黒＋白文字・1行省略）を重ねる
+function maCaptionBand(ctx, text, x, y, w, h, fontSize) {
+  const cap = (text || "").trim();
+  if (!cap) return;
+  ctx.font = `600 ${fontSize}px ${MA_FONT}`;
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  const padX = Math.round(fontSize * 0.7);
+  const padY = Math.round(fontSize * 0.5);
+  const lineH = Math.round(fontSize * 1.32);
+  let lines = maWrap(ctx, cap, w - padX * 2); // 折り返して全文
+  const maxLines = Math.max(1, Math.floor((h - padY * 2) / lineH)); // セルに物理的に収まる最大行数
+  if (lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(last + "…").width > w - padX * 2) last = last.slice(0, -1);
+    lines[maxLines - 1] = last + "…";
+  }
+  const bandH = lines.length * lineH + padY * 2;
+  ctx.fillStyle = "rgba(0,0,0,0.62)"; ctx.fillRect(x, y + h - bandH, w, bandH);
+  ctx.fillStyle = "#fff";
+  let ty = y + h - bandH + padY + Math.round(fontSize * 0.92);
+  for (const ln of lines) { ctx.fillText(ln, x + padX, ty); ty += lineH; }
+}
+function maWrap(ctx, text, maxW) {
+  const out = [];
+  (text || "").split(/\n/).forEach(line => {
+    let cur = "";
+    for (const ch of Array.from(line)) {
+      if (cur && ctx.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; } else cur += ch;
+    }
+    out.push(cur);
+  });
+  return out;
+}
+// 1写真：ヘッダー（黒帯）にコメントを入れた画像
+async function generateModelerPhotoImage(photo, album) {
+  const S = 2, W = 1080, padX = 48;
+  const img = await maLoadImage(photo && photo.url);
+  const caption = ((photo && photo.caption) || "").trim() || (album && album.title) || "";
+  let imgH = Math.round(W * 0.75);
+  if (img) imgH = Math.max(540, Math.min(Math.round(W * img.naturalHeight / img.naturalWidth), 1500));
+  const probe = document.createElement("canvas").getContext("2d");
+  probe.font = `600 32px ${MA_FONT}`;
+  const capLines = caption ? maWrap(probe, caption, W - padX * 2).slice(0, 3) : [];
+  const headerH = 56 + (capLines.length ? capLines.length * 42 + 16 : 0);
+  const H = headerH + imgH;
+  const canvas = document.createElement("canvas");
+  canvas.width = W * S; canvas.height = H * S;
+  const ctx = canvas.getContext("2d"); ctx.scale(S, S); ctx.imageSmoothingQuality = "high";
+  ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 0, W, headerH);
+  try { ctx.letterSpacing = "3px"; } catch (e) {}
+  ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`; ctx.textBaseline = "alphabetic";
+  ctx.fillText("MODELERS ALBUM", padX, 34);
+  try { ctx.letterSpacing = "0px"; } catch (e) {}
+  if (capLines.length) {
+    ctx.fillStyle = "#fff"; ctx.font = `600 32px ${MA_FONT}`;
+    let y = 56 + 30; for (const ln of capLines) { ctx.fillText(ln, padX, y); y += 42; }
+  }
+  maDrawCover(ctx, img, 0, headerH, W, imgH);
+  return await new Promise(r => canvas.toBlob(r, "image/png"));
+}
+// アルバム全体：全写真を4枚ずつ複数画像に分割（24枚→6画像）。1枚目＝表紙(大)＋他3＋ヘッダー、2枚目以降＝2x2グリッド。
+async function maRenderAlbumPage(album, group, page, total) {
+  const S = 2, W = 1080, H = 1350, M = 46, GAP = 8;
+  const imgs = await Promise.all(group.map(p => (p ? maLoadImage(p.url) : Promise.resolve(null))));
+  const canvas = document.createElement("canvas");
+  canvas.width = W * S; canvas.height = H * S;
+  const ctx = canvas.getContext("2d"); ctx.scale(S, S); ctx.imageSmoothingQuality = "high";
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+  ctx.textBaseline = "alphabetic";
+  if (page === 0) {
+    try { ctx.letterSpacing = "4px"; } catch (e) {}
+    ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`;
+    ctx.fillText("MODELERS ALBUM", M, 44);
+    try { ctx.letterSpacing = "0px"; } catch (e) {}
+    const title = album.title || "UNTITLED";
+    let fs = 50; ctx.font = `800 ${fs}px ${MA_FONT}`;
+    while (ctx.measureText(title).width > W - 2 * M && fs > 26) { fs -= 2; ctx.font = `800 ${fs}px ${MA_FONT}`; }
+    let shown = title;
+    if (ctx.measureText(shown).width > W - 2 * M) { while (shown.length > 1 && ctx.measureText(shown + "…").width > W - 2 * M) shown = shown.slice(0, -1); shown += "…"; }
+    ctx.fillStyle = "#111"; ctx.fillText(shown, M, 108);
+    const meta = [fmtYM(album.createdYM), ...(album.tags || [])].filter(Boolean).join("   /   ");
+    if (meta) { ctx.fillStyle = "#777"; ctx.font = `600 20px ${MA_FONT}`; ctx.fillText(meta, M, 146); }
+    if ((album.comment || "").trim()) {
+      ctx.fillStyle = "#444"; ctx.font = `400 21px ${MA_FONT}`;
+      const lines = maWrap(ctx, album.comment.trim(), W - 2 * M).slice(0, 2);
+      let y = 182; for (const ln of lines) { ctx.fillText(ln, M, y); y += 28; }
+    }
+    if (total > 1) { ctx.fillStyle = "#999"; ctx.font = `600 16px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`1 / ${total}`, W - M, 44); ctx.textAlign = "left"; }
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(M, 242); ctx.lineTo(W - M, 242); ctx.stroke();
+  } else {
+    let t = album.title || "UNTITLED"; ctx.font = `800 26px ${MA_FONT}`;
+    while (ctx.measureText(t).width > W - 2 * M - 90 && t.length > 1) t = t.slice(0, -1);
+    ctx.fillStyle = "#111"; ctx.fillText(t, M, 56);
+    ctx.fillStyle = "#999"; ctx.font = `600 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`${page + 1} / ${total}`, W - M, 56); ctx.textAlign = "left";
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M, 90); ctx.lineTo(W - M, 90); ctx.stroke();
+  }
+  // 共通レイアウト：特集（大）1枚 ＋ サムネ3枚（全ページ共通。先頭が大きい1枚）
+  const headerH = page === 0 ? 244 : 92;
+  const FOOT = 56, areaTop = headerH, areaH = H - areaTop - FOOT;
+  const coverH = Math.round(areaH * 0.65), rowY = areaTop + coverH + GAP, rowH = areaH - coverH - GAP, cellW = (W - GAP * 2) / 3;
+  maDrawCover(ctx, imgs[0], 0, areaTop, W, coverH);
+  if (imgs[0]) maCaptionBand(ctx, group[0] && group[0].caption, 0, areaTop, W, coverH, 30);
+  for (let i = 0; i < 3; i++) { const cx = i * (cellW + GAP); maDrawCover(ctx, imgs[i + 1] || null, cx, rowY, cellW, rowH); if (imgs[i + 1]) maCaptionBand(ctx, group[i + 1] && group[i + 1].caption, cx, rowY, cellW, rowH, 18); }
+  ctx.fillStyle = "#999"; ctx.font = `600 19px ${MA_FONT}`; ctx.textAlign = "center";
+  ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 20); ctx.textAlign = "left";
+  return await new Promise(r => canvas.toBlob(r, "image/png"));
+}
+// ordered（{url,caption}配列・先頭が表紙）を渡せばその写真で、無ければ全写真(表紙先頭)で生成
+async function generateModelerAlbumImages(album, ordered) {
+  let list = ordered;
+  if (!list) {
+    const photos = maNormPhotos(album.photos);
+    if (!photos.length) return [];
+    const ci = Math.min(album.cover || 0, Math.max(0, photos.length - 1));
+    list = [photos[ci], ...photos.filter((_, i) => i !== ci)];
+  }
+  list = (list || []).filter(Boolean);
+  if (!list.length) return [];
+  const chunks = [];
+  for (let i = 0; i < list.length; i += 4) chunks.push(list.slice(i, i + 4));
+  const blobs = [];
+  for (let c = 0; c < chunks.length; c++) blobs.push(await maRenderAlbumPage(album, chunks[c], c, chunks.length));
+  return blobs;
+}
+// ビフォーアフター比較：X向け横長16:9(1600x900)1枚。ヘッダー黒帯にコメント、下に BEFORE | AFTER。
+async function generateBeforeAfterImage(beforeP, afterP, comment) {
+  const S = 2, W = 1600, H = 900, padX = 44, gap = 6;
+  const [imgB, imgA] = await Promise.all([maLoadImage(beforeP && beforeP.url), maLoadImage(afterP && afterP.url)]);
+  const cap = (comment || "").trim();
+  const probe = document.createElement("canvas").getContext("2d");
+  probe.font = `600 34px ${MA_FONT}`;
+  const lines = cap ? maWrap(probe, cap, W - padX * 2).slice(0, 2) : [];
+  const headerH = 58 + (lines.length ? lines.length * 44 + 12 : 0);
+  const canvas = document.createElement("canvas");
+  canvas.width = W * S; canvas.height = H * S;
+  const ctx = canvas.getContext("2d"); ctx.scale(S, S); ctx.imageSmoothingQuality = "high";
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+  // header
+  ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 0, W, headerH);
+  ctx.textBaseline = "alphabetic";
+  try { ctx.letterSpacing = "4px"; } catch (e) {}
+  ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`;
+  ctx.fillText("BEFORE / AFTER  —  MODELERS ALBUM", padX, 36);
+  try { ctx.letterSpacing = "0px"; } catch (e) {}
+  if (lines.length) { ctx.fillStyle = "#fff"; ctx.font = `600 34px ${MA_FONT}`; let y = 58 + 32; for (const ln of lines) { ctx.fillText(ln, padX, y); y += 44; } }
+  // photos（ズーム・位置調整を反映）
+  const py = headerH, ph = H - headerH, cw = (W - gap) / 2;
+  maDrawTransformed(ctx, imgB, 0, py, cw, ph, beforeP && beforeP.t);
+  maDrawTransformed(ctx, imgA, cw + gap, py, cw, ph, afterP && afterP.t);
+  // labels
+  const drawLabel = (txt, x) => {
+    ctx.font = `800 24px ${MA_FONT}`;
+    const w = ctx.measureText(txt).width + 30;
+    ctx.fillStyle = "rgba(0,0,0,0.72)"; ctx.fillRect(x, py, w, 46);
+    ctx.fillStyle = "#fff"; ctx.textBaseline = "alphabetic"; ctx.fillText(txt, x + 15, py + 31);
+  };
+  drawLabel("BEFORE", 0);
+  drawLabel("AFTER", cw + gap);
+  return await new Promise(r => canvas.toBlob(r, "image/png"));
+}
+async function maShareImage(blob, filename, text) {
+  if (!blob) { alert("画像の生成に失敗しました"); return; }
+  const file = new File([blob], filename, { type: "image/png" });
+  if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], text }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  try { const u = URL.createObjectURL(file); const a = document.createElement("a"); a.href = u; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); } catch (e) {}
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+}
+// 複数画像をまとめて共有（非対応端末は順次ダウンロード＋テキスト投稿）。X投稿は最大4枚/件のため、保存して複数投稿に使う想定。
+async function maShareImages(blobs, baseName, text) {
+  const list = (blobs || []).filter(Boolean);
+  if (!list.length) { alert("画像の生成に失敗しました"); return; }
+  if (list.length === 1) return maShareImage(list[0], `${baseName}.png`, text);
+  const files = list.map((b, i) => new File([b], `${baseName}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
+  if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files })) {
+    try { await navigator.share({ files, text }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  for (const f of files) { try { const u = URL.createObjectURL(f); const a = document.createElement("a"); a.href = u; a.download = f.name; a.click(); await new Promise(r => setTimeout(r, 350)); URL.revokeObjectURL(u); } catch (e) {} }
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+}
+
+// ===== モデラーズアルバム バックアップ用 ZIP（store・無圧縮）。写真は元データのまま詰めてメモリ節約 =====
+const MA_CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
+function maCrc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = MA_CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function maPhotoToBlob(url) {
+  if (isIdbBlobUrl(url)) return await kitsIdbPhotoGet(idbBlobUrlToId(url));
+  if (typeof url === "string" && url.startsWith("data:")) { try { return await (await fetch(url)).blob(); } catch (e) { return null; } }
+  if (typeof url === "string" && url) { try { return await (await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)).blob(); } catch (e) { return null; } }
+  return null;
+}
+async function buildModelerZip(targets) {
+  const enc = new TextEncoder();
+  const u16 = (n) => [n & 255, (n >>> 8) & 255];
+  const u32 = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const parts = [], central = []; let offset = 0;
+  const addEntry = (name, dataPart, crc, size) => {
+    const nb = enc.encode(name);
+    const lh = [].concat(u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(size), u32(size), u16(nb.length), u16(0));
+    const lhU8 = new Uint8Array(lh.length + nb.length); lhU8.set(lh, 0); lhU8.set(nb, lh.length);
+    parts.push(lhU8); parts.push(dataPart);
+    const cd = [].concat(u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(size), u32(size), u16(nb.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset));
+    const cdU8 = new Uint8Array(cd.length + nb.length); cdU8.set(cd, 0); cdU8.set(nb, cd.length); central.push(cdU8);
+    offset += lhU8.length + size;
+  };
+  const manifestAlbums = []; let pc = 0;
+  for (const a of targets) {
+    const mphotos = [];
+    for (const p of maNormPhotos(a.photos)) {
+      const blob = await maPhotoToBlob(p.url);
+      if (!blob) continue;
+      const ext = (blob.type || "").includes("png") ? "png" : (blob.type || "").includes("webp") ? "webp" : "jpg";
+      const fname = `photos/${pc++}_${makePhotoId()}.${ext}`;
+      const buf = new Uint8Array(await blob.arrayBuffer()); // CRC計算用（1枚ずつ・直後に破棄）
+      addEntry(fname, blob, maCrc32(buf), buf.length); // データ部は元のBlob参照（JSヒープに載せない）
+      mphotos.push({ file: fname, caption: p.caption || "" });
+      await new Promise(r => setTimeout(r, 0));
+    }
+    manifestAlbums.push({ ...a, photos: mphotos });
+  }
+  const man = enc.encode(JSON.stringify({ version: 1, type: "modeler_albums_zip", exportedAt: new Date().toISOString(), albums: manifestAlbums }));
+  addEntry("manifest.json", man, maCrc32(man), man.length);
+  const cdStart = offset; let cdSize = 0;
+  for (const c of central) { parts.push(c); cdSize += c.length; }
+  parts.push(new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length), u32(cdSize), u32(cdStart), u16(0))));
+  return new Blob(parts, { type: "application/zip" });
+}
+async function isZipFile(file) { try { const b = new Uint8Array(await file.slice(0, 2).arrayBuffer()); return b[0] === 0x50 && b[1] === 0x4b; } catch (e) { return false; } }
+async function readModelerZip(file) {
+  const dv = async (s, l) => new DataView(await file.slice(s, s + l).arrayBuffer());
+  let offset = 0, manifest = null; const photoMap = {};
+  while (offset + 4 <= file.size) {
+    const sig = (await dv(offset, 4)).getUint32(0, true);
+    if (sig !== 0x04034b50) break; // ローカルヘッダ以外（中央ディレクトリ等）に到達
+    const h = await dv(offset, 30);
+    const size = h.getUint32(18, true), fnLen = h.getUint16(26, true), exLen = h.getUint16(28, true);
+    const name = new TextDecoder().decode(await file.slice(offset + 30, offset + 30 + fnLen).arrayBuffer());
+    const dataStart = offset + 30 + fnLen + exLen;
+    if (name === "manifest.json") manifest = JSON.parse(await file.slice(dataStart, dataStart + size).text());
+    else if (name.indexOf("photos/") === 0) {
+      // iOS Safari/standalone では、File の遅延スライス（Blob）をそのまま IDB に入れると
+      // 入力クリア後に読み戻しが空/破損になることがある。arrayBuffer で実体化してから保存する。
+      const ext = (name.split(".").pop() || "").toLowerCase();
+      const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+      const ab = await file.slice(dataStart, dataStart + size).arrayBuffer();
+      const id = makePhotoId();
+      if (await kitsIdbPhotoSet(id, new Blob([ab], { type: mime }))) photoMap[name] = idToIdbBlobUrl(id);
+    }
+    offset = dataStart + size;
+    await new Promise(r => setTimeout(r, 0));
+  }
+  if (!manifest) throw new Error("ZIP内に manifest.json がありません");
+  return (manifest.albums || []).map(a => ({
+    ...a, id: a.id || makePhotoId(), cover: a.cover || 0,
+    photos: (a.photos || []).map(ph => ({ url: photoMap[ph.file] || "", caption: ph.caption || "" })).filter(p => p.url),
+  }));
+}
+
+// ビフォーアフター用：画像をドラッグで位置調整＋スライダーでズーム。t={z,ox,oy} を親へ通知
+function BaAdjust({ url, t, onChange }) {
+  const [nat, setNat] = useState(null);
+  const [boxW, setBoxW] = useState(0);
+  const boxRef = useRef(null);
+  const drag = useRef(null);
+  useEffect(() => {
+    const measure = () => { if (boxRef.current) setBoxW(boxRef.current.offsetWidth); };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+  const AR = 790 / 797; // 出力セルにほぼ一致（高さ/幅）
+  const boxH = boxW * AR;
+  const z = t.z || 1, ox = t.ox != null ? t.ox : 0.5, oy = t.oy != null ? t.oy : 0.5;
+  let imgStyle = { display: "none" };
+  if (nat && boxW) {
+    const s = Math.max(boxW / nat.iw, boxH / nat.ih) * z;
+    const dispW = nat.iw * s, dispH = nat.ih * s;
+    imgStyle = { position: "absolute", left: -(dispW - boxW) * ox, top: -(dispH - boxH) * oy, width: dispW, height: dispH, maxWidth: "none", pointerEvents: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" };
+  }
+  const onDown = (e) => { drag.current = { x: e.clientX, y: e.clientY, ox, oy }; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {} };
+  const onMove = (e) => {
+    if (!drag.current || !nat || !boxW) return;
+    e.preventDefault();
+    const s = Math.max(boxW / nat.iw, boxH / nat.ih) * z;
+    const maxX = Math.max(1, nat.iw * s - boxW), maxY = Math.max(1, nat.ih * s - boxH);
+    const nox = Math.max(0, Math.min(1, drag.current.ox - (e.clientX - drag.current.x) / maxX));
+    const noy = Math.max(0, Math.min(1, drag.current.oy - (e.clientY - drag.current.y) / maxY));
+    onChange({ z, ox: nox, oy: noy });
+  };
+  const onUp = () => { drag.current = null; };
+  return (
+    <div>
+      <div ref={boxRef} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+        style={{ position: "relative", width: "100%", aspectRatio: "797 / 790", overflow: "hidden", background: "#111", cursor: "move", touchAction: "none" }}>
+        <img src={url} alt="" draggable={false} onLoad={(e) => setNat({ iw: e.target.naturalWidth, ih: e.target.naturalHeight })} style={imgStyle} />
+      </div>
+      <input type="range" min="1" max="3" step="0.02" value={z}
+        onChange={(e) => onChange({ z: parseFloat(e.target.value), ox, oy })}
+        style={{ width: "100%", marginTop: 6 }} title="ズーム" />
+    </div>
+  );
+}
+
+function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits }) {
+  const [albums, setAlbums] = useState([]);
+  const [mode, setMode] = useState("list"); // "list" | "edit" | "view"
+  const [draft, setDraft] = useState(null);  // 編集中アルバム
+  const [viewId, setViewId] = useState(null); // 閲覧中アルバム id
+  const [lightbox, setLightbox] = useState(null); // { photos:[], i:number, zoom:bool }
+  const [tagInput, setTagInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [shareResult, setShareResult] = useState(null); // シェア結果 { files, urls, text }
+  const [shareSelect, setShareSelect] = useState(null); // 写真選択 { album, sel:number[] }（最大16枚）
+  const [baSelect, setBaSelect] = useState(null); // ビフォーアフター { album, sel:[before,after], comment }
+  const [maHelp, setMaHelp] = useState(false); // 取扱説明書（使い方）表示
+  const [maBackup, setMaBackup] = useState(false); // バックアップ画面表示
+  const [maBusy, setMaBusy] = useState(false); // バックアップ作成/復元中のロード表示
+  const [bkReady, setBkReady] = useState(null); // 作成済みバックアップ { url, name, sizeMB }（タップ直後にDL）
+  const [tagManage, setTagManage] = useState(false);
+  const [editTag, setEditTag] = useState(null); // 改名中のタグ名
+  const [editTagVal, setEditTagVal] = useState("");
+  const savedRef = useRef(false);
+  const maFileRef = useRef(null); // バックアップ読み込み用 file input
+
+  useEffect(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem(MA_LS_KEY) || "[]");
+      if (Array.isArray(s)) setAlbums(s.map(a => ({ ...a, photos: maNormPhotos(a.photos) }))); // 旧データ（文字列）を {url,caption} へ移行
+    } catch (e) {}
+  }, []);
+  useEffect(() => {
+    if (!savedRef.current) { savedRef.current = true; return; } // 初回マウントの保存はスキップ
+    try { localStorage.setItem(MA_LS_KEY, JSON.stringify(albums)); } catch (e) {}
+  }, [albums]);
+
+  const viewing = viewId ? albums.find(a => a.id === viewId) : null;
+
+  const startNew = () => { setDraft({ id: makePhotoId(), title: "", createdYM: "", tags: [], comment: "", photos: [], cover: 0, createdAt: Date.now(), updatedAt: Date.now() }); setTagInput(""); setMode("edit"); };
+  const startEdit = (a) => { setDraft({ ...a, tags: [...(a.tags || [])], photos: maNormPhotos(a.photos).map(p => ({ ...p })) }); setTagInput(""); setTagManage(false); setMode("edit"); };
+
+  const addPhotos = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length || !draft) return;
+    const room = MAX_ALBUM_PHOTOS - draft.photos.length;
+    if (room <= 0) { alert(`写真は1アルバム最大${MAX_ALBUM_PHOTOS}枚までです`); return; }
+    setBusy(true);
+    const added = [];
+    for (const f of files.slice(0, room)) {
+      const id = makePhotoId();
+      const ok = await kitsIdbPhotoSet(id, f); // 原本を無圧縮で IDB に保存（高画質）
+      if (ok) added.push({ url: idToIdbBlobUrl(id), caption: "" });
+    }
+    setBusy(false);
+    if (added.length) setDraft(d => ({ ...d, photos: [...d.photos, ...added].slice(0, MAX_ALBUM_PHOTOS) }));
+    else alert("写真の保存に失敗しました（端末の空き容量をご確認ください）");
+  };
+
+  const removePhoto = (idx) => {
+    // 注意：ここでは IDB の blob を即削除しない（編集をキャンセルした場合に元アルバムの画像が壊れるため）。
+    // 実体の削除はアルバムごと削除する deleteAlbum 時のみ行う。
+    setDraft(d => {
+      const photos = d.photos.filter((_, i) => i !== idx);
+      let cover = d.cover || 0;
+      if (idx === cover) cover = 0; else if (idx < cover) cover -= 1;
+      return { ...d, photos, cover: Math.min(cover, Math.max(0, photos.length - 1)) };
+    });
+  };
+
+  const addNewTag = (raw) => {
+    const t = (raw == null ? tagInput : raw).trim();
+    if (!t) return;
+    setDraft(d => (d.tags.includes(t) ? d : { ...d, tags: [...d.tags, t] }));
+    if (!tagMasterList.includes(t)) setTagMasterList(prev => [...prev, t]);
+    setTagInput("");
+  };
+  const toggleTag = (t) => setDraft(d => ({ ...d, tags: d.tags.includes(t) ? d.tags.filter(x => x !== t) : [...d.tags, t] }));
+  const setCaption = (i, caption) => setDraft(d => ({ ...d, photos: d.photos.map((p, idx) => (idx === i ? { ...p, caption } : p)) }));
+  // 写真の並べ替え（‹ ›で前後に1つ移動）。表紙(cover)indexも追従させる
+  const movePhoto = (i, dir) => setDraft(d => {
+    const j = i + dir;
+    if (j < 0 || j >= d.photos.length) return d;
+    const photos = [...d.photos];
+    [photos[i], photos[j]] = [photos[j], photos[i]];
+    let cover = d.cover || 0;
+    if (cover === i) cover = j; else if (cover === j) cover = i;
+    return { ...d, photos, cover };
+  });
+
+  // 長押しドラッグで写真を並べ替え（タッチ/マウス両対応）。長押しで浮かせ、離した位置へ挿入。
+  const [dragView, setDragView] = useState(null); // 浮いている写真 { x, y, url }
+  const dragRef = useRef({ timer: null, active: false, from: -1, sx: 0, sy: 0, pid: null, node: null });
+  const photoCellIndexAt = (x, y) => {
+    const el = document.elementFromPoint(x, y);
+    const cell = el && el.closest && el.closest("[data-photo-cell]");
+    if (!cell) return -1;
+    const n = parseInt(cell.getAttribute("data-photo-cell"), 10);
+    return isNaN(n) ? -1 : n;
+  };
+  const onPhotoPointerDown = (e, i, p) => {
+    if (e.button != null && e.button !== 0) return;
+    if (e.target.closest && e.target.closest("button")) return; // ✕/‹›/表紙ボタンの操作は除外
+    const r = dragRef.current;
+    r.from = i; r.sx = e.clientX; r.sy = e.clientY; r.active = false;
+    clearTimeout(r.timer);
+    r.timer = setTimeout(() => {
+      r.active = true;
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+      setDragView({ x: r.sx, y: r.sy, url: p.url });
+      // 発動後は window に非passiveのtouchmove等を張り、スクロールを止めつつ指に追従させる
+      const move = (ev) => {
+        if (ev.cancelable) ev.preventDefault();
+        const pt = ev.touches ? ev.touches[0] : ev;
+        if (pt) setDragView(v => (v ? { ...v, x: pt.clientX, y: pt.clientY } : v));
+      };
+      const end = (ev) => {
+        const pt = ev.changedTouches ? ev.changedTouches[0] : ev;
+        finishPhotoDrag(pt ? pt.clientX : r.sx, pt ? pt.clientY : r.sy);
+      };
+      r.move = move; r.end = end;
+      window.addEventListener("touchmove", move, { passive: false });
+      window.addEventListener("mousemove", move);
+      window.addEventListener("touchend", end);
+      window.addEventListener("mouseup", end);
+      window.addEventListener("touchcancel", end);
+    }, 260);
+  };
+  const onPhotoPointerMove = (e) => {
+    const r = dragRef.current;
+    // 発動前に動いたらスクロール扱い＝長押しキャンセル（発動後の追従は window 側で処理）
+    if (!r.active && r.timer && (Math.abs(e.clientX - r.sx) > 10 || Math.abs(e.clientY - r.sy) > 10)) {
+      clearTimeout(r.timer); r.timer = null; r.from = -1;
+    }
+  };
+  const onPhotoPointerUp = () => {
+    const r = dragRef.current;
+    if (!r.active && r.timer) { clearTimeout(r.timer); r.timer = null; r.from = -1; } // タップ（発動前）だけ後始末。発動後は window の end が処理
+  };
+  const finishPhotoDrag = (x, y) => {
+    const r = dragRef.current;
+    if (r.move) { window.removeEventListener("touchmove", r.move, { passive: false }); window.removeEventListener("mousemove", r.move); }
+    if (r.end) { window.removeEventListener("touchend", r.end); window.removeEventListener("mouseup", r.end); window.removeEventListener("touchcancel", r.end); }
+    if (r.active) {
+      const from = r.from, to = photoCellIndexAt(x, y);
+      if (from >= 0 && to >= 0 && to !== from) {
+        setDraft(d => {
+          const photos = [...d.photos];
+          const coverUrl = (photos[d.cover || 0] || {}).url;
+          const [moved] = photos.splice(from, 1);
+          photos.splice(to, 0, moved);
+          let cover = photos.findIndex(z => z.url === coverUrl);
+          if (cover < 0) cover = 0;
+          return { ...d, photos, cover };
+        });
+      }
+    }
+    if (r.timer) { clearTimeout(r.timer); r.timer = null; }
+    r.active = false; r.from = -1; r.move = null; r.end = null;
+    setDragView(null);
+  };
+
+  // タグの改名・削除（マスタ＋全アルバム＋全キットへ反映＝アプリ全体で統一）
+  const renameTag = (oldT, rawNew) => {
+    const newT = (rawNew || "").trim();
+    if (!newT || newT === oldT) { setEditTag(null); return; }
+    setTagMasterList(prev => Array.from(new Set(prev.map(t => (t === oldT ? newT : t)))));
+    setAlbums(prev => prev.map(a => ({ ...a, tags: Array.from(new Set((a.tags || []).map(t => (t === oldT ? newT : t)))) })));
+    if (setKits) setKits(prev => prev.map(k => ({ ...k, tags: Array.from(new Set((k.tags || []).map(t => (t === oldT ? newT : t)))) })));
+    setDraft(d => (d ? { ...d, tags: Array.from(new Set(d.tags.map(t => (t === oldT ? newT : t)))) } : d));
+    setEditTag(null); setEditTagVal("");
+  };
+  const deleteTagEverywhere = (t) => {
+    if (!window.confirm(`タグ「${t}」を削除しますか？\nすべてのアルバム・キットからも外れます。`)) return;
+    setTagMasterList(prev => prev.filter(x => x !== t));
+    setAlbums(prev => prev.map(a => ({ ...a, tags: (a.tags || []).filter(x => x !== t) })));
+    if (setKits) setKits(prev => prev.map(k => ({ ...k, tags: (k.tags || []).filter(x => x !== t) })));
+    setDraft(d => (d ? { ...d, tags: d.tags.filter(x => x !== t) } : d));
+  };
+
+  // バックアップ：指定アルバムのJSONを作り {url,name,sizeMB} を返す（メモリ節約：分割→Blob）
+  const buildBackupBlob = async (targets) => {
+    const parts = [`{"version":1,"type":"modeler_albums","exportedAt":${JSON.stringify(new Date().toISOString())},"albums":[`];
+    for (let ai = 0; ai < targets.length; ai++) {
+      const a = targets[ai];
+      const photos = [];
+      for (const p of maNormPhotos(a.photos)) {
+        let u = p.url;
+        if (isIdbBlobUrl(u)) {
+          const b = await kitsIdbPhotoGet(idbBlobUrlToId(u));
+          u = b ? await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); }) : "";
+        }
+        if (u) photos.push({ url: u, caption: p.caption || "" });
+      }
+      parts.push((ai ? "," : "") + JSON.stringify({ ...a, photos }));
+      await new Promise(r => setTimeout(r, 0));
+    }
+    parts.push("]}");
+    const blob = new Blob(parts, { type: "application/json" });
+    const date = new Date().toLocaleDateString("ja-JP").replace(/\//g, "-");
+    const one = targets.length === 1 ? "_" + (targets[0].title || "album").replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 24) : "";
+    return { url: URL.createObjectURL(blob), name: `modelers_album_backup${one}_${date}.json`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) };
+  };
+  // 単独/選択アルバムを保存
+  const maExport = async (list) => {
+    const targets = Array.isArray(list) ? list : albums;
+    if (!targets.length) { alert("アルバムがありません"); return; }
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+    try { setBkReady(await buildBackupBlob(targets)); }
+    catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
+    finally { setMaBusy(false); }
+  };
+  // 全アルバムを1個ずつ順番に保存（保存するたびに自動で次を用意。iOSはDLごとにタップが必要なため）
+  const startExportAll = async () => {
+    if (!albums.length) { alert("アルバムがありません"); return; }
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+    try { const r = await buildBackupBlob([albums[0]]); setBkReady({ ...r, queue: albums, qi: 0 }); }
+    catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
+    finally { setMaBusy(false); }
+  };
+  // 全アルバムを1つのZIPにまとめて保存（1回のDL＝保存先指定も1回。メモリ節約で大容量も安定）
+  const exportZip = async () => {
+    if (!albums.length) { alert("アルバムがありません"); return; }
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+    try {
+      const blob = await buildModelerZip(albums);
+      const date = new Date().toLocaleDateString("ja-JP").replace(/\//g, "-");
+      setBkReady({ url: URL.createObjectURL(blob), name: `modelers_albums_${date}.zip`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) });
+    } catch (e) { alert("ZIPの作成に失敗しました: " + (e.message || e)); }
+    finally { setMaBusy(false); }
+  };
+  // 保存（DL）後に呼ぶ：キューがあれば次のアルバムを用意、無ければ閉じる
+  const advanceBackup = (cur) => {
+    setTimeout(async () => {
+      try { URL.revokeObjectURL(cur.url); } catch (e) {}
+      if (cur.queue && cur.qi + 1 < cur.queue.length) {
+        setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+        try { const r = await buildBackupBlob([cur.queue[cur.qi + 1]]); setBkReady({ ...r, queue: cur.queue, qi: cur.qi + 1 }); }
+        catch (e) { alert("作成に失敗: " + (e.message || e)); setBkReady(null); }
+        finally { setMaBusy(false); }
+      } else { setBkReady(null); }
+    }, 800);
+  };
+  // 複数のバックアップファイルをまとめて選択→順番に取り込み、既存に統合（同idは置換・無ければ追加）
+  const maImport = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+    try {
+      let added = 0;
+      const map = new Map(albums.map(a => [a.id, a]));
+      for (const file of files) {
+        let imported = [];
+        if (/\.zip$/i.test(file.name) || await isZipFile(file)) {
+          // ZIP：写真は元データのままIDBへ（メモリ節約）
+          try { imported = await readModelerZip(file); } catch (_) { continue; }
+        } else {
+          // 旧JSON形式（base64インライン）
+          let data; try { data = JSON.parse(await file.text()); } catch (_) { continue; }
+          const arr = data.albums || (Array.isArray(data) ? data : null);
+          if (!Array.isArray(arr)) continue;
+          for (const a of arr) {
+            const photos = [];
+            for (const p of maNormPhotos(a.photos)) {
+              let url = p.url;
+              if (typeof url === "string" && url.startsWith("data:")) {
+                try { const b = await (await fetch(url)).blob(); const id = makePhotoId(); if (await kitsIdbPhotoSet(id, b)) url = idToIdbBlobUrl(id); } catch (_) {}
+              }
+              photos.push({ url, caption: p.caption || "" });
+            }
+            imported.push({ ...a, id: a.id || makePhotoId(), photos, cover: a.cover || 0 });
+          }
+        }
+        for (const album of imported) { map.set(album.id, album); added++; }
+      }
+      setAlbums(Array.from(map.values()));
+      setMaBackup(false);
+      alert(`${added}件のアルバムを取り込みました（既存に統合）。`);
+    } catch (e) { alert("インポートに失敗しました。正しいバックアップファイルを選択してください。"); }
+    finally { setMaBusy(false); }
+  };
+
+  // ビフォーアフター：BEFORE/AFTER の写真を直接アップロード（アルバムからは選ばない）
+  const startBeforeAfter = (a) => setBaSelect({ album: a, beforeUrl: null, afterUrl: null, comment: "", bt: { z: 1, ox: 0.5, oy: 0.5 }, at: { z: 1, ox: 0.5, oy: 0.5 } });
+  const onBaPick = async (key, e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(file); });
+    if (!url) { alert("画像の読み込みに失敗しました"); return; }
+    const tKey = key === "beforeUrl" ? "bt" : "at"; // 新しい画像は調整リセット
+    setBaSelect(s => (s ? { ...s, [key]: url, [tKey]: { z: 1, ox: 0.5, oy: 0.5 } } : s));
+  };
+  const doBeforeAfter = async () => {
+    if (!baSelect || !baSelect.beforeUrl || !baSelect.afterUrl) { alert("BEFORE・AFTERの両方をアップロードしてください"); return; }
+    const { album, beforeUrl, afterUrl, comment, bt, at } = baSelect;
+    setSharing(true);
+    try {
+      const blob = await generateBeforeAfterImage({ url: beforeUrl, t: bt }, { url: afterUrl, t: at }, comment);
+      if (!blob) { alert("画像の生成に失敗しました"); return; }
+      const file = new File([blob], `modelers_ba_${(album && album.id) || "x"}.png`, { type: "image/png" });
+      const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(blob); });
+      setBaSelect(null);
+      setShareResult({ files: [file], urls: [url], text: `${comment ? comment.trim() + "\n" : ""}${MA_TAGS}` });
+    } catch (e) { alert("生成に失敗しました: " + (e.message || e)); }
+    finally { setSharing(false); }
+  };
+
+  // 1ファイル保存（共有シート→保存／非対応はDL）。ユーザー操作ごとなので確実
+  const saveOne = async (file) => {
+    if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try { const u = URL.createObjectURL(file); const a = document.createElement("a"); a.href = u; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); } catch (e) {}
+  };
+  const MAX_SHARE_PHOTOS = 16; // 1投稿分（4枚×最大4画像）
+  // Share ALL → まず写真を選択（最大16枚・選んだ順／表紙を先頭に既定選択）
+  const shareAlbum = (a) => {
+    const ph = maNormPhotos(a.photos);
+    if (!ph.length) { alert("写真がありません"); return; }
+    const ci = Math.min(a.cover || 0, ph.length - 1);
+    const order = [ci, ...ph.map((_, i) => i).filter(i => i !== ci)];
+    setShareSelect({ album: a, sel: order.slice(0, MAX_SHARE_PHOTOS), large: [] });
+  };
+  const toggleShareSel = (i) => setShareSelect(s => {
+    if (!s) return s;
+    if (s.sel.includes(i)) return { ...s, sel: s.sel.filter(x => x !== i), large: (s.large || []).filter(x => x !== i) };
+    if (s.sel.length >= MAX_SHARE_PHOTOS) { alert(`1投稿は最大${MAX_SHARE_PHOTOS}枚までです`); return s; }
+    return { ...s, sel: [...s.sel, i] };
+  });
+  // 各画像(4枚組)の「大」を直接トグル。1組につき1枚（同組の既存「大」は外す）。同じ写真を再タップでOFF(既定=組の先頭に戻る)
+  const toggleShareLarge = (i) => setShareSelect(s => {
+    if (!s) return s;
+    const order = s.sel.indexOf(i);
+    if (order < 0) return s; // 未選択は対象外
+    const gStart = Math.floor(order / 4) * 4;
+    const groupMembers = s.sel.slice(gStart, gStart + 4);
+    const cur = (s.large || []).find(x => groupMembers.includes(x));
+    let large = (s.large || []).filter(x => !groupMembers.includes(x)); // その組の指定を一旦クリア
+    if (cur !== i) large = [...large, i]; // 別写真→大に設定（同じならOFFのままクリア）
+    return { ...s, large };
+  });
+  const doShareSelected = async () => {
+    if (!shareSelect) return;
+    const { album, sel, large = [] } = shareSelect;
+    const ph = maNormPhotos(album.photos);
+    // 4枚組ごとに「大」を先頭へ並べ替え（未指定は先頭のまま）
+    const ordered = [];
+    for (let k = 0; k < sel.length; k += 4) {
+      const g = sel.slice(k, k + 4);
+      const lead = g.find(idx => large.includes(idx));
+      if (lead != null) ordered.push(lead, ...g.filter(idx => idx !== lead));
+      else ordered.push(...g);
+    }
+    const chosen = ordered.map(i => ph[i]).filter(Boolean);
+    if (!chosen.length) { alert("写真を選択してください"); return; }
+    setSharing(true);
+    try {
+      const blobs = (await generateModelerAlbumImages(album, chosen)).filter(Boolean);
+      if (!blobs.length) { alert("画像の生成に失敗しました"); return; }
+      const files = blobs.map((b, i) => new File([b], `modelers_${album.id}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
+      const urls = await Promise.all(blobs.map(b => new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); })));
+      // shareSelect は残す（プレビューから「戻る」で選び直せるように）
+      setShareResult({ files, urls, text: `「${album.title || "作品"}」\n${MA_TAGS}` });
+    } catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
+    finally { setSharing(false); }
+  };
+  const sharePhoto = async (a, photo) => {
+    setSharing(true);
+    try { const blob = await generateModelerPhotoImage(photo, a); await maShareImage(blob, `modelers_photo.png`, `${(photo.caption || "").trim() || a.title || "作品"}\n${MA_TAGS}`); }
+    catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
+    finally { setSharing(false); }
+  };
+
+  const saveDraft = () => {
+    if (!draft) return;
+    if (!draft.title.trim()) { alert("作品名を入力してください"); return; }
+    const a = { ...draft, title: draft.title.trim(), updatedAt: Date.now() };
+    setAlbums(prev => {
+      const i = prev.findIndex(x => x.id === a.id);
+      if (i >= 0) { const c = [...prev]; c[i] = a; return c; }
+      return [a, ...prev];
+    });
+    setMode("list"); setDraft(null);
+  };
+
+  const deleteAlbum = (a) => {
+    if (!window.confirm(`「${a.title || "無題"}」を削除しますか？\nこの操作は元に戻せません。`)) return;
+    maNormPhotos(a.photos).forEach(p => { if (isIdbBlobUrl(p.url)) kitsIdbPhotoDelete(idbBlobUrlToId(p.url)); });
+    setAlbums(prev => prev.filter(x => x.id !== a.id));
+    setMode("list"); setDraft(null); setViewId(null);
+  };
+
+  const ma = {
+    wrap: { position: "fixed", inset: 0, zIndex: 300, background: "#fff", color: "#111", fontFamily: MA_FONT, overflowY: "auto", WebkitOverflowScrolling: "touch" },
+    bar: { position: "sticky", top: 0, zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "#fff", borderBottom: "1px solid #111" },
+    brand: { fontSize: 14, fontWeight: 800, letterSpacing: "0.24em", margin: 0 },
+    sub: { fontSize: 8, letterSpacing: "0.34em", color: "#999", marginTop: 3 },
+    ghost: { background: "none", border: "1px solid #111", color: "#111", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", cursor: "pointer", borderRadius: 0, whiteSpace: "nowrap" },
+    black: { background: "#111", border: "1px solid #111", color: "#fff", padding: "11px 20px", fontSize: 11, fontWeight: 700, letterSpacing: "0.16em", cursor: "pointer", borderRadius: 0 },
+    body: { padding: "20px 18px 60px", maxWidth: 940, margin: "0 auto" },
+    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 },
+    label: { display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888", marginBottom: 6, textTransform: "uppercase" },
+    input: { width: "100%", boxSizing: "border-box", border: "none", borderBottom: "1px solid #111", padding: "8px 2px", fontSize: 16, fontFamily: MA_FONT, color: "#111", background: "transparent", outline: "none" },
+  };
+
+  // ---- 拡大ライトボックス ----
+  const renderLightbox = () => {
+    if (!lightbox) return null;
+    const { photos, i, zoom, album } = lightbox;
+    const cur = photos[i] || { url: "", caption: "" };
+    const go = (d) => setLightbox(lb => ({ ...lb, i: (lb.i + d + photos.length) % photos.length, zoom: false }));
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "#000", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", color: "#fff" }}>
+          <span style={{ fontSize: 11, letterSpacing: "0.2em", fontFamily: MA_FONT }}>{i + 1} / {photos.length}</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            {album && <button onClick={() => sharePhoto(album, cur)} disabled={sharing} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer", fontFamily: MA_FONT, whiteSpace: "nowrap" }}>{sharing ? "..." : "Share this pic"}</button>}
+            <button onClick={() => setLightbox(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer", fontFamily: MA_FONT }}>CLOSE</button>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflow: zoom ? "auto" : "hidden", display: "flex", alignItems: zoom ? "flex-start" : "center", justifyContent: zoom ? "flex-start" : "center", position: "relative" }}>
+          <KitImage src={cur.url} style={zoom ? { width: "auto", maxWidth: "none", height: "auto", cursor: "zoom-out", display: "block" } : { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", cursor: "zoom-in", display: "block" }} />
+          <div onClick={() => setLightbox(lb => ({ ...lb, zoom: !lb.zoom }))} style={{ position: "absolute", inset: 0 }} title="タップで拡大/縮小" />
+        </div>
+        {cur.caption && !zoom && (
+          <div style={{ padding: "12px 18px 18px", color: "#fff", fontFamily: MA_FONT, fontSize: 13, lineHeight: 1.7, letterSpacing: "0.03em", background: "#000", whiteSpace: "pre-wrap" }}>{cur.caption}</div>
+        )}
+        {photos.length > 1 && !zoom && (
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", pointerEvents: "none" }}>
+            <button onClick={() => go(-1)} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 44, height: 44, fontSize: 22, cursor: "pointer" }}>‹</button>
+            <button onClick={() => go(1)} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 44, height: 44, fontSize: 22, cursor: "pointer" }}>›</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ---- アルバム全体シェアの結果（全画像をプレビュー→1枚ずつ確実に保存） ----
+  const renderShareResult = () => {
+    if (!shareResult) return null;
+    const { files, urls, text } = shareResult;
+    let canAll = false;
+    try { canAll = typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files }); } catch (e) { canAll = false; }
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 420, background: "rgba(0,0,0,0.94)", overflowY: "auto", padding: "16px 16px 40px", fontFamily: MA_FONT }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          {shareSelect
+            ? <button onClick={() => setShareResult(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer" }}>‹ 選び直す</button>
+            : <span style={{ color: "#fff", fontSize: 12, letterSpacing: "0.18em" }}>{files.length} IMAGES</span>}
+          <button onClick={() => { setShareResult(null); setShareSelect(null); }} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer" }}>CLOSE</button>
+        </div>
+        <div style={{ color: "#bbb", fontSize: 11, lineHeight: 1.8, marginBottom: 14 }}>これで1投稿分（画像最大4枚）。{canAll ? "「まとめて共有」でそのままXへ投稿できます。" : "各画像を「保存」してXに投稿してください。"}</div>
+        {canAll && <button onClick={async () => { try { await navigator.share({ files, text }); } catch (e) {} }} style={{ width: "100%", padding: "13px", background: "#fff", color: "#111", border: "none", fontSize: 12, fontWeight: 800, letterSpacing: "0.18em", cursor: "pointer", marginBottom: 16 }}>まとめて共有 / SHARE ALL</button>}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
+          {urls.map((u, i) => (
+            <div key={i}>
+              {u && <img src={u} alt="" style={{ width: "100%", display: "block", border: "1px solid #333" }} />}
+              <button onClick={() => saveOne(files[i])} style={{ width: "100%", marginTop: 6, padding: "9px", background: "#111", color: "#fff", border: "1px solid #fff", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", cursor: "pointer" }}>{i + 1} / {files.length}　保存 SAVE</button>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginTop: 18 }}>
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" style={{ color: "#fff", fontSize: 12, letterSpacing: "0.1em", textDecoration: "underline" }}>Xを開く（投稿テキスト）</a>
+        </div>
+      </div>
+    );
+  };
+
+  // ---- シェアする写真の選択（最大16枚＝1投稿分） ----
+  const renderShareSelect = () => {
+    if (!shareSelect || shareResult) return null; // プレビュー表示中は隠す（戻るで再表示）
+    const { album, sel, large = [] } = shareSelect;
+    const ph = maNormPhotos(album.photos);
+    const imgN = Math.ceil(sel.length / 4);
+    const bigOf = (order) => { const gs = Math.floor(order / 4) * 4; const g = sel.slice(gs, gs + 4); const ex = g.find(idx => large.includes(idx)); return ex != null ? ex : g[0]; };
+    return (
+      <div style={{ ...ma.wrap, zIndex: 420 }}>
+        <div style={ma.bar}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={ma.ghost} onClick={() => setShareSelect(null)}>CANCEL</button>
+            <button style={ma.ghost} onClick={() => setShareSelect(s => (s ? { ...s, sel: [], large: [] } : s))} disabled={sel.length === 0}>全解除</button>
+          </div>
+          <button style={ma.black} onClick={doShareSelected} disabled={sharing || sel.length === 0}>{sharing ? "..." : `シェア (${sel.length})`}</button>
+        </div>
+        <div style={ma.body}>
+          <div style={{ fontSize: 12, letterSpacing: "0.04em", color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
+            シェアする写真を選択（最大{MAX_SHARE_PHOTOS}枚＝1投稿分）。<b>4枚ごとに1画像</b>になり、各画像は「大きい1枚＋小さい3枚」。<br />
+            写真の<b style={{ color: "#111" }}>右側の「大」</b>をタップすると、その写真を大きく表示できます（1画像につき1枚）。<br />
+            <b>左上の番号の色＝何枚目の画像か</b>：
+            <span style={{ color: "#2563eb", fontWeight: 800 }}>■1枚目</span> <span style={{ color: "#16a34a", fontWeight: 800 }}>■2枚目</span> <span style={{ color: "#ea580c", fontWeight: 800 }}>■3枚目</span> <span style={{ color: "#9333ea", fontWeight: 800 }}>■4枚目</span><br />
+            選択 <b style={{ color: "#111" }}>{sel.length}</b> / {MAX_SHARE_PHOTOS}　→　生成画像 {imgN} 枚
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
+            {ph.map((p, i) => {
+              const order = sel.indexOf(i);
+              const on = order >= 0;
+              const isBig = on && bigOf(order) === i; // この組で大きく表示される写真
+              const grpColor = ["#2563eb", "#16a34a", "#ea580c", "#9333ea"][Math.floor(order / 4) % 4]; // 何枚目の画像か＝番号の色
+              return (
+                <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: isBig ? "3px solid #111" : (on ? "2px solid #111" : "2px solid #eee"), opacity: on ? 1 : 0.55 }}>
+                  <MaThumb src={p.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", background: grpColor, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
+                  {on && (
+                    <button onClick={(e) => { e.stopPropagation(); toggleShareLarge(i); }}
+                      title="大きく表示する写真にする"
+                      style={{ position: "absolute", top: 0, right: 0, height: "100%", width: "40%", border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: 5 }}>
+                      <span style={{ padding: "2px 8px", fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", background: isBig ? "#2563eb" : "rgba(255,255,255,0.85)", color: isBig ? "#fff" : "#111", border: `1px solid ${isBig ? "#2563eb" : "#111"}` }}>大</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ---- ビフォーアフター（BEFORE/AFTER を直接アップロード＋コメント） ----
+  const renderBeforeAfter = () => {
+    if (!baSelect) return null;
+    const { beforeUrl, afterUrl, comment, bt = { z: 1, ox: 0.5, oy: 0.5 }, at = { z: 1, ox: 0.5, oy: 0.5 } } = baSelect;
+    const slot = (label, key, url, tKey, t) => (
+      <div style={{ flex: 1, minWidth: 130 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", marginBottom: 6 }}>{label}</div>
+        {url ? (
+          <div>
+            <BaAdjust url={url} t={t} onChange={(nt) => setBaSelect(s => (s ? { ...s, [tKey]: nt } : s))} />
+            <label style={{ display: "block", marginTop: 6, textAlign: "center", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#555", border: "1px solid #ccc", padding: "5px 0", cursor: "pointer" }}>
+              画像を変更
+              <input type="file" accept="image/*" onChange={(e) => onBaPick(key, e)} style={{ display: "none" }} />
+            </label>
+          </div>
+        ) : (
+          <label style={{ display: "block", cursor: "pointer" }}>
+            <div style={{ aspectRatio: "797 / 790", border: "1px dashed #111", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 11, color: "#888", letterSpacing: "0.08em" }}>画像をアップロード</span>
+            </div>
+            <input type="file" accept="image/*" onChange={(e) => onBaPick(key, e)} style={{ display: "none" }} />
+          </label>
+        )}
+      </div>
+    );
+    return (
+      <div style={{ ...ma.wrap, zIndex: 420 }}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => setBaSelect(null)}>CANCEL</button>
+          <button style={ma.black} onClick={doBeforeAfter} disabled={sharing || !beforeUrl || !afterUrl}>{sharing ? "..." : "作成してシェア"}</button>
+        </div>
+        <div style={ma.body}>
+          <div style={{ fontSize: 12, color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
+            <b style={{ color: "#111" }}>BEFORE</b> と <b style={{ color: "#111" }}>AFTER</b> の写真をアップロード。各画像は<b>ドラッグで位置調整・下のスライダーで拡大縮小</b>できます。表示されている範囲がそのまま書き出されます。
+          </div>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            {slot("BEFORE", "beforeUrl", beforeUrl, "bt", bt)}
+            {slot("AFTER", "afterUrl", afterUrl, "at", at)}
+          </div>
+          <label style={ma.label}>コメント（画像ヘッダーに表示）</label>
+          <input style={ma.input} value={comment} onChange={e => setBaSelect(s => ({ ...s, comment: e.target.value }))} placeholder="例：全塗装でディテールアップ" />
+        </div>
+      </div>
+    );
+  };
+
+  // ---- バックアップ ----
+  const renderBackup = () => {
+    if (!maBackup) return null;
+    return (
+      <div style={{ ...ma.wrap, zIndex: 430 }}>
+        <div style={ma.bar}>
+          <div><div style={ma.brand}>BACKUP</div><div style={ma.sub}>MODELERS ALBUM</div></div>
+          <button style={ma.ghost} onClick={() => setMaBackup(false)}>CLOSE</button>
+        </div>
+        <div style={{ ...ma.body, maxWidth: 560 }}>
+          <div style={{ fontSize: 13, lineHeight: 1.95, color: "#333", marginBottom: 22 }}>モデラーズアルバムのデータ（写真は高画質のまま）を1つのJSONファイルに書き出し／読み込みできます。機種変更やブラウザ移行の前に保存してください。</div>
+          <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>エクスポート（バックアップ）</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 10 }}>全アルバム（{albums.length}件）を<b>1つのZIPファイル</b>にまとめて保存します（保存は1回だけ・大容量でも安定）。</div>
+            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={exportZip}>ZIP一括ダウンロード（{albums.length}件）</button>
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: "0.08em", marginBottom: 6 }}>うまくいかない時：アルバムごとに保存（JSON）</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+                {albums.map(a => (
+                  <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, borderBottom: "1px solid #eee", paddingBottom: 6 }}>
+                    <span style={{ fontSize: 12, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{a.title || "UNTITLED"}<span style={{ color: "#999", marginLeft: 6 }}>{maNormPhotos(a.photos).length}枚</span></span>
+                    <button style={{ ...ma.ghost, padding: "5px 12px", flexShrink: 0 }} onClick={() => maExport([a])}>保存</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>インポート（復元）</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>ZIP／JSONのバックアップから復元します。<b>複数ファイルをまとめて選択</b>でき、順番に取り込んで既存のアルバムに統合します（同じアルバムは置き換え）。</div>
+            <button style={{ ...ma.ghost, width: "100%", boxSizing: "border-box" }} onClick={() => maFileRef.current && maFileRef.current.click()}>ファイルを選択（複数可）</button>
+            <input ref={maFileRef} type="file" accept=".zip,.json,application/zip,application/json" multiple style={{ display: "none" }} onChange={maImport} />
+          </div>
+          <div style={{ fontSize: 11, color: "#999", lineHeight: 1.7 }}>※ データは端末内のみに保存されます。Safari／Chromeなどブラウザが違うと別データになります。移行時は必ずエクスポート→インポートしてください。</div>
+        </div>
+        {maBusy && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "rgba(255,255,255,0.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, fontFamily: MA_FONT }}>
+            <style>{"@keyframes maspin{to{transform:rotate(360deg)}}"}</style>
+            <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: "50%", animation: "maspin 0.8s linear infinite" }} />
+            <div style={{ fontSize: 13, letterSpacing: "0.18em", color: "#111", fontWeight: 800 }}>データ作成中…</div>
+            <div style={{ fontSize: 11, color: "#888", letterSpacing: "0.04em" }}>写真が多いと少し時間がかかります</div>
+          </div>
+        )}
+        {bkReady && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "rgba(255,255,255,0.97)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24, fontFamily: MA_FONT, textAlign: "center" }}>
+            {bkReady.queue && <div style={{ fontSize: 11, letterSpacing: "0.16em", color: "#888", fontWeight: 700 }}>{bkReady.qi + 1} / {bkReady.queue.length} 件目</div>}
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.06em", color: "#111", maxWidth: 320, overflowWrap: "anywhere" }}>{bkReady.name}</div>
+            <div style={{ fontSize: 12, color: "#666" }}>約{bkReady.sizeMB}MB</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, maxWidth: 320 }}>下のボタンを押すと保存（ダウンロード）します。{bkReady.queue ? "保存すると自動で次のアルバムが出ます。" : "端末の保存先選択が出たらお好きな場所へ。"}</div>
+            <a href={bkReady.url} download={bkReady.name}
+              onClick={() => advanceBackup(bkReady)}
+              style={{ ...ma.black, minWidth: 240, textDecoration: "none", textAlign: "center", display: "inline-block" }}>
+              {bkReady.queue ? (bkReady.qi + 1 < bkReady.queue.length ? "保存して次へ" : "保存して完了") : "ダウンロードして保存"}
+            </a>
+            <button style={{ ...ma.ghost }} onClick={() => { try { URL.revokeObjectURL(bkReady.url); } catch (e) {} setBkReady(null); }}>{bkReady.queue ? "中止" : "閉じる"}</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ---- 取扱説明書（使い方） ----
+  const renderHelp = () => {
+    if (!maHelp) return null;
+    const H2 = { fontSize: 13, fontWeight: 800, letterSpacing: "0.12em", margin: "26px 0 8px", paddingBottom: 6, borderBottom: "1px solid #111", color: "#111" };
+    const P = { fontSize: 13, lineHeight: 1.95, color: "#333", margin: "0 0 6px" };
+    const UL = { margin: 0, paddingLeft: "1.3em" };
+    const LI = { fontSize: 13, lineHeight: 1.9, color: "#333" };
+    return (
+      <div style={{ ...ma.wrap, zIndex: 430 }}>
+        <div style={ma.bar}>
+          <div><div style={ma.brand}>使い方 / HELP</div><div style={ma.sub}>MODELERS ALBUM</div></div>
+          <button style={ma.ghost} onClick={() => setMaHelp(false)}>CLOSE</button>
+        </div>
+        <div style={{ ...ma.body, maxWidth: 720 }}>
+          <p style={P}>モデラーズアルバムは、あなたの作品を高画質で記録・展示するためのポートフォリオです。写真や情報は<b>すべてこの端末内に保存</b>され、サーバーには送信されません。</p>
+
+          <div style={{ border: "2px solid #111", padding: "13px 15px", margin: "16px 0 8px", background: "#fafafa" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", marginBottom: 7 }}>はじめに：必ずホーム画面に追加してください</div>
+            <div style={{ fontSize: 12.5, lineHeight: 2, color: "#333" }}>
+              快適に使うため、<b>この画面を必ずホーム画面に追加</b>してからご利用ください。<br />
+              <b>iPhone（Safari）</b>：画面下の<b>共有ボタン</b>→「<b>ホーム画面に追加</b>」。<br />
+              <b>Android（Chrome）</b>：メニュー（⋮）→「<b>ホーム画面に追加</b>」。<br />
+              追加すると「Modelers Album」専用アイコンで、アプリのように起動できます。<br />
+              ※データは追加したこのアプリ内に保存されます。万一に備え、下記10のバックアップも必ず併用してください。
+            </div>
+          </div>
+
+          <div style={H2}>1. アルバムを作る</div>
+          <p style={P}>トップ右上の「NEW ALBUM」から作成します。作品名／作成年月／タグ／制作コメントを登録し、「SAVE」で保存。一覧のカバーをタップで閲覧、右上「EDIT」で再編集できます。</p>
+
+          <div style={H2}>2. 写真を追加する（高画質）</div>
+          <ul style={UL}>
+            <li style={LI}>編集画面の「ADD」から追加（1アルバム最大30枚）。</li>
+            <li style={LI}>写真は<b>圧縮せず原本のまま</b>保存するので高画質です。</li>
+            <li style={LI}>各写真下部の「表紙にする」で<b>表紙（COVER）</b>を指定できます。</li>
+          </ul>
+
+          <div style={H2}>3. 写真を並べ替える</div>
+          <p style={P}>編集画面で写真を<b>長押し</b>すると浮き上がり、動かして離した位置へ移動できます。左上の「‹ ›」ボタンでも前後に動かせます。</p>
+
+          <div style={H2}>4. 写真ごとにコメント</div>
+          <p style={P}>編集画面で各写真の下に入力欄があります。閲覧時・拡大時・写真単体のシェア画像にも表示されます。</p>
+
+          <div style={H2}>5. タグ</div>
+          <p style={P}>編集画面でタグの付与・新規追加ができます。「タグを編集」を押すと、タグ名の<b>改名</b>（タップ）と<b>削除</b>（✕）が可能です（すべてのアルバム・キットに反映されます）。</p>
+
+          <div style={H2}>6. 写真を拡大して見る</div>
+          <p style={P}>閲覧画面で写真をタップすると全画面表示。さらに<b>画像をタップで等倍ズーム</b>（細部確認）、左右の「‹ ›」で送れます。</p>
+
+          <div style={H2}>7. Xにシェアする（写真1枚）</div>
+          <p style={P}>拡大画面の「Share this pic」で、その写真を<b>コメント入りヘッダー付き</b>の画像にしてXへ投稿できます。投稿テキストには <b>#モデラーズアルバム #TSUMITSUMI</b> が自動で付きます。</p>
+
+          <div style={H2}>8. Xにシェアする（アルバム）</div>
+          <ul style={UL}>
+            <li style={LI}>閲覧画面の「Share ALL」→ シェアする写真を<b>最大16枚</b>選択します。</li>
+            <li style={LI}><b>4枚ごとに1画像</b>（最大4画像＝X1投稿分）を生成。各画像は「<b>大きい1枚＋小さい3枚</b>」のレイアウトです。</li>
+            <li style={LI}>各写真の<b>右側の「大」をタップ</b>すると、その画像で大きく表示する1枚を選べます（もう一度タップでOFF）。</li>
+            <li style={LI}>1枚目のヘッダーに作品名・完成年月・コメントが入り、各写真の<b>コメントも画像内に表示</b>されます（長文も折り返して表示）。</li>
+            <li style={LI}>生成後、プレビューから1枚ずつ保存／まとめて共有できます（Xは1投稿あたり画像4枚まで）。</li>
+          </ul>
+
+          <div style={H2}>9. ビフォーアフター画像</div>
+          <p style={P}>トップの「Before After作成」→ BEFORE と AFTER の写真を<b>アップロード</b>＋コメント入力 → X向けの<b>横長1枚</b>の比較画像を生成します。</p>
+
+          <div style={H2}>10. バックアップ（保存・復元）</div>
+          <ul style={UL}>
+            <li style={LI}>トップ右上の<b>ダウンロードアイコン</b>（HELPの左）からバックアップ画面を開けます。</li>
+            <li style={LI}>「エクスポート」で<b>全アルバム＋写真を1つのJSONファイル</b>に書き出し。iCloudやGoogleドライブに保管しておくと安心です。</li>
+            <li style={LI}>機種変更・ブラウザ移行のときは、新しい環境で「インポート」して復元します（現在のデータは上書き）。</li>
+            <li style={LI}>※写真が多いとファイルはかなり大きくなります。</li>
+          </ul>
+
+          <div style={H2}>11. 保存とデータについて</div>
+          <ul style={UL}>
+            <li style={LI}>データは<b>この端末内のみ</b>に保存されます（プライバシー重視）。</li>
+            <li style={LI}>ブラウザのキャッシュ削除や機種変更で<b>消える可能性</b>があります。<b>定期的にバックアップ（上記10）</b>を取ることを強くおすすめします。</li>
+          </ul>
+          <div style={{ height: 30 }} />
+        </div>
+      </div>
+    );
+  };
+
+  // ---- 一覧 ----
+  if (mode === "list") {
+    return (
+      <div style={ma.wrap}>
+        <div style={ma.bar}>
+          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+            <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ height: 40, width: "auto", display: "block" }} />
+            <div>
+              <div style={ma.brand}>MODELERS ALBUM</div>
+              <div style={ma.sub}>PORTFOLIO</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+            <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={() => setMaBackup(true)} title="バックアップ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
+            </button>
+            <button style={ma.ghost} onClick={() => setMaHelp(true)}>HELP</button>
+            <a href="/" title="ツミツミへ" style={{ display: "flex", alignItems: "center" }}>
+              <img src="/LOGO.png" alt="TSUMI TSUMI" style={{ height: 28, width: "auto", display: "block" }} />
+            </a>
+          </div>
+        </div>
+        <div style={ma.body}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "#888" }}>{albums.length} WORKS</span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button style={ma.ghost} onClick={() => startBeforeAfter(null)}>Before After作成</button>
+              <button style={ma.black} onClick={startNew}>NEW ALBUM</button>
+            </div>
+          </div>
+          {albums.length === 0 ? (
+            <div style={{ textAlign: "center", color: "#aaa", padding: "80px 0", fontSize: 13, letterSpacing: "0.1em", lineHeight: 2 }}>
+              作品アルバムがありません<br />「NEW ALBUM」から作成しましょう
+            </div>
+          ) : (
+            <div style={ma.grid}>
+              {[...albums].sort((a, b) => {
+                const ya = a.createdYM || "", yb = b.createdYM || "";
+                if (ya === yb) return 0;
+                if (!ya) return 1; if (!yb) return -1; // 制作年月なしは末尾
+                return yb < ya ? -1 : 1; // 制作年月の新しい順（降順）
+              }).map(a => {
+                const ph = maNormPhotos(a.photos);
+                const cover = ph[a.cover || 0] || ph[0];
+                return (
+                  <div key={a.id} onClick={() => { setViewId(a.id); setMode("view"); }} style={{ cursor: "pointer" }}>
+                    <div style={{ width: "100%", aspectRatio: "1/1", background: "#111", overflow: "hidden", position: "relative" }}>
+                      {cover ? <MaThumb src={cover.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 10, letterSpacing: "0.2em" }}>NO IMAGE</div>}
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title || "UNTITLED"}</div>
+                    <div style={{ fontSize: 10, color: "#999", letterSpacing: "0.14em", marginTop: 2 }}>{fmtYM(a.createdYM)}{a.createdYM && (a.photos || []).length ? "  /  " : ""}{(a.photos || []).length ? `${a.photos.length} PHOTOS` : ""}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {renderLightbox()}
+        {renderBeforeAfter()}
+        {renderShareResult()}
+        {renderHelp()}
+        {renderBackup()}
+      </div>
+    );
+  }
+
+  // ---- 閲覧 ----
+  if (mode === "view" && viewing) {
+    const a = viewing;
+    return (
+      <div style={ma.wrap}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => { setViewId(null); setMode("list"); }}>BACK</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            {maNormPhotos(a.photos).length > 0 && <button style={ma.black} onClick={() => shareAlbum(a)} disabled={sharing}>{sharing ? "..." : "Share ALL"}</button>}
+            <button style={ma.ghost} onClick={() => startEdit(a)}>EDIT</button>
+          </div>
+        </div>
+        <div style={ma.body}>
+          <div style={{ fontSize: 10, letterSpacing: "0.3em", color: "#999" }}>{fmtYM(a.createdYM)}</div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "0.02em", margin: "6px 0 14px", lineHeight: 1.25 }}>{a.title || "UNTITLED"}</h1>
+          {(a.tags || []).length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+              {a.tags.map(t => <span key={t} style={{ border: "1px solid #111", padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>{t}</span>)}
+            </div>
+          )}
+          {a.comment && <p style={{ fontSize: 14, lineHeight: 1.9, color: "#333", whiteSpace: "pre-wrap", margin: "0 0 22px", paddingBottom: 22, borderBottom: "1px solid #eee" }}>{a.comment}</p>}
+          {(() => {
+            const ph = maNormPhotos(a.photos);
+            return (<>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+                {ph.map((p, i) => (
+                  <div key={i} onClick={() => setLightbox({ album: a, photos: ph, i, zoom: false })} style={{ cursor: "zoom-in" }}>
+                    <div style={{ aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden" }}>
+                      <MaThumb src={p.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    </div>
+                    {p.caption && <div style={{ fontSize: 10, color: "#666", lineHeight: 1.5, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.caption}</div>}
+                  </div>
+                ))}
+              </div>
+              {ph.length === 0 && <div style={{ color: "#bbb", fontSize: 12, padding: "40px 0", textAlign: "center" }}>写真がありません</div>}
+            </>);
+          })()}
+        </div>
+        {renderLightbox()}
+        {renderShareSelect()}
+        {renderBeforeAfter()}
+        {renderShareResult()}
+      </div>
+    );
+  }
+
+  // ---- 編集 ----
+  if (mode === "edit" && draft) {
+    const masterTags = [...new Set([...(tagMasterList || []), ...draft.tags])];
+    return (
+      <div style={{ ...ma.wrap, overflowY: dragView ? "hidden" : "auto" }}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => { setMode(viewId ? "view" : "list"); setDraft(null); }}>CANCEL</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            {albums.some(x => x.id === draft.id) && <button style={{ ...ma.ghost, borderColor: "#c00", color: "#c00" }} onClick={() => deleteAlbum(draft)}>DELETE</button>}
+            <button style={ma.black} onClick={saveDraft}>SAVE</button>
+          </div>
+        </div>
+        <div style={ma.body}>
+          <div style={{ marginBottom: 22 }}>
+            <label style={ma.label}>作品名 / Title</label>
+            <input style={ma.input} value={draft.title} onChange={e => setDraft(d => ({ ...d, title: e.target.value }))} placeholder="例：RX-78-2 ガンダム" />
+          </div>
+          <div style={{ marginBottom: 22, maxWidth: 220 }}>
+            <label style={ma.label}>作成年月 / Date</label>
+            <input type="month" style={ma.input} value={draft.createdYM} onChange={e => setDraft(d => ({ ...d, createdYM: e.target.value }))} />
+          </div>
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <label style={{ ...ma.label, marginBottom: 0 }}>タグ / Tags</label>
+              <button onClick={() => { setTagManage(m => !m); setEditTag(null); }} style={{ background: "none", border: "none", color: "#888", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer", textDecoration: "underline", fontFamily: MA_FONT }}>{tagManage ? "完了" : "タグを編集"}</button>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {masterTags.map(t => {
+                if (tagManage && editTag === t) {
+                  return <input key={t} autoFocus value={editTagVal} onChange={e => setEditTagVal(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); renameTag(t, editTagVal); } }} onBlur={() => renameTag(t, editTagVal)} style={{ border: "1px solid #111", padding: "4px 8px", fontSize: 11, fontFamily: MA_FONT, width: 110, outline: "none" }} />;
+                }
+                if (tagManage) {
+                  return (
+                    <span key={t} style={{ display: "inline-flex", alignItems: "center", border: "1px solid #111" }}>
+                      <button onClick={() => { setEditTag(t); setEditTagVal(t); }} style={{ border: "none", background: "#fff", color: "#111", padding: "4px 9px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: MA_FONT }}>{t}</button>
+                      <button onClick={() => deleteTagEverywhere(t)} style={{ border: "none", borderLeft: "1px solid #111", background: "#111", color: "#fff", padding: "4px 8px", fontSize: 11, cursor: "pointer", lineHeight: 1 }}>✕</button>
+                    </span>
+                  );
+                }
+                const on = draft.tags.includes(t);
+                return <button key={t} onClick={() => toggleTag(t)} style={{ border: "1px solid #111", padding: "4px 11px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", cursor: "pointer", background: on ? "#111" : "#fff", color: on ? "#fff" : "#111", fontFamily: MA_FONT }}>{t}</button>;
+              })}
+            </div>
+            {tagManage ? (
+              <div style={{ fontSize: 10, color: "#999", letterSpacing: "0.04em" }}>タグ名をタップで改名／✕で削除（全アルバム・キットに反映）</div>
+            ) : (
+              <div style={{ display: "flex", gap: 8 }}>
+                <input style={{ ...ma.input, flex: 1 }} value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addNewTag(); } }} placeholder="新しいタグを追加" />
+                <button style={ma.ghost} onClick={() => addNewTag()}>ADD</button>
+              </div>
+            )}
+          </div>
+          <div style={{ marginBottom: 26 }}>
+            <label style={ma.label}>制作コメント / Notes</label>
+            <textarea value={draft.comment} onChange={e => setDraft(d => ({ ...d, comment: e.target.value }))} placeholder="制作のこだわり・使用塗料・反省点など自由に" style={{ width: "100%", boxSizing: "border-box", minHeight: 90, border: "1px solid #111", padding: "10px", fontSize: 14, lineHeight: 1.7, fontFamily: MA_FONT, resize: "vertical", outline: "none" }} />
+          </div>
+          <div>
+            <label style={ma.label}>写真 / Photos（最大{MAX_ALBUM_PHOTOS}枚・高画質のまま保存／各写真にコメント可／長押しで並べ替え・‹›でも移動）</label>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
+              {draft.photos.map((p, i) => (
+                <div key={i}>
+                  <div data-photo-cell={i}
+                    onPointerDown={(e) => onPhotoPointerDown(e, i, p)} onPointerMove={onPhotoPointerMove} onPointerUp={onPhotoPointerUp} onPointerCancel={onPhotoPointerUp}
+                    style={{ position: "relative", aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", border: (draft.cover || 0) === i ? "2px solid #111" : "2px solid transparent", opacity: dragView && dragRef.current.from === i ? 0.3 : 1, touchAction: "manipulation", cursor: "grab", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}>
+                    <MaThumb src={p.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }} />
+                    <div style={{ position: "absolute", top: 4, left: 4, display: "flex", gap: 4 }}>
+                      <button onClick={() => movePhoto(i, -1)} disabled={i === 0} style={{ width: 24, height: 24, border: "none", borderRadius: 0, background: i === 0 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === 0 ? "default" : "pointer" }} title="前へ">‹</button>
+                      <button onClick={() => movePhoto(i, 1)} disabled={i === draft.photos.length - 1} style={{ width: 24, height: 24, border: "none", borderRadius: 0, background: i === draft.photos.length - 1 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === draft.photos.length - 1 ? "default" : "pointer" }} title="後ろへ">›</button>
+                    </div>
+                    <button onClick={() => removePhoto(i)} style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: 0, border: "none", background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}>✕</button>
+                    <button onClick={() => setDraft(d => ({ ...d, cover: i }))} style={{ position: "absolute", bottom: 0, left: 0, right: 0, border: "none", background: (draft.cover || 0) === i ? "#111" : "rgba(0,0,0,0.55)", color: "#fff", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", padding: "3px 0", cursor: "pointer" }}>{(draft.cover || 0) === i ? "COVER" : "表紙にする"}</button>
+                  </div>
+                  <input value={p.caption || ""} onChange={e => setCaption(i, e.target.value)} placeholder="コメント" style={{ width: "100%", boxSizing: "border-box", marginTop: 5, border: "none", borderBottom: "1px solid #ddd", padding: "4px 2px", fontSize: 11, fontFamily: MA_FONT, outline: "none", background: "transparent" }} />
+                </div>
+              ))}
+              {draft.photos.length < MAX_ALBUM_PHOTOS && (
+                <label style={{ aspectRatio: "1/1", border: "1px dashed #111", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11, letterSpacing: "0.1em", color: "#111", gap: 4 }}>
+                  <span style={{ fontSize: 22, fontWeight: 300 }}>+</span>
+                  <span>{busy ? "保存中…" : "ADD"}</span>
+                  <span style={{ fontSize: 9, color: "#999" }}>{draft.photos.length}/{MAX_ALBUM_PHOTOS}</span>
+                  <input type="file" accept="image/*" multiple onChange={addPhotos} style={{ display: "none" }} disabled={busy} />
+                </label>
+              )}
+            </div>
+          </div>
+        </div>
+        {dragView && (
+          <div style={{ position: "fixed", left: dragView.x, top: dragView.y, transform: "translate(-50%, -50%)", width: 116, height: 116, zIndex: 500, pointerEvents: "none", background: "#fff", overflow: "hidden", border: "2px solid #111", boxShadow: "0 10px 30px rgba(0,0,0,0.45)" }}>
+            <KitImage src={dragView.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          </div>
+        )}
+        {renderLightbox()}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 // ---- Main App ----
@@ -3291,6 +4636,14 @@ export default function App() {
   const [scanLoading, setScanLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
+  const [showModelerAlbum, setShowModelerAlbum] = useState(false); // モデラーズアルバム（ポートフォリオ）表示
+  // 入口ボタンは非公開中だが、?modeler または #modeler 付きURLで直接開ける（仕上げのプレビュー用）
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.has("modeler") || window.location.hash === "#modeler") setShowModelerAlbum(true);
+    } catch (e) {}
+  }, []);
   const [shareKit, setShareKit] = useState(null); // 単一キットの完成品シェア対象
   const [myXId, setMyXId] = useState("");
   const [filterSeries, setFilterSeries] = useState("");
@@ -3713,9 +5066,58 @@ export default function App() {
     setKits(importedKits);
   };
 
-  const handleWant = (kit) => {
+  // 譲る/シェア用に、キットの表示画像（completedPhotoUrl || photoUrl）を Blob で取得する。
+  // idb-blob: / data: / http(s) のいずれにも対応（http は CORS 回避のため image-proxy 経由）。
+  const getKitImageBlob = async (kit) => {
+    const src = (kit && (kit.completedPhotoUrl || kit.photoUrl)) || "";
+    if (!src) return null;
+    try {
+      if (isIdbBlobUrl(src)) return await kitsIdbPhotoGet(idbBlobUrlToId(src));
+      if (src.startsWith("data:")) return await (await fetch(src)).blob();
+      const r = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`);
+      if (r.ok) return await r.blob();
+    } catch (e) {}
+    return null;
+  };
+
+  const handleWant = async (kit) => {
     const text = `「${kit.name}」これを作ってくれる方に譲りたいです！DMお願いします #TSUMITSUMI #ツミツミ`;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+    const intentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+
+    // 画像を File 化（取得できれば）
+    let file = null;
+    try {
+      const blob = await getKitImageBlob(kit);
+      if (blob && blob.size > 0) {
+        const isPng = (blob.type || "").includes("png");
+        file = new File([blob], `tsumitsumi_${kit.jan || "kit"}.${isPng ? "png" : "jpg"}`, { type: blob.type || "image/jpeg" });
+      }
+    } catch (e) {}
+
+    // スマホ等：Web Share API で「画像つき」共有 → 共有シートから X を選ぶとそのまま画像が添付される
+    if (file && typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // ユーザーがキャンセル
+        // それ以外（活性切れ等）は下のフォールバックへ
+      }
+    }
+
+    // フォールバック（PC・画像共有非対応端末）：X の投稿インテントは画像を自動添付できないため、
+    // 画像をダウンロードしておき（手動添付できるように）テキスト投稿画面を開く。
+    if (file) {
+      try {
+        const url = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      } catch (e) {}
+    }
+    window.open(intentUrl, "_blank");
   };
 
   const handleBulkSetField = (field, value) => {
@@ -3843,7 +5245,7 @@ export default function App() {
   // 内部のクリックハンドラは React state setter または functional setState を使う関数のみを参照するので、
   // キャッシュされたクロージャでも stale 問題は発生しない（moveKit は内部で setKits(prev => ...) を使用）。
   const gridCards = useMemo(() => filtered.map((kit) => (
-    <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
+    <div key={kit.id} style={{ borderRadius: 0, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
       {(kit.completedPhotoUrl || kit.photoUrl)
         ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
         : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}><PhotoPlaceholderIcon size={32} /></div>
@@ -3862,15 +5264,15 @@ export default function App() {
       if (!reorderMode) setDetail(kit);
     }}>
       {bulkMode && (
-        <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: 24, height: 24, borderRadius: 0, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {bulkSelected.has(kit.id) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
         </div>
       )}
       {reorderMode && !bulkMode && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
-          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 0, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             onClick={(e) => { e.stopPropagation(); moveKit(kit.id, -1); }} disabled={index === 0}>▲</button>
-          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === filtered.length - 1 ? "#f3f4f6" : "#fff", color: index === filtered.length - 1 ? "#ccc" : "#374151", fontSize: 14, cursor: index === filtered.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 0, background: index === filtered.length - 1 ? "#f3f4f6" : "#fff", color: index === filtered.length - 1 ? "#ccc" : "#374151", fontSize: 14, cursor: index === filtered.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }} disabled={index === filtered.length - 1}>▼</button>
         </div>
       )}
@@ -3882,7 +5284,7 @@ export default function App() {
           {kit.scale && <span style={s.badge}>{kit.scale}</span>}
           {kit.completed && <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700, marginLeft: 6 }}>✓ 完成済み</span>}
           {kit.tags?.length > 0 && kit.tags.map(tag => (
-            <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
+            <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>#{tag}</span>
           ))}
         </div>
         <div style={s.cardBottom}>
@@ -3901,7 +5303,7 @@ export default function App() {
         </div>
         {kit.completed && filter === "done" && !bulkMode && !reorderMode && (
           <button onClick={(e) => { e.stopPropagation(); setAlbumKit(kit); }}
-            style={{ marginTop: 8, alignSelf: "flex-start", padding: "5px 16px", background: "#f0fdf4", color: "#166534", border: "1.5px solid #bbf7d0", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+            style={{ marginTop: 8, alignSelf: "flex-start", padding: "5px 16px", background: "#f0fdf4", color: "#166534", border: "1.5px solid #bbf7d0", borderRadius: 0, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
             アルバム
           </button>
         )}
@@ -3915,13 +5317,13 @@ export default function App() {
     const cover = photos[0] || kit.photoUrl;
     return (
       <div key={kit.id} onClick={() => setAlbumKit(kit)}
-        style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }}>
+        style={{ borderRadius: 0, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }}>
         <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", position: "relative" }}>
           {cover
             ? <KitImage src={cover} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><PhotoPlaceholderIcon size={32} /></div>}
           {photos.length > 1 && (
-            <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20 }}>{photos.length}枚</span>
+            <span style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 0 }}>{photos.length}枚</span>
           )}
           {/* 名前オーバーレイ */}
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "16px 8px 6px", background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))", color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{kit.name}</div>
@@ -3972,34 +5374,38 @@ export default function App() {
               <line x1="12" y1="17.5" x2="12" y2="17.51" />
             </svg>
           </button>
-          <button style={{ ...s.searchIconBtn, width: 30, height: 30 }} onClick={() => setShowAppShare(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 10L12 6L16 10" />
-              <line x1="12" y1="6" x2="12" y2="17" />
-              <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" />
-            </svg>
+          <button style={{ ...s.shareBtn, width: 30, height: 30, fontSize: 13 }} onClick={() => setShowShare(true)} title="Xでシェア">𝕏</button>
+          <button style={{ ...s.searchIconBtn, width: 30, height: 30, padding: 0, overflow: "hidden" }} onClick={() => setShowModelerAlbum(true)} title="モデラーズアルバム">
+            <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ width: 30, height: 30, objectFit: "cover", display: "block" }} />
           </button>
-          <button style={{ ...s.shareBtn, width: 30, height: 30, fontSize: 13 }} onClick={() => setShowShare(true)}>𝕏</button>
         </div>
       </div>
 
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 16px", display: bulkMode ? "none" : "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto" }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 20, padding: "3px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>{rank.label}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 0, padding: "3px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>登録数 {totalKits}</span>
         <a href="/tips/" target="_blank" rel="noopener noreferrer"
-          style={{ marginLeft: "auto", flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 12, padding: "3px 8px", textDecoration: "none", whiteSpace: "nowrap", lineHeight: 1.2 }}>
+          style={{ marginLeft: "auto", flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 0, padding: "3px 8px", textDecoration: "none", whiteSpace: "nowrap", lineHeight: 1.2 }}>
           プラモTIPS
         </a>
         <a href="/gears.html" target="_blank" rel="noopener noreferrer"
-          style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#9a3412", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "2px 8px", textDecoration: "none", textAlign: "center", lineHeight: 1.15 }}>
+          style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#9a3412", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 0, padding: "2px 8px", textDecoration: "none", textAlign: "center", lineHeight: 1.15 }}>
           おすすめ<br/>定番アイテム
         </a>
       </div>
 
+      {/* モデラーズアルバムの入口は完成まで非公開。再公開するときは下記ボタンを戻す：
+      <button onClick={() => setShowModelerAlbum(true)}
+        style={{ display: bulkMode ? "none" : "flex", alignItems: "center", justifyContent: "center", gap: 12, width: "100%", boxSizing: "border-box", padding: "11px 16px", background: "#111", color: "#fff", border: "none", cursor: "pointer", fontFamily: "'Helvetica Neue', 'Inter', 'Noto Sans JP', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: "0.28em" }}>
+        MODELERS ALBUM
+        <span style={{ fontSize: 9, letterSpacing: "0.2em", color: "#9ca3af", fontWeight: 600 }}>PORTFOLIO ›</span>
+      </button>
+      */}
+
       {showSearch && !bulkMode && (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "10px 16px" }}>
           <input autoFocus
-            style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
+            style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
             placeholder="キット名・シリーズで検索..."
             value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </div>
@@ -4035,7 +5441,7 @@ export default function App() {
                 <span style={{ fontSize: 9, color: "#d1d5db" }}>税込希望小売価格×個数</span>
               )}
               <button
-                style={{ fontSize: 10, padding: "2px 8px", border: "1px solid #e5e7eb", borderRadius: 20, background: showPriceTotal ? "#f0fdf4" : "#f3f4f6", color: showPriceTotal ? "#16a34a" : "#9ca3af", cursor: "pointer" }}
+                style={{ fontSize: 10, padding: "2px 8px", border: "1px solid #e5e7eb", borderRadius: 0, background: showPriceTotal ? "#f0fdf4" : "#f3f4f6", color: showPriceTotal ? "#16a34a" : "#9ca3af", cursor: "pointer" }}
                 onClick={() => setShowPriceTotal(v => !v)}>
                 {showPriceTotal ? "表示中" : "非表示"}
               </button>
@@ -4048,7 +5454,7 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", display: bulkMode ? "none" : undefined }}>
         <div style={{ padding: "8px 16px 4px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 5 }}>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
               value={filterScale} onChange={(e) => setFilterScale(e.target.value)}>
               <option value="">スケール</option>
               <option value="__unset__">未設定</option>
@@ -4056,7 +5462,7 @@ export default function App() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
               value={filterSeries} onChange={(e) => setFilterSeries(e.target.value)}>
               <option value="">シリーズ</option>
               <option value="__unset__">未設定</option>
@@ -4064,7 +5470,7 @@ export default function App() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, background: filterRating ? "#fffbeb" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, background: filterRating ? "#fffbeb" : "#fafafa" }}
               value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
               <option value="">評価</option>
               <option value="5">★5</option>
@@ -4073,7 +5479,7 @@ export default function App() {
               <option value="2">★2</option>
               <option value="1">★1</option>
             </select>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, background: filterCondition ? "#f5f3ff" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, background: filterCondition ? "#f5f3ff" : "#fafafa" }}
               value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
               <option value="">状態</option>
               {CONDITION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -4090,7 +5496,7 @@ export default function App() {
                 const active = filterTags.includes(tag);
                 return (
                   <button key={tag}
-                    style={{ background: active ? "#166534" : "#f0fdf4", color: active ? "#fff" : "#166534", border: `1.5px solid ${active ? "#166534" : "#bbf7d0"}`, borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                    style={{ background: active ? "#166534" : "#f0fdf4", color: active ? "#fff" : "#166534", border: `1.5px solid ${active ? "#166534" : "#bbf7d0"}`, borderRadius: 0, padding: "3px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
                     onClick={() => setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}>
                     #{tag}
                   </button>
@@ -4116,31 +5522,31 @@ export default function App() {
         )}
         {filtered.length > 0 && !bulkMode && (
           <div style={{ display: "flex", flexWrap: "nowrap", alignItems: "center", gap: 5, marginBottom: 4, overflowX: "auto", paddingBottom: 2 }}>
-            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "list" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "list" ? "#111" : "#fff", color: viewMode === "list" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "list" ? "#111" : "#e5e7eb"}`, borderRadius: 0, background: viewMode === "list" ? "#111" : "#fff", color: viewMode === "list" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setViewMode("list")}>☰ 詳細</button>
-            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 0, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setViewMode("grid")}>⊞ サムネ</button>
-            <select style={{ fontSize: 11, padding: "3px 6px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", flexShrink: 0 }}
+            <select style={{ fontSize: 11, padding: "3px 6px", border: "1.5px solid #e5e7eb", borderRadius: 0, background: "#fff", color: "#6b7280", cursor: "pointer", flexShrink: 0 }}
               value={sortKey} onChange={(e) => { setSortKey(e.target.value); setReorderMode(false); }}>
               <option value="name">名前順</option>
               <option value="date">登録順</option>
               <option value="purchaseDate">購入日順</option>
             </select>
-            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 0, background: "#fff", color: "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}>
               {sortDir === "asc" ? "↑昇" : "↓降"}
             </button>
             {filtered.length > 1 && sortKey === "custom" && (
-              <button style={{ fontSize: 11, padding: "3px 8px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+              <button style={{ fontSize: 11, padding: "3px 8px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 0, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
                 onClick={() => setReorderMode(v => !v)}>
                 {reorderMode ? "✓完了" : "↕手動"}
               </button>
             )}
-            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 0, background: "#fff", color: "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => { setBulkMode(true); setBulkSelected(new Set()); }}>
               ☑ 一括
             </button>
-            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #111", borderRadius: 20, background: "#111", color: "#fff", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #111", borderRadius: 0, background: "#111", color: "#fff", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setShowTagEditor(true)}>
               タグ編集
             </button>
@@ -4161,18 +5567,18 @@ export default function App() {
         {bulkMode && (
           <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: "#111", color: "#fff" }}>
             <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>☑ 一括編集モード</span>
-            <button style={{ fontSize: 12, padding: "4px 12px", background: "#fff", color: "#111", border: "none", borderRadius: 20, fontWeight: 700, cursor: "pointer" }}
+            <button style={{ fontSize: 12, padding: "4px 12px", background: "#fff", color: "#111", border: "none", borderRadius: 0, fontWeight: 700, cursor: "pointer" }}
               onClick={() => { setBulkMode(false); setBulkSelected(new Set()); }}>✕ 解除</button>
           </div>
         )}
         {bulkMode && (() => {
           const allExistingTags = [...new Set([...tagMasterList, ...kits.flatMap(k => k.tags || [])])];
           return (
-            <div style={{ background: "#fff", borderRadius: 10, marginBottom: 8, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
+            <div style={{ background: "#fff", borderRadius: 0, marginBottom: 8, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
               {/* ヘッダー：件数・削除 */}
               <div style={{ display: "flex", alignItems: "center", padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <span style={{ fontSize: 12, color: "#6b7280", flex: 1 }}>{bulkSelected.size}件選択中</span>
-                <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+                <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 0, cursor: "pointer", fontWeight: 700 }}
                   onClick={handleBulkDelete}>削除</button>
               </div>
               {/* 状態 */}
@@ -4181,7 +5587,7 @@ export default function App() {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {CONDITION_OPTIONS.map(opt => (
                     <button key={opt} onClick={() => handleBulkSetField("condition", opt)}
-                      style={{ padding: "5px 12px", borderRadius: 20, border: "1.5px solid #e5e7eb", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#374151" }}>
+                      style={{ padding: "5px 12px", borderRadius: 0, border: "1.5px solid #e5e7eb", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#374151" }}>
                       {opt}
                     </button>
                   ))}
@@ -4191,7 +5597,7 @@ export default function App() {
               <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>シリーズを一括設定</div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none", background: "#fafafa" }}
+                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 12, outline: "none", background: "#fafafa" }}
                     onChange={(e) => { if (e.target.value) handleBulkSetField("series", e.target.value); e.target.value = ""; }}
                     defaultValue="">
                     <option value="">シリーズを選択...</option>
@@ -4203,7 +5609,7 @@ export default function App() {
               <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>スケールを一括設定</div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none", background: "#fafafa" }}
+                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 12, outline: "none", background: "#fafafa" }}
                     onChange={(e) => { if (e.target.value) handleBulkSetField("scale", e.target.value); e.target.value = ""; }}
                     defaultValue="">
                     <option value="">スケールを選択...</option>
@@ -4225,13 +5631,13 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 6 }}>
-                  <input style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none" }}
+                  <input style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 12, outline: "none" }}
                     placeholder="新しいタグを入力..."
                     value={bulkTagInput}
                     onChange={(e) => setBulkTagInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { handleBulkAddTag(bulkTagInput); setBulkTagInput(""); } }}
                   />
-                  <button style={{ padding: "6px 14px", background: "#111", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                  <button style={{ padding: "6px 14px", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
                     onClick={() => { handleBulkAddTag(bulkTagInput); setBulkTagInput(""); }}>追加</button>
                 </div>
               </div>
@@ -4258,7 +5664,7 @@ export default function App() {
 
       {/* バックグラウンド価格自動取得の通知トースト（総額が増えた理由の説明） */}
       {priceAutoToast && (
-        <div style={{ position: "fixed", bottom: 92, left: "50%", transform: "translateX(-50%)", zIndex: 60, maxWidth: "92%", background: "#1e293b", color: "#fff", borderRadius: 10, padding: "10px 14px", fontSize: 12, fontWeight: 600, boxShadow: "0 4px 16px rgba(0,0,0,0.28)", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ position: "fixed", bottom: 92, left: "50%", transform: "translateX(-50%)", zIndex: 60, maxWidth: "92%", background: "#1e293b", color: "#fff", borderRadius: 0, padding: "10px 14px", fontSize: 12, fontWeight: 600, boxShadow: "0 4px 16px rgba(0,0,0,0.28)", display: "flex", alignItems: "center", gap: 12 }}>
           <span>{priceAutoToast}</span>
           <span onClick={() => setPriceAutoToast(null)} style={{ cursor: "pointer", opacity: 0.7, flexShrink: 0 }}>✕</span>
         </div>
@@ -4267,7 +5673,7 @@ export default function App() {
       {/* フロート式「プラモを預ける」リンク。トップから移動して左下に常駐させる。
           z-index は右下の FAB（50）より下げて、スキャン/手動登録の操作を邪魔しないようにする。 */}
       <a href="/storage.html" target="_blank" rel="noopener noreferrer"
-        style={{ position: "fixed", bottom: 24, left: 16, zIndex: 40, fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 20, padding: "6px 12px", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+        style={{ position: "fixed", bottom: 24, left: 16, zIndex: 40, fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 0, padding: "6px 12px", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
         プラモを預ける
       </a>
 
@@ -4324,7 +5730,7 @@ export default function App() {
                   <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 6 }}>タグ</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {detail.tags.map(tag => (
-                      <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>#{tag}</span>
+                      <span key={tag} style={{ background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>#{tag}</span>
                     ))}
                   </div>
                 </div>
@@ -4341,7 +5747,7 @@ export default function App() {
                       background: "#ecfdf5",
                       color: "#059669",
                       border: "1.5px solid #a7f3d0",
-                      borderRadius: 12,
+                      borderRadius: 0,
                       fontSize: 13,
                       fontWeight: 700,
                       textAlign: "center",
@@ -4359,7 +5765,7 @@ export default function App() {
                 <div style={{ marginTop: 10 }}>
                   <button
                     onClick={() => { setDetail(null); setShareKit(detail); }}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "11px", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "11px", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
                     この完成品をXでシェア
                   </button>
                 </div>
@@ -4381,7 +5787,7 @@ export default function App() {
                       background: "#111",
                       color: "#fff",
                       border: "1px solid #111",
-                      borderRadius: 8,
+                      borderRadius: 0,
                       fontSize: 12,
                       fontWeight: 700,
                       textDecoration: "none",
@@ -4418,12 +5824,12 @@ export default function App() {
       {dupConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => resolveDup(false)}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 360, padding: 20, boxShadow: "0 10px 40px rgba(0,0,0,0.3)", boxSizing: "border-box" }}
+          <div style={{ background: "#fff", borderRadius: 0, width: "100%", maxWidth: 360, padding: 20, boxShadow: "0 10px 40px rgba(0,0,0,0.3)", boxSizing: "border-box" }}
             onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 10 }}>
               このJANは既に{dupConfirm.where}です
             </div>
-            <div style={{ fontSize: 13, color: "#374151", marginBottom: 16, padding: "10px 12px", background: "#f9fafb", borderRadius: 8, lineHeight: 1.5, wordBreak: "break-all" }}>
+            <div style={{ fontSize: 13, color: "#374151", marginBottom: 16, padding: "10px 12px", background: "#f9fafb", borderRadius: 0, lineHeight: 1.5, wordBreak: "break-all" }}>
               「{dupConfirm.kit?.name || dupConfirm.kit?.jan || "（名称なし）"}」
             </div>
             <div style={{ fontSize: 13, color: "#374151", marginBottom: 16 }}>
@@ -4431,12 +5837,12 @@ export default function App() {
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button
-                style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => resolveDup(false)}>
                 キャンセル
               </button>
               <button
-                style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => resolveDup(true)}>
                 追加する
               </button>
@@ -4457,14 +5863,14 @@ export default function App() {
                 <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
                   {continuousQueue.map((k, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
-                      {(k.completedPhotoUrl || k.photoUrl) && <KitImage src={k.completedPhotoUrl || k.photoUrl} style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} />}
+                      {(k.completedPhotoUrl || k.photoUrl) && <KitImage src={k.completedPhotoUrl || k.photoUrl} style={{ width: 30, height: 30, borderRadius: 0, objectFit: "cover" }} />}
                       <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{k.name || k.jan}</span>
                       <button style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14 }}
                         onClick={() => setContinuousQueue(q => q.filter((_, j) => j !== i))}>✕</button>
                     </div>
                   ))}
                 </div>
-                <button style={{ width: "100%", padding: "10px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: "pointer" }}
+                <button style={{ width: "100%", padding: "10px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 0, fontWeight: 700, fontSize: 14, cursor: "pointer" }}
                   onClick={handleBulkScanRegister}>
                   ✓ {continuousQueue.length}件をまとめて登録
                 </button>
@@ -4556,6 +5962,15 @@ export default function App() {
         </div>
       )}
 
+      {showModelerAlbum && (
+        <ModelerAlbum
+          onClose={() => setShowModelerAlbum(false)}
+          tagMasterList={tagMasterList}
+          setTagMasterList={setTagMasterList}
+          kits={kits}
+          setKits={setKits} />
+      )}
+
       {shareKit && (
         <div style={s.overlay} onClick={() => setShareKit(null)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
@@ -4577,7 +5992,7 @@ export default function App() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
               {CONDITION_OPTIONS.map((opt) => (
                 <button key={opt}
-                  style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  style={{ padding: "6px 14px", borderRadius: 0, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
                     background: form.condition === opt ? "#111" : "#f3f4f6",
                     color: form.condition === opt ? "#fff" : "#374151",
                     borderColor: form.condition === opt ? "#111" : "#e5e7eb" }}
@@ -4613,7 +6028,7 @@ export default function App() {
               />
               {form.jan && (
                 <button
-                  style={{ padding: "8px 12px", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ padding: "8px 12px", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 0, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
                   onClick={async (e) => {
                     e.preventDefault();
                     const r = await fetch(`/api/price?jan=${form.jan}`);
@@ -4674,21 +6089,21 @@ export default function App() {
 
             <label style={s.label}>個数</label>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <button style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              <button style={{ width: 36, height: 36, borderRadius: 0, border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                 onClick={() => setForm((f) => ({ ...f, count: Math.max(1, (f.count || 1) - 1) }))}>−</button>
               <span style={{ fontSize: 18, fontWeight: 700, minWidth: 32, textAlign: "center" }}>{form.count || 1}</span>
-              <button style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              <button style={{ width: 36, height: 36, borderRadius: 0, border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                 onClick={() => setForm((f) => ({ ...f, count: (f.count || 1) + 1 }))}>＋</button>
             </div>
 
             <label style={s.label}>箱の写真</label>
             <div style={{ position: "relative" }}>
               <div style={s.photoArea} onClick={() => fileRef.current.click()}>
-                {form.photoUrl ? <KitImage src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+                {form.photoUrl ? <KitImage src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }} />
                   : <span style={{ color: "#9ca3af", fontSize: 14 }}>タップして写真を選択</span>}
               </div>
               {form.photoUrl && (
-                <button style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                <button style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 0, width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                   onClick={(e) => { e.stopPropagation(); tryDeleteOrphanBlob(form.photoUrl); setForm((f) => ({ ...f, photoUrl: "", photo: null })); }}>✕</button>
               )}
             </div>
@@ -4700,16 +6115,16 @@ export default function App() {
               return (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {photos.map((url, i) => (
-                    <div key={i} style={{ position: "relative", width: 88, height: 88, borderRadius: 8, overflow: "hidden", border: `1.5px solid ${i === 0 ? "#22c55e" : "#e5e7eb"}` }}>
+                    <div key={i} style={{ position: "relative", width: 88, height: 88, borderRadius: 0, overflow: "hidden", border: `1.5px solid ${i === 0 ? "#22c55e" : "#e5e7eb"}` }}>
                       <KitImage src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       {i === 0 && <span style={{ position: "absolute", left: 0, bottom: 0, background: "#22c55e", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 5px", borderTopRightRadius: 6 }}>表紙</span>}
-                      <button type="button" style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      <button type="button" style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 0, width: 22, height: 22, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                         onClick={(e) => { e.stopPropagation(); removeCompletedPhoto(i); }}>✕</button>
                     </div>
                   ))}
                   {photos.length < MAX_COMPLETED_PHOTOS && (
                     <div onClick={() => completedFileRef.current.click()}
-                      style={{ width: 88, height: 88, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fafafa", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 11, cursor: "pointer", textAlign: "center", lineHeight: 1.4 }}>
+                      style={{ width: 88, height: 88, borderRadius: 0, border: "1.5px dashed #d1d5db", background: "#fafafa", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 11, cursor: "pointer", textAlign: "center", lineHeight: 1.4 }}>
                       <span style={{ fontSize: 22 }}></span>追加<br/>{photos.length}/{MAX_COMPLETED_PHOTOS}
                     </div>
                   )}
@@ -4728,7 +6143,7 @@ export default function App() {
                 onChange={(e) => setForm((f) => ({ ...f, jan: e.target.value.replace(/[^0-9]/g, "").slice(0, 13) }))}
               />
               <button
-                style={{ padding: "8px 10px", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                style={{ padding: "8px 10px", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
                 onClick={async (e) => {
                   e.preventDefault();
                   if (!form.name) return;
@@ -4762,7 +6177,7 @@ export default function App() {
 
             {/* 編集時のみ：このキットを削除（積みプラ・完成品とも編集の中に集約） */}
             {editId !== null && (
-              <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => setConfirmDelete({ id: editId, name: form.name })}>
                 このキットを削除
               </button>
@@ -4783,18 +6198,18 @@ export default function App() {
       {confirmDelete && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
           onClick={() => setConfirmDelete(null)}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 340, padding: "24px 20px 18px", boxSizing: "border-box", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
+          <div style={{ background: "#fff", borderRadius: 0, width: "100%", maxWidth: 340, padding: "24px 20px 18px", boxSizing: "border-box", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
             onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#111", textAlign: "center", marginBottom: 8 }}>本当に削除しますか？</div>
             <div style={{ fontSize: 13, color: "#6b7280", textAlign: "center", lineHeight: 1.6, marginBottom: 20 }}>
               「{confirmDelete.name || "このキット"}」を削除します。<br />この操作は元に戻せません。
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => setConfirmDelete(null)}>
                 いいえ
               </button>
-              <button style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => { handleDelete(confirmDelete.id); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); setConfirmDelete(null); }}>
                 はい、削除
               </button>
@@ -4811,8 +6226,8 @@ const s = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 20px 14px", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   headerTitle: { fontSize: 15, fontWeight: 700, color: "#111", letterSpacing: 1 },
   headerSub: { fontSize: 8, color: "#aaa", letterSpacing: 2, marginTop: 1 },
-  shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
-  searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: 0, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 },
+  shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 0, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
+  searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 0, padding: 0, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 },
   stats: { display: "flex", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   statBox: { flex: 1, padding: "9px 0", textAlign: "center", cursor: "pointer" },
   statNum: { fontSize: 16, fontWeight: 700 },
@@ -4823,39 +6238,39 @@ const s = {
   loadingBar: { background: "#f0fdf4", color: "#166534", padding: "10px 20px", fontSize: 13, borderBottom: "1px solid #dcfce7" },
   list: { padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 },
   empty: { textAlign: "center", color: "#bbb", padding: "60px 0", fontSize: 14, lineHeight: 1.9 },
-  card: { background: "#fff", borderRadius: 12, padding: "14px 12px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", cursor: "pointer" },
-  thumb: { width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0 },
-  thumbPh: { width: 56, height: 56, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 },
+  card: { background: "#fff", borderRadius: 0, padding: "14px 12px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", cursor: "pointer" },
+  thumb: { width: 56, height: 56, borderRadius: 0, objectFit: "cover", flexShrink: 0 },
+  thumbPh: { width: 56, height: 56, borderRadius: 0, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   cardName: { fontSize: 13, fontWeight: 700, color: "#111", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 },
   cardMeta: { fontSize: 12, color: "#6b7280", marginTop: 3, display: "flex", gap: 6, alignItems: "center" },
-  badge: { background: "#f3f4f6", borderRadius: 4, padding: "1px 6px", fontSize: 11, color: "#374151" },
+  badge: { background: "#f3f4f6", borderRadius: 0, padding: "1px 6px", fontSize: 11, color: "#374151" },
   cardBottom: { display: "flex", gap: 8, marginTop: 6, alignItems: "center" },
   stars: { fontSize: 13, color: "#f59e0b", letterSpacing: 1 },
-  countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "2px 8px", fontWeight: 600 },
-  condBadge: { fontSize: 10, borderRadius: 20, padding: "2px 8px", fontWeight: 600 },
-  checkBtn: { width: 32, height: 32, borderRadius: "50%", border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
+  countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
+  condBadge: { fontSize: 10, borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
+  checkBtn: { width: 32, height: 32, borderRadius: 0, border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
   fab: { width: 56, height: 56, borderRadius: "50%", color: "#fff", border: "none", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" },
-  modal: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
-  modalPhoto: { width: "100%", maxHeight: 220, objectFit: "contain", borderRadius: "20px 20px 0 0" },
+  modal: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  modalPhoto: { width: "100%", maxHeight: 220, objectFit: "contain", borderRadius: 0 },
   modalBody: { padding: "20px 20px 32px" },
   modalTitle: { fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 6 },
-  doneBadge: { display: "inline-block", background: "#f0fdf4", color: "#166534", borderRadius: 20, padding: "2px 12px", fontSize: 12, fontWeight: 600, marginBottom: 12 },
+  doneBadge: { display: "inline-block", background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "2px 12px", fontSize: 12, fontWeight: 600, marginBottom: 12 },
   table: { width: "100%", borderCollapse: "collapse", marginTop: 12 },
   td1: { padding: "6px 0", fontSize: 12, color: "#9ca3af", width: 80, verticalAlign: "top" },
   td2: { padding: "6px 0", fontSize: 14, color: "#111" },
-  wantBtn: { width: "100%", marginTop: 16, padding: "12px 0", background: "#fff0f3", color: "#e11d48", border: "1.5px solid #fecdd3", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  wantBtn: { width: "100%", marginTop: 16, padding: "12px 0", background: "#fff0f3", color: "#e11d48", border: "1.5px solid #fecdd3", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" },
   modalBtns: { display: "flex", gap: 8, marginTop: 12 },
-  editBtn: { flex: 1, padding: "10px 0", background: "#f3f4f6", border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#111" },
-  deleteBtn: { flex: 1, padding: "10px 0", background: "#fee2e2", border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#b91c1c" },
-  closeBtn: { flex: 1, padding: "10px 0", background: "#111", border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#fff" },
-  formModal: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", overflowX: "hidden", padding: "24px 20px 40px", boxSizing: "border-box" },
+  editBtn: { flex: 1, padding: "10px 0", background: "#f3f4f6", border: "none", borderRadius: 0, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#111" },
+  deleteBtn: { flex: 1, padding: "10px 0", background: "#fee2e2", border: "none", borderRadius: 0, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#b91c1c" },
+  closeBtn: { flex: 1, padding: "10px 0", background: "#111", border: "none", borderRadius: 0, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#fff" },
+  formModal: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", overflowX: "hidden", padding: "24px 20px 40px", boxSizing: "border-box" },
   formTitle: { fontSize: 18, fontWeight: 700, color: "#111", marginBottom: 20 },
   label: { display: "block", fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 6, marginTop: 14 },
-  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
-  photoArea: { width: "100%", height: 120, border: "1.5px dashed #d1d5db", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginTop: 2 },
+  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
+  photoArea: { width: "100%", height: 120, border: "1.5px dashed #d1d5db", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginTop: 2 },
   formBtns: { display: "flex", gap: 10, marginTop: 24 },
-  cancelBtn: { flex: 1, padding: "12px 0", background: "#f3f4f6", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#374151" },
-  saveBtn: { flex: 2, padding: "12px 0", background: "#111", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#fff" },
+  cancelBtn: { flex: 1, padding: "12px 0", background: "#f3f4f6", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#374151" },
+  saveBtn: { flex: 2, padding: "12px 0", background: "#111", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#fff" },
 };

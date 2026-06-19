@@ -12,6 +12,21 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ツミツミ" />
+    <!-- モデラーズアルバム(?modeler / #modeler)で開いた時だけ、ホーム画面追加用のアイコン・名称を専用に差し替え -->
+    <script>
+      (function () {
+        try {
+          var s = window.location.search || "", h = window.location.hash || "";
+          if (/[?&]modeler\b/.test(s) || h === "#modeler") {
+            var links = document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]');
+            for (var i = 0; i < links.length; i++) links[i].href = "/modeler-icon.png";
+            var t = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+            if (t) t.setAttribute("content", "Modelers Album");
+            document.title = "Modelers Album";
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta name="theme-color" content="#1a1a1a" />
     <!-- OGP / Google検索結果のサイト名表示用 -->
     <meta property="og:title" content="ツミツミ｜完全無料の積みプラ管理アプリ" />

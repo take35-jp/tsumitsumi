@@ -17,7 +17,7 @@
 - **プライバシーポリシー**: https://tsumitsumi.vercel.app/privacy.html
 - **GitHub**: https://github.com/take35-jp/tsumitsumi
 - **公式X**: @tsumitsumi_pla
-- **ホスティング**: Vercel（Hobby Plan、Function 12個まで。現在12個＝上限。これ以上増やすには統合/削除が必要）
+- **ホスティング**: Vercel（**Pro Plan**／$20月〜）。**広告(AdSense)・アフィリエイト掲載は商用利用にあたり、VercelではPro以上が必須**（Hobby無料枠は非商用限定なので解約・降格は規約違反＝停止リスク）。Hobbyにあった「Function 12個上限」は**Proでは撤廃**され、個数上限の心配は不要。現在のFunctionは12個。
 - **DB**: Supabase（PostgreSQL）
 - **Supabase URL**: https://oxtfwmcdtngvicrcjyue.supabase.co
 - **正式リリース日**: 2026/5/1
@@ -27,7 +27,7 @@
 
 ## 2. 現在のバージョン
 
-**v1.35（2026/06/13）**
+**v1.41（2026/06/19）**
 ※ 下記の履歴リストは v1.11 までの記録。v1.12〜v1.30 はコード側 versions 配列が一次情報（CLAUDE.md側は未追従）。最新の追加のみ末尾に追記する運用。
 
 ### バージョニングルール
@@ -55,6 +55,13 @@
 - **v1.32**: 完成品アルバム機能（3段階）。①完成写真を最大6枚化：`completedPhotos[]` 配列追加、旧 `completedPhotoUrl` は表紙[0]として後方互換維持（`getCompletedPhotos(kit)` ヘルパーで吸収）。編集フォームを6枚グリッドUIに。`tryDeleteOrphanBlob` 等の孤児blob掃除を配列走査対応。②完成タブ刷新：`filter==="done" && !bulkMode && !reorderMode` のとき通常リスト/グリッドの代わりにアルバムサムネグリッド（`albumCards`）を表示。タップで `AlbumViewerModal`（最大6枚ライトボックス：メイン写真＋‹›送り＋カウンター＋サムネストリップ）。③per-kitシェア：完成済みカード（リスト）に「📸シェア」ボタン＋ビューア内シェア。`generateKitAlbumImage(kit, rank)` で1キットの最大6枚を1080x1350の1枚にグリッド配置。`AlbumShareModal` に `singleKit` プロップを追加してコレクション版と共用。実機プレビューで3枚注入→グリッド→ビューア→生成画像のピクセル検証済み
 - **v1.34**: キット削除の確認ダイアログをアプリ内モーダル化。従来は編集フォームの「このキットを削除」ボタンで `window.confirm`（ネイティブ）を出していたが、v1.33 のスタイリッシュ化方針に合わせ、アプリ内の専用 Yes/No モーダルに置き換え。`confirmDelete` state（`{ id, name } | null`）を追加。削除ボタンは `setConfirmDelete({ id: editId, name: form.name })` を呼ぶだけにし、App 末尾（`reportTarget` モーダルの直後）に確認モーダルを描画。「本当に削除しますか？」＋キット名＋「この操作は元に戻せません」、ボタンは「いいえ」（グレー）／「はい、削除」（赤 #ef4444）。「はい」で `handleDelete`→フォームリセット→モーダル閉じ。オーバーレイ/背景クリックでキャンセル可。
 - **v1.35**: 完成品アルバムのXシェア画像を高画質化。①完成写真を**無圧縮（原本のまま）でIDBに保存**：`handleCompletedPhoto` が `kitsIdbPhotoSet(photoId, file)` に原本Blobをそのまま渡す（リサイズ・再エンコードなし）。IDB保存に失敗したときだけ localStorage 用に base64 圧縮フォールバック（`COMPLETED_PHOTO_MAXPX=1440 / QUALITY=0.82 / MAXCHARS=620000`）。メインのサムネ用 `handlePhoto` は320px圧縮のまま据え置き＝容量節約。`compressImageToBlob`/`compressImageToBase64` には `maxBytes`/`maxChars` 引数を追加済み（既定値そのままで後方互換）。②`generateKitAlbumImage` に `SCALE=2` を導入：キャンバスを `W*2 x H*2`（2160x2700）にして `ctx.scale(2,2)`、レイアウト計算は論理座標(1080x1350)のまま。`imageSmoothingQuality="high"`。※既存の完成写真は旧解像度のままで、再登録した写真から原本画質になる。アルバムビューア（ライトボックス）も自動的に高精細化。⚠️原本保存のため1枚あたり数MBになり得る（IDBは余裕があるが端末クォータ次第）。
+- **v1.36**: 「これを作ってくれる方に譲りたい！」（`handleWant`・詳細モーダルの未完成キット用ボタン）のXシェアにキット画像を添付。X の intent/tweet URL は画像を自動添付できないため、Web Share API 方式に変更。`getKitImageBlob(kit)` でキットの表示画像（`completedPhotoUrl || photoUrl`、idb-blob/data/httpいずれも対応・httpは image-proxy 経由）を Blob 取得→`File` 化し、`navigator.canShare({files})` 対応端末（主にスマホ）では `navigator.share({files,text})` で画像つき共有（共有シートからX選択でそのまま添付）。非対応（PC等）や活性切れ時は、画像を自動ダウンロード（手動添付用）してから従来どおりテキストの投稿インテントを開くフォールバック。`handleWant` は async 化。
+- **v1.37**: 「モデラーズアルバム」新設（モデラーのポートフォリオ）。モジュールレベルの新コンポーネント `ModelerAlbum`（白黒ミニマル・サンセリフ `MA_FONT`・絵文字なし）を追加し、App から `showModelerAlbum` state＋ヘッダー下の黒帯ボタンで全画面起動。**完全に端末内**：アルバム配列は localStorage `tsumitsumi_modeler_albums`、写真は**原本無圧縮で IDB 保存**（既存の `kitsIdbPhotoSet/Get/Delete`・`idToIdbBlobUrl` を流用、`KitImage` で表示）。1アルバム最大30枚（`MAX_ALBUM_PHOTOS`）。基本項目＝作品名／作成年月(`<input type=month>`)／自由タグ（`tagMasterList` を App から受け取り共有・新規タグはマスタにも追加）／制作コメント。一覧＝カバーのサムネグリッド、閲覧＝B&W詳細＋サムネ→タップで全画面ライトボックス（`‹›`送り＋タップで等倍ズーム。index.html の `user-scalable=no` でピンチ不可のため自前ズーム）。表紙は任意の写真を指定可。**注意**：`removePhoto` は IDB blob を即削除しない（編集キャンセル時の画像破損防止）。実体削除はアルバムごと削除（`deleteAlbum`）時のみ＝removeした写真のblobは軽微な孤児として残る。バックアップ（Excel/CSV）には未対応・端末依存。将来の公開URL（サーバー保存）は未実装で拡張余地。**※現在は一般非公開**：入口の黒帯ボタンはコメントアウト済みで、`?modeler` または `#modeler` 付きURLでのみ起動（プレビュー用の隠し導線）。完成後にボタンを戻して公開予定なので、公開向け更新履歴（HelpModal/versions配列）には未掲載。
+  - **拡張（同v1.37内・未公開のまま追加）**：①写真データを `{url, caption}` 構造に変更（旧＝文字列は `maNormPhotos` で移行）。写真1枚ごとにコメント可（編集の各サムネ下に入力欄／閲覧・ライトボックスで表示）。②タグの追加に加え**削除・改名**を `ModelerAlbum` 内で可能に（`renameTag`/`deleteTagEverywhere`＝マスタ＋全アルバム＋全キットに反映。App から `kits/setKits` を受け取る）。③**Xシェア**：写真単体＝`generateModelerPhotoImage`（黒帯ヘッダーにコメント入り）／アルバム全体（Share ALL）＝まず `renderShareSelect`（`shareSelect` state）で**最大16枚＝1投稿分を選択**（選んだ順・先頭が表紙／既定は表紙先頭で先頭16枚）→ `generateModelerAlbumImages(album, chosen)` で**4枚ずつ画像化**（16枚なら4画像）。1枚目＝表紙大＋他3＋ヘッダー〔作品名/完成年月/コメント〕、2枚目以降＝2x2グリッド＋ページ番号。`maRenderAlbumPage`で各ページ描画。。**複数画像はDL自動化がPCでブロックされる**ため、生成後は結果モーダル `renderShareResult`（`shareResult` state）に全画像をプレビュー表示し、`saveOne` で1枚ずつ確実に保存＋対応端末は「まとめて共有」`navigator.share({files})` も提示）。`maShareImage` で Web Share API（画像つき）→非対応はDL＋テキストintentフォールバック。画像生成はモジュール関数 `maLoadImage`/`maDrawCover`/`maWrap`、`SCALE=2` 高精細。④写真の並べ替え：編集サムネを**長押しドラッグ**で自由に並べ替え（ポインタ方式・タッチ/マウス両対応／`dragView`＋`dragRef`、`document.elementFromPoint`で挿入先判定、ドラッグ中は編集ラッパーの`overflowY:hidden`でスクロール固定、浮遊クローン表示）。保険として ‹ ›（`movePhoto`）ボタンも併設。表紙(cover)はURL一致で追従。⑤Xシェアの画像生成は `maLoadImage` を**FileReaderのdataURL方式**に変更（objectURL即revokeで表紙以外が描画されないバグを解消）。⑥ボタン表記＝アルバム「Share ALL」／写真単体「Share this pic」。⑦一覧ヘッダー：左端に Modelers ロゴ（`/modelers-logo.jpg`）、右端は CLOSE を廃止し**ツミツミロゴ（`/LOGO.png`）→ `/` リンク**（HELPボタンは残置）。⑧**ビフォーアフター比較画像**：viewの「Before After作成」ボタン→`renderBeforeAfter`で**BEFORE/AFTERを直接アップロード**（アルバムからは選ばない・`onBaPick`でdataURL化）＋コメント入力→各画像は `BaAdjust`（ドラッグで位置・スライダーでズーム z1〜3／t={z,ox,oy}）で調整可→`generateBeforeAfterImage`が `maDrawTransformed`(cover×z＋ox,oy)でX向け横長16:9(1600x900)1枚を生成（黒帯ヘッダーにコメント＋BEFORE/AFTERラベル）→`shareResult`で保存/共有。⑨**取扱説明書**：一覧ヘッダー右の「HELP」→`renderHelp`（`maHelp` state）で全機能の使い方を白黒で表示（アルバム作成/高画質追加/並べ替え/タグ/拡大/写真・アルバムシェア/ビフォーアフター/データ注意の10項目）。アプリ内ヘルプ方式（独立URLなし・公開時もそのまま使える）。⑩**バックアップ**：一覧ヘッダーのHELP左にDLアイコン→`renderBackup`（`maBackup` state）。`maExport` で全アルバム＋写真を1つのJSONに書き出し（idb-blob画像はbase64データURLにインライン化）、`maImport` で復元（dataURL→IDB再格納してidb-blob sentinel化・現データは上書き）。export/import中は「データ作成中…」ロード（`maBusy`）。保存は**作成(重い処理)と保存(DL)を分離**：`buildBackupBlob(targets)`でJSON生成（アルバム分割でBlob化＝メモリ節約）→`bkReady`に objectURL 保持→完了パネルの**実体 `<a href download>` をタップして保存**（iOSで重いデータの遅延DLが「遷移」扱い＝トップに戻る不具合の回避）。**推奨＝ZIP一括**(`exportZip`→`buildModelerZip`)：写真を**base64化せず元Blobのまま** store(無圧縮)ZIPに詰める自前ZIP実装（`maCrc32`／ローカルヘッダ＋中央ディレクトリ＋EOCD、ZIP64非対応＝〜4GB）。CRCは1枚ずつ`arrayBuffer`で計算→直後破棄、データ部は元Blob参照なので**JSヒープをほぼ使わず大容量・iOS standaloneでも安定**。`manifest.json`＋`photos/<id>.<ext>`構成。1回のDLで完結。インポート(`maImport`)は**ZIP/JSON両対応・複数ファイルまとめOK**→`readModelerZip`は`file.slice`で逐次読み込み写真Blobを直接IDBへ（低メモリ）、既存へ統合（同id置換）。フォールバックで個別JSON保存(`maExport([a])`)も残置。`navigator.share`/`showSaveFilePicker`はiOSがJSONを弾くため不採用。⑪**Share ALLレイアウト更新**：全ページとも「特集(大)1枚＋サムネ3枚」に統一（旧2枚目以降の2x2を廃止）。各4枚組の「大」は `renderShareSelect` でサムネ右側の「大」ボタンを直接タップしてON/OFF（`shareSelect.large[]`＋`toggleShareLarge`、1組1枚=同組の既存大は外す／再タップで既定=組の先頭に戻る）。`doShareSelected` が各4枚組で「大」を先頭へ並べ替えてから生成。写真コメントは `maCaptionBand` を**折り返し対応**にして全文表示（セルに収まる範囲で複数行、超過時のみ末尾…）。
+- **v1.38**: アプリ全体のデザインを**角ゼロ（長方形）に統一**。最初はタグ・称号・状態バッジ等のラベル枠のみ角丸→0にしたが、続いて `src/App.jsx` 内の**全 `borderRadius`（計206箇所・数値/"50%"/"20px 20px 0 0"等すべて）を 0 に一括置換**（タグ・称号・バッジ・ボタン・カード・モーダル・FAB・サムネ等すべて角ばる）。※canvasの `ctx.roundRect` によるシェア画像内の角丸は別物で対象外。モデラーズアルバム(B&W)は元々ほぼ角ゼロ。
+- **v1.39**: **モデラーズアルバムを正式公開**＋ヘッダーのシェア系ボタンを整理。①ヘッダー右上のアイコン列を「検索 / バックアップ(↓) / ヘルプ(?) / **Xでシェア(𝕏)** / **モデラーズアルバム(ロゴ)**」の並びに変更。従来あった app-share ボタン（アップロード矢印・`setShowAppShare`）を削除し、Xシェア（`setShowShare`・𝕏）に**一本化**（`showAppShare` state と `AppShareModal` 呼び出しは dead code として残置・無害）。②空いた最右枠に `public/modelers-logo.jpg` のロゴボタンを新設（`onClick={() => setShowModelerAlbum(true)}`、`s.searchIconBtn` ベース・30x30・`objectFit:cover`）。これで v1.37 以来 `?modeler`/`#modeler` の隠し導線でしか入れなかった**モデラーズアルバムをヘッダーから一般公開**。※`?modeler` 自動起動（line 4567 付近）と、コメントアウト済みの黒帯 `MODELERS ALBUM` ボタン（line 5320 付近）はそのまま残置。③更新履歴（HelpModal 直近3件＋versions 配列）も公開向けに更新済み。
+- **v1.40**: モデラーズアルバムの**ZIPバックアップ復元で写真が表示されない不具合を修正**。`readModelerZip` が ZIP 内の写真を `file.slice(...)`（File の遅延スライス Blob）のまま `kitsIdbPhotoSet` で IDB に保存していたが、**iOS Safari/ホーム画面アプリ（standalone）では、ファイル入力クリア後に遅延スライスの読み戻しが空/破損になる**ため、復元後にサムネが「NO IMAGE」やブロークン画像（青い?）になり、アルバムを開くとクラッシュ（メモリ枯渇でリロード）していた。修正は **arrayBuffer で実体化してから `new Blob([ab], {type})` を IDB 保存**（拡張子から MIME 判定）。1枚ずつ実体化するためメモリは増やさない。⚠️**残課題**：閲覧(view)とサムネ一覧は原本（無圧縮・数MB/枚）を `KitImage` で等倍デコードするため、写真枚数の多いアルバム（例：20枚）では iOS standalone のメモリ上限でクラッシュし得る。恒久対策はサムネ生成（grid/cover は縮小版、ライトボックスのみ原本）だが未実装。再発するようなら要対応。→ v1.41 で対応。
+- **v1.41**: モデラーズアルバムの**サムネ縮小表示**で軽量化（※一覧からの削除✕ボタンも一旦入れたがユーザー要望で撤去。削除は従来どおり編集画面の DELETE のみ）。モジュールに `MaThumb`（idb-blob を縮小 dataURL 化して表示するコンポーネント）＋`makeThumbDataUrl`（canvas で `maxPx` に縮小→`toDataURL("image/jpeg",q)`）＋`enqueueThumb`（生成を **Promise チェーンで直列化**＝同時デコードを1枚ずつに抑え瞬間メモリを抑制）＋`maThumbCache`（`id:maxPx`→dataURL のセッションキャッシュ）を追加。一覧cover・閲覧グリッド・編集グリッド・シェア選択グリッドの `KitImage` を `MaThumb maxPx={480}` に置換（原本の等倍デコードをやめてメモリ枯渇クラッシュを回避）。**ライトボックス（拡大）とシェア画像生成（`maLoadImage`）は従来どおり原本**を使うので画質は無劣化。これで v1.40 の残課題（写真の多いアルバムでのクラッシュ）に対処。
 
 ---
 
@@ -70,7 +77,7 @@ tsumitsumi/
 │   ├── manual.html      # 取扱説明書
 │   ├── privacy.html     # プライバシーポリシー
 │   └── ...
-├── api/                 # Vercel Functions（12個＝上限）
+├── api/                 # Vercel Functions（現在12個。Proのため個数上限の懸念なし）
 │   ├── search.js
 │   ├── admin-search.js
 │   ├── browse.js
@@ -113,7 +120,7 @@ tsumitsumi/
 - ❌ 楽天市場/楽天ブックスから価格取得（同上）
 - ❌ バンダイホビーサイトに JANを期待する（載っていない）
 - ❌ ヨドバシ.com からスクレイピングで JAN取得（平文では無い）
-- ❌ Vercel Function を 12個 超えるエンドポイント追加（Hobby Plan上限）
+- ⚠️ （旧Hobby時代の制約）Function 12個上限は **Pro移行で解消済み**。とはいえ無闇に増やさず整理は意識する
 - ❌ 商品名で機械的にマッチング（表記ゆれ多発）
 - ❌ /api/admin-search を一般クライアントから叩く（管理用）
 
@@ -155,7 +162,7 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 
 ---
 
-## 7. APIエンドポイント一覧（Vercel Function 12個＝上限）
+## 7. APIエンドポイント一覧（Vercel Function 現在12個・Proのため個数上限の懸念なし）
 
 | エンドポイント | 用途 | メモ |
 |---|---|---|
@@ -323,7 +330,7 @@ TIPS_EDIT_SECRET=...    # /api/tips-save 用。admin「TIPS編集」で保存時
 - Supabase クエリで `_=タイムスタンプ` を使うとフィルタ判定でエラー → `ts=...` などを使う
 
 ### Vercel 関連
-- Hobby Plan の Function 上限 = 12個。**現在12個で上限到達**（余裕ゼロ）。新規追加には既存の統合/削除が必要
+- **Pro Plan で運用中**（商用利用＝広告/アフィリエイトのため必須）。Hobbyの「Function 12個上限」は**Proで撤廃**済みで、新規Function追加も可能（現在12個）。※過去のメモに残る「12個＝上限」はHobby時代の名残
 - Function を増やすときは何かを統合・削除する必要あり
 
 ### ビルド・デプロイ
