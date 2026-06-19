@@ -3742,7 +3742,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     return (
       <div style={{ ...ma.wrap, zIndex: 420 }}>
         <div style={ma.bar}>
-          <button style={ma.ghost} onClick={() => setShareSelect(null)}>CANCEL</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={ma.ghost} onClick={() => setShareSelect(null)}>CANCEL</button>
+            <button style={ma.ghost} onClick={() => setShareSelect(s => (s ? { ...s, sel: [], large: [] } : s))} disabled={sel.length === 0}>全解除</button>
+          </div>
           <button style={ma.black} onClick={doShareSelected} disabled={sharing || sel.length === 0}>{sharing ? "..." : `シェア (${sel.length})`}</button>
         </div>
         <div style={ma.body}>
