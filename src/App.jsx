@@ -3302,6 +3302,59 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     return { ...d, photos, cover };
   });
 
+  // 長押しドラッグで写真を並べ替え（タッチ/マウス両対応）。長押しで浮かせ、離した位置へ挿入。
+  const [dragView, setDragView] = useState(null); // 浮いている写真 { x, y, url }
+  const dragRef = useRef({ timer: null, active: false, from: -1, sx: 0, sy: 0, pid: null, node: null });
+  const photoCellIndexAt = (x, y) => {
+    const el = document.elementFromPoint(x, y);
+    const cell = el && el.closest && el.closest("[data-photo-cell]");
+    if (!cell) return -1;
+    const n = parseInt(cell.getAttribute("data-photo-cell"), 10);
+    return isNaN(n) ? -1 : n;
+  };
+  const onPhotoPointerDown = (e, i, p) => {
+    if (e.button != null && e.button !== 0) return;
+    if (e.target.closest && e.target.closest("button")) return; // ✕/‹›/表紙ボタンの操作は除外
+    const r = dragRef.current;
+    r.from = i; r.sx = e.clientX; r.sy = e.clientY; r.pid = e.pointerId; r.node = e.currentTarget; r.active = false;
+    clearTimeout(r.timer);
+    r.timer = setTimeout(() => {
+      r.active = true;
+      try { r.node.setPointerCapture(r.pid); } catch (_) {}
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+      setDragView({ x: r.sx, y: r.sy, url: p.url });
+    }, 260);
+  };
+  const onPhotoPointerMove = (e) => {
+    const r = dragRef.current;
+    if (!r.active) {
+      if (r.timer && (Math.abs(e.clientX - r.sx) > 10 || Math.abs(e.clientY - r.sy) > 10)) { clearTimeout(r.timer); r.timer = null; r.from = -1; }
+      return;
+    }
+    e.preventDefault();
+    setDragView(v => (v ? { ...v, x: e.clientX, y: e.clientY } : v));
+  };
+  const onPhotoPointerUp = (e) => {
+    const r = dragRef.current;
+    if (r.timer) { clearTimeout(r.timer); r.timer = null; }
+    if (r.active) {
+      const from = r.from, to = photoCellIndexAt(e.clientX, e.clientY);
+      if (from >= 0 && to >= 0 && to !== from) {
+        setDraft(d => {
+          const photos = [...d.photos];
+          const coverUrl = (photos[d.cover || 0] || {}).url;
+          const [moved] = photos.splice(from, 1);
+          photos.splice(to, 0, moved);
+          let cover = photos.findIndex(x => x.url === coverUrl);
+          if (cover < 0) cover = 0;
+          return { ...d, photos, cover };
+        });
+      }
+    }
+    r.active = false; r.from = -1; r.node = null;
+    setDragView(null);
+  };
+
   // タグの改名・削除（マスタ＋全アルバム＋全キットへ反映＝アプリ全体で統一）
   const renameTag = (oldT, rawNew) => {
     const newT = (rawNew || "").trim();
@@ -3489,7 +3542,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   if (mode === "edit" && draft) {
     const masterTags = [...new Set([...(tagMasterList || []), ...draft.tags])];
     return (
-      <div style={ma.wrap}>
+      <div style={{ ...ma.wrap, overflowY: dragView ? "hidden" : "auto" }}>
         <div style={ma.bar}>
           <button style={ma.ghost} onClick={() => { setMode(viewId ? "view" : "list"); setDraft(null); }}>CANCEL</button>
           <div style={{ display: "flex", gap: 8 }}>
@@ -3542,12 +3595,14 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             <textarea value={draft.comment} onChange={e => setDraft(d => ({ ...d, comment: e.target.value }))} placeholder="制作のこだわり・使用塗料・反省点など自由に" style={{ width: "100%", boxSizing: "border-box", minHeight: 90, border: "1px solid #111", padding: "10px", fontSize: 14, lineHeight: 1.7, fontFamily: MA_FONT, resize: "vertical", outline: "none" }} />
           </div>
           <div>
-            <label style={ma.label}>写真 / Photos（最大{MAX_ALBUM_PHOTOS}枚・高画質のまま保存／各写真にコメント可）</label>
+            <label style={ma.label}>写真 / Photos（最大{MAX_ALBUM_PHOTOS}枚・高画質のまま保存／各写真にコメント可／長押しで並べ替え・‹›でも移動）</label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
               {draft.photos.map((p, i) => (
                 <div key={i}>
-                  <div style={{ position: "relative", aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", border: (draft.cover || 0) === i ? "2px solid #111" : "2px solid transparent" }}>
-                    <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <div data-photo-cell={i}
+                    onPointerDown={(e) => onPhotoPointerDown(e, i, p)} onPointerMove={onPhotoPointerMove} onPointerUp={onPhotoPointerUp} onPointerCancel={onPhotoPointerUp}
+                    style={{ position: "relative", aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", border: (draft.cover || 0) === i ? "2px solid #111" : "2px solid transparent", opacity: dragView && dragRef.current.from === i ? 0.3 : 1, touchAction: "manipulation", cursor: "grab", userSelect: "none" }}>
+                    <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
                     <div style={{ position: "absolute", top: 4, left: 4, display: "flex", gap: 4 }}>
                       <button onClick={() => movePhoto(i, -1)} disabled={i === 0} style={{ width: 24, height: 24, border: "none", borderRadius: "50%", background: i === 0 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === 0 ? "default" : "pointer" }} title="前へ">‹</button>
                       <button onClick={() => movePhoto(i, 1)} disabled={i === draft.photos.length - 1} style={{ width: 24, height: 24, border: "none", borderRadius: "50%", background: i === draft.photos.length - 1 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === draft.photos.length - 1 ? "default" : "pointer" }} title="後ろへ">›</button>
@@ -3569,6 +3624,11 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             </div>
           </div>
         </div>
+        {dragView && (
+          <div style={{ position: "fixed", left: dragView.x, top: dragView.y, transform: "translate(-50%, -50%)", width: 116, height: 116, zIndex: 500, pointerEvents: "none", background: "#fff", overflow: "hidden", border: "2px solid #111", boxShadow: "0 10px 30px rgba(0,0,0,0.45)" }}>
+            <KitImage src={dragView.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          </div>
+        )}
         {renderLightbox()}
       </div>
     );
