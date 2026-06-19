@@ -3304,10 +3304,12 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [shareSelect, setShareSelect] = useState(null); // 写真選択 { album, sel:number[] }（最大16枚）
   const [baSelect, setBaSelect] = useState(null); // ビフォーアフター { album, sel:[before,after], comment }
   const [maHelp, setMaHelp] = useState(false); // 取扱説明書（使い方）表示
+  const [maBackup, setMaBackup] = useState(false); // バックアップ画面表示
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
   const savedRef = useRef(false);
+  const maFileRef = useRef(null); // バックアップ読み込み用 file input
 
   useEffect(() => {
     try {
@@ -3443,6 +3445,61 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     setAlbums(prev => prev.map(a => ({ ...a, tags: (a.tags || []).filter(x => x !== t) })));
     if (setKits) setKits(prev => prev.map(k => ({ ...k, tags: (k.tags || []).filter(x => x !== t) })));
     setDraft(d => (d ? { ...d, tags: d.tags.filter(x => x !== t) } : d));
+  };
+
+  // バックアップ：全アルバム＋写真(高画質)を1つのJSONに書き出し／復元（ツミツミ本体と同方式）
+  const maExport = async () => {
+    try {
+      const out = [];
+      for (const a of albums) {
+        const photos = [];
+        for (const p of maNormPhotos(a.photos)) {
+          let url = p.url;
+          if (isIdbBlobUrl(url)) {
+            const b = await kitsIdbPhotoGet(idbBlobUrlToId(url));
+            url = b ? await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); }) : "";
+          }
+          if (url) photos.push({ url, caption: p.caption || "" });
+        }
+        out.push({ ...a, photos });
+      }
+      const data = JSON.stringify({ version: 1, type: "modeler_albums", exportedAt: new Date().toISOString(), albums: out }, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const u = URL.createObjectURL(blob);
+      const el = document.createElement("a");
+      el.href = u; el.download = `modelers_album_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`;
+      el.click(); setTimeout(() => URL.revokeObjectURL(u), 1500);
+      alert("バックアップファイルをダウンロードしました。");
+    } catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
+  };
+  const maImport = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      const arr = data.albums || (Array.isArray(data) ? data : null);
+      if (!Array.isArray(arr)) throw new Error("bad");
+      const restored = [];
+      for (const a of arr) {
+        const photos = [];
+        for (const p of maNormPhotos(a.photos)) {
+          let url = p.url;
+          if (typeof url === "string" && url.startsWith("data:")) {
+            try {
+              const b = await (await fetch(url)).blob();
+              const id = makePhotoId();
+              if (await kitsIdbPhotoSet(id, b)) url = idToIdbBlobUrl(id);
+            } catch (_) {}
+          }
+          photos.push({ url, caption: p.caption || "" });
+        }
+        restored.push({ ...a, id: a.id || makePhotoId(), photos, cover: a.cover || 0 });
+      }
+      setAlbums(restored);
+      setMaBackup(false);
+      alert(`${restored.length}件のアルバムをインポートしました。`);
+    } catch (e) { alert("インポートに失敗しました。正しいバックアップファイルを選択してください。"); }
   };
 
   // ビフォーアフター：BEFORE/AFTER の写真を直接アップロード（アルバムからは選ばない）
@@ -3678,6 +3735,34 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     );
   };
 
+  // ---- バックアップ ----
+  const renderBackup = () => {
+    if (!maBackup) return null;
+    return (
+      <div style={{ ...ma.wrap, zIndex: 430 }}>
+        <div style={ma.bar}>
+          <div><div style={ma.brand}>BACKUP</div><div style={ma.sub}>MODELERS ALBUM</div></div>
+          <button style={ma.ghost} onClick={() => setMaBackup(false)}>CLOSE</button>
+        </div>
+        <div style={{ ...ma.body, maxWidth: 560 }}>
+          <div style={{ fontSize: 13, lineHeight: 1.95, color: "#333", marginBottom: 22 }}>モデラーズアルバムのデータ（写真は高画質のまま）を1つのJSONファイルに書き出し／読み込みできます。機種変更やブラウザ移行の前に保存してください。</div>
+          <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>エクスポート（バックアップ）</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>全アルバム（{albums.length}件）と写真をJSONで保存します。写真が多いとファイルは大きくなります。</div>
+            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={maExport}>ダウンロード（{albums.length}件）</button>
+          </div>
+          <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>インポート（復元）</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>バックアップファイルから復元します。現在のアルバムは上書きされます。</div>
+            <button style={{ ...ma.ghost, width: "100%", boxSizing: "border-box" }} onClick={() => maFileRef.current && maFileRef.current.click()}>ファイルを選択</button>
+            <input ref={maFileRef} type="file" accept=".json,application/json" style={{ display: "none" }} onChange={maImport} />
+          </div>
+          <div style={{ fontSize: 11, color: "#999", lineHeight: 1.7 }}>※ データは端末内のみに保存されます。Safari／Chromeなどブラウザが違うと別データになります。移行時は必ずエクスポート→インポートしてください。</div>
+        </div>
+      </div>
+    );
+  };
+
   // ---- 取扱説明書（使い方） ----
   const renderHelp = () => {
     if (!maHelp) return null;
@@ -3750,6 +3835,9 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             </div>
           </div>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={() => setMaBackup(true)} title="バックアップ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
+            </button>
             <button style={ma.ghost} onClick={() => setMaHelp(true)}>HELP</button>
             <a href="/" title="ツミツミへ" style={{ display: "flex", alignItems: "center" }}>
               <img src="/LOGO.png" alt="TSUMI TSUMI" style={{ height: 28, width: "auto", display: "block" }} />
@@ -3791,6 +3879,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         {renderBeforeAfter()}
         {renderShareResult()}
         {renderHelp()}
+        {renderBackup()}
       </div>
     );
   }
