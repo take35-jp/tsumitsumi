@@ -1411,7 +1411,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.41", date: "2026/06/19", isNew: true, items: ["モデラーズアルバムの一覧から各アルバムを削除できるように（サムネ右上の✕）", "モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
+    { ver: "v1.41", date: "2026/06/19", isNew: true, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
     { ver: "v1.40", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
     { ver: "v1.39", date: "2026/06/19", isNew: false, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
     { ver: "v1.38", date: "2026/06/19", isNew: false, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
@@ -1665,8 +1665,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・モデラーズアルバムの一覧からアルバムを削除できるように（サムネ右上の✕）<br/>
-              ・一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化）
+              ・モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化）
             </div>
           </div>
           {/* v1.40 */}
@@ -4272,8 +4271,6 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
                     <div style={{ width: "100%", aspectRatio: "1/1", background: "#111", overflow: "hidden", position: "relative" }}>
                       {cover ? <MaThumb src={cover.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 10, letterSpacing: "0.2em" }}>NO IMAGE</div>}
-                      <button onClick={(e) => { e.stopPropagation(); deleteAlbum(a); }} title="このアルバムを削除"
-                        style={{ position: "absolute", top: 6, right: 6, width: 28, height: 28, lineHeight: 1, border: "1px solid #fff", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MA_FONT }}>✕</button>
                     </div>
                     <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title || "UNTITLED"}</div>
                     <div style={{ fontSize: 10, color: "#999", letterSpacing: "0.14em", marginTop: 2 }}>{fmtYM(a.createdYM)}{a.createdYM && (a.photos || []).length ? "  /  " : ""}{(a.photos || []).length ? `${a.photos.length} PHOTOS` : ""}</div>
