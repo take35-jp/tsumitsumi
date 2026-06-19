@@ -3625,7 +3625,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       if (!blobs.length) { alert("画像の生成に失敗しました"); return; }
       const files = blobs.map((b, i) => new File([b], `modelers_${album.id}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
       const urls = await Promise.all(blobs.map(b => new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); })));
-      setShareSelect(null);
+      // shareSelect は残す（プレビューから「戻る」で選び直せるように）
       setShareResult({ files, urls, text: `「${album.title || "作品"}」\n${MA_TAGS}` });
     } catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
     finally { setSharing(false); }
@@ -3710,8 +3710,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     return (
       <div style={{ position: "fixed", inset: 0, zIndex: 420, background: "rgba(0,0,0,0.94)", overflowY: "auto", padding: "16px 16px 40px", fontFamily: MA_FONT }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <span style={{ color: "#fff", fontSize: 12, letterSpacing: "0.18em" }}>{files.length} IMAGES</span>
-          <button onClick={() => setShareResult(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer" }}>CLOSE</button>
+          {shareSelect
+            ? <button onClick={() => setShareResult(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer" }}>‹ 選び直す</button>
+            : <span style={{ color: "#fff", fontSize: 12, letterSpacing: "0.18em" }}>{files.length} IMAGES</span>}
+          <button onClick={() => { setShareResult(null); setShareSelect(null); }} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer" }}>CLOSE</button>
         </div>
         <div style={{ color: "#bbb", fontSize: 11, lineHeight: 1.8, marginBottom: 14 }}>これで1投稿分（画像最大4枚）。{canAll ? "「まとめて共有」でそのままXへ投稿できます。" : "各画像を「保存」してXに投稿してください。"}</div>
         {canAll && <button onClick={async () => { try { await navigator.share({ files, text }); } catch (e) {} }} style={{ width: "100%", padding: "13px", background: "#fff", color: "#111", border: "none", fontSize: 12, fontWeight: 800, letterSpacing: "0.18em", cursor: "pointer", marginBottom: 16 }}>まとめて共有 / SHARE ALL</button>}
@@ -3732,7 +3734,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
 
   // ---- シェアする写真の選択（最大16枚＝1投稿分） ----
   const renderShareSelect = () => {
-    if (!shareSelect) return null;
+    if (!shareSelect || shareResult) return null; // プレビュー表示中は隠す（戻るで再表示）
     const { album, sel, large = [] } = shareSelect;
     const ph = maNormPhotos(album.photos);
     const imgN = Math.ceil(sel.length / 4);
