@@ -3564,6 +3564,13 @@ export default function App() {
   const [showShare, setShowShare] = useState(false);
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
   const [showModelerAlbum, setShowModelerAlbum] = useState(false); // モデラーズアルバム（ポートフォリオ）表示
+  // 入口ボタンは非公開中だが、?modeler または #modeler 付きURLで直接開ける（仕上げのプレビュー用）
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.has("modeler") || window.location.hash === "#modeler") setShowModelerAlbum(true);
+    } catch (e) {}
+  }, []);
   const [shareKit, setShareKit] = useState(null); // 単一キットの完成品シェア対象
   const [myXId, setMyXId] = useState("");
   const [filterSeries, setFilterSeries] = useState("");
