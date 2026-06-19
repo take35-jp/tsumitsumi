@@ -3233,6 +3233,42 @@ async function generateModelerAlbumImages(album, ordered) {
   for (let c = 0; c < chunks.length; c++) blobs.push(await maRenderAlbumPage(album, chunks[c], c, chunks.length));
   return blobs;
 }
+// ビフォーアフター比較：X向け横長16:9(1600x900)1枚。ヘッダー黒帯にコメント、下に BEFORE | AFTER。
+async function generateBeforeAfterImage(beforeP, afterP, comment) {
+  const S = 2, W = 1600, H = 900, padX = 44, gap = 6;
+  const [imgB, imgA] = await Promise.all([maLoadImage(beforeP && beforeP.url), maLoadImage(afterP && afterP.url)]);
+  const cap = (comment || "").trim();
+  const probe = document.createElement("canvas").getContext("2d");
+  probe.font = `600 34px ${MA_FONT}`;
+  const lines = cap ? maWrap(probe, cap, W - padX * 2).slice(0, 2) : [];
+  const headerH = 58 + (lines.length ? lines.length * 44 + 12 : 0);
+  const canvas = document.createElement("canvas");
+  canvas.width = W * S; canvas.height = H * S;
+  const ctx = canvas.getContext("2d"); ctx.scale(S, S); ctx.imageSmoothingQuality = "high";
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+  // header
+  ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 0, W, headerH);
+  ctx.textBaseline = "alphabetic";
+  try { ctx.letterSpacing = "4px"; } catch (e) {}
+  ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`;
+  ctx.fillText("BEFORE / AFTER  —  MODELERS ALBUM", padX, 36);
+  try { ctx.letterSpacing = "0px"; } catch (e) {}
+  if (lines.length) { ctx.fillStyle = "#fff"; ctx.font = `600 34px ${MA_FONT}`; let y = 58 + 32; for (const ln of lines) { ctx.fillText(ln, padX, y); y += 44; } }
+  // photos
+  const py = headerH, ph = H - headerH, cw = (W - gap) / 2;
+  maDrawCover(ctx, imgB, 0, py, cw, ph);
+  maDrawCover(ctx, imgA, cw + gap, py, cw, ph);
+  // labels
+  const drawLabel = (txt, x) => {
+    ctx.font = `800 24px ${MA_FONT}`;
+    const w = ctx.measureText(txt).width + 30;
+    ctx.fillStyle = "rgba(0,0,0,0.72)"; ctx.fillRect(x, py, w, 46);
+    ctx.fillStyle = "#fff"; ctx.textBaseline = "alphabetic"; ctx.fillText(txt, x + 15, py + 31);
+  };
+  drawLabel("BEFORE", 0);
+  drawLabel("AFTER", cw + gap);
+  return await new Promise(r => canvas.toBlob(r, "image/png"));
+}
 async function maShareImage(blob, filename, text) {
   if (!blob) { alert("画像の生成に失敗しました"); return; }
   const file = new File([blob], filename, { type: "image/png" });
@@ -3266,6 +3302,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [sharing, setSharing] = useState(false);
   const [shareResult, setShareResult] = useState(null); // シェア結果 { files, urls, text }
   const [shareSelect, setShareSelect] = useState(null); // 写真選択 { album, sel:number[] }（最大16枚）
+  const [baSelect, setBaSelect] = useState(null); // ビフォーアフター { album, sel:[before,after], comment }
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
@@ -3405,6 +3442,33 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     setAlbums(prev => prev.map(a => ({ ...a, tags: (a.tags || []).filter(x => x !== t) })));
     if (setKits) setKits(prev => prev.map(k => ({ ...k, tags: (k.tags || []).filter(x => x !== t) })));
     setDraft(d => (d ? { ...d, tags: d.tags.filter(x => x !== t) } : d));
+  };
+
+  // ビフォーアフター：BEFORE→AFTER の順に2枚選択
+  const startBeforeAfter = (a) => {
+    if (maNormPhotos(a.photos).length < 2) { alert("写真が2枚以上必要です"); return; }
+    setBaSelect({ album: a, sel: [], comment: "" });
+  };
+  const toggleBaSel = (i) => setBaSelect(s => {
+    if (!s) return s;
+    if (s.sel.includes(i)) return { ...s, sel: s.sel.filter(x => x !== i) };
+    if (s.sel.length >= 2) { alert("BEFOREとAFTERの2枚です（変更は選択を外してから）"); return s; }
+    return { ...s, sel: [...s.sel, i] };
+  });
+  const doBeforeAfter = async () => {
+    if (!baSelect || baSelect.sel.length < 2) { alert("BEFORE・AFTERの2枚を選んでください"); return; }
+    const { album, sel, comment } = baSelect;
+    const ph = maNormPhotos(album.photos);
+    setSharing(true);
+    try {
+      const blob = await generateBeforeAfterImage(ph[sel[0]], ph[sel[1]], comment);
+      if (!blob) { alert("画像の生成に失敗しました"); return; }
+      const file = new File([blob], `modelers_ba_${album.id}.png`, { type: "image/png" });
+      const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(blob); });
+      setBaSelect(null);
+      setShareResult({ files: [file], urls: [url], text: `${comment ? comment.trim() + "\n" : ""}#TSUMITSUMI #ツミツミ #プラモデル` });
+    } catch (e) { alert("生成に失敗しました: " + (e.message || e)); }
+    finally { setSharing(false); }
   };
 
   // 1ファイル保存（共有シート→保存／非対応はDL）。ユーザー操作ごとなので確実
@@ -3580,14 +3644,51 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     );
   };
 
+  // ---- ビフォーアフター（2枚選択＋コメント） ----
+  const renderBeforeAfter = () => {
+    if (!baSelect) return null;
+    const { album, sel, comment } = baSelect;
+    const ph = maNormPhotos(album.photos);
+    return (
+      <div style={{ ...ma.wrap, zIndex: 420 }}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => setBaSelect(null)}>CANCEL</button>
+          <button style={ma.black} onClick={doBeforeAfter} disabled={sharing || sel.length < 2}>{sharing ? "..." : "作成してシェア"}</button>
+        </div>
+        <div style={ma.body}>
+          <div style={{ fontSize: 12, color: "#555", lineHeight: 1.9, marginBottom: 14 }}>
+            写真を2枚タップ。1枚目が <b style={{ color: "#111" }}>BEFORE</b>、2枚目が <b style={{ color: "#111" }}>AFTER</b> になります（横長1枚の比較画像をXサイズで生成）。
+          </div>
+          <label style={ma.label}>コメント（画像ヘッダーに表示）</label>
+          <input style={{ ...ma.input, marginBottom: 18 }} value={comment} onChange={e => setBaSelect(s => ({ ...s, comment: e.target.value }))} placeholder="例：全塗装でディテールアップ" />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
+            {ph.map((p, i) => {
+              const k = sel.indexOf(i);
+              const on = k >= 0;
+              return (
+                <div key={i} onClick={() => toggleBaSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: on ? "2px solid #111" : "2px solid #eee", opacity: on ? 1 : 0.55 }}>
+                  <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  {on && <div style={{ position: "absolute", top: 4, left: 4, padding: "2px 7px", background: "#111", color: "#fff", fontSize: 9, fontWeight: 800, letterSpacing: "0.08em" }}>{k === 0 ? "BEFORE" : "AFTER"}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ---- 一覧 ----
   if (mode === "list") {
     return (
       <div style={ma.wrap}>
         <div style={ma.bar}>
-          <div>
-            <div style={ma.brand}>MODELERS ALBUM</div>
-            <div style={ma.sub}>PORTFOLIO</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+            <img src="/LOGO.png" alt="TSUMI TSUMI" style={{ height: 30, width: "auto", display: "block" }} />
+            <div>
+              <div style={ma.brand}>MODELERS ALBUM</div>
+              <div style={ma.sub}>PORTFOLIO</div>
+            </div>
           </div>
           <button style={ma.ghost} onClick={onClose}>CLOSE</button>
         </div>
@@ -3632,6 +3733,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         <div style={ma.bar}>
           <button style={ma.ghost} onClick={() => { setViewId(null); setMode("list"); }}>BACK</button>
           <div style={{ display: "flex", gap: 8 }}>
+            {maNormPhotos(a.photos).length >= 2 && <button style={ma.ghost} onClick={() => startBeforeAfter(a)}>B / A</button>}
             {maNormPhotos(a.photos).length > 0 && <button style={ma.black} onClick={() => shareAlbum(a)} disabled={sharing}>{sharing ? "..." : "Share ALL"}</button>}
             <button style={ma.ghost} onClick={() => startEdit(a)}>EDIT</button>
           </div>
@@ -3664,6 +3766,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         </div>
         {renderLightbox()}
         {renderShareSelect()}
+        {renderBeforeAfter()}
         {renderShareResult()}
       </div>
     );
