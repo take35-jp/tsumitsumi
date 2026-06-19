@@ -5317,9 +5317,9 @@ export default function App() {
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-            <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 0 }}>スキャン登録</span>
+            <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>スキャン登録</span>
             <button
-              style={{ background: "rgba(0,0,0,0.5)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", fontSize: 10, padding: "2px 8px", borderRadius: 0, cursor: "pointer" }}
+              style={{ background: "rgba(0,0,0,0.5)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", fontSize: 10, padding: "2px 8px", borderRadius: 20, cursor: "pointer" }}
               onClick={() => { setContinuousScan(v => !v); }}>
               {continuousScan ? "連続ON" : "1回のみ"}
             </button>
@@ -5332,11 +5332,11 @@ export default function App() {
           </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 0 }}>一括登録</span>
+          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>一括登録</span>
           <button style={{ ...s.fab, background: "#111", fontSize: 18 }} onClick={() => setShowBrowse(true)}>☰</button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 0 }}>手動登録</span>
+          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>手動登録</span>
           <button style={{ ...s.fab, background: "#111" }} onClick={() => { setForm(makeEmptyForm()); setEditId(null); setShowForm(true); }}>＋</button>
         </div>
       </div>
