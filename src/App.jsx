@@ -3133,6 +3133,15 @@ function maDrawCover(ctx, img, dx, dy, dw, dh) {
   ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
   ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h); ctx.restore();
 }
+// cover を基準にズーム(z≥1)＋位置(ox,oy∈[0,1])で描画（BaAdjust のプレビューと同じ計算）
+function maDrawTransformed(ctx, img, dx, dy, dw, dh, t) {
+  if (!img) { ctx.fillStyle = "#ececec"; ctx.fillRect(dx, dy, dw, dh); return; }
+  const z = (t && t.z) || 1, ox = (t && t.ox != null) ? t.ox : 0.5, oy = (t && t.oy != null) ? t.oy : 0.5;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const s = Math.max(dw / iw, dh / ih) * z, w = iw * s, h = ih * s;
+  ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+  ctx.drawImage(img, dx - (w - dw) * ox, dy - (h - dh) * oy, w, h); ctx.restore();
+}
 // 写真領域の下部にコメント帯（半透明黒＋白文字・1行省略）を重ねる
 function maCaptionBand(ctx, text, x, y, w, h, fontSize) {
   const cap = (text || "").trim();
@@ -3279,10 +3288,10 @@ async function generateBeforeAfterImage(beforeP, afterP, comment) {
   ctx.fillText("BEFORE / AFTER  —  MODELERS ALBUM", padX, 36);
   try { ctx.letterSpacing = "0px"; } catch (e) {}
   if (lines.length) { ctx.fillStyle = "#fff"; ctx.font = `600 34px ${MA_FONT}`; let y = 58 + 32; for (const ln of lines) { ctx.fillText(ln, padX, y); y += 44; } }
-  // photos
+  // photos（ズーム・位置調整を反映）
   const py = headerH, ph = H - headerH, cw = (W - gap) / 2;
-  maDrawCover(ctx, imgB, 0, py, cw, ph);
-  maDrawCover(ctx, imgA, cw + gap, py, cw, ph);
+  maDrawTransformed(ctx, imgB, 0, py, cw, ph, beforeP && beforeP.t);
+  maDrawTransformed(ctx, imgA, cw + gap, py, cw, ph, afterP && afterP.t);
   // labels
   const drawLabel = (txt, x) => {
     ctx.font = `800 24px ${MA_FONT}`;
@@ -3314,6 +3323,51 @@ async function maShareImages(blobs, baseName, text) {
   }
   for (const f of files) { try { const u = URL.createObjectURL(f); const a = document.createElement("a"); a.href = u; a.download = f.name; a.click(); await new Promise(r => setTimeout(r, 350)); URL.revokeObjectURL(u); } catch (e) {} }
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+}
+
+// ビフォーアフター用：画像をドラッグで位置調整＋スライダーでズーム。t={z,ox,oy} を親へ通知
+function BaAdjust({ url, t, onChange }) {
+  const [nat, setNat] = useState(null);
+  const [boxW, setBoxW] = useState(0);
+  const boxRef = useRef(null);
+  const drag = useRef(null);
+  useEffect(() => {
+    const measure = () => { if (boxRef.current) setBoxW(boxRef.current.offsetWidth); };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+  const AR = 790 / 797; // 出力セルにほぼ一致（高さ/幅）
+  const boxH = boxW * AR;
+  const z = t.z || 1, ox = t.ox != null ? t.ox : 0.5, oy = t.oy != null ? t.oy : 0.5;
+  let imgStyle = { display: "none" };
+  if (nat && boxW) {
+    const s = Math.max(boxW / nat.iw, boxH / nat.ih) * z;
+    const dispW = nat.iw * s, dispH = nat.ih * s;
+    imgStyle = { position: "absolute", left: -(dispW - boxW) * ox, top: -(dispH - boxH) * oy, width: dispW, height: dispH, maxWidth: "none", pointerEvents: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" };
+  }
+  const onDown = (e) => { drag.current = { x: e.clientX, y: e.clientY, ox, oy }; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {} };
+  const onMove = (e) => {
+    if (!drag.current || !nat || !boxW) return;
+    e.preventDefault();
+    const s = Math.max(boxW / nat.iw, boxH / nat.ih) * z;
+    const maxX = Math.max(1, nat.iw * s - boxW), maxY = Math.max(1, nat.ih * s - boxH);
+    const nox = Math.max(0, Math.min(1, drag.current.ox - (e.clientX - drag.current.x) / maxX));
+    const noy = Math.max(0, Math.min(1, drag.current.oy - (e.clientY - drag.current.y) / maxY));
+    onChange({ z, ox: nox, oy: noy });
+  };
+  const onUp = () => { drag.current = null; };
+  return (
+    <div>
+      <div ref={boxRef} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+        style={{ position: "relative", width: "100%", aspectRatio: "797 / 790", overflow: "hidden", background: "#111", cursor: "move", touchAction: "none" }}>
+        <img src={url} alt="" draggable={false} onLoad={(e) => setNat({ iw: e.target.naturalWidth, ih: e.target.naturalHeight })} style={imgStyle} />
+      </div>
+      <input type="range" min="1" max="3" step="0.02" value={z}
+        onChange={(e) => onChange({ z: parseFloat(e.target.value), ox, oy })}
+        style={{ width: "100%", marginTop: 6 }} title="ズーム" />
+    </div>
+  );
 }
 
 function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits }) {
@@ -3547,21 +3601,22 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   };
 
   // ビフォーアフター：BEFORE/AFTER の写真を直接アップロード（アルバムからは選ばない）
-  const startBeforeAfter = (a) => setBaSelect({ album: a, beforeUrl: null, afterUrl: null, comment: "" });
+  const startBeforeAfter = (a) => setBaSelect({ album: a, beforeUrl: null, afterUrl: null, comment: "", bt: { z: 1, ox: 0.5, oy: 0.5 }, at: { z: 1, ox: 0.5, oy: 0.5 } });
   const onBaPick = async (key, e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = "";
     if (!file) return;
     const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(file); });
     if (!url) { alert("画像の読み込みに失敗しました"); return; }
-    setBaSelect(s => (s ? { ...s, [key]: url } : s));
+    const tKey = key === "beforeUrl" ? "bt" : "at"; // 新しい画像は調整リセット
+    setBaSelect(s => (s ? { ...s, [key]: url, [tKey]: { z: 1, ox: 0.5, oy: 0.5 } } : s));
   };
   const doBeforeAfter = async () => {
     if (!baSelect || !baSelect.beforeUrl || !baSelect.afterUrl) { alert("BEFORE・AFTERの両方をアップロードしてください"); return; }
-    const { album, beforeUrl, afterUrl, comment } = baSelect;
+    const { album, beforeUrl, afterUrl, comment, bt, at } = baSelect;
     setSharing(true);
     try {
-      const blob = await generateBeforeAfterImage({ url: beforeUrl }, { url: afterUrl }, comment);
+      const blob = await generateBeforeAfterImage({ url: beforeUrl, t: bt }, { url: afterUrl, t: at }, comment);
       if (!blob) { alert("画像の生成に失敗しました"); return; }
       const file = new File([blob], `modelers_ba_${(album && album.id) || "x"}.png`, { type: "image/png" });
       const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(blob); });
@@ -3785,16 +3840,27 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   // ---- ビフォーアフター（BEFORE/AFTER を直接アップロード＋コメント） ----
   const renderBeforeAfter = () => {
     if (!baSelect) return null;
-    const { beforeUrl, afterUrl, comment } = baSelect;
-    const slot = (label, key, url) => (
-      <label style={{ flex: 1, minWidth: 130 }}>
+    const { beforeUrl, afterUrl, comment, bt = { z: 1, ox: 0.5, oy: 0.5 }, at = { z: 1, ox: 0.5, oy: 0.5 } } = baSelect;
+    const slot = (label, key, url, tKey, t) => (
+      <div style={{ flex: 1, minWidth: 130 }}>
         <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", marginBottom: 6 }}>{label}</div>
-        <div style={{ aspectRatio: "1/1", border: "1px dashed #111", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer" }}>
-          {url ? <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            : <span style={{ fontSize: 11, color: "#888", letterSpacing: "0.08em" }}>画像をアップロード</span>}
-        </div>
-        <input type="file" accept="image/*" onChange={(e) => onBaPick(key, e)} style={{ display: "none" }} />
-      </label>
+        {url ? (
+          <div>
+            <BaAdjust url={url} t={t} onChange={(nt) => setBaSelect(s => (s ? { ...s, [tKey]: nt } : s))} />
+            <label style={{ display: "block", marginTop: 6, textAlign: "center", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#555", border: "1px solid #ccc", padding: "5px 0", cursor: "pointer" }}>
+              画像を変更
+              <input type="file" accept="image/*" onChange={(e) => onBaPick(key, e)} style={{ display: "none" }} />
+            </label>
+          </div>
+        ) : (
+          <label style={{ display: "block", cursor: "pointer" }}>
+            <div style={{ aspectRatio: "797 / 790", border: "1px dashed #111", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 11, color: "#888", letterSpacing: "0.08em" }}>画像をアップロード</span>
+            </div>
+            <input type="file" accept="image/*" onChange={(e) => onBaPick(key, e)} style={{ display: "none" }} />
+          </label>
+        )}
+      </div>
     );
     return (
       <div style={{ ...ma.wrap, zIndex: 420 }}>
@@ -3804,11 +3870,11 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         </div>
         <div style={ma.body}>
           <div style={{ fontSize: 12, color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
-            <b style={{ color: "#111" }}>BEFORE</b> と <b style={{ color: "#111" }}>AFTER</b> の写真をアップロード。横長1枚の比較画像（Xサイズ）を生成します。
+            <b style={{ color: "#111" }}>BEFORE</b> と <b style={{ color: "#111" }}>AFTER</b> の写真をアップロード。各画像は<b>ドラッグで位置調整・下のスライダーで拡大縮小</b>できます。表示されている範囲がそのまま書き出されます。
           </div>
           <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-            {slot("BEFORE", "beforeUrl", beforeUrl)}
-            {slot("AFTER", "afterUrl", afterUrl)}
+            {slot("BEFORE", "beforeUrl", beforeUrl, "bt", bt)}
+            {slot("AFTER", "afterUrl", afterUrl, "at", at)}
           </div>
           <label style={ma.label}>コメント（画像ヘッダーに表示）</label>
           <input style={ma.input} value={comment} onChange={e => setBaSelect(s => ({ ...s, comment: e.target.value }))} placeholder="例：全塗装でディテールアップ" />
