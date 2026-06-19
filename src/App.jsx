@@ -1411,7 +1411,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.42", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左。対応端末は共有シート、PCはURLコピー）"] },
+    { ver: "v1.43", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加（プラモTIPS・おすすめ定番アイテムへ）"] },
+    { ver: "v1.42", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左。対応端末は共有シート、PCはURLコピー）"] },
     { ver: "v1.41", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
     { ver: "v1.40", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
     { ver: "v1.39", date: "2026/06/19", isNew: false, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
@@ -1658,10 +1659,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.42 */}
+          {/* v1.43 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.43</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加
+            </div>
+          </div>
+          {/* v1.42 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.42</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
             </div>
@@ -1677,16 +1688,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化）
-            </div>
-          </div>
-          {/* v1.40 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.40</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・モデラーズアルバムのバックアップ復元（ZIP取り込み）で写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）
             </div>
           </div>
         </div>
@@ -3930,6 +3931,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     brand: { fontSize: 14, fontWeight: 800, letterSpacing: "0.24em", margin: 0 },
     sub: { fontSize: 8, letterSpacing: "0.34em", color: "#999", marginTop: 3 },
     ghost: { background: "none", border: "1px solid #111", color: "#111", padding: "8px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", cursor: "pointer", borderRadius: 0, whiteSpace: "nowrap" },
+    corner: { display: "block", minWidth: 58, textAlign: "center", background: "rgba(255,255,255,0.92)", border: "1px solid #111", color: "#111", padding: "5px 12px", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textDecoration: "none", borderRadius: 0, whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
     black: { background: "#111", border: "1px solid #111", color: "#fff", padding: "11px 20px", fontSize: 11, fontWeight: 700, letterSpacing: "0.16em", cursor: "pointer", borderRadius: 0 },
     body: { padding: "20px 18px 60px", maxWidth: 940, margin: "0 auto" },
     grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 },
@@ -4306,6 +4308,11 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         {renderShareResult()}
         {renderHelp()}
         {renderBackup()}
+        {/* 左下フロート：TSUMITSUMI本体の「プラモを預ける」と同じ配置方式。やや小さめ・目立たせない。 */}
+        <div style={{ position: "fixed", bottom: 20, left: 14, zIndex: 40, display: "flex", flexDirection: "column", gap: 6 }}>
+          <a href="/tips/" target="_blank" rel="noopener noreferrer" style={ma.corner}>TIPS</a>
+          <a href="/gears.html" target="_blank" rel="noopener noreferrer" style={ma.corner}>TOOLS</a>
+        </div>
       </div>
     );
   }
