@@ -17,7 +17,7 @@
 - **プライバシーポリシー**: https://tsumitsumi.vercel.app/privacy.html
 - **GitHub**: https://github.com/take35-jp/tsumitsumi
 - **公式X**: @tsumitsumi_pla
-- **ホスティング**: Vercel（Hobby Plan、Function 12個まで。現在12個＝上限。これ以上増やすには統合/削除が必要）
+- **ホスティング**: Vercel（**Pro Plan**／$20月〜）。**広告(AdSense)・アフィリエイト掲載は商用利用にあたり、VercelではPro以上が必須**（Hobby無料枠は非商用限定なので解約・降格は規約違反＝停止リスク）。Hobbyにあった「Function 12個上限」は**Proでは撤廃**され、個数上限の心配は不要。現在のFunctionは12個。
 - **DB**: Supabase（PostgreSQL）
 - **Supabase URL**: https://oxtfwmcdtngvicrcjyue.supabase.co
 - **正式リリース日**: 2026/5/1
@@ -71,7 +71,7 @@ tsumitsumi/
 │   ├── manual.html      # 取扱説明書
 │   ├── privacy.html     # プライバシーポリシー
 │   └── ...
-├── api/                 # Vercel Functions（12個＝上限）
+├── api/                 # Vercel Functions（現在12個。Proのため個数上限の懸念なし）
 │   ├── search.js
 │   ├── admin-search.js
 │   ├── browse.js
@@ -114,7 +114,7 @@ tsumitsumi/
 - ❌ 楽天市場/楽天ブックスから価格取得（同上）
 - ❌ バンダイホビーサイトに JANを期待する（載っていない）
 - ❌ ヨドバシ.com からスクレイピングで JAN取得（平文では無い）
-- ❌ Vercel Function を 12個 超えるエンドポイント追加（Hobby Plan上限）
+- ⚠️ （旧Hobby時代の制約）Function 12個上限は **Pro移行で解消済み**。とはいえ無闇に増やさず整理は意識する
 - ❌ 商品名で機械的にマッチング（表記ゆれ多発）
 - ❌ /api/admin-search を一般クライアントから叩く（管理用）
 
@@ -156,7 +156,7 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 
 ---
 
-## 7. APIエンドポイント一覧（Vercel Function 12個＝上限）
+## 7. APIエンドポイント一覧（Vercel Function 現在12個・Proのため個数上限の懸念なし）
 
 | エンドポイント | 用途 | メモ |
 |---|---|---|
@@ -324,7 +324,7 @@ TIPS_EDIT_SECRET=...    # /api/tips-save 用。admin「TIPS編集」で保存時
 - Supabase クエリで `_=タイムスタンプ` を使うとフィルタ判定でエラー → `ts=...` などを使う
 
 ### Vercel 関連
-- Hobby Plan の Function 上限 = 12個。**現在12個で上限到達**（余裕ゼロ）。新規追加には既存の統合/削除が必要
+- **Pro Plan で運用中**（商用利用＝広告/アフィリエイトのため必須）。Hobbyの「Function 12個上限」は**Proで撤廃**済みで、新規Function追加も可能（現在12個）。※過去のメモに残る「12個＝上限」はHobby時代の名残
 - Function を増やすときは何かを統合・削除する必要あり
 
 ### ビルド・デプロイ
