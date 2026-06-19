@@ -3749,6 +3749,8 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <div style={{ fontSize: 12, letterSpacing: "0.04em", color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
             シェアする写真を選択（最大{MAX_SHARE_PHOTOS}枚＝1投稿分）。<b>4枚ごとに1画像</b>になり、各画像は「大きい1枚＋小さい3枚」。<br />
             写真の<b style={{ color: "#111" }}>右側の「大」</b>をタップすると、その写真を大きく表示できます（1画像につき1枚）。<br />
+            <b>左上の番号の色＝何枚目の画像か</b>：
+            <span style={{ color: "#2563eb", fontWeight: 800 }}>■1枚目</span> <span style={{ color: "#16a34a", fontWeight: 800 }}>■2枚目</span> <span style={{ color: "#ea580c", fontWeight: 800 }}>■3枚目</span> <span style={{ color: "#9333ea", fontWeight: 800 }}>■4枚目</span><br />
             選択 <b style={{ color: "#111" }}>{sel.length}</b> / {MAX_SHARE_PHOTOS}　→　生成画像 {imgN} 枚
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
@@ -3756,10 +3758,11 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
               const order = sel.indexOf(i);
               const on = order >= 0;
               const isBig = on && bigOf(order) === i; // この組で大きく表示される写真
+              const grpColor = ["#2563eb", "#16a34a", "#ea580c", "#9333ea"][Math.floor(order / 4) % 4]; // 何枚目の画像か＝番号の色
               return (
                 <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: isBig ? "3px solid #111" : (on ? "2px solid #111" : "2px solid #eee"), opacity: on ? 1 : 0.55 }}>
                   <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", background: "#111", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
+                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", background: grpColor, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
                   {on && (
                     <button onClick={(e) => { e.stopPropagation(); toggleShareLarge(i); }}
                       title="大きく表示する写真にする"
