@@ -3385,6 +3385,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [maHelp, setMaHelp] = useState(false); // 取扱説明書（使い方）表示
   const [maBackup, setMaBackup] = useState(false); // バックアップ画面表示
   const [maBusy, setMaBusy] = useState(false); // バックアップ作成/復元中のロード表示
+  const [bkReady, setBkReady] = useState(null); // 作成済みバックアップ { url, name, sizeMB }（タップ直後にDL）
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
@@ -3566,12 +3567,9 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       }
       const data = JSON.stringify({ version: 1, type: "modeler_albums", exportedAt: new Date().toISOString(), albums: out }, null, 2);
       const blob = new Blob([data], { type: "application/json" });
-      // TSUMITSUMI本体のバックアップと同じ通常ダウンロード方式（端末側の保存先選択が出る）
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = `modelers_album_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`;
-      a.click(); URL.revokeObjectURL(url);
-      alert("バックアップファイルを保存しました。");
+      // 重い作成と保存(ダウンロード)を分離。保存はボタンのタップ直後に実行する（iOSが遅延DLを遷移扱いして戻る問題を回避）
+      const objUrl = URL.createObjectURL(blob);
+      setBkReady({ url: objUrl, name: `modelers_album_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) });
     } catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
     finally { setMaBusy(false); }
   };
@@ -3921,6 +3919,18 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: "50%", animation: "maspin 0.8s linear infinite" }} />
             <div style={{ fontSize: 13, letterSpacing: "0.18em", color: "#111", fontWeight: 800 }}>データ作成中…</div>
             <div style={{ fontSize: 11, color: "#888", letterSpacing: "0.04em" }}>写真が多いと少し時間がかかります</div>
+          </div>
+        )}
+        {bkReady && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "rgba(255,255,255,0.97)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24, fontFamily: MA_FONT, textAlign: "center" }}>
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.1em", color: "#111" }}>バックアップ作成完了（約{bkReady.sizeMB}MB）</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, maxWidth: 320 }}>下のボタンを押すと保存（ダウンロード）します。端末の保存先選択が出たらお好きな場所へ。</div>
+            <a href={bkReady.url} download={bkReady.name}
+              onClick={() => { setTimeout(() => { try { URL.revokeObjectURL(bkReady.url); } catch (e) {} setBkReady(null); }, 4000); }}
+              style={{ ...ma.black, minWidth: 240, textDecoration: "none", textAlign: "center", display: "inline-block" }}>
+              ダウンロードして保存
+            </a>
+            <button style={{ ...ma.ghost }} onClick={() => { try { URL.revokeObjectURL(bkReady.url); } catch (e) {} setBkReady(null); }}>閉じる</button>
           </div>
         )}
       </div>
