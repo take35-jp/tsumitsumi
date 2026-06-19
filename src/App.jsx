@@ -111,6 +111,71 @@ function KitImage({ src, style, alt, onError }) {
   return <img src={resolved} style={style} alt={alt || ""} onError={onError} />;
 }
 
+// ====== サムネイル（縮小表示）======
+// 一覧/グリッドで原本（無圧縮・数MB）をそのまま等倍デコードすると、枚数が多いと
+// メモリを食い尽くしてクラッシュ（特に iOS のホーム画面アプリ）。
+// 縮小した dataURL を作って表示し、生成はキューで1枚ずつ直列化（瞬間メモリを抑制）。
+const maThumbCache = new Map(); // key: "<id>:<maxPx>" -> dataURL
+let maThumbQueue = Promise.resolve();
+function enqueueThumb(fn) {
+  const run = maThumbQueue.then(fn, fn);
+  maThumbQueue = run.then(() => {}, () => {});
+  return run;
+}
+async function makeThumbDataUrl(blob, maxPx, quality) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+    const iw = img.naturalWidth || 1, ih = img.naturalHeight || 1;
+    const scale = Math.min(1, maxPx / Math.max(iw, ih));
+    const w = Math.max(1, Math.round(iw * scale)), h = Math.max(1, Math.round(ih * scale));
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const ctx = c.getContext("2d"); ctx.imageSmoothingQuality = "high"; ctx.drawImage(img, 0, 0, w, h);
+    return c.toDataURL("image/jpeg", quality);
+  } finally { URL.revokeObjectURL(url); }
+}
+// idb-blob の写真は縮小サムネで表示。http/data: はそのまま流す（既に軽い/外部）。
+function MaThumb({ src, maxPx = 480, quality = 0.7, style, alt }) {
+  const [resolved, setResolved] = useState(() => (src && !isIdbBlobUrl(src)) ? src : null);
+  const [missing, setMissing] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setMissing(false);
+    if (!src) { setResolved(null); return; }
+    if (!isIdbBlobUrl(src)) { setResolved(src); return; }
+    const id = idbBlobUrlToId(src);
+    const key = id + ":" + maxPx;
+    if (maThumbCache.has(key)) { setResolved(maThumbCache.get(key)); return; }
+    setResolved(null);
+    enqueueThumb(async () => {
+      if (cancelled) return;
+      const blob = await kitsIdbPhotoGet(id);
+      if (cancelled) return;
+      if (!blob) { setMissing(true); return; }
+      try {
+        const dataUrl = await makeThumbDataUrl(blob, maxPx, quality);
+        if (cancelled) return;
+        maThumbCache.set(key, dataUrl);
+        setResolved(dataUrl);
+      } catch (e) {
+        if (!cancelled) setMissing(true); // 縮小失敗時は無理に原本を出さない（メモリ保護）
+      }
+    });
+    return () => { cancelled = true; };
+  }, [src, maxPx, quality]);
+  if (!resolved) {
+    if (missing) {
+      return (
+        <div style={{ ...style, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }} title="画像データが見つかりません（再アップロードしてください）">
+          <PhotoPlaceholderIcon size={24} />
+        </div>
+      );
+    }
+    return <div style={{ ...style, background: "#f1f1f1" }} />; // 読み込み中
+  }
+  return <img src={resolved} style={style} alt={alt || ""} loading="lazy" />;
+}
+
 const SERIES_OPTIONS = [
   // ── バンダイ ガンプラ ──
   "ガンプラ",
@@ -1346,7 +1411,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.40", date: "2026/06/19", isNew: true, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
+    { ver: "v1.41", date: "2026/06/19", isNew: true, items: ["モデラーズアルバムの一覧から各アルバムを削除できるように（サムネ右上の✕）", "モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
+    { ver: "v1.40", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
     { ver: "v1.39", date: "2026/06/19", isNew: false, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
     { ver: "v1.38", date: "2026/06/19", isNew: false, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
     { ver: "v1.37", date: "2026/06/16", isNew: false, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
@@ -1591,10 +1657,21 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.40 */}
+          {/* v1.41 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.41</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・モデラーズアルバムの一覧からアルバムを削除できるように（サムネ右上の✕）<br/>
+              ・一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化）
+            </div>
+          </div>
+          {/* v1.40 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.40</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
@@ -1611,16 +1688,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・「モデラーズアルバム」を正式公開（画面右上のロゴボタンから起動）<br/>
               ・画面右上のシェア系ボタンを「Xでシェア」に一本化
-            </div>
-          </div>
-          {/* v1.38 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.38</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・ボタン・カード・モーダルなどすべて）
             </div>
           </div>
         </div>
@@ -3948,7 +4015,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
               const grpColor = ["#2563eb", "#16a34a", "#ea580c", "#9333ea"][Math.floor(order / 4) % 4]; // 何枚目の画像か＝番号の色
               return (
                 <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: isBig ? "3px solid #111" : (on ? "2px solid #111" : "2px solid #eee"), opacity: on ? 1 : 0.55 }}>
-                  <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <MaThumb src={p.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", background: grpColor, color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
                   {on && (
                     <button onClick={(e) => { e.stopPropagation(); toggleShareLarge(i); }}
@@ -4203,8 +4270,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
                 return (
                   <div key={a.id} onClick={() => { setViewId(a.id); setMode("view"); }} style={{ cursor: "pointer" }}>
                     <div style={{ width: "100%", aspectRatio: "1/1", background: "#111", overflow: "hidden", position: "relative" }}>
-                      {cover ? <KitImage src={cover.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      {cover ? <MaThumb src={cover.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 10, letterSpacing: "0.2em" }}>NO IMAGE</div>}
+                      <button onClick={(e) => { e.stopPropagation(); deleteAlbum(a); }} title="このアルバムを削除"
+                        style={{ position: "absolute", top: 6, right: 6, width: 28, height: 28, lineHeight: 1, border: "1px solid #fff", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MA_FONT }}>✕</button>
                     </div>
                     <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title || "UNTITLED"}</div>
                     <div style={{ fontSize: 10, color: "#999", letterSpacing: "0.14em", marginTop: 2 }}>{fmtYM(a.createdYM)}{a.createdYM && (a.photos || []).length ? "  /  " : ""}{(a.photos || []).length ? `${a.photos.length} PHOTOS` : ""}</div>
@@ -4251,7 +4320,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
                 {ph.map((p, i) => (
                   <div key={i} onClick={() => setLightbox({ album: a, photos: ph, i, zoom: false })} style={{ cursor: "zoom-in" }}>
                     <div style={{ aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden" }}>
-                      <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <MaThumb src={p.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                     </div>
                     {p.caption && <div style={{ fontSize: 10, color: "#666", lineHeight: 1.5, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.caption}</div>}
                   </div>
@@ -4333,7 +4402,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
                   <div data-photo-cell={i}
                     onPointerDown={(e) => onPhotoPointerDown(e, i, p)} onPointerMove={onPhotoPointerMove} onPointerUp={onPhotoPointerUp} onPointerCancel={onPhotoPointerUp}
                     style={{ position: "relative", aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", border: (draft.cover || 0) === i ? "2px solid #111" : "2px solid transparent", opacity: dragView && dragRef.current.from === i ? 0.3 : 1, touchAction: "manipulation", cursor: "grab", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}>
-                    <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }} />
+                    <MaThumb src={p.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }} />
                     <div style={{ position: "absolute", top: 4, left: 4, display: "flex", gap: 4 }}>
                       <button onClick={() => movePhoto(i, -1)} disabled={i === 0} style={{ width: 24, height: 24, border: "none", borderRadius: 0, background: i === 0 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === 0 ? "default" : "pointer" }} title="前へ">‹</button>
                       <button onClick={() => movePhoto(i, 1)} disabled={i === draft.photos.length - 1} style={{ width: 24, height: 24, border: "none", borderRadius: 0, background: i === draft.photos.length - 1 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === draft.photos.length - 1 ? "default" : "pointer" }} title="後ろへ">›</button>
