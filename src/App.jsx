@@ -5887,7 +5887,7 @@ const s = {
   countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
   condBadge: { fontSize: 10, borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
   checkBtn: { width: 32, height: 32, borderRadius: 0, border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
-  fab: { width: 56, height: 56, borderRadius: 0, color: "#fff", border: "none", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" },
+  fab: { width: 56, height: 56, borderRadius: "50%", color: "#fff", border: "none", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" },
   modal: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   modalPhoto: { width: "100%", maxHeight: 220, objectFit: "contain", borderRadius: 0 },
