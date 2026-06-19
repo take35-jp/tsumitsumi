@@ -3092,7 +3092,7 @@ function PriceReportModal({ target, onClose }) {
 
 // ============== MODELERS ALBUM（モデラーのポートフォリオ：端末内・高画質・白黒ミニマル） ==============
 const MA_FONT = "'Helvetica Neue', 'Inter', 'Segoe UI', 'Noto Sans JP', system-ui, sans-serif";
-const MA_TAGS = "#モデラーズアルバム #TSUMITSUMI #ツミツミ #プラモデル"; // モデラーズアルバムのXシェア既定ハッシュタグ
+const MA_TAGS = "#モデラーズアルバム #TSUMITSUMI"; // モデラーズアルバムのXシェア既定ハッシュタグ
 const MAX_ALBUM_PHOTOS = 30;
 const MA_LS_KEY = "tsumitsumi_modeler_albums";
 
