@@ -3216,13 +3216,19 @@ async function maRenderAlbumPage(album, group, page, total) {
   ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 20); ctx.textAlign = "left";
   return await new Promise(r => canvas.toBlob(r, "image/png"));
 }
-async function generateModelerAlbumImages(album) {
-  const photos = maNormPhotos(album.photos);
-  if (!photos.length) return [];
-  const ci = Math.min(album.cover || 0, Math.max(0, photos.length - 1));
-  const ordered = [photos[ci], ...photos.filter((_, i) => i !== ci)]; // 表紙を先頭に
+// ordered（{url,caption}配列・先頭が表紙）を渡せばその写真で、無ければ全写真(表紙先頭)で生成
+async function generateModelerAlbumImages(album, ordered) {
+  let list = ordered;
+  if (!list) {
+    const photos = maNormPhotos(album.photos);
+    if (!photos.length) return [];
+    const ci = Math.min(album.cover || 0, Math.max(0, photos.length - 1));
+    list = [photos[ci], ...photos.filter((_, i) => i !== ci)];
+  }
+  list = (list || []).filter(Boolean);
+  if (!list.length) return [];
   const chunks = [];
-  for (let i = 0; i < ordered.length; i += 4) chunks.push(ordered.slice(i, i + 4));
+  for (let i = 0; i < list.length; i += 4) chunks.push(list.slice(i, i + 4));
   const blobs = [];
   for (let c = 0; c < chunks.length; c++) blobs.push(await maRenderAlbumPage(album, chunks[c], c, chunks.length));
   return blobs;
@@ -3258,7 +3264,8 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [tagInput, setTagInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [shareResult, setShareResult] = useState(null); // アルバム全体シェア結果 { files, urls, text }
+  const [shareResult, setShareResult] = useState(null); // シェア結果 { files, urls, text }
+  const [shareSelect, setShareSelect] = useState(null); // 写真選択 { album, sel:number[] }（最大16枚）
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
@@ -3407,15 +3414,35 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     }
     try { const u = URL.createObjectURL(file); const a = document.createElement("a"); a.href = u; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); } catch (e) {}
   };
-  const shareAlbum = async (a) => {
-    if (!maNormPhotos(a.photos).length) { alert("写真がありません"); return; }
+  const MAX_SHARE_PHOTOS = 16; // 1投稿分（4枚×最大4画像）
+  // Share ALL → まず写真を選択（最大16枚・選んだ順／表紙を先頭に既定選択）
+  const shareAlbum = (a) => {
+    const ph = maNormPhotos(a.photos);
+    if (!ph.length) { alert("写真がありません"); return; }
+    const ci = Math.min(a.cover || 0, ph.length - 1);
+    const order = [ci, ...ph.map((_, i) => i).filter(i => i !== ci)];
+    setShareSelect({ album: a, sel: order.slice(0, MAX_SHARE_PHOTOS) });
+  };
+  const toggleShareSel = (i) => setShareSelect(s => {
+    if (!s) return s;
+    if (s.sel.includes(i)) return { ...s, sel: s.sel.filter(x => x !== i) };
+    if (s.sel.length >= MAX_SHARE_PHOTOS) { alert(`1投稿は最大${MAX_SHARE_PHOTOS}枚までです`); return s; }
+    return { ...s, sel: [...s.sel, i] };
+  });
+  const doShareSelected = async () => {
+    if (!shareSelect) return;
+    const { album, sel } = shareSelect;
+    const ph = maNormPhotos(album.photos);
+    const chosen = sel.map(i => ph[i]).filter(Boolean);
+    if (!chosen.length) { alert("写真を選択してください"); return; }
     setSharing(true);
     try {
-      const blobs = (await generateModelerAlbumImages(a)).filter(Boolean);
+      const blobs = (await generateModelerAlbumImages(album, chosen)).filter(Boolean);
       if (!blobs.length) { alert("画像の生成に失敗しました"); return; }
-      const files = blobs.map((b, i) => new File([b], `modelers_${a.id}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
+      const files = blobs.map((b, i) => new File([b], `modelers_${album.id}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
       const urls = await Promise.all(blobs.map(b => new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); })));
-      setShareResult({ files, urls, text: `「${a.title || "作品"}」\n#TSUMITSUMI #ツミツミ #プラモデル` });
+      setShareSelect(null);
+      setShareResult({ files, urls, text: `「${album.title || "作品"}」\n#TSUMITSUMI #ツミツミ #プラモデル` });
     } catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
     finally { setSharing(false); }
   };
@@ -3502,7 +3529,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <span style={{ color: "#fff", fontSize: 12, letterSpacing: "0.18em" }}>{files.length} IMAGES</span>
           <button onClick={() => setShareResult(null)} style={{ background: "none", border: "1px solid #fff", color: "#fff", padding: "6px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", cursor: "pointer" }}>CLOSE</button>
         </div>
-        <div style={{ color: "#bbb", fontSize: 11, lineHeight: 1.8, marginBottom: 14 }}>各画像を「保存」してXに投稿してください（Xは1投稿あたり画像4枚まで）。{canAll ? "下の「まとめて共有」も使えます。" : ""}</div>
+        <div style={{ color: "#bbb", fontSize: 11, lineHeight: 1.8, marginBottom: 14 }}>これで1投稿分（画像最大4枚）。{canAll ? "「まとめて共有」でそのままXへ投稿できます。" : "各画像を「保存」してXに投稿してください。"}</div>
         {canAll && <button onClick={async () => { try { await navigator.share({ files, text }); } catch (e) {} }} style={{ width: "100%", padding: "13px", background: "#fff", color: "#111", border: "none", fontSize: 12, fontWeight: 800, letterSpacing: "0.18em", cursor: "pointer", marginBottom: 16 }}>まとめて共有 / SHARE ALL</button>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
           {urls.map((u, i) => (
@@ -3514,6 +3541,40 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         </div>
         <div style={{ textAlign: "center", marginTop: 18 }}>
           <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" style={{ color: "#fff", fontSize: 12, letterSpacing: "0.1em", textDecoration: "underline" }}>Xを開く（投稿テキスト）</a>
+        </div>
+      </div>
+    );
+  };
+
+  // ---- シェアする写真の選択（最大16枚＝1投稿分） ----
+  const renderShareSelect = () => {
+    if (!shareSelect) return null;
+    const { album, sel } = shareSelect;
+    const ph = maNormPhotos(album.photos);
+    const imgN = Math.ceil(sel.length / 4);
+    return (
+      <div style={{ ...ma.wrap, zIndex: 420 }}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => setShareSelect(null)}>CANCEL</button>
+          <button style={ma.black} onClick={doShareSelected} disabled={sharing || sel.length === 0}>{sharing ? "..." : `シェア (${sel.length})`}</button>
+        </div>
+        <div style={ma.body}>
+          <div style={{ fontSize: 12, letterSpacing: "0.04em", color: "#555", lineHeight: 1.9, marginBottom: 16 }}>
+            シェアする写真を選択（最大{MAX_SHARE_PHOTOS}枚＝1投稿分）。選んだ順に並び、先頭が表紙（大）になります。<br />
+            選択 <b style={{ color: "#111" }}>{sel.length}</b> / {MAX_SHARE_PHOTOS}　→　生成画像 {imgN} 枚（4枚で1画像）
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
+            {ph.map((p, i) => {
+              const order = sel.indexOf(i);
+              const on = order >= 0;
+              return (
+                <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: on ? "2px solid #111" : "2px solid #eee", opacity: on ? 1 : 0.55 }}>
+                  <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", borderRadius: 10, background: "#111", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -3602,6 +3663,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           })()}
         </div>
         {renderLightbox()}
+        {renderShareSelect()}
         {renderShareResult()}
       </div>
     );
