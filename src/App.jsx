@@ -1346,7 +1346,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.39", date: "2026/06/19", isNew: true, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
+    { ver: "v1.40", date: "2026/06/19", isNew: true, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
+    { ver: "v1.39", date: "2026/06/19", isNew: false, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
     { ver: "v1.38", date: "2026/06/19", isNew: false, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
     { ver: "v1.37", date: "2026/06/16", isNew: false, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
     { ver: "v1.36", date: "2026/06/16", isNew: false, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
@@ -1590,10 +1591,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.39 */}
+          {/* v1.40 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.40</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・モデラーズアルバムのバックアップ復元（ZIP取り込み）で写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）
+            </div>
+          </div>
+          {/* v1.39 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.39</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
@@ -1610,16 +1621,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・ボタン・カード・モーダルなどすべて）
-            </div>
-          </div>
-          {/* v1.37 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.37</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存・作成年月/タグ/コメント記録・タップで拡大。白黒ミニマルなデザイン
             </div>
           </div>
         </div>
@@ -3384,7 +3385,15 @@ async function readModelerZip(file) {
     const name = new TextDecoder().decode(await file.slice(offset + 30, offset + 30 + fnLen).arrayBuffer());
     const dataStart = offset + 30 + fnLen + exLen;
     if (name === "manifest.json") manifest = JSON.parse(await file.slice(dataStart, dataStart + size).text());
-    else if (name.indexOf("photos/") === 0) { const id = makePhotoId(); if (await kitsIdbPhotoSet(id, file.slice(dataStart, dataStart + size))) photoMap[name] = idToIdbBlobUrl(id); }
+    else if (name.indexOf("photos/") === 0) {
+      // iOS Safari/standalone では、File の遅延スライス（Blob）をそのまま IDB に入れると
+      // 入力クリア後に読み戻しが空/破損になることがある。arrayBuffer で実体化してから保存する。
+      const ext = (name.split(".").pop() || "").toLowerCase();
+      const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+      const ab = await file.slice(dataStart, dataStart + size).arrayBuffer();
+      const id = makePhotoId();
+      if (await kitsIdbPhotoSet(id, new Blob([ab], { type: mime }))) photoMap[name] = idToIdbBlobUrl(id);
+    }
     offset = dataStart + size;
     await new Promise(r => setTimeout(r, 0));
   }
