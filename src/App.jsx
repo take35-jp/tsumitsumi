@@ -3574,15 +3574,19 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   };
   // 作成済みバックアップを保存（保存先を選べる：共有シート→ファイル/クラウド/AirDrop等。PCは保存ダイアログ）
   const saveBackup = async (file) => {
-    if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: file.name }); return; } catch (e) { if (e && e.name === "AbortError") return; }
-    }
+    // 1) PC: 保存ダイアログ（フォルダ・ファイル名を選べる）
     if (typeof window !== "undefined" && window.showSaveFilePicker) {
       try {
         const h = await window.showSaveFilePicker({ suggestedName: file.name, types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
         const w = await h.createWritable(); await w.write(file); await w.close(); return;
       } catch (e) { if (e && e.name === "AbortError") return; }
     }
+    // 2) スマホ等: 共有シート（ファイル/iCloud/Drive/AirDrop に保存）。canShareで弾かず必ず試す
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try { await navigator.share({ files: [file], title: file.name }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; /* 非対応形式等は次のDLへ */ }
+    }
+    // 3) フォールバック: ダウンロード
     const u = URL.createObjectURL(file); const a = document.createElement("a"); a.href = u; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500);
   };
   const maImport = async (e) => {
