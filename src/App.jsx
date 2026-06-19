@@ -1346,7 +1346,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.38", date: "2026/06/19", isNew: true, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
+    { ver: "v1.39", date: "2026/06/19", isNew: true, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
+    { ver: "v1.38", date: "2026/06/19", isNew: false, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
     { ver: "v1.37", date: "2026/06/16", isNew: false, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
     { ver: "v1.36", date: "2026/06/16", isNew: false, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
     { ver: "v1.35", date: "2026/06/13", isNew: false, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
@@ -1589,10 +1590,21 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.38 */}
+          {/* v1.39 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.39</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・「モデラーズアルバム」を正式公開（画面右上のロゴボタンから起動）<br/>
+              ・画面右上のシェア系ボタンを「Xでシェア」に一本化
+            </div>
+          </div>
+          {/* v1.38 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.38</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
@@ -1608,16 +1620,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存・作成年月/タグ/コメント記録・タップで拡大。白黒ミニマルなデザイン
-            </div>
-          </div>
-          {/* v1.36 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.36</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有）
             </div>
           </div>
         </div>
