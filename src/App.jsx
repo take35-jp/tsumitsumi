@@ -3852,7 +3852,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
               <div style={ma.sub}>PORTFOLIO</div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
             <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={() => setMaBackup(true)} title="バックアップ">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
             </button>
