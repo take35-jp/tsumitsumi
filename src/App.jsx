@@ -3547,68 +3547,87 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     setDraft(d => (d ? { ...d, tags: d.tags.filter(x => x !== t) } : d));
   };
 
-  // バックアップ：全アルバム＋写真(高画質)を1つのJSONに書き出し／復元（ツミツミ本体と同方式）
+  // バックアップ：指定アルバムのJSONを作り {url,name,sizeMB} を返す（メモリ節約：分割→Blob）
+  const buildBackupBlob = async (targets) => {
+    const parts = [`{"version":1,"type":"modeler_albums","exportedAt":${JSON.stringify(new Date().toISOString())},"albums":[`];
+    for (let ai = 0; ai < targets.length; ai++) {
+      const a = targets[ai];
+      const photos = [];
+      for (const p of maNormPhotos(a.photos)) {
+        let u = p.url;
+        if (isIdbBlobUrl(u)) {
+          const b = await kitsIdbPhotoGet(idbBlobUrlToId(u));
+          u = b ? await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); }) : "";
+        }
+        if (u) photos.push({ url: u, caption: p.caption || "" });
+      }
+      parts.push((ai ? "," : "") + JSON.stringify({ ...a, photos }));
+      await new Promise(r => setTimeout(r, 0));
+    }
+    parts.push("]}");
+    const blob = new Blob(parts, { type: "application/json" });
+    const date = new Date().toLocaleDateString("ja-JP").replace(/\//g, "-");
+    const one = targets.length === 1 ? "_" + (targets[0].title || "album").replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 24) : "";
+    return { url: URL.createObjectURL(blob), name: `modelers_album_backup${one}_${date}.json`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) };
+  };
+  // 単独/選択アルバムを保存
   const maExport = async (list) => {
     const targets = Array.isArray(list) ? list : albums;
     if (!targets.length) { alert("アルバムがありません"); return; }
-    setMaBusy(true);
-    await new Promise(r => setTimeout(r, 30)); // ロード画面を先に描画
-    try {
-      // メモリ節約：巨大な単一JSON文字列を作らず、アルバムごとに分割して Blob のパーツにする
-      const parts = [`{"version":1,"type":"modeler_albums","exportedAt":${JSON.stringify(new Date().toISOString())},"albums":[`];
-      for (let ai = 0; ai < targets.length; ai++) {
-        const a = targets[ai];
-        const photos = [];
-        for (const p of maNormPhotos(a.photos)) {
-          let u = p.url;
-          if (isIdbBlobUrl(u)) {
-            const b = await kitsIdbPhotoGet(idbBlobUrlToId(u));
-            u = b ? await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(b); }) : "";
-          }
-          if (u) photos.push({ url: u, caption: p.caption || "" });
-        }
-        parts.push((ai ? "," : "") + JSON.stringify({ ...a, photos }));
-        await new Promise(r => setTimeout(r, 0)); // GC/描画に余裕を与える（メモリ超過での再読み込み回避）
-      }
-      parts.push("]}");
-      const blob = new Blob(parts, { type: "application/json" });
-      const date = new Date().toLocaleDateString("ja-JP").replace(/\//g, "-");
-      const one = targets.length === 1 ? "_" + (targets[0].title || "album").replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 24) : "";
-      // 重い作成と保存(ダウンロード)を分離。保存はボタンのタップ直後に実行する（iOSが遅延DLを遷移扱いして戻る問題を回避）
-      const objUrl = URL.createObjectURL(blob);
-      setBkReady({ url: objUrl, name: `modelers_album_backup${one}_${date}.json`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) });
-    } catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+    try { setBkReady(await buildBackupBlob(targets)); }
+    catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
     finally { setMaBusy(false); }
   };
+  // 全アルバムを1個ずつ順番に保存（保存するたびに自動で次を用意。iOSはDLごとにタップが必要なため）
+  const startExportAll = async () => {
+    if (!albums.length) { alert("アルバムがありません"); return; }
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+    try { const r = await buildBackupBlob([albums[0]]); setBkReady({ ...r, queue: albums, qi: 0 }); }
+    catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
+    finally { setMaBusy(false); }
+  };
+  // 保存（DL）後に呼ぶ：キューがあれば次のアルバムを用意、無ければ閉じる
+  const advanceBackup = (cur) => {
+    setTimeout(async () => {
+      try { URL.revokeObjectURL(cur.url); } catch (e) {}
+      if (cur.queue && cur.qi + 1 < cur.queue.length) {
+        setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+        try { const r = await buildBackupBlob([cur.queue[cur.qi + 1]]); setBkReady({ ...r, queue: cur.queue, qi: cur.qi + 1 }); }
+        catch (e) { alert("作成に失敗: " + (e.message || e)); setBkReady(null); }
+        finally { setMaBusy(false); }
+      } else { setBkReady(null); }
+    }, 800);
+  };
+  // 複数のバックアップファイルをまとめて選択→順番に取り込み、既存に統合（同idは置換・無ければ追加）
   const maImport = async (e) => {
-    const file = e.target.files && e.target.files[0];
+    const files = Array.from(e.target.files || []);
     e.target.value = "";
-    if (!file) return;
-    setMaBusy(true);
-    await new Promise(r => setTimeout(r, 30));
+    if (!files.length) return;
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
     try {
-      const data = JSON.parse(await file.text());
-      const arr = data.albums || (Array.isArray(data) ? data : null);
-      if (!Array.isArray(arr)) throw new Error("bad");
-      const restored = [];
-      for (const a of arr) {
-        const photos = [];
-        for (const p of maNormPhotos(a.photos)) {
-          let url = p.url;
-          if (typeof url === "string" && url.startsWith("data:")) {
-            try {
-              const b = await (await fetch(url)).blob();
-              const id = makePhotoId();
-              if (await kitsIdbPhotoSet(id, b)) url = idToIdbBlobUrl(id);
-            } catch (_) {}
+      let added = 0;
+      const map = new Map(albums.map(a => [a.id, a]));
+      for (const file of files) {
+        let data; try { data = JSON.parse(await file.text()); } catch (_) { continue; }
+        const arr = data.albums || (Array.isArray(data) ? data : null);
+        if (!Array.isArray(arr)) continue;
+        for (const a of arr) {
+          const photos = [];
+          for (const p of maNormPhotos(a.photos)) {
+            let url = p.url;
+            if (typeof url === "string" && url.startsWith("data:")) {
+              try { const b = await (await fetch(url)).blob(); const id = makePhotoId(); if (await kitsIdbPhotoSet(id, b)) url = idToIdbBlobUrl(id); } catch (_) {}
+            }
+            photos.push({ url, caption: p.caption || "" });
           }
-          photos.push({ url, caption: p.caption || "" });
+          const album = { ...a, id: a.id || makePhotoId(), photos, cover: a.cover || 0 };
+          map.set(album.id, album); added++;
         }
-        restored.push({ ...a, id: a.id || makePhotoId(), photos, cover: a.cover || 0 });
       }
-      setAlbums(restored);
+      setAlbums(Array.from(map.values()));
       setMaBackup(false);
-      alert(`${restored.length}件のアルバムをインポートしました。`);
+      alert(`${added}件のアルバムを取り込みました（既存に統合）。`);
     } catch (e) { alert("インポートに失敗しました。正しいバックアップファイルを選択してください。"); }
     finally { setMaBusy(false); }
   };
@@ -3909,13 +3928,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <div style={{ fontSize: 13, lineHeight: 1.95, color: "#333", marginBottom: 22 }}>モデラーズアルバムのデータ（写真は高画質のまま）を1つのJSONファイルに書き出し／読み込みできます。機種変更やブラウザ移行の前に保存してください。</div>
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>エクスポート（バックアップ）</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 10 }}>全アルバム（{albums.length}件）をまとめて保存します。</div>
-            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={() => maExport()}>全アルバムをダウンロード（{albums.length}件）</button>
-            <div style={{ marginTop: 10, padding: "8px 10px", background: "#fff7ed", border: "1px solid #fed7aa", fontSize: 11, color: "#9a3412", lineHeight: 1.7 }}>
-              ホーム画面アプリで「トップに戻る／保存できない」場合は、<b>Safariで開いて保存</b>するか、下の<b>アルバム1個ずつ</b>の保存をお試しください（メモリ節約で成功しやすい）。
-            </div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 10 }}>全アルバム（{albums.length}件）を<b>1個ずつ順番に</b>保存します。保存するたびに自動で次のアルバムが用意されます。</div>
+            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={startExportAll}>全アルバムを順番に保存（{albums.length}件）</button>
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: "0.08em", marginBottom: 6 }}>アルバムごとに保存</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: "0.08em", marginBottom: 6 }}>アルバムごとに保存（個別）</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
                 {albums.map(a => (
                   <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, borderBottom: "1px solid #eee", paddingBottom: 6 }}>
@@ -3928,9 +3944,9 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           </div>
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>インポート（復元）</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>バックアップファイルから復元します。現在のアルバムは上書きされます。</div>
-            <button style={{ ...ma.ghost, width: "100%", boxSizing: "border-box" }} onClick={() => maFileRef.current && maFileRef.current.click()}>ファイルを選択</button>
-            <input ref={maFileRef} type="file" accept=".json,application/json" style={{ display: "none" }} onChange={maImport} />
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>バックアップファイルから復元します。<b>複数ファイルをまとめて選択</b>でき、順番に取り込んで既存のアルバムに統合します（同じアルバムは置き換え）。</div>
+            <button style={{ ...ma.ghost, width: "100%", boxSizing: "border-box" }} onClick={() => maFileRef.current && maFileRef.current.click()}>ファイルを選択（複数可）</button>
+            <input ref={maFileRef} type="file" accept=".json,application/json" multiple style={{ display: "none" }} onChange={maImport} />
           </div>
           <div style={{ fontSize: 11, color: "#999", lineHeight: 1.7 }}>※ データは端末内のみに保存されます。Safari／Chromeなどブラウザが違うと別データになります。移行時は必ずエクスポート→インポートしてください。</div>
         </div>
@@ -3944,14 +3960,16 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         )}
         {bkReady && (
           <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "rgba(255,255,255,0.97)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24, fontFamily: MA_FONT, textAlign: "center" }}>
-            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.1em", color: "#111" }}>バックアップ作成完了（約{bkReady.sizeMB}MB）</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, maxWidth: 320 }}>下のボタンを押すと保存（ダウンロード）します。端末の保存先選択が出たらお好きな場所へ。</div>
+            {bkReady.queue && <div style={{ fontSize: 11, letterSpacing: "0.16em", color: "#888", fontWeight: 700 }}>{bkReady.qi + 1} / {bkReady.queue.length} 件目</div>}
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.06em", color: "#111", maxWidth: 320, overflowWrap: "anywhere" }}>{bkReady.name}</div>
+            <div style={{ fontSize: 12, color: "#666" }}>約{bkReady.sizeMB}MB</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, maxWidth: 320 }}>下のボタンを押すと保存（ダウンロード）します。{bkReady.queue ? "保存すると自動で次のアルバムが出ます。" : "端末の保存先選択が出たらお好きな場所へ。"}</div>
             <a href={bkReady.url} download={bkReady.name}
-              onClick={() => { setTimeout(() => { try { URL.revokeObjectURL(bkReady.url); } catch (e) {} setBkReady(null); }, 4000); }}
+              onClick={() => advanceBackup(bkReady)}
               style={{ ...ma.black, minWidth: 240, textDecoration: "none", textAlign: "center", display: "inline-block" }}>
-              ダウンロードして保存
+              {bkReady.queue ? (bkReady.qi + 1 < bkReady.queue.length ? "保存して次へ" : "保存して完了") : "ダウンロードして保存"}
             </a>
-            <button style={{ ...ma.ghost }} onClick={() => { try { URL.revokeObjectURL(bkReady.url); } catch (e) {} setBkReady(null); }}>閉じる</button>
+            <button style={{ ...ma.ghost }} onClick={() => { try { URL.revokeObjectURL(bkReady.url); } catch (e) {} setBkReady(null); }}>{bkReady.queue ? "中止" : "閉じる"}</button>
           </div>
         )}
       </div>
