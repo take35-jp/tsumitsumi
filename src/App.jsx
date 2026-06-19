@@ -3798,7 +3798,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   // このアプリ（モデラーズアルバム）を共有：対応端末はネイティブ共有シート、非対応はURLコピー
   const maShareApp = async () => {
     const url = "https://tsumitsumi.vercel.app/?modeler";
-    const text = `作品ポートフォリオを端末内だけで作れる「モデラーズアルバム」\n${MA_TAGS}`;
+    const text = `あなたの作品をカンタンにアルバム化。新作投稿も楽チン。ビフォー・アフターも作れちゃう。Webアプリ「モデラーズアルバム」\n${MA_TAGS}`;
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({ title: "MODELERS ALBUM", text, url });
