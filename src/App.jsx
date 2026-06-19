@@ -3325,6 +3325,74 @@ async function maShareImages(blobs, baseName, text) {
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
 }
 
+// ===== モデラーズアルバム バックアップ用 ZIP（store・無圧縮）。写真は元データのまま詰めてメモリ節約 =====
+const MA_CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
+function maCrc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = MA_CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function maPhotoToBlob(url) {
+  if (isIdbBlobUrl(url)) return await kitsIdbPhotoGet(idbBlobUrlToId(url));
+  if (typeof url === "string" && url.startsWith("data:")) { try { return await (await fetch(url)).blob(); } catch (e) { return null; } }
+  if (typeof url === "string" && url) { try { return await (await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)).blob(); } catch (e) { return null; } }
+  return null;
+}
+async function buildModelerZip(targets) {
+  const enc = new TextEncoder();
+  const u16 = (n) => [n & 255, (n >>> 8) & 255];
+  const u32 = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const parts = [], central = []; let offset = 0;
+  const addEntry = (name, dataPart, crc, size) => {
+    const nb = enc.encode(name);
+    const lh = [].concat(u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(size), u32(size), u16(nb.length), u16(0));
+    const lhU8 = new Uint8Array(lh.length + nb.length); lhU8.set(lh, 0); lhU8.set(nb, lh.length);
+    parts.push(lhU8); parts.push(dataPart);
+    const cd = [].concat(u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(size), u32(size), u16(nb.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset));
+    const cdU8 = new Uint8Array(cd.length + nb.length); cdU8.set(cd, 0); cdU8.set(nb, cd.length); central.push(cdU8);
+    offset += lhU8.length + size;
+  };
+  const manifestAlbums = []; let pc = 0;
+  for (const a of targets) {
+    const mphotos = [];
+    for (const p of maNormPhotos(a.photos)) {
+      const blob = await maPhotoToBlob(p.url);
+      if (!blob) continue;
+      const ext = (blob.type || "").includes("png") ? "png" : (blob.type || "").includes("webp") ? "webp" : "jpg";
+      const fname = `photos/${pc++}_${makePhotoId()}.${ext}`;
+      const buf = new Uint8Array(await blob.arrayBuffer()); // CRC計算用（1枚ずつ・直後に破棄）
+      addEntry(fname, blob, maCrc32(buf), buf.length); // データ部は元のBlob参照（JSヒープに載せない）
+      mphotos.push({ file: fname, caption: p.caption || "" });
+      await new Promise(r => setTimeout(r, 0));
+    }
+    manifestAlbums.push({ ...a, photos: mphotos });
+  }
+  const man = enc.encode(JSON.stringify({ version: 1, type: "modeler_albums_zip", exportedAt: new Date().toISOString(), albums: manifestAlbums }));
+  addEntry("manifest.json", man, maCrc32(man), man.length);
+  const cdStart = offset; let cdSize = 0;
+  for (const c of central) { parts.push(c); cdSize += c.length; }
+  parts.push(new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length), u32(cdSize), u32(cdStart), u16(0))));
+  return new Blob(parts, { type: "application/zip" });
+}
+async function isZipFile(file) { try { const b = new Uint8Array(await file.slice(0, 2).arrayBuffer()); return b[0] === 0x50 && b[1] === 0x4b; } catch (e) { return false; } }
+async function readModelerZip(file) {
+  const dv = async (s, l) => new DataView(await file.slice(s, s + l).arrayBuffer());
+  let offset = 0, manifest = null; const photoMap = {};
+  while (offset + 4 <= file.size) {
+    const sig = (await dv(offset, 4)).getUint32(0, true);
+    if (sig !== 0x04034b50) break; // ローカルヘッダ以外（中央ディレクトリ等）に到達
+    const h = await dv(offset, 30);
+    const size = h.getUint32(18, true), fnLen = h.getUint16(26, true), exLen = h.getUint16(28, true);
+    const name = new TextDecoder().decode(await file.slice(offset + 30, offset + 30 + fnLen).arrayBuffer());
+    const dataStart = offset + 30 + fnLen + exLen;
+    if (name === "manifest.json") manifest = JSON.parse(await file.slice(dataStart, dataStart + size).text());
+    else if (name.indexOf("photos/") === 0) { const id = makePhotoId(); if (await kitsIdbPhotoSet(id, file.slice(dataStart, dataStart + size))) photoMap[name] = idToIdbBlobUrl(id); }
+    offset = dataStart + size;
+    await new Promise(r => setTimeout(r, 0));
+  }
+  if (!manifest) throw new Error("ZIP内に manifest.json がありません");
+  return (manifest.albums || []).map(a => ({
+    ...a, id: a.id || makePhotoId(), cover: a.cover || 0,
+    photos: (a.photos || []).map(ph => ({ url: photoMap[ph.file] || "", caption: ph.caption || "" })).filter(p => p.url),
+  }));
+}
+
 // ビフォーアフター用：画像をドラッグで位置調整＋スライダーでズーム。t={z,ox,oy} を親へ通知
 function BaAdjust({ url, t, onChange }) {
   const [nat, setNat] = useState(null);
@@ -3587,6 +3655,17 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
     finally { setMaBusy(false); }
   };
+  // 全アルバムを1つのZIPにまとめて保存（1回のDL＝保存先指定も1回。メモリ節約で大容量も安定）
+  const exportZip = async () => {
+    if (!albums.length) { alert("アルバムがありません"); return; }
+    setMaBusy(true); await new Promise(r => setTimeout(r, 30));
+    try {
+      const blob = await buildModelerZip(albums);
+      const date = new Date().toLocaleDateString("ja-JP").replace(/\//g, "-");
+      setBkReady({ url: URL.createObjectURL(blob), name: `modelers_albums_${date}.zip`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) });
+    } catch (e) { alert("ZIPの作成に失敗しました: " + (e.message || e)); }
+    finally { setMaBusy(false); }
+  };
   // 保存（DL）後に呼ぶ：キューがあれば次のアルバムを用意、無ければ閉じる
   const advanceBackup = (cur) => {
     setTimeout(async () => {
@@ -3609,21 +3688,28 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       let added = 0;
       const map = new Map(albums.map(a => [a.id, a]));
       for (const file of files) {
-        let data; try { data = JSON.parse(await file.text()); } catch (_) { continue; }
-        const arr = data.albums || (Array.isArray(data) ? data : null);
-        if (!Array.isArray(arr)) continue;
-        for (const a of arr) {
-          const photos = [];
-          for (const p of maNormPhotos(a.photos)) {
-            let url = p.url;
-            if (typeof url === "string" && url.startsWith("data:")) {
-              try { const b = await (await fetch(url)).blob(); const id = makePhotoId(); if (await kitsIdbPhotoSet(id, b)) url = idToIdbBlobUrl(id); } catch (_) {}
+        let imported = [];
+        if (/\.zip$/i.test(file.name) || await isZipFile(file)) {
+          // ZIP：写真は元データのままIDBへ（メモリ節約）
+          try { imported = await readModelerZip(file); } catch (_) { continue; }
+        } else {
+          // 旧JSON形式（base64インライン）
+          let data; try { data = JSON.parse(await file.text()); } catch (_) { continue; }
+          const arr = data.albums || (Array.isArray(data) ? data : null);
+          if (!Array.isArray(arr)) continue;
+          for (const a of arr) {
+            const photos = [];
+            for (const p of maNormPhotos(a.photos)) {
+              let url = p.url;
+              if (typeof url === "string" && url.startsWith("data:")) {
+                try { const b = await (await fetch(url)).blob(); const id = makePhotoId(); if (await kitsIdbPhotoSet(id, b)) url = idToIdbBlobUrl(id); } catch (_) {}
+              }
+              photos.push({ url, caption: p.caption || "" });
             }
-            photos.push({ url, caption: p.caption || "" });
+            imported.push({ ...a, id: a.id || makePhotoId(), photos, cover: a.cover || 0 });
           }
-          const album = { ...a, id: a.id || makePhotoId(), photos, cover: a.cover || 0 };
-          map.set(album.id, album); added++;
         }
+        for (const album of imported) { map.set(album.id, album); added++; }
       }
       setAlbums(Array.from(map.values()));
       setMaBackup(false);
@@ -3928,10 +4014,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <div style={{ fontSize: 13, lineHeight: 1.95, color: "#333", marginBottom: 22 }}>モデラーズアルバムのデータ（写真は高画質のまま）を1つのJSONファイルに書き出し／読み込みできます。機種変更やブラウザ移行の前に保存してください。</div>
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>エクスポート（バックアップ）</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 10 }}>全アルバム（{albums.length}件）を<b>1個ずつ順番に</b>保存します。保存するたびに自動で次のアルバムが用意されます。</div>
-            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={startExportAll}>全アルバムを順番に保存（{albums.length}件）</button>
-            <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: "0.08em", marginBottom: 6 }}>アルバムごとに保存（個別）</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 10 }}>全アルバム（{albums.length}件）を<b>1つのZIPファイル</b>にまとめて保存します（保存は1回だけ・大容量でも安定）。</div>
+            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={exportZip}>ZIP一括ダウンロード（{albums.length}件）</button>
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: "0.08em", marginBottom: 6 }}>うまくいかない時：アルバムごとに保存（JSON）</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
                 {albums.map(a => (
                   <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, borderBottom: "1px solid #eee", paddingBottom: 6 }}>
@@ -3944,9 +4030,9 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           </div>
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>インポート（復元）</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>バックアップファイルから復元します。<b>複数ファイルをまとめて選択</b>でき、順番に取り込んで既存のアルバムに統合します（同じアルバムは置き換え）。</div>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>ZIP／JSONのバックアップから復元します。<b>複数ファイルをまとめて選択</b>でき、順番に取り込んで既存のアルバムに統合します（同じアルバムは置き換え）。</div>
             <button style={{ ...ma.ghost, width: "100%", boxSizing: "border-box" }} onClick={() => maFileRef.current && maFileRef.current.click()}>ファイルを選択（複数可）</button>
-            <input ref={maFileRef} type="file" accept=".json,application/json" multiple style={{ display: "none" }} onChange={maImport} />
+            <input ref={maFileRef} type="file" accept=".zip,.json,application/zip,application/json" multiple style={{ display: "none" }} onChange={maImport} />
           </div>
           <div style={{ fontSize: 11, color: "#999", lineHeight: 1.7 }}>※ データは端末内のみに保存されます。Safari／Chromeなどブラウザが違うと別データになります。移行時は必ずエクスポート→インポートしてください。</div>
         </div>
