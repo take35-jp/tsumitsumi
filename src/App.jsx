@@ -4973,7 +4973,7 @@ export default function App() {
     return (
       <div style={{ ...s.root, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 14 }}>
         <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: 2, color: "#111" }}>TSUMI TSUMI</div>
-        <div style={{ width: 32, height: 32, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: 0, animation: "ttspin 0.8s linear infinite" }} />
+        <div style={{ width: 32, height: 32, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: "50%", animation: "ttspin 0.8s linear infinite" }} />
         <div style={{ fontSize: 12, color: "#9ca3af" }}>読み込み中...</div>
         <style>{"@keyframes ttspin{to{transform:rotate(360deg)}}"}</style>
       </div>
