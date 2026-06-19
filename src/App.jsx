@@ -824,7 +824,7 @@ function BarcodeScanner({ onDetected, onClose, continuous = false }) {
         </div>
       ) : (
         <div>
-          <img src={imgSrc} style={{ width: "100%", borderRadius: 12, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
+          <img src={imgSrc} style={{ width: "100%", borderRadius: 0, objectFit: "contain", maxHeight: 200, marginBottom: 10 }} alt="" />
           {scanning && <div style={sc.scanningBox}>バーコードを解析中...</div>}
           {error && (
             <div style={sc.errorBox}>
@@ -863,17 +863,17 @@ function ManualInput({ onDetected }) {
 
   return (
     <div>
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, lineHeight: 1.7, background: "#f8f9fa", borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8, lineHeight: 1.7, background: "#f8f9fa", borderRadius: 0, padding: "10px 12px" }}>
         <div style={{ fontWeight: 700, marginBottom: 4 }}>バーコード数字のコピー方法</div>
         <div>① カメラでバーコード<strong>下の数字</strong>を映す</div>
         <div>② 数字が認識されたらタップ→コピー</div>
         <div>③ 下の入力欄に貼り付けると自動検索</div>
       </div>
       <div style={{ display: "flex", gap: 8, paddingBottom: 8 }}>
-        <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+        <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none" }}
           placeholder="JANコード（13桁）" inputMode="numeric" value={val}
           onChange={handleChange} onPaste={handlePaste} />
-        <button style={{ padding: "10px 16px", background: val.length >= 8 ? "#111" : "#d1d5db", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: val.length >= 8 ? "pointer" : "default" }}
+        <button style={{ padding: "10px 16px", background: val.length >= 8 ? "#111" : "#d1d5db", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 600, cursor: val.length >= 8 ? "pointer" : "default" }}
           onClick={() => val.length >= 8 && onDetected(val)}>検索</button>
       </div>
     </div>
@@ -881,22 +881,22 @@ function ManualInput({ onDetected }) {
 }
 
 const sc = {
-  wrap: { background: "#fff", borderRadius: "0 0 20px 20px", width: "100%", maxWidth: 480, padding: "20px 20px 28px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 28px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
-  closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 20, fontWeight: 600 },
-  videoWrap: { position: "relative", background: "#111", borderRadius: 14, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
+  closeBtn: { background: "#f3f4f6", border: "none", fontSize: 13, cursor: "pointer", color: "#374151", padding: "6px 14px", borderRadius: 0, fontWeight: 600 },
+  videoWrap: { position: "relative", background: "#111", borderRadius: 0, overflow: "hidden", aspectRatio: "4/3", marginBottom: 4 },
   dimOverlay: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-  frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)" },
+  frame: { width: "80%", aspectRatio: "2.5/1", border: "2.5px solid #fff", borderRadius: 0, boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)" },
   hint: { position: "absolute", bottom: 28, left: 0, right: 0, textAlign: "center", color: "rgba(255,255,255,0.9)", fontSize: 12 },
   tapHint: { position: "absolute", bottom: 10, left: 0, right: 0, textAlign: "center", color: "#4ade80", fontSize: 11, fontWeight: 600 },
-  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 16, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
-  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 10, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
-  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 12, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
-  retakeBtn: { display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
+  shootBox: { background: "#f8f9fa", border: "2px dashed #d1d5db", borderRadius: 0, padding: "36px 20px", textAlign: "center", cursor: "pointer", marginBottom: 8 },
+  scanningBox: { background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "12px 16px", fontSize: 13, textAlign: "center", marginBottom: 10 },
+  errorBox: { background: "#fee2e2", color: "#b91c1c", borderRadius: 0, padding: "14px 16px", fontSize: 13, marginBottom: 10 },
+  retakeBtn: { display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  retakeBtn2: { width: "100%", padding: "10px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 8 },
   dividerRow: { display: "flex", alignItems: "center", margin: "16px 0 12px" },
-  dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 20, padding: "3px 12px", margin: "0 auto" },
+  dividerText: { fontSize: 12, color: "#9ca3af", border: "1px solid #e5e7eb", borderRadius: 0, padding: "3px 12px", margin: "0 auto" },
 };
 
 // ---- Kit Name Input with Suggestions ----
@@ -982,7 +982,7 @@ function KitNameInput({ value, onChange, onSelect }) {
               {item.photoUrl && <KitImage src={item.photoUrl} style={suggS.thumb} />}
               <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
                 {item.scale && (
-                  <span style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: 6, padding: "1px 7px", fontSize: 10, fontWeight: 700, marginBottom: 3 }}>
+                  <span style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: 0, padding: "1px 7px", fontSize: 10, fontWeight: 700, marginBottom: 3 }}>
                     {item.scale}
                   </span>
                 )}
@@ -999,10 +999,10 @@ function KitNameInput({ value, onChange, onSelect }) {
 }
 
 const suggS = {
-  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
-  list: { background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4, overflow: "hidden" },
+  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
+  list: { background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4, overflow: "hidden" },
   item: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", cursor: "pointer", borderBottom: "1px solid #f0f0f0" },
-  thumb: { width: 40, height: 40, objectFit: "cover", borderRadius: 6, flexShrink: 0 },
+  thumb: { width: 40, height: 40, objectFit: "cover", borderRadius: 0, flexShrink: 0 },
   name: { fontSize: 13, color: "#111", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   scale: { fontSize: 11, color: "#4f8ef7", fontWeight: 600, marginTop: 2 },
 };
@@ -1061,7 +1061,7 @@ function BrowseModal({ onBulkAdd, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }}>
+      <div style={{ background: "#fff", borderRadius: 0, padding: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <span style={{ fontSize: 17, fontWeight: 700, color: "#111" }}>リストから一括登録</span>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#9ca3af" }}>×</button>
@@ -1074,16 +1074,16 @@ function BrowseModal({ onBulkAdd, onClose }) {
             onChange={(e) => setBrowseQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); search(1, browseQuery); } }}
             placeholder="例: バンダイ HG ガンダム（スペース区切りでAND検索）"
-            style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1.5px solid #d1d5db", fontSize: 14 }}
+            style={{ flex: 1, padding: "10px 12px", borderRadius: 0, border: "1.5px solid #d1d5db", fontSize: 14 }}
           />
           <button
             onClick={() => { setPage(1); search(1, browseQuery); }}
-            style={{ padding: "10px 16px", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+            style={{ padding: "10px 16px", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
             検索
           </button>
         </div>
 
-        <div style={{ background: "#fff8e1", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
+        <div style={{ background: "#fff8e1", borderRadius: 0, padding: "10px 14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
             注意：登録される情報は商品名・画像のみです。購入日・価格・状態などの詳細は登録後に個別に編集してください。
           </div>
@@ -1102,8 +1102,8 @@ function BrowseModal({ onBulkAdd, onClose }) {
                 const key = getKey(item);
                 const isSelected = !!selectedItems[key];
                 return (
-                  <div key={key} onClick={() => toggleSelect(item)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: isSelected ? "#dcfce7" : "#fff", border: "1.5px solid", borderColor: isSelected ? "#22c55e" : "#e5e7eb", borderRadius: 10, marginBottom: 6, cursor: "pointer" }}>
-                    {item.image_url && <img src={item.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 6 }} />}
+                  <div key={key} onClick={() => toggleSelect(item)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: isSelected ? "#dcfce7" : "#fff", border: "1.5px solid", borderColor: isSelected ? "#22c55e" : "#e5e7eb", borderRadius: 0, marginBottom: 6, cursor: "pointer" }}>
+                    {item.image_url && <img src={item.image_url} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
                       {item.scale && <div style={{ fontSize: 11, color: "#6b7280" }}>{item.scale}</div>}
@@ -1117,18 +1117,18 @@ function BrowseModal({ onBulkAdd, onClose }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 8 }}>
               <button
                 disabled={page <= 1}
-                style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: page <= 1 ? "#f3f4f6" : "#fff", borderRadius: 8, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1 }}
+                style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: page <= 1 ? "#f3f4f6" : "#fff", borderRadius: 0, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1 }}
                 onClick={() => { const p = page - 1; setPage(p); search(p); }}>← 前へ</button>
               <span style={{ fontSize: 12, color: "#9ca3af" }}>{page} / {Math.ceil(total / 20) || 1} ページ ({total}件)</span>
               {page * 20 < total && (
-                <button style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: "#fff", borderRadius: 8, fontSize: 13, cursor: "pointer" }}
+                <button style={{ padding: "6px 16px", border: "1.5px solid #d1d5db", background: "#fff", borderRadius: 0, fontSize: 13, cursor: "pointer" }}
                   onClick={() => { const p = page + 1; setPage(p); search(p); }}>次へ →</button>
               )}
             </div>
 
             {/* 一括登録ボタン */}
             {selectedCount > 0 && (
-              <button style={{ width: "100%", padding: "14px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ width: "100%", padding: "14px", background: "#22c55e", color: "#fff", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
                 onClick={handleBulkAdd}>
                 ✓ {selectedCount}件をまとめて登録
               </button>
@@ -1208,27 +1208,27 @@ function BackupModal({ kits, onImport, onClose }) {
       </div>
 
       {msg && (
-        <div style={{ background: msgType === "ok" ? "#f0fdf4" : "#fee2e2", color: msgType === "ok" ? "#166534" : "#b91c1c", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16, wordBreak: "break-word" }}>
+        <div style={{ background: msgType === "ok" ? "#f0fdf4" : "#fee2e2", color: msgType === "ok" ? "#166534" : "#b91c1c", borderRadius: 0, padding: "10px 14px", fontSize: 13, marginBottom: 16, wordBreak: "break-word" }}>
           {msg}
         </div>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
+        <div style={{ background: "#f8f9fa", borderRadius: 0, padding: "16px" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>エクスポート（バックアップ）</div>
           <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>現在の積みプラデータをJSONファイルとして保存します。iCloudやGoogleドライブに保存しておくと安心です。</div>
           <button
-            style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+            style={{ width: "100%", padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
             onClick={handleExport}>
             ダウンロード（{kits.length}件）
           </button>
         </div>
 
-        <div style={{ background: "#f8f9fa", borderRadius: 12, padding: "16px" }}>
+        <div style={{ background: "#f8f9fa", borderRadius: 0, padding: "16px" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 6 }}>インポート（復元）</div>
           <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12, lineHeight: 1.6 }}>バックアップファイルからデータを復元します。現在のデータは上書きされます。</div>
           <button
-            style={{ width: "100%", padding: "12px 0", background: "#fff", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+            style={{ width: "100%", padding: "12px 0", background: "#fff", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
             onClick={() => fileRef.current.click()}>
             ファイルを選択
           </button>
@@ -1236,7 +1236,7 @@ function BackupModal({ kits, onImport, onClose }) {
         </div>
       </div>
 
-      <div style={{ background: "#fff8e1", borderRadius: 10, padding: "12px 14px", marginTop: 4 }}>
+      <div style={{ background: "#fff8e1", borderRadius: 0, padding: "12px 14px", marginTop: 4 }}>
         <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.7, wordBreak: "break-word" }}>
           <strong>注意：</strong>SafariとChromeなど、ブラウザの種類が異なるとデータは別々に保存されます。異なるブラウザへ移行する場合は、必ずエクスポートしてからインポートしてください。
         </div>
@@ -1287,7 +1287,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
     : allTags.filter(t => !tags.includes(t)).slice(0, 5);
 
   return (
-    <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "8px 10px", background: "#fafafa" }}>
+    <div style={{ border: "1.5px solid #e5e7eb", borderRadius: 0, padding: "8px 10px", background: "#fafafa" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: tags.length > 0 ? 8 : 0 }}>
         {tags.map(tag => (
           <span key={tag}
@@ -1307,7 +1307,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
               style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 24, height: 24, minWidth: 24, minHeight: 24,
-                background: "#ef4444", border: "none", borderRadius: "50%",
+                background: "#ef4444", border: "none", borderRadius: 0,
                 color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer",
                 flexShrink: 0, lineHeight: 1, padding: 0,
                 touchAction: "manipulation",
@@ -1321,7 +1321,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
           {suggestions.map(t => (
             <button key={t} onClick={() => addTag(t)}
-              style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 20, padding: "2px 10px", fontSize: 11, color: "#374151", cursor: "pointer" }}>
+              style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 0, padding: "2px 10px", fontSize: 11, color: "#374151", cursor: "pointer" }}>
               ＋{t}
             </button>
           ))}
@@ -1336,7 +1336,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(input); } }}
         />
         <button
-          style={{ background: "#111", color: "#fff", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
+          style={{ background: "#111", color: "#fff", border: "none", borderRadius: 0, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
           onClick={() => addTag(input)}>追加</button>
       </div>
     </div>
@@ -1346,7 +1346,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.38", date: "2026/06/19", isNew: true, items: ["タグ・称号・状態バッジなどのラベルの枠を角丸から長方形デザインに変更"] },
+    { ver: "v1.38", date: "2026/06/19", isNew: true, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
     { ver: "v1.37", date: "2026/06/16", isNew: false, items: ["「モデラーズアルバム」を新設（作品ポートフォリオ）。1アルバム最大30枚を高画質のまま保存でき、作成年月・自由タグ・制作コメントを記録。写真はタップで拡大。白黒ミニマルなデザイン"] },
     { ver: "v1.36", date: "2026/06/16", isNew: false, items: ["「これを作ってくれる人に譲りたい！」のXシェアで、キットの画像も一緒に投稿できるように（スマホは画像つきで共有、PCは画像を保存してから投稿画面へ）"] },
     { ver: "v1.35", date: "2026/06/13", isNew: false, items: ["完成品アルバムのXシェア画像を高画質化（完成写真を圧縮せず原本のまま保存し、シェア画像も2倍の高精細に）"] },
@@ -1393,9 +1393,9 @@ function AllVersionsModal({ onClose }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {versions.map((v, i) => (
-          <div key={v.ver} style={{ background: v.isNew ? "#f0fdf4" : "#fafafa", border: `1px solid ${v.isNew ? "#bbf7d0" : "#e5e7eb"}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div key={v.ver} style={{ background: v.isNew ? "#f0fdf4" : "#fafafa", border: `1px solid ${v.isNew ? "#bbf7d0" : "#e5e7eb"}`, borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              {v.isNew && <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>}
+              {v.isNew && <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>}
               <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{v.ver}</span>
               <span style={{ fontSize: 11, color: "#9ca3af" }}>{v.date}</span>
             </div>
@@ -1457,7 +1457,7 @@ function StorageGauge({ kits }) {
       <div style={{ marginBottom: 8 }}>
         使用中: {fmt(info.used)} / 約 {fmt(info.max)} ({pct < 1 ? '<1' : pct}%)
       </div>
-      <div style={{ height: 8, background: '#1f2937', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ height: 8, background: '#1f2937', borderRadius: 0, overflow: 'hidden' }}>
         <div style={{ width: Math.max(pct, 0.5) + '%', height: '100%', background: color, transition: 'width 0.3s' }} />
       </div>
       {pct >= 80 && (
@@ -1482,14 +1482,14 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
 
         <div style={hs.section}>
           <div style={{ display: "flex", gap: 8 }}>
-            <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, padding: "14px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <a href="https://tsumitsumi.vercel.app/manual.html" target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, padding: "14px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, textDecoration: "none", color: "#166534", fontWeight: 700, textAlign: "center", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
               使い方はコチラ →
             </a>
             <button
               onClick={onToggleTheme}
               type="button"
               aria-label={theme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}
-              style={{ flexShrink: 0, padding: "14px 16px", background: "#fef3c7", border: "1.5px solid #fcd34d", borderRadius: 10, color: "#78350f", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>
+              style={{ flexShrink: 0, padding: "14px 16px", background: "#fef3c7", border: "1.5px solid #fcd34d", borderRadius: 0, color: "#78350f", fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>
               {theme === "dark" ? "ライト" : "ダーク"}
             </button>
           </div>
@@ -1509,7 +1509,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           onClick={onMigratePhotos}
           disabled={migrateLoading || migrateTargetCount === 0}
           style={{
-            width: "100%", padding: "10px 16px", border: "none", borderRadius: 10,
+            width: "100%", padding: "10px 16px", border: "none", borderRadius: 0,
             background: migrateLoading || migrateTargetCount === 0 ? "#e5e7eb" : "#111",
             color: migrateLoading || migrateTargetCount === 0 ? "#9ca3af" : "#fff",
             fontSize: 13, fontWeight: 700,
@@ -1544,7 +1544,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           href="https://x.com/tsumitsumi_pla"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 20, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#000", color: "#fff", borderRadius: 0, padding: "10px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
           𝕏 @tsumitsumi_pla
         </a>
       </div>
@@ -1566,7 +1566,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             { title: "【保存版】ガンプラ初心者が最初に揃える工具5選", desc: "1万円以下で全部そろえる、本当に必要な工具を厳選", url: "/tips/beginner-tools.html", date: "2026/05/27" },
           ].map((t, i) => (
             <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", padding: "10px 12px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, textDecoration: "none", color: "#111" }}>
+              style={{ display: "block", padding: "10px 12px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 0, textDecoration: "none", color: "#111" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#9a3412", marginBottom: 2 }}>{t.title}</div>
               <div style={{ fontSize: 11, color: "#9a3412", opacity: 0.85, lineHeight: 1.5 }}>{t.desc}</div>
               <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>{t.date} 公開</div>
@@ -1590,18 +1590,18 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* v1.38 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 20, padding: "1px 7px" }}>NEW</span>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.38</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・タグ・称号・状態バッジなどのラベルの枠を長方形デザインに変更
+              ・アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・ボタン・カード・モーダルなどすべて）
             </div>
           </div>
           {/* v1.37 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.37</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
@@ -1611,7 +1611,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
           </div>
           {/* v1.36 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.36</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/16</span>
@@ -1626,7 +1626,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
       <div style={hs.section}>
         <div style={hs.sectionTitle}>プライバシーポリシー</div>
         <div style={hs.desc}>本サービスのプライバシーポリシー、アフィリエイト広告に関する表記、免責事項は別ページにまとめています。</div>
-        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 10, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>プライバシーポリシーを開く →</a>
+        <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "10px 14px", background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 0, textDecoration: "none", color: "#111", fontSize: 13, fontWeight: 600, textAlign: "center", marginTop: 8 }}>プライバシーポリシーを開く →</a>
         <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 10, textAlign: "center" }}>当サイトはアフィリエイト広告を利用しています</div>
       </div>
 
@@ -1642,7 +1642,7 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
 }
 
 const hs = {
-  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
   closeBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" },
@@ -1650,9 +1650,9 @@ const hs = {
   sectionTitle: { fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 10 },
   desc: { fontSize: 13, color: "#6b7280", lineHeight: 1.7, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" },
   item: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "#374151", marginBottom: 6, lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "anywhere" },
-  num: { minWidth: 20, height: 20, background: "#111", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
-  warn: { minWidth: 20, height: 20, background: "#f59e0b", color: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
-  tip: { fontSize: 12, color: "#4f8ef7", background: "#eff6ff", borderRadius: 8, padding: "6px 10px", marginTop: 8, wordBreak: "break-word", overflowWrap: "anywhere", boxSizing: "border-box", whiteSpace: "normal", display: "block" },
+  num: { minWidth: 20, height: 20, background: "#111", color: "#fff", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
+  warn: { minWidth: 20, height: 20, background: "#f59e0b", color: "#fff", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 },
+  tip: { fontSize: 12, color: "#4f8ef7", background: "#eff6ff", borderRadius: 0, padding: "6px 10px", marginTop: 8, wordBreak: "break-word", overflowWrap: "anywhere", boxSizing: "border-box", whiteSpace: "normal", display: "block" },
 };
 
 // ---- App Share Modal ----
@@ -1733,12 +1733,12 @@ function AppShareModal({ onClose }) {
 }
 
 const as = {
-  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
   title: { fontSize: 16, fontWeight: 700, color: "#111" },
   closeBtn: { background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" },
-  appCard: { background: "#f8f9fa", borderRadius: 16, padding: "20px", textAlign: "center", marginBottom: 20 },
-  btn: { width: "100%", padding: "14px 16px", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", textAlign: "left" },
+  appCard: { background: "#f8f9fa", borderRadius: 0, padding: "20px", textAlign: "center", marginBottom: 20 },
+  btn: { width: "100%", padding: "14px 16px", color: "#fff", border: "none", borderRadius: 0, cursor: "pointer", textAlign: "left" },
 };
 
 // ---- タグ編集モーダル ----
@@ -1820,14 +1820,14 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
         <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>新しいタグを作成</div>
         <div style={{ display: "flex", gap: 6 }}>
           <input
-            style={{ flex: 1, border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
+            style={{ flex: 1, border: "1.5px solid #e5e7eb", borderRadius: 0, padding: "6px 10px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
             placeholder="タグ名（例：プレバン限定品）"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addNewTag(); } }}
           />
           <button
-            style={{ background: "#111", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+            style={{ background: "#111", color: "#fff", border: "none", borderRadius: 0, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
             onClick={addNewTag}>＋作成</button>
         </div>
       </div>
@@ -1840,21 +1840,21 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {tagUsage.map(([tag, { count, totalPrice }]) => (
-            <div key={tag} style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
+            <div key={tag} style={{ background: "#fafafa", border: "1px solid #e5e7eb", borderRadius: 0, padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
               {editingTag === tag ? (
                 <>
                   <input
-                    style={{ flex: 1, border: "1.5px solid #4f8ef7", borderRadius: 6, padding: "4px 8px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
+                    style={{ flex: 1, border: "1.5px solid #4f8ef7", borderRadius: 0, padding: "4px 8px", fontSize: 13, color: "#111", outline: "none", minWidth: 0 }}
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveEdit(tag); } else if (e.key === "Escape") cancelEdit(); }}
                     autoFocus
                   />
                   <button
-                    style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 0, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
                     onClick={() => saveEdit(tag)}>保存</button>
                   <button
-                    style={{ background: "#fff", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#fff", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: 0, padding: "4px 10px", fontSize: 11, cursor: "pointer", flexShrink: 0 }}
                     onClick={cancelEdit}>取消</button>
                 </>
               ) : (
@@ -1863,10 +1863,10 @@ function TagEditorModal({ kits, setKits, tagMasterList, setTagMasterList, onClos
                     #{tag}<span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 400, marginLeft: 6 }}>{count}件{totalPrice > 0 ? ` ¥${totalPrice.toLocaleString()}` : ""}</span>
                   </span>
                   <button
-                    style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 0, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
                     onClick={() => startEdit(tag)}>編集</button>
                   <button
-                    style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+                    style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 0, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
                     onClick={() => deleteTag(tag, count)}>削除</button>
                 </>
               )}
@@ -2549,7 +2549,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
         <label style={xs.label}>あなたのX ID（省略可）</label>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
           <span style={{ color: "#9ca3af", fontSize: 16 }}>@</span>
-          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none" }}
             placeholder="your_x_id" value={myXId} onChange={(e) => setMyXId(e.target.value.replace(/^@/, ""))} />
         </div>
         <div style={xs.modeRow}>
@@ -2574,17 +2574,17 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
         )}
 
         {/* 画像生成セクション */}
-        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px", marginBottom: 12 }}>
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 6 }}>画像を生成してシェア</div>
           <div style={{ fontSize: 11, color: "#166534", marginBottom: 10 }}>
             {targetKits.length}件 → 画像{totalPages}枚（1枚あたり最大68件）
           </div>
-          <button style={{ width: "100%", padding: "12px 0", background: generating ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: generating ? "default" : "pointer" }}
+          <button style={{ width: "100%", padding: "12px 0", background: generating ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: generating ? "default" : "pointer" }}
             onClick={handleGenerateImages} disabled={generating}>
             {generating ? "生成中..." : `画像を生成してダウンロード（${totalPages}枚）`}
           </button>
           {generatedCount > 0 && (
-            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 0, padding: "12px 14px" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
                 {generatedCount}枚の画像を生成しました
               </div>
@@ -2594,18 +2594,18 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
               </div>
               {canNativeShareImages && (
                 <button onClick={handleNativeShare}
-                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
+                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
                   全画像をまとめて共有（X等を選択）
                 </button>
               )}
               {/* 各ページのプレビュー＋個別保存（data URL 利用で iOS でも確実に表示） */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                 {generatedDataUrls.map((url, i) => (
-                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 8, padding: 8 }}>
+                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 0, padding: 8 }}>
                     <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>画像 {i + 1} / {generatedDataUrls.length}</div>
-                    <img src={url} alt={`page ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
+                    <img src={url} alt={`page ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 0, marginBottom: 6 }} />
                     <button onClick={() => handleSaveOne(i)}
-                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
+                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
                       画像 {i + 1} を保存
                     </button>
                   </div>
@@ -2613,7 +2613,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
               </div>
               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweetForImage(targetKits.length, generatedCount))}`}
                 target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
                 𝕏 Xを開いて投稿する（保存した画像を添付）
               </a>
             </div>
@@ -2621,7 +2621,7 @@ function XShareModal({ kits, myXId, setMyXId, onClose }) {
         </div>
 
         {/* テキストのみ投稿 */}
-        <button style={{ width: "100%", padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+        <button style={{ width: "100%", padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
           onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweet())}`, "_blank")}>
           𝕏 テキストのみ投稿
         </button>
@@ -2730,8 +2730,8 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
         <div style={xs.empty}>完成済みのキットがありません。<br/>キットを「完成済み」にすると、完成写真でリッチなアルバムを作れます。</div>
       ) : (<>
         {isSingle ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "10px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10 }}>
-            {getCompletedPhotos(singleKit)[0] && <KitImage src={getCompletedPhotos(singleKit)[0]} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }} />}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "10px 12px", background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0 }}>
+            {getCompletedPhotos(singleKit)[0] && <KitImage src={getCompletedPhotos(singleKit)[0]} style={{ width: 48, height: 48, borderRadius: 0, objectFit: "cover" }} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{singleKit.name}</div>
               <div style={{ fontSize: 11, color: "#166534" }}>完成写真 {singlePhotoCount} 枚を1枚の画像にまとめます</div>
@@ -2739,14 +2739,14 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
           </div>
         ) : (<>
           <label style={xs.label}>アルバムのタイトル</label>
-          <input style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", marginBottom: 14, boxSizing: "border-box" }}
+          <input style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none", marginBottom: 14, boxSizing: "border-box" }}
             placeholder="完成コレクション" value={title} maxLength={24} onChange={(e) => setTitle(e.target.value)} />
         </>)}
 
         <label style={xs.label}>あなたのX ID（省略可）</label>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
           <span style={{ color: "#9ca3af", fontSize: 16 }}>@</span>
-          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none" }}
+          <input style={{ flex: 1, padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none" }}
             placeholder="your_x_id" value={myXId} onChange={(e) => setMyXId(e.target.value.replace(/^@/, ""))} />
         </div>
         {!isSingle && (
@@ -2772,19 +2772,19 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
           </div>
         )}
 
-        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px", marginBottom: 12 }}>
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "14px", marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginBottom: 6 }}>完成写真でアルバムを生成</div>
           <div style={{ fontSize: 11, color: "#166534", marginBottom: 10 }}>
             {isSingle
               ? `完成写真 ${singlePhotoCount}枚 → 1枚の画像にまとめます`
               : `${targetKits.length}件 → 表紙＋ショーケース 計${totalPages}枚（1ページ4件・完成写真を大きく表示）`}
           </div>
-          <button style={{ width: "100%", padding: "12px 0", background: (generating || targetKits.length === 0) ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: (generating || targetKits.length === 0) ? "default" : "pointer" }}
+          <button style={{ width: "100%", padding: "12px 0", background: (generating || targetKits.length === 0) ? "#d1d5db" : "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: (generating || targetKits.length === 0) ? "default" : "pointer" }}
             onClick={handleGenerate} disabled={generating || targetKits.length === 0}>
             {generating ? "生成中..." : (isSingle ? "画像を生成" : `アルバム画像を生成（${totalPages}枚）`)}
           </button>
           {generatedBlobs.length > 0 && (
-            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 8, padding: "12px 14px" }}>
+            <div style={{ marginTop: 10, background: "#dcfce7", borderRadius: 0, padding: "12px 14px" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 6 }}>
                 {generatedBlobs.length}枚のアルバム画像を生成しました
               </div>
@@ -2794,17 +2794,17 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
               </div>
               {canNativeShareImages && (
                 <button onClick={handleNativeShare}
-                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
+                  style={{ display: "block", width: "100%", padding: "13px 0", marginBottom: 10, background: "#1d4ed8", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
                   全画像をまとめて共有（X等を選択）
                 </button>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                 {generatedDataUrls.map((url, i) => (
-                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 8, padding: 8 }}>
+                  <div key={i} style={{ background: "#fff", border: "1px solid #bbf7d0", borderRadius: 0, padding: 8 }}>
                     <div style={{ fontSize: 11, color: "#166534", fontWeight: 700, marginBottom: 6 }}>{i === 0 ? "表紙" : `ショーケース ${i}`} / 全{generatedDataUrls.length}枚</div>
-                    <img src={url} alt={`album ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 4, marginBottom: 6 }} />
+                    <img src={url} alt={`album ${i + 1}`} style={{ width: "100%", display: "block", borderRadius: 0, marginBottom: 6 }} />
                     <button onClick={() => handleSaveOne(i)}
-                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
+                      style={{ display: "block", width: "100%", padding: "10px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 13, fontWeight: 700, textAlign: "center", cursor: "pointer", boxSizing: "border-box" }}>
                       この画像を保存
                     </button>
                   </div>
@@ -2812,7 +2812,7 @@ function AlbumShareModal({ kits, rank, myXId, setMyXId, onClose, singleKit = nul
               </div>
               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildTweet())}`}
                 target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                style={{ display: "block", width: "100%", padding: "13px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
                 𝕏 Xを開いて投稿する（保存した画像を添付）
               </a>
             </div>
@@ -2834,13 +2834,13 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         <div style={xs.empty}>完成写真がまだありません。<br/>キットを編集して完成写真を登録してください。</div>
         {onEdit && (
           <button onClick={() => onEdit(kit)}
-            style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            style={{ width: "100%", marginTop: 14, padding: "12px 0", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             編集して完成写真を追加
           </button>
         )}
         {onUncomplete && (
           <button onClick={() => onUncomplete(kit)}
-            style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
             完成を解除
           </button>
         )}
@@ -2857,12 +2857,12 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         <button style={xs.closeBtn} onClick={onClose}>✕ 閉じる</button>
       </div>
       {/* メイン写真（縦長端末でも溢れないよう高さ制限） */}
-      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 12, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1", maxHeight: "40vh" }}>
+      <div style={{ position: "relative", width: "100%", background: "#0a0a0a", borderRadius: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1/1", maxHeight: "40vh" }}>
         <KitImage src={cur} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
         {photos.length > 1 && (<>
-          <button onClick={() => go(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
-          <button onClick={() => go(1)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>›</button>
-          <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{safeIdx + 1} / {photos.length}</div>
+          <button onClick={() => go(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: 0, border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
+          <button onClick={() => go(1)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 40, height: 40, borderRadius: 0, border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 20, cursor: "pointer" }}>›</button>
+          <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 0 }}>{safeIdx + 1} / {photos.length}</div>
         </>)}
       </div>
       {/* サムネイルストリップ */}
@@ -2870,7 +2870,7 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
         <div style={{ display: "flex", gap: 6, marginTop: 10, overflowX: "auto", paddingBottom: 4 }}>
           {photos.map((url, i) => (
             <div key={i} onClick={() => setIdx(i)}
-              style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `2px solid ${i === safeIdx ? "#22c55e" : "#e5e7eb"}`, cursor: "pointer" }}>
+              style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 0, overflow: "hidden", border: `2px solid ${i === safeIdx ? "#22c55e" : "#e5e7eb"}`, cursor: "pointer" }}>
               <KitImage src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           ))}
@@ -2878,27 +2878,27 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
       )}
       {/* メタ情報（★は完成品では非表示） */}
       <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        {kit.scale && <span style={{ fontSize: 12, fontWeight: 700, background: "#f3f4f6", color: "#374151", borderRadius: 20, padding: "3px 10px" }}>{kit.scale}</span>}
+        {kit.scale && <span style={{ fontSize: 12, fontWeight: 700, background: "#f3f4f6", color: "#374151", borderRadius: 0, padding: "3px 10px" }}>{kit.scale}</span>}
         {kit.series && <span style={{ fontSize: 12, color: "#9ca3af" }}>{kit.series}</span>}
       </div>
       {/* 操作ボタン：編集（写真の追加削除・各項目）／シェア */}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         {onEdit && (
           <button onClick={() => onEdit(kit)}
-            style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             編集
           </button>
         )}
         {onShare && (
           <button onClick={() => onShare(kit)}
-            style={{ flex: 1, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "12px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             シェア
           </button>
         )}
       </div>
       {onUncomplete && (
         <button onClick={() => onUncomplete(kit)}
-          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "#fff", color: "#6b7280", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
           完成を解除
         </button>
       )}
@@ -2907,25 +2907,25 @@ function AlbumViewerModal({ kit, onClose, onShare, onEdit, onUncomplete }) {
 }
 
 const xs = {
-  wrap: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, padding: "20px 20px 32px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  wrap: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, padding: "20px 20px 32px", maxHeight: "90vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { fontSize: 17, fontWeight: 700, color: "#111" },
-  closeBtn: { background: "#f3f4f6", border: "1.5px solid #e5e7eb", fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#111", padding: "10px 18px", borderRadius: 22, minHeight: 40, whiteSpace: "nowrap" },
+  closeBtn: { background: "#f3f4f6", border: "1.5px solid #e5e7eb", fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#111", padding: "10px 18px", borderRadius: 0, minHeight: 40, whiteSpace: "nowrap" },
   label: { display: "block", fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 6 },
   empty: { textAlign: "center", color: "#bbb", padding: "32px 0", fontSize: 14 },
   modeRow: { display: "flex", gap: 8, marginBottom: 14 },
-  modeBtn: { flex: 1, padding: "8px 0", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#6b7280" },
+  modeBtn: { flex: 1, padding: "8px 0", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#6b7280" },
   modeBtnActive: { background: "#111", color: "#fff", border: "1.5px solid #111" },
   kitList: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14, maxHeight: 220, overflowY: "auto" },
-  kitRow: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, cursor: "pointer" },
-  checkbox: { width: 20, height: 20, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  kitThumb: { width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 },
+  kitRow: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 0, cursor: "pointer" },
+  checkbox: { width: 20, height: 20, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  kitThumb: { width: 36, height: 36, borderRadius: 0, objectFit: "cover", flexShrink: 0 },
   kitName: { fontSize: 13, fontWeight: 600, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   kitMeta: { fontSize: 11, color: "#9ca3af", marginTop: 2 },
-  previewBox: { background: "#f8f9fa", borderRadius: 10, padding: "12px 14px", marginBottom: 14 },
+  previewBox: { background: "#f8f9fa", borderRadius: 0, padding: "12px 14px", marginBottom: 14 },
   previewLabel: { fontSize: 11, color: "#9ca3af", fontWeight: 600, marginBottom: 6 },
   previewText: { fontSize: 12, color: "#374151", whiteSpace: "pre-wrap", lineHeight: 1.6 },
-  tweetBtn: { width: "100%", padding: "14px 0", background: "#000", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer" },
+  tweetBtn: { width: "100%", padding: "14px 0", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 700, cursor: "pointer" },
 };
 
 // ---- Price Report Modal ----
@@ -3049,11 +3049,11 @@ function PriceReportModal({ target, onClose }) {
           </div>
         ) : (
           <>
-            <div style={{ background: "#f8f9fa", borderRadius: 10, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ background: "#f8f9fa", borderRadius: 0, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 12, alignItems: "center" }}>
               {target.photoUrl ? (
-                <KitImage src={target.photoUrl} style={{ width: 50, height: 50, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                <KitImage src={target.photoUrl} style={{ width: 50, height: 50, borderRadius: 0, objectFit: "cover", flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 50, height: 50, borderRadius: 6, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}></div>
+                <div style={{ width: 50, height: 50, borderRadius: 0, background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 22 }}></div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#111", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{target.name || "(商品名不明)"}</div>
@@ -3066,7 +3066,7 @@ function PriceReportModal({ target, onClose }) {
             {(target.jan || target.name) && (
               <button
                 type="button"
-                style={{ width: "100%", padding: "10px 0", marginBottom: 14, background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                style={{ width: "100%", padding: "10px 0", marginBottom: 14, background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 0, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
                 onClick={() => {
                   const q = `${target.jan || target.name || ""} 希望小売価格`.trim();
                   window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank", "noopener,noreferrer");
@@ -3079,7 +3079,7 @@ function PriceReportModal({ target, onClose }) {
             <label style={s.label}>コメント(任意・200文字以内)</label>
             <textarea style={{ ...s.input, minHeight: 70, fontFamily: "inherit", resize: "vertical" }} placeholder="情報源(公式サイト等)・補足情報など" value={comment} maxLength={200} onChange={(e) => setComment(e.target.value)} />
             <div style={{ fontSize: 10, color: "#9ca3af", textAlign: "right", marginTop: 2 }}>{comment.length}/200</div>
-            {errMsg && (<div style={{ marginTop: 10, padding: "8px 12px", background: "#fee2e2", color: "#b91c1c", borderRadius: 8, fontSize: 12 }}>{errMsg}</div>)}
+            {errMsg && (<div style={{ marginTop: 10, padding: "8px 12px", background: "#fee2e2", color: "#b91c1c", borderRadius: 0, fontSize: 12 }}>{errMsg}</div>)}
             <div style={s.formBtns}>
               <button style={s.cancelBtn} onClick={onClose} disabled={submitting}>キャンセル</button>
               <button style={s.saveBtn} onClick={handleSubmit} disabled={submitting}>{submitting ? "送信中..." : "報告を送信"}</button>
@@ -3710,7 +3710,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
               return (
                 <div key={i} onClick={() => toggleShareSel(i)} style={{ position: "relative", aspectRatio: "1/1", overflow: "hidden", cursor: "pointer", border: on ? "2px solid #111" : "2px solid #eee", opacity: on ? 1 : 0.55 }}>
                   <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", borderRadius: 10, background: "#111", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
+                  {on && <div style={{ position: "absolute", top: 4, left: 4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box", borderRadius: 0, background: "#111", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{order + 1}</div>}
                 </div>
               );
             })}
@@ -4034,10 +4034,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
                     style={{ position: "relative", aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", border: (draft.cover || 0) === i ? "2px solid #111" : "2px solid transparent", opacity: dragView && dragRef.current.from === i ? 0.3 : 1, touchAction: "manipulation", cursor: "grab", userSelect: "none" }}>
                     <KitImage src={p.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
                     <div style={{ position: "absolute", top: 4, left: 4, display: "flex", gap: 4 }}>
-                      <button onClick={() => movePhoto(i, -1)} disabled={i === 0} style={{ width: 24, height: 24, border: "none", borderRadius: "50%", background: i === 0 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === 0 ? "default" : "pointer" }} title="前へ">‹</button>
-                      <button onClick={() => movePhoto(i, 1)} disabled={i === draft.photos.length - 1} style={{ width: 24, height: 24, border: "none", borderRadius: "50%", background: i === draft.photos.length - 1 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === draft.photos.length - 1 ? "default" : "pointer" }} title="後ろへ">›</button>
+                      <button onClick={() => movePhoto(i, -1)} disabled={i === 0} style={{ width: 24, height: 24, border: "none", borderRadius: 0, background: i === 0 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === 0 ? "default" : "pointer" }} title="前へ">‹</button>
+                      <button onClick={() => movePhoto(i, 1)} disabled={i === draft.photos.length - 1} style={{ width: 24, height: 24, border: "none", borderRadius: 0, background: i === draft.photos.length - 1 ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.7)", color: "#fff", fontSize: 15, lineHeight: 1, cursor: i === draft.photos.length - 1 ? "default" : "pointer" }} title="後ろへ">›</button>
                     </div>
-                    <button onClick={() => removePhoto(i)} style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}>✕</button>
+                    <button onClick={() => removePhoto(i)} style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: 0, border: "none", background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 13, cursor: "pointer", lineHeight: 1 }}>✕</button>
                     <button onClick={() => setDraft(d => ({ ...d, cover: i }))} style={{ position: "absolute", bottom: 0, left: 0, right: 0, border: "none", background: (draft.cover || 0) === i ? "#111" : "rgba(0,0,0,0.55)", color: "#fff", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", padding: "3px 0", cursor: "pointer" }}>{(draft.cover || 0) === i ? "COVER" : "表紙にする"}</button>
                   </div>
                   <input value={p.caption || ""} onChange={e => setCaption(i, e.target.value)} placeholder="コメント" style={{ width: "100%", boxSizing: "border-box", marginTop: 5, border: "none", borderBottom: "1px solid #ddd", padding: "4px 2px", fontSize: 11, fontFamily: MA_FONT, outline: "none", background: "transparent" }} />
@@ -4878,7 +4878,7 @@ export default function App() {
   // 内部のクリックハンドラは React state setter または functional setState を使う関数のみを参照するので、
   // キャッシュされたクロージャでも stale 問題は発生しない（moveKit は内部で setKits(prev => ...) を使用）。
   const gridCards = useMemo(() => filtered.map((kit) => (
-    <div key={kit.id} style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
+    <div key={kit.id} style={{ borderRadius: 0, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }} onClick={() => setDetail(kit)}>
       {(kit.completedPhotoUrl || kit.photoUrl)
         ? <KitImage src={kit.completedPhotoUrl || kit.photoUrl} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
         : <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}><PhotoPlaceholderIcon size={32} /></div>
@@ -4897,15 +4897,15 @@ export default function App() {
       if (!reorderMode) setDetail(kit);
     }}>
       {bulkMode && (
-        <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: 24, height: 24, borderRadius: 0, border: `2px solid ${bulkSelected.has(kit.id) ? "#4f8ef7" : "#d1d5db"}`, background: bulkSelected.has(kit.id) ? "#4f8ef7" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {bulkSelected.has(kit.id) && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
         </div>
       )}
       {reorderMode && !bulkMode && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
-          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 0, background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#ccc" : "#374151", fontSize: 14, cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             onClick={(e) => { e.stopPropagation(); moveKit(kit.id, -1); }} disabled={index === 0}>▲</button>
-          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 8, background: index === filtered.length - 1 ? "#f3f4f6" : "#fff", color: index === filtered.length - 1 ? "#ccc" : "#374151", fontSize: 14, cursor: index === filtered.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          <button style={{ width: 28, height: 28, border: "1.5px solid #e5e7eb", borderRadius: 0, background: index === filtered.length - 1 ? "#f3f4f6" : "#fff", color: index === filtered.length - 1 ? "#ccc" : "#374151", fontSize: 14, cursor: index === filtered.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             onClick={(e) => { e.stopPropagation(); moveKit(kit.id, 1); }} disabled={index === filtered.length - 1}>▼</button>
         </div>
       )}
@@ -4936,7 +4936,7 @@ export default function App() {
         </div>
         {kit.completed && filter === "done" && !bulkMode && !reorderMode && (
           <button onClick={(e) => { e.stopPropagation(); setAlbumKit(kit); }}
-            style={{ marginTop: 8, alignSelf: "flex-start", padding: "5px 16px", background: "#f0fdf4", color: "#166534", border: "1.5px solid #bbf7d0", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+            style={{ marginTop: 8, alignSelf: "flex-start", padding: "5px 16px", background: "#f0fdf4", color: "#166534", border: "1.5px solid #bbf7d0", borderRadius: 0, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
             アルバム
           </button>
         )}
@@ -4950,7 +4950,7 @@ export default function App() {
     const cover = photos[0] || kit.photoUrl;
     return (
       <div key={kit.id} onClick={() => setAlbumKit(kit)}
-        style={{ borderRadius: 10, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }}>
+        style={{ borderRadius: 0, overflow: "hidden", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", cursor: "pointer", position: "relative" }}>
         <div style={{ width: "100%", aspectRatio: "1/1", background: "#f3f4f6", position: "relative" }}>
           {cover
             ? <KitImage src={cover} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
@@ -4973,7 +4973,7 @@ export default function App() {
     return (
       <div style={{ ...s.root, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 14 }}>
         <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: 2, color: "#111" }}>TSUMI TSUMI</div>
-        <div style={{ width: 32, height: 32, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: "50%", animation: "ttspin 0.8s linear infinite" }} />
+        <div style={{ width: 32, height: 32, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: 0, animation: "ttspin 0.8s linear infinite" }} />
         <div style={{ fontSize: 12, color: "#9ca3af" }}>読み込み中...</div>
         <style>{"@keyframes ttspin{to{transform:rotate(360deg)}}"}</style>
       </div>
@@ -5022,11 +5022,11 @@ export default function App() {
         <span style={{ fontSize: 11, fontWeight: 700, color: rank.color, background: rank.color + "18", borderRadius: 0, padding: "3px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>{rank.label}</span>
         <span style={{ fontSize: 11, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>登録数 {totalKits}</span>
         <a href="/tips/" target="_blank" rel="noopener noreferrer"
-          style={{ marginLeft: "auto", flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 12, padding: "3px 8px", textDecoration: "none", whiteSpace: "nowrap", lineHeight: 1.2 }}>
+          style={{ marginLeft: "auto", flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 0, padding: "3px 8px", textDecoration: "none", whiteSpace: "nowrap", lineHeight: 1.2 }}>
           プラモTIPS
         </a>
         <a href="/gears.html" target="_blank" rel="noopener noreferrer"
-          style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#9a3412", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "2px 8px", textDecoration: "none", textAlign: "center", lineHeight: 1.15 }}>
+          style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: "#9a3412", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 0, padding: "2px 8px", textDecoration: "none", textAlign: "center", lineHeight: 1.15 }}>
           おすすめ<br/>定番アイテム
         </a>
       </div>
@@ -5042,7 +5042,7 @@ export default function App() {
       {showSearch && !bulkMode && (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "10px 16px" }}>
           <input autoFocus
-            style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 10, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
+            style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #4f8ef7", borderRadius: 0, fontSize: 14, background: "#fafafa", outline: "none", boxSizing: "border-box" }}
             placeholder="キット名・シリーズで検索..."
             value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </div>
@@ -5078,7 +5078,7 @@ export default function App() {
                 <span style={{ fontSize: 9, color: "#d1d5db" }}>税込希望小売価格×個数</span>
               )}
               <button
-                style={{ fontSize: 10, padding: "2px 8px", border: "1px solid #e5e7eb", borderRadius: 20, background: showPriceTotal ? "#f0fdf4" : "#f3f4f6", color: showPriceTotal ? "#16a34a" : "#9ca3af", cursor: "pointer" }}
+                style={{ fontSize: 10, padding: "2px 8px", border: "1px solid #e5e7eb", borderRadius: 0, background: showPriceTotal ? "#f0fdf4" : "#f3f4f6", color: showPriceTotal ? "#16a34a" : "#9ca3af", cursor: "pointer" }}
                 onClick={() => setShowPriceTotal(v => !v)}>
                 {showPriceTotal ? "表示中" : "非表示"}
               </button>
@@ -5091,7 +5091,7 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", display: bulkMode ? "none" : undefined }}>
         <div style={{ padding: "8px 16px 4px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 5 }}>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterScale ? "#059669" : "#e5e7eb"}`, background: filterScale ? "#ecfdf5" : "#fafafa" }}
               value={filterScale} onChange={(e) => setFilterScale(e.target.value)}>
               <option value="">スケール</option>
               <option value="__unset__">未設定</option>
@@ -5099,7 +5099,7 @@ export default function App() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterSeries ? "#4f8ef7" : "#e5e7eb"}`, background: filterSeries ? "#eff6ff" : "#fafafa" }}
               value={filterSeries} onChange={(e) => setFilterSeries(e.target.value)}>
               <option value="">シリーズ</option>
               <option value="__unset__">未設定</option>
@@ -5107,7 +5107,7 @@ export default function App() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, background: filterRating ? "#fffbeb" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterRating ? "#f59e0b" : "#e5e7eb"}`, background: filterRating ? "#fffbeb" : "#fafafa" }}
               value={filterRating} onChange={(e) => setFilterRating(e.target.value)}>
               <option value="">評価</option>
               <option value="5">★5</option>
@@ -5116,7 +5116,7 @@ export default function App() {
               <option value="2">★2</option>
               <option value="1">★1</option>
             </select>
-            <select style={{ padding: "3px 4px", borderRadius: 8, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, background: filterCondition ? "#f5f3ff" : "#fafafa" }}
+            <select style={{ padding: "3px 4px", borderRadius: 0, fontSize: 10, outline: "none", color: "#111", minWidth: 0, width: "100%", border: `1.5px solid ${filterCondition ? "#8b5cf6" : "#e5e7eb"}`, background: filterCondition ? "#f5f3ff" : "#fafafa" }}
               value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
               <option value="">状態</option>
               {CONDITION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -5159,31 +5159,31 @@ export default function App() {
         )}
         {filtered.length > 0 && !bulkMode && (
           <div style={{ display: "flex", flexWrap: "nowrap", alignItems: "center", gap: 5, marginBottom: 4, overflowX: "auto", paddingBottom: 2 }}>
-            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "list" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "list" ? "#111" : "#fff", color: viewMode === "list" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "list" ? "#111" : "#e5e7eb"}`, borderRadius: 0, background: viewMode === "list" ? "#111" : "#fff", color: viewMode === "list" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setViewMode("list")}>☰ 詳細</button>
-            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 20, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "4px 8px", border: `1.5px solid ${viewMode === "grid" ? "#111" : "#e5e7eb"}`, borderRadius: 0, background: viewMode === "grid" ? "#111" : "#fff", color: viewMode === "grid" ? "#fff" : "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setViewMode("grid")}>⊞ サムネ</button>
-            <select style={{ fontSize: 11, padding: "3px 6px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", flexShrink: 0 }}
+            <select style={{ fontSize: 11, padding: "3px 6px", border: "1.5px solid #e5e7eb", borderRadius: 0, background: "#fff", color: "#6b7280", cursor: "pointer", flexShrink: 0 }}
               value={sortKey} onChange={(e) => { setSortKey(e.target.value); setReorderMode(false); }}>
               <option value="name">名前順</option>
               <option value="date">登録順</option>
               <option value="purchaseDate">購入日順</option>
             </select>
-            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 0, background: "#fff", color: "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}>
               {sortDir === "asc" ? "↑昇" : "↓降"}
             </button>
             {filtered.length > 1 && sortKey === "custom" && (
-              <button style={{ fontSize: 11, padding: "3px 8px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 20, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+              <button style={{ fontSize: 11, padding: "3px 8px", border: `1.5px solid ${reorderMode ? "#4f8ef7" : "#e5e7eb"}`, borderRadius: 0, background: reorderMode ? "#eff6ff" : "#fff", color: reorderMode ? "#4f8ef7" : "#6b7280", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
                 onClick={() => setReorderMode(v => !v)}>
                 {reorderMode ? "✓完了" : "↕手動"}
               </button>
             )}
-            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 20, background: "#fff", color: "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #e5e7eb", borderRadius: 0, background: "#fff", color: "#6b7280", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => { setBulkMode(true); setBulkSelected(new Set()); }}>
               ☑ 一括
             </button>
-            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #111", borderRadius: 20, background: "#111", color: "#fff", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
+            <button style={{ fontSize: 11, padding: "3px 8px", border: "1.5px solid #111", borderRadius: 0, background: "#111", color: "#fff", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}
               onClick={() => setShowTagEditor(true)}>
               タグ編集
             </button>
@@ -5204,18 +5204,18 @@ export default function App() {
         {bulkMode && (
           <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: "#111", color: "#fff" }}>
             <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>☑ 一括編集モード</span>
-            <button style={{ fontSize: 12, padding: "4px 12px", background: "#fff", color: "#111", border: "none", borderRadius: 20, fontWeight: 700, cursor: "pointer" }}
+            <button style={{ fontSize: 12, padding: "4px 12px", background: "#fff", color: "#111", border: "none", borderRadius: 0, fontWeight: 700, cursor: "pointer" }}
               onClick={() => { setBulkMode(false); setBulkSelected(new Set()); }}>✕ 解除</button>
           </div>
         )}
         {bulkMode && (() => {
           const allExistingTags = [...new Set([...tagMasterList, ...kits.flatMap(k => k.tags || [])])];
           return (
-            <div style={{ background: "#fff", borderRadius: 10, marginBottom: 8, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
+            <div style={{ background: "#fff", borderRadius: 0, marginBottom: 8, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
               {/* ヘッダー：件数・削除 */}
               <div style={{ display: "flex", alignItems: "center", padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <span style={{ fontSize: 12, color: "#6b7280", flex: 1 }}>{bulkSelected.size}件選択中</span>
-                <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700 }}
+                <button style={{ fontSize: 12, padding: "6px 12px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 0, cursor: "pointer", fontWeight: 700 }}
                   onClick={handleBulkDelete}>削除</button>
               </div>
               {/* 状態 */}
@@ -5224,7 +5224,7 @@ export default function App() {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {CONDITION_OPTIONS.map(opt => (
                     <button key={opt} onClick={() => handleBulkSetField("condition", opt)}
-                      style={{ padding: "5px 12px", borderRadius: 20, border: "1.5px solid #e5e7eb", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#374151" }}>
+                      style={{ padding: "5px 12px", borderRadius: 0, border: "1.5px solid #e5e7eb", fontSize: 12, fontWeight: 600, cursor: "pointer", background: "#f3f4f6", color: "#374151" }}>
                       {opt}
                     </button>
                   ))}
@@ -5234,7 +5234,7 @@ export default function App() {
               <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>シリーズを一括設定</div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none", background: "#fafafa" }}
+                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 12, outline: "none", background: "#fafafa" }}
                     onChange={(e) => { if (e.target.value) handleBulkSetField("series", e.target.value); e.target.value = ""; }}
                     defaultValue="">
                     <option value="">シリーズを選択...</option>
@@ -5246,7 +5246,7 @@ export default function App() {
               <div style={{ padding: "10px 16px", borderBottom: "1px solid #f0f0f0" }}>
                 <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>スケールを一括設定</div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none", background: "#fafafa" }}
+                  <select style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 12, outline: "none", background: "#fafafa" }}
                     onChange={(e) => { if (e.target.value) handleBulkSetField("scale", e.target.value); e.target.value = ""; }}
                     defaultValue="">
                     <option value="">スケールを選択...</option>
@@ -5268,13 +5268,13 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 6 }}>
-                  <input style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 8, fontSize: 12, outline: "none" }}
+                  <input style={{ flex: 1, padding: "6px 10px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 12, outline: "none" }}
                     placeholder="新しいタグを入力..."
                     value={bulkTagInput}
                     onChange={(e) => setBulkTagInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") { handleBulkAddTag(bulkTagInput); setBulkTagInput(""); } }}
                   />
-                  <button style={{ padding: "6px 14px", background: "#111", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                  <button style={{ padding: "6px 14px", background: "#111", color: "#fff", border: "none", borderRadius: 0, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
                     onClick={() => { handleBulkAddTag(bulkTagInput); setBulkTagInput(""); }}>追加</button>
                 </div>
               </div>
@@ -5301,7 +5301,7 @@ export default function App() {
 
       {/* バックグラウンド価格自動取得の通知トースト（総額が増えた理由の説明） */}
       {priceAutoToast && (
-        <div style={{ position: "fixed", bottom: 92, left: "50%", transform: "translateX(-50%)", zIndex: 60, maxWidth: "92%", background: "#1e293b", color: "#fff", borderRadius: 10, padding: "10px 14px", fontSize: 12, fontWeight: 600, boxShadow: "0 4px 16px rgba(0,0,0,0.28)", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ position: "fixed", bottom: 92, left: "50%", transform: "translateX(-50%)", zIndex: 60, maxWidth: "92%", background: "#1e293b", color: "#fff", borderRadius: 0, padding: "10px 14px", fontSize: 12, fontWeight: 600, boxShadow: "0 4px 16px rgba(0,0,0,0.28)", display: "flex", alignItems: "center", gap: 12 }}>
           <span>{priceAutoToast}</span>
           <span onClick={() => setPriceAutoToast(null)} style={{ cursor: "pointer", opacity: 0.7, flexShrink: 0 }}>✕</span>
         </div>
@@ -5310,16 +5310,16 @@ export default function App() {
       {/* フロート式「プラモを預ける」リンク。トップから移動して左下に常駐させる。
           z-index は右下の FAB（50）より下げて、スキャン/手動登録の操作を邪魔しないようにする。 */}
       <a href="/storage.html" target="_blank" rel="noopener noreferrer"
-        style={{ position: "fixed", bottom: 24, left: 16, zIndex: 40, fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 20, padding: "6px 12px", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+        style={{ position: "fixed", bottom: 24, left: 16, zIndex: 40, fontSize: 11, fontWeight: 700, color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 0, padding: "6px 12px", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
         プラモを預ける
       </a>
 
       <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 12, zIndex: 50, alignItems: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-            <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>スキャン登録</span>
+            <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 0 }}>スキャン登録</span>
             <button
-              style={{ background: "rgba(0,0,0,0.5)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", fontSize: 10, padding: "2px 8px", borderRadius: 20, cursor: "pointer" }}
+              style={{ background: "rgba(0,0,0,0.5)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", fontSize: 10, padding: "2px 8px", borderRadius: 0, cursor: "pointer" }}
               onClick={() => { setContinuousScan(v => !v); }}>
               {continuousScan ? "連続ON" : "1回のみ"}
             </button>
@@ -5332,11 +5332,11 @@ export default function App() {
           </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>一括登録</span>
+          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 0 }}>一括登録</span>
           <button style={{ ...s.fab, background: "#111", fontSize: 18 }} onClick={() => setShowBrowse(true)}>☰</button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 20 }}>手動登録</span>
+          <span style={{ background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 10px", borderRadius: 0 }}>手動登録</span>
           <button style={{ ...s.fab, background: "#111" }} onClick={() => { setForm(makeEmptyForm()); setEditId(null); setShowForm(true); }}>＋</button>
         </div>
       </div>
@@ -5384,7 +5384,7 @@ export default function App() {
                       background: "#ecfdf5",
                       color: "#059669",
                       border: "1.5px solid #a7f3d0",
-                      borderRadius: 12,
+                      borderRadius: 0,
                       fontSize: 13,
                       fontWeight: 700,
                       textAlign: "center",
@@ -5402,7 +5402,7 @@ export default function App() {
                 <div style={{ marginTop: 10 }}>
                   <button
                     onClick={() => { setDetail(null); setShareKit(detail); }}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "11px", background: "#000", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "11px", background: "#000", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
                     この完成品をXでシェア
                   </button>
                 </div>
@@ -5424,7 +5424,7 @@ export default function App() {
                       background: "#111",
                       color: "#fff",
                       border: "1px solid #111",
-                      borderRadius: 8,
+                      borderRadius: 0,
                       fontSize: 12,
                       fontWeight: 700,
                       textDecoration: "none",
@@ -5461,12 +5461,12 @@ export default function App() {
       {dupConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => resolveDup(false)}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 360, padding: 20, boxShadow: "0 10px 40px rgba(0,0,0,0.3)", boxSizing: "border-box" }}
+          <div style={{ background: "#fff", borderRadius: 0, width: "100%", maxWidth: 360, padding: 20, boxShadow: "0 10px 40px rgba(0,0,0,0.3)", boxSizing: "border-box" }}
             onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 10 }}>
               このJANは既に{dupConfirm.where}です
             </div>
-            <div style={{ fontSize: 13, color: "#374151", marginBottom: 16, padding: "10px 12px", background: "#f9fafb", borderRadius: 8, lineHeight: 1.5, wordBreak: "break-all" }}>
+            <div style={{ fontSize: 13, color: "#374151", marginBottom: 16, padding: "10px 12px", background: "#f9fafb", borderRadius: 0, lineHeight: 1.5, wordBreak: "break-all" }}>
               「{dupConfirm.kit?.name || dupConfirm.kit?.jan || "（名称なし）"}」
             </div>
             <div style={{ fontSize: 13, color: "#374151", marginBottom: 16 }}>
@@ -5474,12 +5474,12 @@ export default function App() {
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button
-                style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => resolveDup(false)}>
                 キャンセル
               </button>
               <button
-                style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => resolveDup(true)}>
                 追加する
               </button>
@@ -5500,14 +5500,14 @@ export default function App() {
                 <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
                   {continuousQueue.map((k, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#374151" }}>
-                      {(k.completedPhotoUrl || k.photoUrl) && <KitImage src={k.completedPhotoUrl || k.photoUrl} style={{ width: 30, height: 30, borderRadius: 4, objectFit: "cover" }} />}
+                      {(k.completedPhotoUrl || k.photoUrl) && <KitImage src={k.completedPhotoUrl || k.photoUrl} style={{ width: 30, height: 30, borderRadius: 0, objectFit: "cover" }} />}
                       <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{k.name || k.jan}</span>
                       <button style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14 }}
                         onClick={() => setContinuousQueue(q => q.filter((_, j) => j !== i))}>✕</button>
                     </div>
                   ))}
                 </div>
-                <button style={{ width: "100%", padding: "10px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: "pointer" }}
+                <button style={{ width: "100%", padding: "10px 0", background: "#22c55e", color: "#fff", border: "none", borderRadius: 0, fontWeight: 700, fontSize: 14, cursor: "pointer" }}
                   onClick={handleBulkScanRegister}>
                   ✓ {continuousQueue.length}件をまとめて登録
                 </button>
@@ -5629,7 +5629,7 @@ export default function App() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
               {CONDITION_OPTIONS.map((opt) => (
                 <button key={opt}
-                  style={{ padding: "6px 14px", borderRadius: 20, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  style={{ padding: "6px 14px", borderRadius: 0, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer",
                     background: form.condition === opt ? "#111" : "#f3f4f6",
                     color: form.condition === opt ? "#fff" : "#374151",
                     borderColor: form.condition === opt ? "#111" : "#e5e7eb" }}
@@ -5665,7 +5665,7 @@ export default function App() {
               />
               {form.jan && (
                 <button
-                  style={{ padding: "8px 12px", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ padding: "8px 12px", background: "#eff6ff", color: "#1d4ed8", border: "1.5px solid #bfdbfe", borderRadius: 0, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
                   onClick={async (e) => {
                     e.preventDefault();
                     const r = await fetch(`/api/price?jan=${form.jan}`);
@@ -5726,21 +5726,21 @@ export default function App() {
 
             <label style={s.label}>個数</label>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <button style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              <button style={{ width: 36, height: 36, borderRadius: 0, border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                 onClick={() => setForm((f) => ({ ...f, count: Math.max(1, (f.count || 1) - 1) }))}>−</button>
               <span style={{ fontSize: 18, fontWeight: 700, minWidth: 32, textAlign: "center" }}>{form.count || 1}</span>
-              <button style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              <button style={{ width: 36, height: 36, borderRadius: 0, border: "1.5px solid #e5e7eb", background: "#f3f4f6", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                 onClick={() => setForm((f) => ({ ...f, count: (f.count || 1) + 1 }))}>＋</button>
             </div>
 
             <label style={s.label}>箱の写真</label>
             <div style={{ position: "relative" }}>
               <div style={s.photoArea} onClick={() => fileRef.current.click()}>
-                {form.photoUrl ? <KitImage src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+                {form.photoUrl ? <KitImage src={form.photoUrl} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 0 }} />
                   : <span style={{ color: "#9ca3af", fontSize: 14 }}>タップして写真を選択</span>}
               </div>
               {form.photoUrl && (
-                <button style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                <button style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 0, width: 28, height: 28, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                   onClick={(e) => { e.stopPropagation(); tryDeleteOrphanBlob(form.photoUrl); setForm((f) => ({ ...f, photoUrl: "", photo: null })); }}>✕</button>
               )}
             </div>
@@ -5752,16 +5752,16 @@ export default function App() {
               return (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {photos.map((url, i) => (
-                    <div key={i} style={{ position: "relative", width: 88, height: 88, borderRadius: 8, overflow: "hidden", border: `1.5px solid ${i === 0 ? "#22c55e" : "#e5e7eb"}` }}>
+                    <div key={i} style={{ position: "relative", width: 88, height: 88, borderRadius: 0, overflow: "hidden", border: `1.5px solid ${i === 0 ? "#22c55e" : "#e5e7eb"}` }}>
                       <KitImage src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       {i === 0 && <span style={{ position: "absolute", left: 0, bottom: 0, background: "#22c55e", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 5px", borderTopRightRadius: 6 }}>表紙</span>}
-                      <button type="button" style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      <button type="button" style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 0, width: 22, height: 22, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                         onClick={(e) => { e.stopPropagation(); removeCompletedPhoto(i); }}>✕</button>
                     </div>
                   ))}
                   {photos.length < MAX_COMPLETED_PHOTOS && (
                     <div onClick={() => completedFileRef.current.click()}
-                      style={{ width: 88, height: 88, borderRadius: 8, border: "1.5px dashed #d1d5db", background: "#fafafa", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 11, cursor: "pointer", textAlign: "center", lineHeight: 1.4 }}>
+                      style={{ width: 88, height: 88, borderRadius: 0, border: "1.5px dashed #d1d5db", background: "#fafafa", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 11, cursor: "pointer", textAlign: "center", lineHeight: 1.4 }}>
                       <span style={{ fontSize: 22 }}></span>追加<br/>{photos.length}/{MAX_COMPLETED_PHOTOS}
                     </div>
                   )}
@@ -5780,7 +5780,7 @@ export default function App() {
                 onChange={(e) => setForm((f) => ({ ...f, jan: e.target.value.replace(/[^0-9]/g, "").slice(0, 13) }))}
               />
               <button
-                style={{ padding: "8px 10px", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                style={{ padding: "8px 10px", background: "#f3f4f6", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
                 onClick={async (e) => {
                   e.preventDefault();
                   if (!form.name) return;
@@ -5814,7 +5814,7 @@ export default function App() {
 
             {/* 編集時のみ：このキットを削除（積みプラ・完成品とも編集の中に集約） */}
             {editId !== null && (
-              <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ width: "100%", marginTop: 18, padding: "11px 0", background: "#fff", color: "#ef4444", border: "1.5px solid #fecaca", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => setConfirmDelete({ id: editId, name: form.name })}>
                 このキットを削除
               </button>
@@ -5835,18 +5835,18 @@ export default function App() {
       {confirmDelete && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
           onClick={() => setConfirmDelete(null)}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 340, padding: "24px 20px 18px", boxSizing: "border-box", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
+          <div style={{ background: "#fff", borderRadius: 0, width: "100%", maxWidth: 340, padding: "24px 20px 18px", boxSizing: "border-box", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
             onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "#111", textAlign: "center", marginBottom: 8 }}>本当に削除しますか？</div>
             <div style={{ fontSize: 13, color: "#6b7280", textAlign: "center", lineHeight: 1.6, marginBottom: 20 }}>
               「{confirmDelete.name || "このキット"}」を削除します。<br />この操作は元に戻せません。
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ flex: 1, padding: "12px 0", background: "#f3f4f6", color: "#111", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => setConfirmDelete(null)}>
                 いいえ
               </button>
-              <button style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+              <button style={{ flex: 1, padding: "12px 0", background: "#ef4444", color: "#fff", border: "none", borderRadius: 0, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => { handleDelete(confirmDelete.id); setForm(makeEmptyForm()); setEditId(null); setShowForm(false); setConfirmDelete(null); }}>
                 はい、削除
               </button>
@@ -5863,8 +5863,8 @@ const s = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 20px 14px", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   headerTitle: { fontSize: 15, fontWeight: 700, color: "#111", letterSpacing: 1 },
   headerSub: { fontSize: 8, color: "#aaa", letterSpacing: 2, marginTop: 1 },
-  shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 20, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
-  searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: 0, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 },
+  shareBtn: { background: "#000", color: "#fff", border: "none", borderRadius: 0, padding: "8px 12px", fontSize: 15, fontWeight: 700, cursor: "pointer" },
+  searchIconBtn: { background: "#f3f4f6", border: "none", borderRadius: 0, padding: 0, fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 },
   stats: { display: "flex", background: "#fff", borderBottom: "1px solid #f0f0f0" },
   statBox: { flex: 1, padding: "9px 0", textAlign: "center", cursor: "pointer" },
   statNum: { fontSize: 16, fontWeight: 700 },
@@ -5875,9 +5875,9 @@ const s = {
   loadingBar: { background: "#f0fdf4", color: "#166534", padding: "10px 20px", fontSize: 13, borderBottom: "1px solid #dcfce7" },
   list: { padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 },
   empty: { textAlign: "center", color: "#bbb", padding: "60px 0", fontSize: 14, lineHeight: 1.9 },
-  card: { background: "#fff", borderRadius: 12, padding: "14px 12px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", cursor: "pointer" },
-  thumb: { width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0 },
-  thumbPh: { width: 56, height: 56, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 },
+  card: { background: "#fff", borderRadius: 0, padding: "14px 12px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", cursor: "pointer" },
+  thumb: { width: 56, height: 56, borderRadius: 0, objectFit: "cover", flexShrink: 0 },
+  thumbPh: { width: 56, height: 56, borderRadius: 0, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   cardName: { fontSize: 13, fontWeight: 700, color: "#111", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 },
   cardMeta: { fontSize: 12, color: "#6b7280", marginTop: 3, display: "flex", gap: 6, alignItems: "center" },
@@ -5886,28 +5886,28 @@ const s = {
   stars: { fontSize: 13, color: "#f59e0b", letterSpacing: 1 },
   countBadge: { fontSize: 11, background: "#f3f4f6", color: "#374151", borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
   condBadge: { fontSize: 10, borderRadius: 0, padding: "2px 8px", fontWeight: 600 },
-  checkBtn: { width: 32, height: 32, borderRadius: "50%", border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
-  fab: { width: 56, height: 56, borderRadius: "50%", color: "#fff", border: "none", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" },
+  checkBtn: { width: 32, height: 32, borderRadius: 0, border: "none", fontSize: 15, cursor: "pointer", fontWeight: 700, flexShrink: 0 },
+  fab: { width: 56, height: 56, borderRadius: 0, color: "#fff", border: "none", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.25)" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center" },
-  modal: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
-  modalPhoto: { width: "100%", maxHeight: 220, objectFit: "contain", borderRadius: "20px 20px 0 0" },
+  modal: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box" },
+  modalPhoto: { width: "100%", maxHeight: 220, objectFit: "contain", borderRadius: 0 },
   modalBody: { padding: "20px 20px 32px" },
   modalTitle: { fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 6 },
   doneBadge: { display: "inline-block", background: "#f0fdf4", color: "#166534", borderRadius: 0, padding: "2px 12px", fontSize: 12, fontWeight: 600, marginBottom: 12 },
   table: { width: "100%", borderCollapse: "collapse", marginTop: 12 },
   td1: { padding: "6px 0", fontSize: 12, color: "#9ca3af", width: 80, verticalAlign: "top" },
   td2: { padding: "6px 0", fontSize: 14, color: "#111" },
-  wantBtn: { width: "100%", marginTop: 16, padding: "12px 0", background: "#fff0f3", color: "#e11d48", border: "1.5px solid #fecdd3", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  wantBtn: { width: "100%", marginTop: 16, padding: "12px 0", background: "#fff0f3", color: "#e11d48", border: "1.5px solid #fecdd3", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer" },
   modalBtns: { display: "flex", gap: 8, marginTop: 12 },
-  editBtn: { flex: 1, padding: "10px 0", background: "#f3f4f6", border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#111" },
-  deleteBtn: { flex: 1, padding: "10px 0", background: "#fee2e2", border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#b91c1c" },
-  closeBtn: { flex: 1, padding: "10px 0", background: "#111", border: "none", borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#fff" },
-  formModal: { background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", overflowX: "hidden", padding: "24px 20px 40px", boxSizing: "border-box" },
+  editBtn: { flex: 1, padding: "10px 0", background: "#f3f4f6", border: "none", borderRadius: 0, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#111" },
+  deleteBtn: { flex: 1, padding: "10px 0", background: "#fee2e2", border: "none", borderRadius: 0, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#b91c1c" },
+  closeBtn: { flex: 1, padding: "10px 0", background: "#111", border: "none", borderRadius: 0, fontWeight: 600, fontSize: 14, cursor: "pointer", color: "#fff" },
+  formModal: { background: "#fff", borderRadius: 0, width: "100%", maxWidth: 480, maxHeight: "92vh", overflowY: "auto", overflowX: "hidden", padding: "24px 20px 40px", boxSizing: "border-box" },
   formTitle: { fontSize: 18, fontWeight: 700, color: "#111", marginBottom: 20 },
   label: { display: "block", fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 6, marginTop: 14 },
-  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
-  photoArea: { width: "100%", height: 120, border: "1.5px dashed #d1d5db", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginTop: 2 },
+  input: { width: "100%", padding: "10px 12px", border: "1.5px solid #e5e7eb", borderRadius: 0, fontSize: 14, color: "#111", background: "#fafafa", boxSizing: "border-box", outline: "none" },
+  photoArea: { width: "100%", height: 120, border: "1.5px dashed #d1d5db", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", marginTop: 2 },
   formBtns: { display: "flex", gap: 10, marginTop: 24 },
-  cancelBtn: { flex: 1, padding: "12px 0", background: "#f3f4f6", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#374151" },
-  saveBtn: { flex: 2, padding: "12px 0", background: "#111", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#fff" },
+  cancelBtn: { flex: 1, padding: "12px 0", background: "#f3f4f6", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#374151" },
+  saveBtn: { flex: 2, padding: "12px 0", background: "#111", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer", color: "#fff" },
 };
