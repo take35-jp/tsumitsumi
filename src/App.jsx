@@ -4318,11 +4318,13 @@ export default function App() {
         </a>
       </div>
 
+      {/* モデラーズアルバムの入口は完成まで非公開。再公開するときは下記ボタンを戻す：
       <button onClick={() => setShowModelerAlbum(true)}
         style={{ display: bulkMode ? "none" : "flex", alignItems: "center", justifyContent: "center", gap: 12, width: "100%", boxSizing: "border-box", padding: "11px 16px", background: "#111", color: "#fff", border: "none", cursor: "pointer", fontFamily: "'Helvetica Neue', 'Inter', 'Noto Sans JP', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: "0.28em" }}>
         MODELERS ALBUM
         <span style={{ fontSize: 9, letterSpacing: "0.2em", color: "#9ca3af", fontWeight: 600 }}>PORTFOLIO ›</span>
       </button>
+      */}
 
       {showSearch && !bulkMode && (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "10px 16px" }}>
