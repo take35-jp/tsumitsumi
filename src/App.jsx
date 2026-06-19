@@ -3385,6 +3385,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [maHelp, setMaHelp] = useState(false); // 取扱説明書（使い方）表示
   const [maBackup, setMaBackup] = useState(false); // バックアップ画面表示
   const [maBusy, setMaBusy] = useState(false); // バックアップ作成/復元中のロード表示
+  const [bkReady, setBkReady] = useState(null); // 作成済みバックアップ { file, sizeMB }（保存先を選んで保存）
   const [tagManage, setTagManage] = useState(false);
   const [editTag, setEditTag] = useState(null); // 改名中のタグ名
   const [editTagVal, setEditTagVal] = useState("");
@@ -3566,13 +3567,23 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       }
       const data = JSON.stringify({ version: 1, type: "modeler_albums", exportedAt: new Date().toISOString(), albums: out }, null, 2);
       const blob = new Blob([data], { type: "application/json" });
-      const u = URL.createObjectURL(blob);
-      const el = document.createElement("a");
-      el.href = u; el.download = `modelers_album_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`;
-      el.click(); setTimeout(() => URL.revokeObjectURL(u), 1500);
-      alert("バックアップファイルをダウンロードしました。");
+      const file = new File([blob], `modelers_album_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`, { type: "application/json" });
+      setBkReady({ file, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) }); // 作成完了→保存先を選んで保存
     } catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
     finally { setMaBusy(false); }
+  };
+  // 作成済みバックアップを保存（保存先を選べる：共有シート→ファイル/クラウド/AirDrop等。PCは保存ダイアログ）
+  const saveBackup = async (file) => {
+    if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: file.name }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    if (typeof window !== "undefined" && window.showSaveFilePicker) {
+      try {
+        const h = await window.showSaveFilePicker({ suggestedName: file.name, types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
+        const w = await h.createWritable(); await w.write(file); await w.close(); return;
+      } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    const u = URL.createObjectURL(file); const a = document.createElement("a"); a.href = u; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500);
   };
   const maImport = async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -3904,7 +3915,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>エクスポート（バックアップ）</div>
             <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>全アルバム（{albums.length}件）と写真をJSONで保存します。写真が多いとファイルは大きくなります。</div>
-            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={maExport}>ダウンロード（{albums.length}件）</button>
+            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={maExport}>バックアップを作成（{albums.length}件）</button>
           </div>
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>インポート（復元）</div>
@@ -3920,6 +3931,15 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             <div style={{ width: 40, height: 40, border: "3px solid #e5e7eb", borderTopColor: "#111", borderRadius: "50%", animation: "maspin 0.8s linear infinite" }} />
             <div style={{ fontSize: 13, letterSpacing: "0.18em", color: "#111", fontWeight: 800 }}>データ作成中…</div>
             <div style={{ fontSize: 11, color: "#888", letterSpacing: "0.04em" }}>写真が多いと少し時間がかかります</div>
+          </div>
+        )}
+        {bkReady && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "rgba(255,255,255,0.97)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24, fontFamily: MA_FONT, textAlign: "center" }}>
+            <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.1em", color: "#111" }}>バックアップ作成完了</div>
+            <div style={{ fontSize: 12, color: "#666" }}>{bkReady.file.name}（約{bkReady.sizeMB}MB）</div>
+            <div style={{ fontSize: 11, color: "#888", lineHeight: 1.8, maxWidth: 320 }}>下のボタンから<b style={{ color: "#111" }}>保存先を選んで保存</b>してください（ファイル／iCloud／Googleドライブ等）。</div>
+            <button style={{ ...ma.black, minWidth: 240 }} onClick={() => saveBackup(bkReady.file)}>保存先を選んで保存</button>
+            <button style={{ ...ma.ghost }} onClick={() => setBkReady(null)}>閉じる</button>
           </div>
         )}
       </div>
