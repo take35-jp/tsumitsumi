@@ -1411,7 +1411,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.41", date: "2026/06/19", isNew: true, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
+    { ver: "v1.42", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左。対応端末は共有シート、PCはURLコピー）"] },
+    { ver: "v1.41", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
     { ver: "v1.40", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムのバックアップ復元（ZIP取り込み）で、写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）"] },
     { ver: "v1.39", date: "2026/06/19", isNew: false, items: ["「モデラーズアルバム」を正式公開。画面右上のロゴボタンから全画面で起動できるように", "画面右上のシェア系ボタンを「Xでシェア」に一本化（アイコンは𝕏）"] },
     { ver: "v1.38", date: "2026/06/19", isNew: false, items: ["アプリ全体のデザインを角丸から長方形（角ゼロ）に統一（タグ・称号・バッジに加え、ボタン・カード・モーダルなどすべて）"] },
@@ -1657,10 +1658,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.41 */}
+          {/* v1.42 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.42</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左）
+            </div>
+          </div>
+          {/* v1.41 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.41</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
             </div>
@@ -1676,17 +1687,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・モデラーズアルバムのバックアップ復元（ZIP取り込み）で写真が表示されない不具合を修正（iPhoneのホーム画面アプリで発生）
-            </div>
-          </div>
-          {/* v1.39 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.39</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/19</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・「モデラーズアルバム」を正式公開（画面右上のロゴボタンから起動）<br/>
-              ・画面右上のシェア系ボタンを「Xでシェア」に一本化
             </div>
           </div>
         </div>
@@ -3795,6 +3795,24 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     finally { setMaBusy(false); }
   };
 
+  // このアプリ（モデラーズアルバム）を共有：対応端末はネイティブ共有シート、非対応はURLコピー
+  const maShareApp = async () => {
+    const url = "https://tsumitsumi.vercel.app/?modeler";
+    const text = `作品ポートフォリオを端末内だけで作れる「モデラーズアルバム」\n${MA_TAGS}`;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "MODELERS ALBUM", text, url });
+        return;
+      }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    try {
+      await navigator.clipboard.writeText(url);
+      alert("アプリのURLをコピーしました。\n" + url);
+    } catch (_) {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + "\n" + url)}`, "_blank");
+    }
+  };
+
   // ビフォーアフター：BEFORE/AFTER の写真を直接アップロード（アルバムからは選ばない）
   const startBeforeAfter = (a) => setBaSelect({ album: a, beforeUrl: null, afterUrl: null, comment: "", bt: { z: 1, ox: 0.5, oy: 0.5 }, at: { z: 1, ox: 0.5, oy: 0.5 } });
   const onBaPick = async (key, e) => {
@@ -4235,6 +4253,9 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             </div>
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+            <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={maShareApp} title="このアプリを共有">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+            </button>
             <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={() => setMaBackup(true)} title="バックアップ">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
             </button>
