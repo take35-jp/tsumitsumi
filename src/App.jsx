@@ -3169,49 +3169,63 @@ async function generateModelerPhotoImage(photo, album) {
   maDrawCover(ctx, img, 0, headerH, W, imgH);
   return await new Promise(r => canvas.toBlob(r, "image/png"));
 }
-// アルバム全体：X向け1080x1350に 表紙(大)＋他3枚＋ヘッダー(キット情報/完成日/コメント)
-async function generateModelerAlbumImage(album) {
-  const S = 2, W = 1080, H = 1350, M = 46;
-  const photos = maNormPhotos(album.photos);
-  const ci = Math.min(album.cover || 0, Math.max(0, photos.length - 1));
-  const cover = photos[ci];
-  const others = photos.filter((_, i) => i !== ci).slice(0, 3);
-  const [coverImg, ...otherImgs] = await Promise.all([cover, ...others].map(p => (p ? maLoadImage(p.url) : Promise.resolve(null))));
+// アルバム全体：全写真を4枚ずつ複数画像に分割（24枚→6画像）。1枚目＝表紙(大)＋他3＋ヘッダー、2枚目以降＝2x2グリッド。
+async function maRenderAlbumPage(album, group, page, total) {
+  const S = 2, W = 1080, H = 1350, M = 46, GAP = 8;
+  const imgs = await Promise.all(group.map(p => (p ? maLoadImage(p.url) : Promise.resolve(null))));
   const canvas = document.createElement("canvas");
   canvas.width = W * S; canvas.height = H * S;
   const ctx = canvas.getContext("2d"); ctx.scale(S, S); ctx.imageSmoothingQuality = "high";
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
-  const HEADER = 244, COVER_H = 632, GAP = 8;
-  // ---- header ----
-  try { ctx.letterSpacing = "4px"; } catch (e) {}
-  ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`; ctx.textBaseline = "alphabetic";
-  ctx.fillText("MODELERS ALBUM", M, 44);
-  try { ctx.letterSpacing = "0px"; } catch (e) {}
-  const title = album.title || "UNTITLED";
-  let fs = 50; ctx.font = `800 ${fs}px ${MA_FONT}`;
-  while (ctx.measureText(title).width > W - 2 * M && fs > 26) { fs -= 2; ctx.font = `800 ${fs}px ${MA_FONT}`; }
-  let shown = title;
-  if (ctx.measureText(shown).width > W - 2 * M) { while (shown.length > 1 && ctx.measureText(shown + "…").width > W - 2 * M) shown = shown.slice(0, -1); shown += "…"; }
-  ctx.fillStyle = "#111"; ctx.fillText(shown, M, 108);
-  const meta = [fmtYM(album.createdYM), ...(album.tags || [])].filter(Boolean).join("   /   ");
-  if (meta) { ctx.fillStyle = "#777"; ctx.font = `600 20px ${MA_FONT}`; ctx.fillText(meta, M, 146); }
-  if ((album.comment || "").trim()) {
-    ctx.fillStyle = "#444"; ctx.font = `400 21px ${MA_FONT}`;
-    const lines = maWrap(ctx, album.comment.trim(), W - 2 * M).slice(0, 2);
-    let y = 182; for (const ln of lines) { ctx.fillText(ln, M, y); y += 28; }
+  ctx.textBaseline = "alphabetic";
+  if (page === 0) {
+    const HEADER = 244, COVER_H = 632;
+    try { ctx.letterSpacing = "4px"; } catch (e) {}
+    ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`;
+    ctx.fillText("MODELERS ALBUM", M, 44);
+    try { ctx.letterSpacing = "0px"; } catch (e) {}
+    const title = album.title || "UNTITLED";
+    let fs = 50; ctx.font = `800 ${fs}px ${MA_FONT}`;
+    while (ctx.measureText(title).width > W - 2 * M && fs > 26) { fs -= 2; ctx.font = `800 ${fs}px ${MA_FONT}`; }
+    let shown = title;
+    if (ctx.measureText(shown).width > W - 2 * M) { while (shown.length > 1 && ctx.measureText(shown + "…").width > W - 2 * M) shown = shown.slice(0, -1); shown += "…"; }
+    ctx.fillStyle = "#111"; ctx.fillText(shown, M, 108);
+    const meta = [fmtYM(album.createdYM), ...(album.tags || [])].filter(Boolean).join("   /   ");
+    if (meta) { ctx.fillStyle = "#777"; ctx.font = `600 20px ${MA_FONT}`; ctx.fillText(meta, M, 146); }
+    if ((album.comment || "").trim()) {
+      ctx.fillStyle = "#444"; ctx.font = `400 21px ${MA_FONT}`;
+      const lines = maWrap(ctx, album.comment.trim(), W - 2 * M).slice(0, 2);
+      let y = 182; for (const ln of lines) { ctx.fillText(ln, M, y); y += 28; }
+    }
+    if (total > 1) { ctx.fillStyle = "#999"; ctx.font = `600 16px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`1 / ${total}`, W - M, 44); ctx.textAlign = "left"; }
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(M, HEADER - 2); ctx.lineTo(W - M, HEADER - 2); ctx.stroke();
+    maDrawCover(ctx, imgs[0], 0, HEADER, W, COVER_H);
+    const rowY = HEADER + COVER_H + GAP, rowH = H - rowY - 56, cellW = (W - GAP * 2) / 3;
+    for (let i = 0; i < 3; i++) maDrawCover(ctx, imgs[i + 1] || null, i * (cellW + GAP), rowY, cellW, rowH);
+  } else {
+    const H1 = 92, FOOT = 44;
+    let t = album.title || "UNTITLED"; ctx.font = `800 26px ${MA_FONT}`;
+    while (ctx.measureText(t).width > W - 2 * M - 90 && t.length > 1) t = t.slice(0, -1);
+    ctx.fillStyle = "#111"; ctx.fillText(t, M, 56);
+    ctx.fillStyle = "#999"; ctx.font = `600 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(`${page + 1} / ${total}`, W - M, 56); ctx.textAlign = "left";
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M, H1 - 1); ctx.lineTo(W - M, H1 - 1); ctx.stroke();
+    const gridY = H1 + 10, gridH = H - gridY - FOOT, g = 8, cw = (W - g) / 2, chh = (gridH - g) / 2;
+    for (let i = 0; i < 4; i++) { const col = i % 2, row = Math.floor(i / 2); maDrawCover(ctx, imgs[i] || null, col * (cw + g), gridY + row * (chh + g), cw, chh); }
   }
-  ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(M, HEADER - 2); ctx.lineTo(W - M, HEADER - 2); ctx.stroke();
-  // ---- cover (full width) ----
-  maDrawCover(ctx, coverImg, 0, HEADER, W, COVER_H);
-  // ---- 3 thumbs ----
-  const rowY = HEADER + COVER_H + GAP;
-  const rowH = H - rowY - 56;
-  const cellW = (W - GAP * 2) / 3;
-  for (let i = 0; i < 3; i++) maDrawCover(ctx, otherImgs[i] || null, i * (cellW + GAP), rowY, cellW, rowH);
-  // ---- footer ----
   ctx.fillStyle = "#999"; ctx.font = `600 19px ${MA_FONT}`; ctx.textAlign = "center";
   ctx.fillText("tsumitsumi.vercel.app", W / 2, H - 20); ctx.textAlign = "left";
   return await new Promise(r => canvas.toBlob(r, "image/png"));
+}
+async function generateModelerAlbumImages(album) {
+  const photos = maNormPhotos(album.photos);
+  if (!photos.length) return [];
+  const ci = Math.min(album.cover || 0, Math.max(0, photos.length - 1));
+  const ordered = [photos[ci], ...photos.filter((_, i) => i !== ci)]; // 表紙を先頭に
+  const chunks = [];
+  for (let i = 0; i < ordered.length; i += 4) chunks.push(ordered.slice(i, i + 4));
+  const blobs = [];
+  for (let c = 0; c < chunks.length; c++) blobs.push(await maRenderAlbumPage(album, chunks[c], c, chunks.length));
+  return blobs;
 }
 async function maShareImage(blob, filename, text) {
   if (!blob) { alert("画像の生成に失敗しました"); return; }
@@ -3220,6 +3234,18 @@ async function maShareImage(blob, filename, text) {
     try { await navigator.share({ files: [file], text }); return; } catch (e) { if (e && e.name === "AbortError") return; }
   }
   try { const u = URL.createObjectURL(file); const a = document.createElement("a"); a.href = u; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1500); } catch (e) {}
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+}
+// 複数画像をまとめて共有（非対応端末は順次ダウンロード＋テキスト投稿）。X投稿は最大4枚/件のため、保存して複数投稿に使う想定。
+async function maShareImages(blobs, baseName, text) {
+  const list = (blobs || []).filter(Boolean);
+  if (!list.length) { alert("画像の生成に失敗しました"); return; }
+  if (list.length === 1) return maShareImage(list[0], `${baseName}.png`, text);
+  const files = list.map((b, i) => new File([b], `${baseName}_${String(i + 1).padStart(2, "0")}.png`, { type: "image/png" }));
+  if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files })) {
+    try { await navigator.share({ files, text }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  for (const f of files) { try { const u = URL.createObjectURL(f); const a = document.createElement("a"); a.href = u; a.download = f.name; a.click(); await new Promise(r => setTimeout(r, 350)); URL.revokeObjectURL(u); } catch (e) {} }
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
 }
 
@@ -3374,9 +3400,9 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   };
 
   const shareAlbum = async (a) => {
-    if (!(a.photos || []).length) { alert("写真がありません"); return; }
+    if (!maNormPhotos(a.photos).length) { alert("写真がありません"); return; }
     setSharing(true);
-    try { const blob = await generateModelerAlbumImage(a); await maShareImage(blob, `modelers_${a.id}.png`, `「${a.title || "作品"}」\n#TSUMITSUMI #ツミツミ #プラモデル`); }
+    try { const blobs = await generateModelerAlbumImages(a); await maShareImages(blobs, `modelers_${a.id}`, `「${a.title || "作品"}」\n#TSUMITSUMI #ツミツミ #プラモデル`); }
     catch (e) { alert("シェア画像の生成に失敗しました: " + (e.message || e)); }
     finally { setSharing(false); }
   };
