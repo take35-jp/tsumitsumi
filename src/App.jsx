@@ -3548,14 +3548,16 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   };
 
   // バックアップ：全アルバム＋写真(高画質)を1つのJSONに書き出し／復元（ツミツミ本体と同方式）
-  const maExport = async () => {
+  const maExport = async (list) => {
+    const targets = Array.isArray(list) ? list : albums;
+    if (!targets.length) { alert("アルバムがありません"); return; }
     setMaBusy(true);
     await new Promise(r => setTimeout(r, 30)); // ロード画面を先に描画
     try {
       // メモリ節約：巨大な単一JSON文字列を作らず、アルバムごとに分割して Blob のパーツにする
       const parts = [`{"version":1,"type":"modeler_albums","exportedAt":${JSON.stringify(new Date().toISOString())},"albums":[`];
-      for (let ai = 0; ai < albums.length; ai++) {
-        const a = albums[ai];
+      for (let ai = 0; ai < targets.length; ai++) {
+        const a = targets[ai];
         const photos = [];
         for (const p of maNormPhotos(a.photos)) {
           let u = p.url;
@@ -3570,9 +3572,11 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
       }
       parts.push("]}");
       const blob = new Blob(parts, { type: "application/json" });
+      const date = new Date().toLocaleDateString("ja-JP").replace(/\//g, "-");
+      const one = targets.length === 1 ? "_" + (targets[0].title || "album").replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 24) : "";
       // 重い作成と保存(ダウンロード)を分離。保存はボタンのタップ直後に実行する（iOSが遅延DLを遷移扱いして戻る問題を回避）
       const objUrl = URL.createObjectURL(blob);
-      setBkReady({ url: objUrl, name: `modelers_album_backup_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) });
+      setBkReady({ url: objUrl, name: `modelers_album_backup${one}_${date}.json`, sizeMB: (blob.size / (1024 * 1024)).toFixed(1) });
     } catch (e) { alert("バックアップの作成に失敗しました: " + (e.message || e)); }
     finally { setMaBusy(false); }
   };
@@ -3905,8 +3909,22 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <div style={{ fontSize: 13, lineHeight: 1.95, color: "#333", marginBottom: 22 }}>モデラーズアルバムのデータ（写真は高画質のまま）を1つのJSONファイルに書き出し／読み込みできます。機種変更やブラウザ移行の前に保存してください。</div>
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>エクスポート（バックアップ）</div>
-            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 12 }}>全アルバム（{albums.length}件）と写真をJSONで保存します。写真が多いとファイルは大きくなります。</div>
-            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={maExport}>ダウンロード（{albums.length}件）</button>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.7, marginBottom: 10 }}>全アルバム（{albums.length}件）をまとめて保存します。</div>
+            <button style={{ ...ma.black, width: "100%", boxSizing: "border-box" }} onClick={() => maExport()}>全アルバムをダウンロード（{albums.length}件）</button>
+            <div style={{ marginTop: 10, padding: "8px 10px", background: "#fff7ed", border: "1px solid #fed7aa", fontSize: 11, color: "#9a3412", lineHeight: 1.7 }}>
+              ホーム画面アプリで「トップに戻る／保存できない」場合は、<b>Safariで開いて保存</b>するか、下の<b>アルバム1個ずつ</b>の保存をお試しください（メモリ節約で成功しやすい）。
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: "0.08em", marginBottom: 6 }}>アルバムごとに保存</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+                {albums.map(a => (
+                  <div key={a.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, borderBottom: "1px solid #eee", paddingBottom: 6 }}>
+                    <span style={{ fontSize: 12, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{a.title || "UNTITLED"}<span style={{ color: "#999", marginLeft: 6 }}>{maNormPhotos(a.photos).length}枚</span></span>
+                    <button style={{ ...ma.ghost, padding: "5px 12px", flexShrink: 0 }} onClick={() => maExport([a])}>保存</button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <div style={{ border: "1px solid #111", padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.1em", marginBottom: 6 }}>インポート（復元）</div>
