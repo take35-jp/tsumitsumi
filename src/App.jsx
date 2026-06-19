@@ -3692,9 +3692,12 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           <button style={ma.ghost} onClick={onClose}>CLOSE</button>
         </div>
         <div style={ma.body}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
             <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "#888" }}>{albums.length} WORKS</span>
-            <button style={ma.black} onClick={startNew}>NEW ALBUM</button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button style={ma.ghost} onClick={() => startBeforeAfter(null)}>Before After作成</button>
+              <button style={ma.black} onClick={startNew}>NEW ALBUM</button>
+            </div>
           </div>
           {albums.length === 0 ? (
             <div style={{ textAlign: "center", color: "#aaa", padding: "80px 0", fontSize: 13, letterSpacing: "0.1em", lineHeight: 2 }}>
@@ -3720,6 +3723,8 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
           )}
         </div>
         {renderLightbox()}
+        {renderBeforeAfter()}
+        {renderShareResult()}
       </div>
     );
   }
@@ -3732,7 +3737,6 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
         <div style={ma.bar}>
           <button style={ma.ghost} onClick={() => { setViewId(null); setMode("list"); }}>BACK</button>
           <div style={{ display: "flex", gap: 8 }}>
-            <button style={ma.ghost} onClick={() => startBeforeAfter(a)}>Before After作成</button>
             {maNormPhotos(a.photos).length > 0 && <button style={ma.black} onClick={() => shareAlbum(a)} disabled={sharing}>{sharing ? "..." : "Share ALL"}</button>}
             <button style={ma.ghost} onClick={() => startEdit(a)}>EDIT</button>
           </div>
