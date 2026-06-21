@@ -134,6 +134,8 @@
   .pc-code { font-family: ui-monospace, "SF Mono", monospace; font-size: 10px; color: #6b7280; margin-top: 1px; }
   .pc-name { font-size: 13px; font-weight: 700; color: #111827; line-height: 1.4; margin: 1px 0; word-break: keep-all; }
   .pc-meta { font-size: 10px; color: #9ca3af; line-height: 1.5; }
+  .pc-price { font-size: 12px; font-weight: 800; color: #b91c1c; margin-top: 2px; }
+  .pc-price:empty { display: none; }
   .pc-amazon { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 8px; background: #111; color: #fff; border-radius: 5px; font-size: 10px; font-weight: 700; text-decoration: none; transition: background 0.15s; }
   .pc-amazon:hover { background: #333; }
 
@@ -634,6 +636,7 @@ function renderCard(p){
         <div class="pc-code">${escapeHtml(p.code)}</div>
         <div class="pc-name">${escapeHtml(dispName(p))}</div>
         <div class="pc-meta">${escapeHtml(p.lineup)} · ${TYPE_LABEL[p.type]}</div>
+        <div class="pc-price"></div>
         <a class="pc-amazon" href="${buildUrl(p)}" target="_blank" rel="nofollow noopener noreferrer sponsored">🛒 Amazonで見る</a>
       </div>
     </div>`;

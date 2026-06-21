@@ -105,7 +105,8 @@
       cardSel:  ".pc",
       linkSel:  ".pc-amazon",
       thumbSel: ".pc-image",
-      priceSel: null, // pc には独立した価格スロットが無い
+      priceSel: ".pc-price",
+      priceWrap: (s) => "¥" + s + " ※最新価格はAmazonで",
     },
   ];
 

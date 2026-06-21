@@ -34,6 +34,8 @@ const SAMPLE = ARGV.includes("--sample") ? parseInt(ARGV[ARGV.indexOf("--sample"
 const ALL = ARGV.includes("--all");
 const UPSERT = ARGV.includes("--upsert");
 const RETRY = ARGV.includes("--retry-unmatched"); // asin_map に未登録の商品だけ、複数クエリで再検索
+const ONLY_TOPCOAT = ARGV.includes("--topcoat"); // トップコート大全のみ対象
+const ONLY_PAINT = ARGV.includes("--paint");     // 塗料大全のみ対象
 
 const REPO_ROOT = path.resolve(__dirname, "..");
 const PAINT_HTML = path.join(REPO_ROOT, "public/paint/index.html");
@@ -118,9 +120,17 @@ function scoreCandidate(p, item) {
   const pType = paintType(`${p.lineup} ${p.name}`);
   const cType = paintType(item?.itemInfo?.title?.displayValue);
   if (pType && cType && pType !== cType) { s -= 5; reasons.push("type-mismatch"); }
-  // スプレー缶は塗料大全(ビン/エアブラシ)対象外 → 強く減点（ビン版を優先）
+  // 形態(form)に応じてスプレー/ビンの一致を評価。
+  //  - spray製品(トップコート缶等): タイトルがスプレーなら加点、非スプレーなら減点
+  //  - bottle製品 / form未設定(塗料大全): スプレーがヒットしたら強く減点（ビン版を優先）
   const rawTitle = item?.itemInfo?.title?.displayValue || "";
-  if (/スプレー/.test(rawTitle)) { s -= 6; reasons.push("spray-x"); }
+  const titleIsSpray = /スプレー/.test(rawTitle);
+  if (p.form === "spray") {
+    if (titleIsSpray) { s += 2; reasons.push("spray-match"); }
+    else { s -= 3; reasons.push("spray-missing"); }
+  } else {
+    if (titleIsSpray) { s -= 6; reasons.push("spray-x"); }
+  }
   // 溶剤・うすめ液・洗浄液・工具は塗料ではない → 強く減点
   if (/溶剤|うすめ液|薄め液|シンナー|クリーナー|ブラシマスター|リムーバー|マスキング|筆|ツール|溶液/.test(rawTitle)) { s -= 6; reasons.push("nonpaint-x"); }
   return { score: s, reasons };
@@ -169,7 +179,9 @@ async function upsertAsinMap(rows) {
   const paints = extractArray(PAINT_HTML, "PAINTS").map((p) => ({ p, ns: "paint" }));
   const topcoats = extractArray(TOPCOAT_HTML, "ITEMS").map((p) => ({ p, ns: "topcoat" }));
   let items = [...paints, ...topcoats];
-  log(`塗料 ${paints.length} / トップコート ${topcoats.length} / 合計 ${items.length} 件`);
+  if (ONLY_TOPCOAT) items = items.filter((x) => x.ns === "topcoat");
+  if (ONLY_PAINT) items = items.filter((x) => x.ns === "paint");
+  log(`塗料 ${paints.length} / トップコート ${topcoats.length} / 合計 ${items.length} 件${ONLY_TOPCOAT ? "（トップコートのみ）" : ONLY_PAINT ? "（塗料のみ）" : ""}`);
   log(`MFR_NAMES: ${Object.keys(MFR_NAMES).length} ブランド`);
 
   if (SAMPLE && SAMPLE > 0 && SAMPLE < items.length) {
@@ -246,8 +258,14 @@ async function upsertAsinMap(rows) {
   log(`\n📊 結果: high ${high} / medium ${med} / low ${low} / error ${none}  → ${OUT_JSON}`);
 
   if (UPSERT) {
-    const writable = results.filter((r) => (r.confidence === "high" || r.confidence === "medium") && r.asin);
-    log(`\n💾 asin_map へ upsert: ${writable.length} 件 (high+medium)`);
+    // high/medium かつ、製品のコードか名前がタイトルに一致したものだけ採用
+    //（brand+形態のみの弱いマッチ＝別商品の誤マッチを除外。例: PS-55→TS-80）
+    const writable = results.filter((r) => (r.confidence === "high" || r.confidence === "medium") && r.asin
+      && /(^|\+)(code|name)(\+|$)/.test(r.reasons || ""));
+    const dropped = results.filter((r) => (r.confidence === "high" || r.confidence === "medium") && r.asin
+      && !/(^|\+)(code|name)(\+|$)/.test(r.reasons || ""));
+    if (dropped.length) log(`  ⚠️ 弱いマッチを除外: ${dropped.length} 件 (${dropped.map((d) => d.code).join(",")})`);
+    log(`\n💾 asin_map へ upsert: ${writable.length} 件 (high+medium・code/name一致のみ)`);
     const rows = writable.map((r) => ({
       key: r.key, asin: r.asin, title: r.title || null, image_url: r.image_url || null,
       price: r.price != null ? r.price : null, confidence: r.confidence, source: "paapi",
