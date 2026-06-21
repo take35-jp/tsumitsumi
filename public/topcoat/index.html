@@ -256,6 +256,7 @@
       <button class="filter-pill" data-cat="type" data-val="lacquer">ラッカー</button>
       <button class="filter-pill" data-cat="type" data-val="water">水性</button>
       <button class="filter-pill" data-cat="type" data-val="acrylic">アクリル</button>
+      <button class="filter-pill" data-cat="type" data-val="enamel">エナメル</button>
       <button class="filter-pill" data-cat="type" data-val="urethane">ウレタン</button>
     </div>
     <div class="filter-row">
@@ -486,78 +487,108 @@
 <script>
 const TAG = "tsumitsumi232-22";
 const ITEMS = [
-  // ===== 缶スプレー：GSI クレオス Mr.スーパークリアー UVカット =====
-  { mfr:"gsi", lineup:"Mr.スーパークリアー UVカット", form:"spray", type:"lacquer", uv:true,  finish:"gloss", code:"B-522", name:"Mr.スーパークリアー UVカット 光沢",   q:"Mr.スーパークリアー UVカット 光沢" },
-  { mfr:"gsi", lineup:"Mr.スーパークリアー UVカット", form:"spray", type:"lacquer", uv:true,  finish:"semi",  code:"B-523", name:"Mr.スーパークリアー UVカット 半光沢", q:"Mr.スーパークリアー UVカット 半光沢" },
-  { mfr:"gsi", lineup:"Mr.スーパークリアー UVカット", form:"spray", type:"lacquer", uv:true,  finish:"flat",  code:"B-524", name:"Mr.スーパークリアー UVカット つや消し", q:"Mr.スーパークリアー UVカット つや消し" },
+  // ===== 缶スプレー：GSI Mr.スーパークリアー（無印・ラッカー） =====
+  { mfr:"gsi", lineup:"Mr.スーパークリアー", form:"spray", type:"lacquer", uv:false, finish:"gloss", code:"B-513", name:"Mr.スーパークリアー 光沢",   q:"Mr.スーパークリアー 光沢 スプレー B513" },
+  { mfr:"gsi", lineup:"Mr.スーパークリアー", form:"spray", type:"lacquer", uv:false, finish:"semi",  code:"B-516", name:"Mr.スーパークリアー 半光沢", q:"Mr.スーパークリアー 半光沢 スプレー B516" },
+  { mfr:"gsi", lineup:"Mr.スーパークリアー", form:"spray", type:"lacquer", uv:false, finish:"flat",  code:"B-514", name:"Mr.スーパークリアー つや消し", q:"Mr.スーパークリアー つや消し スプレー B514" },
 
-  // ===== 缶スプレー：GSI クレオス 水性プレミアムトップコート =====
-  { mfr:"gsi", lineup:"水性プレミアムトップコート", form:"spray", type:"water", uv:false, finish:"gloss", code:"B-501", name:"水性プレミアムトップコート 光沢",   q:"水性プレミアムトップコート 光沢 B501" },
-  { mfr:"gsi", lineup:"水性プレミアムトップコート", form:"spray", type:"water", uv:false, finish:"semi",  code:"B-502", name:"水性プレミアムトップコート 半光沢", q:"水性プレミアムトップコート 半光沢 B502" },
-  { mfr:"gsi", lineup:"水性プレミアムトップコート", form:"spray", type:"water", uv:false, finish:"flat",  code:"B-503", name:"水性プレミアムトップコート つや消し", q:"水性プレミアムトップコート つや消し B503" },
+  // ===== 缶スプレー：GSI Mr.スーパークリアー UVカット（光沢・つや消しの2種のみ） =====
+  { mfr:"gsi", lineup:"Mr.スーパークリアー UVカット", form:"spray", type:"lacquer", uv:true, finish:"gloss", code:"B-522", name:"Mr.スーパークリアー UVカット 光沢",   q:"Mr.スーパークリアー UVカット 光沢 B522" },
+  { mfr:"gsi", lineup:"Mr.スーパークリアー UVカット", form:"spray", type:"lacquer", uv:true, finish:"flat",  code:"B-523", name:"Mr.スーパークリアー UVカット つや消し", q:"Mr.スーパークリアー UVカット つや消し B523" },
 
-  // ===== 缶スプレー：GSI クレオス 水性プレミアム UVカット =====
-  { mfr:"gsi", lineup:"水性プレミアムトップコート UVカット", form:"spray", type:"water", uv:true, finish:"gloss", code:"B-525", name:"水性プレミアム UVカット 光沢",   q:"水性プレミアムトップコート UVカット 光沢" },
-  { mfr:"gsi", lineup:"水性プレミアムトップコート UVカット", form:"spray", type:"water", uv:true, finish:"semi",  code:"B-526", name:"水性プレミアム UVカット 半光沢", q:"水性プレミアムトップコート UVカット 半光沢" },
-  { mfr:"gsi", lineup:"水性プレミアムトップコート UVカット", form:"spray", type:"water", uv:true, finish:"flat",  code:"B-527", name:"水性プレミアム UVカット つや消し", q:"水性プレミアムトップコート UVカット つや消し" },
+  // ===== 缶スプレー：GSI Mr.スーパースムースクリアー（究極のつや消し） =====
+  { mfr:"gsi", lineup:"Mr.スーパースムースクリアー", form:"spray", type:"lacquer", uv:false, finish:"flat", code:"B-530", name:"Mr.スーパースムースクリアー つや消し", q:"Mr.スーパースムースクリアー つや消し スプレー B530" },
+
+  // ===== 缶スプレー：GSI 水性トップコート（通常版） =====
+  { mfr:"gsi", lineup:"水性トップコート", form:"spray", type:"water", uv:false, finish:"gloss", code:"B-501", name:"水性トップコート 光沢",   q:"水性トップコート 光沢 B501" },
+  { mfr:"gsi", lineup:"水性トップコート", form:"spray", type:"water", uv:false, finish:"semi",  code:"B-502", name:"水性トップコート 半光沢", q:"水性トップコート 半光沢 B502" },
+  { mfr:"gsi", lineup:"水性トップコート", form:"spray", type:"water", uv:false, finish:"flat",  code:"B-503", name:"水性トップコート つや消し", q:"水性トップコート つや消し B503" },
+
+  // ===== 缶スプレー：GSI 水性プレミアムトップコート =====
+  { mfr:"gsi", lineup:"水性プレミアムトップコート", form:"spray", type:"water", uv:false, finish:"gloss", code:"B-601", name:"水性プレミアムトップコート 光沢",   q:"水性プレミアムトップコート 光沢 B601" },
+  { mfr:"gsi", lineup:"水性プレミアムトップコート", form:"spray", type:"water", uv:false, finish:"semi",  code:"B-602", name:"水性プレミアムトップコート 半光沢", q:"水性プレミアムトップコート 半光沢 B602" },
+  { mfr:"gsi", lineup:"水性プレミアムトップコート", form:"spray", type:"water", uv:false, finish:"flat",  code:"B-603", name:"水性プレミアムトップコート つや消し", q:"水性プレミアムトップコート つや消し B603" },
+
+  // ===== 缶スプレー：GSI 水性プレミアムトップコート UVカット（つや消しのみ） =====
+  { mfr:"gsi", lineup:"水性プレミアムトップコート UVカット", form:"spray", type:"water", uv:true, finish:"flat", code:"B-604", name:"水性プレミアムトップコート UVカット つや消し", q:"水性プレミアムトップコート UVカット つや消し B604" },
 
   // ===== 缶スプレー：タミヤ TSスプレー（クリア系） =====
-  { mfr:"tamiya", lineup:"タミヤ TSスプレー", form:"spray", type:"lacquer", uv:false, finish:"gloss", code:"TS-13", name:"タミヤ TS-13 クリヤー",         q:"タミヤ TS-13 クリヤー" },
-  { mfr:"tamiya", lineup:"タミヤ TSスプレー", form:"spray", type:"lacquer", uv:false, finish:"semi",  code:"TS-79", name:"タミヤ TS-79 セミグロスクリヤー", q:"タミヤ TS-79 セミグロスクリヤー" },
-  { mfr:"tamiya", lineup:"タミヤ TSスプレー", form:"spray", type:"lacquer", uv:false, finish:"flat",  code:"TS-80", name:"タミヤ TS-80 フラットクリヤー", q:"タミヤ TS-80 フラットクリヤー" },
+  { mfr:"tamiya", lineup:"タミヤ TSスプレー", form:"spray", type:"lacquer", uv:false, finish:"gloss", code:"TS-13", name:"タミヤ TS-13 クリヤー",         q:"タミヤ TS-13 クリヤー スプレー" },
+  { mfr:"tamiya", lineup:"タミヤ TSスプレー", form:"spray", type:"lacquer", uv:false, finish:"semi",  code:"TS-79", name:"タミヤ TS-79 セミグロスクリヤー", q:"タミヤ TS-79 セミグロスクリヤー スプレー" },
+  { mfr:"tamiya", lineup:"タミヤ TSスプレー", form:"spray", type:"lacquer", uv:false, finish:"flat",  code:"TS-80", name:"タミヤ TS-80 フラットクリヤー", q:"タミヤ TS-80 フラットクリヤー スプレー" },
+  { mfr:"tamiya", lineup:"タミヤ TSスプレー", form:"spray", type:"lacquer", uv:false, finish:"gloss", code:"TS-65", name:"タミヤ TS-65 パールクリヤー", q:"タミヤ TS-65 パールクリヤー スプレー" },
 
   // ===== 缶スプレー：タミヤ ポリカ用 PS（クリア系） =====
-  { mfr:"tamiya", lineup:"タミヤ PSスプレー(ポリカ用)", form:"spray", type:"lacquer", uv:false, finish:"flat", code:"PS-55", name:"タミヤ PS-55 フラットクリヤー", q:"タミヤ PS-55 フラットクリヤー" },
+  { mfr:"tamiya", lineup:"タミヤ PSスプレー(ポリカ用)", form:"spray", type:"lacquer", uv:false, finish:"flat",  code:"PS-55", name:"タミヤ PS-55 フラットクリヤー", q:"タミヤ PS-55 フラットクリヤー ポリカ" },
+  { mfr:"tamiya", lineup:"タミヤ PSスプレー(ポリカ用)", form:"spray", type:"lacquer", uv:false, finish:"gloss", code:"PS-58", name:"タミヤ PS-58 パールクリヤー", q:"タミヤ PS-58 パールクリヤー ポリカ" },
+
+  // ===== 缶スプレー：ガイア EXクリアースプレー =====
+  { mfr:"gaia", lineup:"ガイア EXスプレー", form:"spray", type:"lacquer", uv:false, finish:"gloss", code:"EXS-03", name:"ガイア Ex-クリアースプレー",       q:"ガイアノーツ Ex-クリアースプレー" },
+  { mfr:"gaia", lineup:"ガイア EXスプレー", form:"spray", type:"lacquer", uv:false, finish:"flat",  code:"EXS-04", name:"ガイア Ex-フラットクリアースプレー", q:"ガイアノーツ Ex-フラットクリアースプレー" },
 
   // ===== ビン：GSI Mr.カラー（ラッカー・エアブラシ用） =====
-  { mfr:"gsi", lineup:"Mr.カラー（クリア系）", form:"bottle", type:"lacquer", uv:false, finish:"semi", code:"C181", name:"Mr.カラー C181 スーパークリアーIII半光沢", q:"Mr.カラー C181 スーパークリアーIII 半光沢" },
-  { mfr:"gsi", lineup:"Mr.カラー（クリア系）", form:"bottle", type:"lacquer", uv:false, finish:"flat", code:"C182", name:"Mr.カラー C182 スーパーフラットクリアー", q:"Mr.カラー C182 スーパーフラットクリアー" },
-  { mfr:"gsi", lineup:"Mr.カラーGX（光沢）", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"GX100", name:"Mr.カラーGX100 スーパークリアーIII", q:"Mr.カラーGX100 スーパークリアーIII" },
+  { mfr:"gsi", lineup:"Mr.カラー（クリア系）", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"C46",  name:"Mr.カラー C46 クリアー",                q:"Mr.カラー C46 クリアー" },
+  { mfr:"gsi", lineup:"Mr.カラー（クリア系）", form:"bottle", type:"lacquer", uv:false, finish:"semi",  code:"C181", name:"Mr.カラー C181 スーパークリアー半光沢", q:"Mr.カラー C181 スーパークリアー 半光沢" },
+  { mfr:"gsi", lineup:"Mr.カラー（クリア系）", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"C182", name:"Mr.カラー C182 スーパークリアーつや消し", q:"Mr.カラー C182 スーパークリアー つや消し" },
+  { mfr:"gsi", lineup:"Mr.カラー（クリア系）", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"C30",  name:"Mr.カラー C30 フラットベース",          q:"Mr.カラー C30 フラットベース" },
+
+  // ===== ビン：GSI Mr.カラーGX（光沢/UVカット/スムース） =====
+  { mfr:"gsi", lineup:"Mr.カラーGX", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"GX100", name:"Mr.カラーGX100 スーパークリアーIII 光沢", q:"Mr.カラーGX100 スーパークリアーIII 光沢" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", form:"bottle", type:"lacquer", uv:true,  finish:"gloss", code:"GX112", name:"Mr.カラーGX112 スーパークリアーIII UVカット 光沢", q:"Mr.カラーGX112 スーパークリアーIII UVカット" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", form:"bottle", type:"lacquer", uv:true,  finish:"flat",  code:"GX113", name:"Mr.カラーGX113 スーパークリアーIII UVカット つや消し", q:"Mr.カラーGX113 スーパークリアーIII UVカット つや消し" },
+  { mfr:"gsi", lineup:"Mr.カラーGX", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"GX114", name:"Mr.カラーGX114 スーパースムースクリアー つや消し", q:"Mr.カラーGX114 スーパースムースクリアー つや消し" },
 
   // ===== ビン：GSI Mr.カラーGGX（新世代 UVカット） =====
-  { mfr:"gsi", lineup:"Mr.カラーGGX UVカット", form:"bottle", type:"lacquer", uv:true, finish:"gloss", code:"LG112", name:"GGXクリアー UVカット 光沢",   q:"Mr.カラーGGX LG112 クリアー UVカット 光沢" },
-  { mfr:"gsi", lineup:"Mr.カラーGGX UVカット", form:"bottle", type:"lacquer", uv:true, finish:"semi",  code:"LG115", name:"GGXクリアー UVカット 半光沢", q:"Mr.カラーGGX LG115 クリアー UVカット 半光沢" },
-  { mfr:"gsi", lineup:"Mr.カラーGGX UVカット", form:"bottle", type:"lacquer", uv:true, finish:"flat",  code:"LG113", name:"GGXクリアー UVカット つや消し", q:"Mr.カラーGGX LG113 クリアー UVカット つや消し" },
+  { mfr:"gsi", lineup:"Mr.カラーGGX UVカット", form:"bottle", type:"lacquer", uv:true, finish:"gloss", code:"LG112", name:"Mr.カラーGGX LG112 クリアー UVカット 光沢",   q:"Mr.カラーGGX LG112 クリアー UVカット 光沢" },
+  { mfr:"gsi", lineup:"Mr.カラーGGX UVカット", form:"bottle", type:"lacquer", uv:true, finish:"semi",  code:"LG115", name:"Mr.カラーGGX LG115 クリアー UVカット 半光沢", q:"Mr.カラーGGX LG115 クリアー UVカット 半光沢" },
+  { mfr:"gsi", lineup:"Mr.カラーGGX UVカット", form:"bottle", type:"lacquer", uv:true, finish:"flat",  code:"LG113", name:"Mr.カラーGGX LG113 クリアー UVカット つや消し", q:"Mr.カラーGGX LG113 クリアー UVカット つや消し" },
 
   // ===== ビン：GSI 水性ホビーカラー =====
-  { mfr:"gsi", lineup:"水性ホビーカラー", form:"bottle", type:"water", uv:false, finish:"gloss", code:"H46", name:"水性ホビーカラー H46 クリアー", q:"水性ホビーカラー H46 クリアー" },
+  { mfr:"gsi", lineup:"水性ホビーカラー", form:"bottle", type:"water", uv:false, finish:"gloss", code:"H-30", name:"水性ホビーカラー H-30 クリアー", q:"水性ホビーカラー H30 クリアー 光沢" },
 
   // ===== ビン：GSI アクリジョン =====
-  { mfr:"gsi", lineup:"アクリジョン", form:"bottle", type:"water", uv:false, finish:"gloss", code:"N46", name:"アクリジョン N46 クリアー", q:"アクリジョン N46 クリアー" },
+  { mfr:"gsi", lineup:"アクリジョン", form:"bottle", type:"water", uv:false, finish:"gloss", code:"N-30", name:"アクリジョン N-30 クリアー",       q:"アクリジョン N30 クリアー 光沢" },
+  { mfr:"gsi", lineup:"アクリジョン", form:"bottle", type:"water", uv:false, finish:"flat",  code:"N-20", name:"アクリジョン N-20 つや消しクリアー", q:"アクリジョン N20 つや消しクリアー" },
 
-  // ===== ビン：ガイア ガイアクリアー =====
-  { mfr:"gaia", lineup:"ガイア クリアー", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"CC-01", name:"ガイア CC-01 ブリリアントコート", q:"ガイア CC-01 ブリリアントコート" },
-  { mfr:"gaia", lineup:"ガイア クリアー", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"CC-02", name:"ガイア CC-02 シャインクリアー",   q:"ガイア CC-02 シャインクリアー" },
-  { mfr:"gaia", lineup:"ガイア クリアー", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"CC-08", name:"ガイア CC-08 フラットクリアー",   q:"ガイア CC-08 フラットクリアー" },
+  // ===== ビン：ガイア ガイアカラー クリアー（番号体系） =====
+  { mfr:"gaia", lineup:"ガイア クリアー", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"007", name:"ガイアカラー 007 クリアー",         q:"ガイアノーツ 007 クリアー" },
+  { mfr:"gaia", lineup:"ガイア クリアー", form:"bottle", type:"lacquer", uv:false, finish:"semi",  code:"030", name:"ガイアカラー 030 セミグロスクリアー", q:"ガイアノーツ 030 セミグロスクリアー" },
+  { mfr:"gaia", lineup:"ガイア クリアー", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"008", name:"ガイアカラー 008 フラットクリアー",   q:"ガイアノーツ 008 フラットクリアー" },
+  { mfr:"gaia", lineup:"ガイア クリアー", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"006", name:"ガイアカラー 006 フラットベース",     q:"ガイアノーツ 006 フラットベース" },
 
   // ===== ビン：ガイア EXシリーズ（大容量基本クリア） =====
-  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"Ex-03", name:"ガイア Ex-03 EXクリアー",            q:"ガイアノーツ Ex-03 EXクリアー" },
-  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"Ex-04", name:"ガイア Ex-04 EXフラットクリアー",    q:"ガイアノーツ Ex-04 EXフラットクリアー" },
-  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"semi",  code:"Ex-09", name:"ガイア Ex-09 EXセミグロスクリアー プレミアム", q:"ガイアノーツ Ex-09 EXセミグロスクリアー プレミアム" },
-  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"Ex-10", name:"ガイア Ex-10 EXフラットクリアー プレミアム", q:"ガイアノーツ Ex-10 EXフラットクリアー プレミアム" },
+  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"Ex-03", name:"ガイア Ex-03 Ex-クリアー",            q:"ガイアノーツ Ex-03 クリアー" },
+  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"semi",  code:"Ex-09", name:"ガイア Ex-09 Ex-セミグロスクリアー プレミアム", q:"ガイアノーツ Ex-09 セミグロスクリアー プレミアム" },
+  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"Ex-04", name:"ガイア Ex-04 Ex-フラットクリアー",    q:"ガイアノーツ Ex-04 フラットクリアー" },
+  { mfr:"gaia", lineup:"ガイア EXシリーズ", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"Ex-10", name:"ガイア Ex-10 Ex-フラットクリアー プレミアム", q:"ガイアノーツ Ex-10 フラットクリアー プレミアム" },
 
   // ===== ビン：タミヤ アクリル（X / XF クリア系） =====
   { mfr:"tamiya", lineup:"タミヤアクリル", form:"bottle", type:"acrylic", uv:false, finish:"gloss", code:"X-22",  name:"タミヤアクリル X-22 クリヤー",       q:"タミヤアクリル X-22 クリヤー" },
   { mfr:"tamiya", lineup:"タミヤアクリル", form:"bottle", type:"acrylic", uv:false, finish:"semi",  code:"X-35",  name:"タミヤアクリル X-35 セミグロスクリヤー", q:"タミヤアクリル X-35 セミグロスクリヤー" },
   { mfr:"tamiya", lineup:"タミヤアクリル", form:"bottle", type:"acrylic", uv:false, finish:"flat",  code:"XF-86", name:"タミヤアクリル XF-86 フラットクリヤー", q:"タミヤアクリル XF-86 フラットクリヤー" },
-  { mfr:"tamiya", lineup:"タミヤアクリル", form:"bottle", type:"acrylic", uv:false, finish:"flat",  code:"X-21",  name:"タミヤアクリル X-21 フラットベース", q:"タミヤアクリル X-21 フラットベース" },
+  { mfr:"tamiya", lineup:"タミヤアクリル", form:"bottle", type:"acrylic", uv:false, finish:"flat",  code:"X-21",  name:"タミヤアクリル X-21 フラットベース",   q:"タミヤアクリル X-21 フラットベース" },
+
+  // ===== ビン：タミヤ エナメル（クリヤー/フラットベース） =====
+  { mfr:"tamiya", lineup:"タミヤエナメル", form:"bottle", type:"enamel", uv:false, finish:"gloss", code:"X-22", name:"タミヤエナメル X-22 クリヤー",     q:"タミヤエナメル X-22 クリヤー" },
+  { mfr:"tamiya", lineup:"タミヤエナメル", form:"bottle", type:"enamel", uv:false, finish:"flat",  code:"X-21", name:"タミヤエナメル X-21 フラットベース", q:"タミヤエナメル X-21 フラットベース" },
 
   // ===== ビン：タミヤ LP（ラッカー） =====
   { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"LP-9",  name:"タミヤLP-9 クリアー",         q:"タミヤカラーLP-9 クリアー" },
   { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", form:"bottle", type:"lacquer", uv:false, finish:"semi",  code:"LP-24", name:"タミヤLP-24 セミグロスクリヤー", q:"タミヤカラーLP-24 セミグロスクリヤー" },
+  { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", form:"bottle", type:"lacquer", uv:false, finish:"flat",  code:"LP-23", name:"タミヤLP-23 フラットクリヤー",   q:"タミヤカラーLP-23 フラットクリヤー" },
   { mfr:"tamiya", lineup:"タミヤLP(ラッカー)", form:"bottle", type:"lacquer", uv:false, finish:"gloss", code:"LP-49", name:"タミヤLP-49 パールクリヤー",   q:"タミヤカラーLP-49 パールクリヤー" },
 
   // ===== ビン：フィニッシャーズ ウレタンクリア（2液） =====
-  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"gloss", code:"GP1",  name:"Finisher's オートクリアー GP1",        q:"Finisher's オートクリアー GP1 ウレタン" },
-  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"gloss", code:"GP1m", name:"Finisher's オートクリアー GP1 ミニ",   q:"Finisher's オートクリアー GP1 ミニ" },
-  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"gloss", code:"GP2",  name:"Finisher's オートクリアー GP2",        q:"Finisher's オートクリアー GP2" },
-  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"flat",  code:"SFC",  name:"Finisher's スーパーフラットコート",    q:"Finisher's スーパーフラットコート" },
+  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"gloss", code:"GP1",  name:"Finisher's オートクリアー GP1",      q:"Finisher's オートクリアー GP1 ウレタン" },
+  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"gloss", code:"GP1m", name:"Finisher's オートクリアー GP1 ミニ", q:"Finisher's オートクリアー GP1 ミニ" },
+  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"gloss", code:"GP2",  name:"Finisher's オートクリアー GP2",      q:"Finisher's オートクリアー GP2" },
+  { mfr:"finishers", lineup:"Finisher's ウレタンクリアー", form:"bottle", type:"urethane", uv:false, finish:"flat",  code:"SFC",  name:"Finisher's スーパーフラットコート",  q:"Finisher's スーパーフラットコート" },
 ];
 
 const FINISH_ORDER = ["gloss", "semi", "flat"];
 const FINISH_LABEL = { gloss: "光沢", semi: "半光沢", flat: "つや消し" };
 const FINISH_ICON  = { gloss: "✨", semi: "🌤️", flat: "🪨" };
-const TYPE_LABEL   = { lacquer:"ラッカー", water:"水性", acrylic:"アクリル", urethane:"ウレタン" };
+const TYPE_LABEL   = { lacquer:"ラッカー", water:"水性", acrylic:"アクリル", enamel:"エナメル", urethane:"ウレタン" };
 const FORM_LABEL   = { spray:"🥫 缶スプレー", bottle:"🍶 ビン" };
 const MFR_NAMES    = { gsi:"GSI クレオス", gaia:"ガイアノーツ", tamiya:"タミヤ", finishers:"フィニッシャーズ" };
 const MFR_ORDER    = ["gsi", "gaia", "tamiya", "finishers"];
