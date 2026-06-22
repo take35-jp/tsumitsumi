@@ -18,3 +18,7 @@ local-tools/*.out
 
 local-tools/retry-safe.json
 local-tools/*.out
+
+# social 投稿の実行時状態・ログ（PCローカルのみ）
+local-tools/social/social-queue.json
+local-tools/social/*.log
