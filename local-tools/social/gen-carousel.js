@@ -154,10 +154,10 @@ function drawContent(ctx, sec, idx, total) {
   // 区切り線
   y += 24; ctx.strokeStyle = C.line; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(W - 80, y); ctx.stroke();
-  // 本文
-  y += 70; ctx.fillStyle = C.sub; ctx.font = `500 40px ${FONT}`;
+  // 本文（可読性のため濃いめ＋やや太字）
+  y += 70; ctx.fillStyle = "#1f2937"; ctx.font = `600 41px ${FONT}`;
   const bl = wrap(ctx, sec.text, W - 160).slice(0, 9);
-  drawLines(ctx, bl, 80, y, 62);
+  drawLines(ctx, bl, 80, y, 64);
   // フッター
   ctx.fillStyle = C.soft; ctx.font = `600 26px ${FONT}`;
   ctx.fillText(IG_HANDLE, 80, H - 70);
