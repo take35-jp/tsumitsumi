@@ -1631,10 +1631,10 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
-            { title: "ミラーレス・一眼カメラで撮るプラモデル写真", desc: "本格撮影のためのレンズ選び・絞り・3点照明・LEDとストロボの使い分け・RAW現像まで", url: "/tips/photo-camera.html", date: "2026/06/08" },
-            { title: "スマートフォンで撮るプラモデル写真", desc: "完成したキットをスマホで映えさせる撮影テクと、必要な3点機材（ライト・背景・三脚）", url: "/tips/photo-smartphone.html", date: "2026/06/08" },
-            { title: "ガンプラのゲート跡が白くなる原因と完全な解決法", desc: "白化が起きる原理と、4つの対処法（ヤスリ・マーカー・塗装・接着剤）を解説", url: "/tips/gate-whitening.html", date: "2026/05/27" },
-            { title: "【保存版】ガンプラ初心者が最初に揃える工具5選", desc: "1万円以下で全部そろえる、本当に必要な工具を厳選", url: "/tips/beginner-tools.html", date: "2026/05/27" },
+            { title: "プラモの組み立て手順 完全ガイド", desc: "説明書の読み方・ランナーやゲートの呼び名・二度切りの基本まで、はじめての1体を図解で完走", url: "/tips/assembly-basics.html", date: "2026/06/23" },
+            { title: "塗装しないで見栄えを上げる｜初心者の色入れ入門", desc: "シール・スミ入れ・部分塗装・つや消しの4つだけで素組みを卒業。失敗しない順番を図解で", url: "/tips/beginner-color.html", date: "2026/06/23" },
+            { title: "完成品の保管・ホコリ対策・飾り方", desc: "黄ばみ・劣化を防ぐ収納術と、積みプラ（未組立）の正しい保管を図解で解説", url: "/tips/storage-display.html", date: "2026/06/23" },
+            { title: "プラモ用接着剤の種類と選び方 完全ガイド", desc: "流し込み・白キャップ・瞬間・エポキシの違いと使い分けを図解。迷ったらまず1本", url: "/tips/glue-types.html", date: "2026/06/23" },
           ].map((t, i) => (
             <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
               style={{ display: "block", padding: "10px 12px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 0, textDecoration: "none", color: "#111" }}>
