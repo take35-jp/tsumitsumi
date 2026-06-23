@@ -1,0 +1,55 @@
+name: Weekly TIPS
+
+# 毎週月曜 18:19 UTC（≒火曜 03:19 JST）に新TIPS記事を生成し、Pull Request を作成する。
+# レビューしてマージすると本番（Vercel）へ反映される。手動実行も可（Actions タブ → Run workflow）。
+on:
+  schedule:
+    - cron: "19 18 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: weekly-tips
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate article
+        id: gen
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          WEEKLY_TIPS_MODEL: ${{ vars.WEEKLY_TIPS_MODEL }}
+        run: node scripts/generate-weekly-tip.mjs
+
+      - name: Create Pull Request
+        if: steps.gen.outputs.created == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: weekly-tips/${{ steps.gen.outputs.slug }}
+          base: main
+          commit-message: "content: 週次TIPS自動生成「${{ steps.gen.outputs.title }}」(${{ steps.gen.outputs.slug }})"
+          title: "📝 週次TIPS: ${{ steps.gen.outputs.title }}"
+          body: |
+            Claude（${{ vars.WEEKLY_TIPS_MODEL || 'claude-opus-4-8' }}）が自動生成した新しいTIPS記事です。
+
+            - スラッグ: `${{ steps.gen.outputs.slug }}`
+            - カテゴリ: ${{ steps.gen.outputs.category }}
+            - 追加/更新: `public/tips/${{ steps.gen.outputs.slug }}.html` / `public/tips/index.html` / `public/sitemap.xml`
+
+            内容（事実関係・図解・表記）を確認し、問題なければマージしてください。マージ＝Vercelで自動公開されます。
+            修正が必要なら、このPR上で直接編集するかコメントしてください。
+          labels: weekly-tips
+          delete-branch: true

@@ -1,35 +1,36 @@
-// api/weekly-tips.js
+// scripts/generate-weekly-tip.mjs
 //
-// 週1回（Vercel Cron）で「プラモ製作TIPS」の新記事を自動生成して公開する。
-// 生成は Claude API（Anthropic Messages API）、公開は GitHub Contents/Git Data API 経由で
-// main ブランチへコミット → Vercel の自動再デプロイで本番反映。
+// GitHub Actions（.github/workflows/weekly-tips.yml）から週1で実行される。
+// Claude API で「プラモ製作TIPS」の新記事を生成し、リポジトリの作業ツリーに
+//   - public/tips/<slug>.html （新規記事）
+//   - public/tips/index.html  （一覧カードを先頭挿入）
+//   - public/sitemap.xml      （URL追記）
+// を書き込む。コミット／PR作成はワークフロー側（peter-evans/create-pull-request）が行う。
 //
-// 設計方針:
-//   - HTML の外枠（メタ情報・3種の構造化データJSON-LD・グローバルナビ・スタイル・
-//     CTA・免責表記・フッター・loader.js・AdSense）はこの関数が「決め打ちで」組み立てる。
-//     Claude には「記事本文(bodyHtml)＋メタ情報＋FAQ」だけを構造化出力(JSON)で書かせる。
-//     → 既存記事テンプレートと完全に同じ体裁・有効なJSON-LDを常に保証できる。
-//   - 図解多め（本文に inline <svg> を3〜4枚）を指示。
-//   - 既出スラッグと重複しないよう、public/tips の一覧を取得して未公開トピックを選ぶ。
-//     用意したトピックキューを使い切ったら Claude に新トピックを発案させる（無限運用）。
+// 設計:
+//   - 記事の外枠HTML（メタ/3種JSON-LD/ナビ/スタイル/CTA/関連/免責/フッター/loader.js/AdSense）は
+//     このスクリプトが決め打ちで組み立て、Claude には本文(bodyHtml)＋メタ＋FAQだけを構造化出力させる。
+//   - 図解（inline SVG）多めを指示。
+//   - 既存スラッグと重複しないよう public/tips を走査し、TOPIC_QUEUE の未公開分を採用。
+//     使い切ったら Claude に新トピックを発案させる（無限運用）。
+//   - 生成物は自己検証（</article>・</html>・JSON-LD parse・本文/FAQ件数）。失敗時は非ゼロ終了＝PRを作らない。
 //
-// 必要な環境変数（Vercel）:
+// 必要な環境変数:
 //   ANTHROPIC_API_KEY  ... Claude API キー（必須）
-//   GITHUB_TOKEN       ... 対象リポジトリ Contents: read/write 権限（/api/tips-save と共用）
-//   CRON_SECRET        ... 任意。設定すると Vercel Cron が Authorization: Bearer <CRON_SECRET>
-//                          を付与するので、その一致を必須化する（手動実行は ?secret= でも可）。
-//   WEEKLY_TIPS_MODEL  ... 任意。既定 "claude-opus-4-8"。
-//   GITHUB_REPO        ... 任意。既定 "take35-jp/tsumitsumi"
-//   GITHUB_BRANCH      ... 任意。既定 "main"
+//   WEEKLY_TIPS_MODEL  ... 任意。既定 "claude-opus-4-8"
+//   GITHUB_OUTPUT      ... Actions が自動設定。slug/title/created を書き出す。
 
-export const config = { runtime: "nodejs", maxDuration: 300 };
+import { readFileSync, writeFileSync, readdirSync, appendFileSync } from "node:fs";
 
 const ADSENSE_CLIENT = "ca-pub-7474274830134796";
 const SITE = "https://tsumitsumi.vercel.app";
 const AMZ_TAG = "tsumitsumi232-22";
+const MODEL = process.env.WEEKLY_TIPS_MODEL || "claude-opus-4-8";
 
-// 用意済みトピックキュー（初心者〜脱初心者向け・図解向き）。先頭から未公開のものを採用。
-// 使い切ったら Claude に新規トピックを発案させる。
+const TIPS_DIR = "public/tips";
+const INDEX_PATH = "public/tips/index.html";
+const SITEMAP_PATH = "public/sitemap.xml";
+
 const TOPIC_QUEUE = [
   { slug: "putty-basics", title: "パテの種類と使い方 入門【ラッカーパテ・ポリパテ・エポパテ・光硬化】", category: "工具・準備" },
   { slug: "primer-surfacer", title: "サーフェイサー入門【役割・番手・吹き方・下地の傷チェック】", category: "塗装・基礎知識" },
@@ -59,26 +60,6 @@ const RELATED_POOL = [
   { url: "/tips/parting-line.html", label: "パーティングライン・ヒケの消し方" },
 ];
 
-// ---------- GitHub helpers ----------
-function ghHeaders(token) {
-  return { Authorization: `Bearer ${token}`, "User-Agent": "tsumitsumi-weekly-tips", Accept: "application/vnd.github+json" };
-}
-async function ghGetJson(url, token) {
-  const r = await fetch(url, { headers: ghHeaders(token) });
-  if (!r.ok) throw new Error(`GitHub GET ${url} -> ${r.status}`);
-  return r.json();
-}
-function b64decode(s) { return Buffer.from(s, "base64").toString("utf8"); }
-
-// 既存 tips スラッグ一覧（重複回避用）
-async function listExistingSlugs(repo, branch, token) {
-  const arr = await ghGetJson(`https://api.github.com/repos/${repo}/contents/public/tips?ref=${encodeURIComponent(branch)}`, token);
-  return (Array.isArray(arr) ? arr : [])
-    .filter((f) => f.type === "file" && /\.html$/.test(f.name) && f.name !== "index.html")
-    .map((f) => f.name.replace(/\.html$/, ""));
-}
-
-// ---------- Claude (Anthropic Messages API) ----------
 const ARTICLE_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -89,23 +70,21 @@ const ARTICLE_SCHEMA = {
     category: { type: "string", description: "カテゴリ（例: 工具・準備 / 塗装・基礎知識 / 仕上げ・トラブル解決 / 入門・基礎知識 / 改造・ステップアップ）" },
     breadcrumbName: { type: "string", description: "パンくず3段目の短い名称" },
     leadHtml: { type: "string", description: "導入文の<p class=\"lead\">…</p>（1つ、HTML）" },
-    bodyHtml: { type: "string", description: "記事本文のHTML。h2/h3・p・ul/ol・tip-box/warning-box・<figure><svg>…</svg></figure>（3〜4枚の図解）を含む。FAQ見出しや関連記事・CTA・免責・<article>タグは含めない（外枠は別途付与する）。" },
+    bodyHtml: { type: "string", description: "記事本文のHTML。h2/h3・p・ul/ol・tip-box/warning-box・<figure><svg>…</svg></figure>（3〜4枚の図解）を含む。FAQ見出しや関連記事・CTA・免責・<article>タグは含めない。" },
     indexDesc: { type: "string", description: "一覧カード用の短い説明（80〜110字・日本語）" },
     faq: {
       type: "array",
-      description: "5問のFAQ。本文の最後に表示される。",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: { q: { type: "string" }, a: { type: "string" } },
-        required: ["q", "a"],
-      },
+      description: "5問のFAQ。",
+      items: { type: "object", additionalProperties: false, properties: { q: { type: "string" }, a: { type: "string" } }, required: ["q", "a"] },
     },
   },
   required: ["slug", "title", "description", "category", "breadcrumbName", "leadHtml", "bodyHtml", "indexDesc", "faq"],
 };
 
-async function generateArticle({ apiKey, model, chosen, existingSlugs }) {
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function jsonLdEscape(s) { return String(s).replace(/<\/script>/gi, "<\\/script>"); }
+
+async function generateArticle({ apiKey, chosen, existingSlugs }) {
   const system = [
     "あなたは日本のプラモデル情報サイト「TSUMI TSUMI（ツミツミ）」のTIPS記事ライターです。",
     "初心者〜脱初心者に向けた、正確で実用的な日本語記事を書きます。事実に基づき、誇張や誤った断定はしません。",
@@ -130,13 +109,11 @@ async function generateArticle({ apiKey, model, chosen, existingSlugs }) {
     "- 見出し<h2>は本文(FAQを除く)で6個以上。本文は十分なボリューム（おおむね2500〜4500字相当）。",
     "- faq は5問。各回答は具体的で正確に。",
     "- slug は英小文字・数字・ハイフンのみ。既出スラッグと重複しないこと。",
-    "- 強調は <strong> を使う（CSSで赤系強調になる）。",
+    "- 強調は <strong> を使う。",
   ].join("\n");
 
   const body = {
-    model,
-    max_tokens: 12000,
-    system,
+    model: MODEL, max_tokens: 12000, system,
     messages: [{ role: "user", content: user }],
     output_config: { effort: "high", format: { type: "json_schema", schema: ARTICLE_SCHEMA } },
   };
@@ -151,14 +128,8 @@ async function generateArticle({ apiKey, model, chosen, existingSlugs }) {
   if (data.stop_reason === "refusal") throw new Error("Anthropic refused the request");
   const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
   if (!text) throw new Error("Anthropic returned empty content (stop_reason=" + data.stop_reason + ")");
-  let obj;
-  try { obj = JSON.parse(text); } catch (e) { throw new Error("Failed to parse model JSON: " + e.message); }
-  return obj;
+  return JSON.parse(text);
 }
-
-// ---------- HTML assembly (外枠を決め打ちで組み立て) ----------
-function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
-function jsonLdEscape(s) { return String(s).replace(/<\/script>/gi, "<\\/script>"); }
 
 const GLOBAL_NAV = `<nav class="tt-globalnav" aria-label="サイトメニュー" style="display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;padding:8px 12px;background:#ffffff;border-bottom:1px solid #e5e7eb;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Hiragino Sans,Meiryo,sans-serif;font-size:13px;line-height:1.5;">
     <a href="/" style="color:#374151;text-decoration:none;font-weight:600;padding:5px 9px;border-radius:6px;white-space:nowrap;">ホーム</a>
@@ -229,26 +200,16 @@ const STYLE_BLOCK = `<style>
 function buildArticleHtml(a, dateISO, dateLabel) {
   const url = `${SITE}/tips/${a.slug}.html`;
   const related = RELATED_POOL.filter((r) => r.url !== `/tips/${a.slug}.html`).slice(0, 3);
-  const faqLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: a.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
-  };
+  const faqLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: a.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
   const articleLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: a.title,
-    description: a.description,
-    image: `${SITE}/LOGO.png`,
-    datePublished: `${dateISO}T09:00:00+09:00`,
-    dateModified: `${dateISO}T09:00:00+09:00`,
+    "@context": "https://schema.org", "@type": "Article", headline: a.title, description: a.description, image: `${SITE}/LOGO.png`,
+    datePublished: `${dateISO}T09:00:00+09:00`, dateModified: `${dateISO}T09:00:00+09:00`,
     author: { "@type": "Organization", name: "TSUMI TSUMI", url: `${SITE}/about.html` },
     publisher: { "@type": "Organization", name: "TSUMI TSUMI", logo: { "@type": "ImageObject", url: `${SITE}/LOGO.png` } },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
   };
   const crumbLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
+    "@context": "https://schema.org", "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "TOP", item: `${SITE}/` },
       { "@type": "ListItem", position: 2, name: "TIPS", item: `${SITE}/tips/` },
@@ -374,7 +335,6 @@ ${relatedHtml}
 `;
 }
 
-// index.html に新カードを先頭挿入
 function insertIndexCard(indexHtml, a, dateLabel) {
   const card = `
     <a class="article-card" href="/tips/${a.slug}.html">
@@ -391,7 +351,6 @@ function insertIndexCard(indexHtml, a, dateLabel) {
   return indexHtml.slice(0, at) + "\n" + card + indexHtml.slice(at);
 }
 
-// sitemap.xml に新URLを </urlset> 直前へ挿入
 function insertSitemapUrl(xml, slug, dateISO) {
   const entry = `  <url>
     <loc>${SITE}/tips/${slug}.html</loc>
@@ -406,111 +365,62 @@ function insertSitemapUrl(xml, slug, dateISO) {
   return xml.slice(0, i) + entry + xml.slice(i);
 }
 
-// Git Data API で3ファイルを1コミットに（原子的）
-async function commitFiles(repo, branch, token, files, message) {
-  const ref = await ghGetJson(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, token);
-  const baseCommitSha = ref.object.sha;
-  const baseCommit = await ghGetJson(`https://api.github.com/repos/${repo}/git/commits/${baseCommitSha}`, token);
-  const baseTreeSha = baseCommit.tree.sha;
-
-  const treeRes = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
-    method: "POST", headers: { ...ghHeaders(token), "Content-Type": "application/json" },
-    body: JSON.stringify({ base_tree: baseTreeSha, tree: files.map((f) => ({ path: f.path, mode: "100644", type: "blob", content: f.content })) }),
-  });
-  const tree = await treeRes.json();
-  if (!treeRes.ok) throw new Error("create tree failed: " + (tree.message || treeRes.status));
-
-  const commitRes = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
-    method: "POST", headers: { ...ghHeaders(token), "Content-Type": "application/json" },
-    body: JSON.stringify({ message, tree: tree.sha, parents: [baseCommitSha] }),
-  });
-  const commit = await commitRes.json();
-  if (!commitRes.ok) throw new Error("create commit failed: " + (commit.message || commitRes.status));
-
-  const updRes = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
-    method: "PATCH", headers: { ...ghHeaders(token), "Content-Type": "application/json" },
-    body: JSON.stringify({ sha: commit.sha, force: false }),
-  });
-  const upd = await updRes.json();
-  if (!updRes.ok) throw new Error("update ref failed: " + (upd.message || updRes.status));
-  return commit;
+function setOutput(k, v) {
+  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${k}=${v}\n`);
 }
 
-// ---------- handler ----------
-export default async function handler(req, res) {
-  const APIKEY = process.env.ANTHROPIC_API_KEY;
-  const TOKEN = process.env.GITHUB_TOKEN;
-  const MODEL = process.env.WEEKLY_TIPS_MODEL || "claude-opus-4-8";
-  const REPO = process.env.GITHUB_REPO || "take35-jp/tsumitsumi";
-  const BRANCH = process.env.GITHUB_BRANCH || "main";
-  const CRON_SECRET = process.env.CRON_SECRET;
+async function main() {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) { console.error("ANTHROPIC_API_KEY が未設定です"); process.exit(1); }
 
-  // 認証: CRON_SECRET があれば Vercel Cron の Bearer か ?secret= の一致を必須化
-  if (CRON_SECRET) {
-    const auth = req.headers.authorization || "";
-    const q = (req.query && req.query.secret) || "";
-    if (auth !== `Bearer ${CRON_SECRET}` && q !== CRON_SECRET) {
-      return res.status(401).json({ error: "unauthorized" });
-    }
+  const existingSlugs = readdirSync(TIPS_DIR)
+    .filter((n) => n.endsWith(".html") && n !== "index.html")
+    .map((n) => n.replace(/\.html$/, ""));
+
+  const chosen = TOPIC_QUEUE.find((t) => !existingSlugs.includes(t.slug)) || null;
+  console.log(chosen ? `キューから採用: ${chosen.slug}` : "キューが空 → Claudeが新トピックを発案します");
+
+  // 生成（最大2回・slug重複/簡易検証で再試行）
+  let a = null, lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let gen;
+    try { gen = await generateArticle({ apiKey, chosen, existingSlugs }); }
+    catch (e) { lastErr = e.message; console.error(`生成失敗(${attempt}): ${e.message}`); continue; }
+    let slug = String(gen.slug || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (!slug) { lastErr = "empty slug"; continue; }
+    if (existingSlugs.includes(slug)) { let n = 2; while (existingSlugs.includes(`${slug}-${n}`)) n++; slug = `${slug}-${n}`; }
+    gen.slug = slug;
+    if (!gen.bodyHtml || gen.bodyHtml.length < 800) { lastErr = "body too short"; continue; }
+    if (!Array.isArray(gen.faq) || gen.faq.length < 3) { lastErr = "faq too few"; continue; }
+    a = gen; break;
   }
-  if (!APIKEY || !TOKEN) {
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY / GITHUB_TOKEN が未設定です" });
-  }
+  if (!a) { console.error("記事生成に失敗: " + lastErr); process.exit(1); }
 
-  try {
-    const existingSlugs = await listExistingSlugs(REPO, BRANCH, TOKEN);
+  const now = new Date();
+  const y = now.getFullYear(), m = String(now.getMonth() + 1).padStart(2, "0"), d = String(now.getDate()).padStart(2, "0");
+  const dateISO = `${y}-${m}-${d}`;
+  const dateLabel = `${y}/${m}/${d}`;
 
-    // 未公開のキュー項目を選ぶ。無ければ Claude に発案させる（chosen=null）。
-    const chosen = TOPIC_QUEUE.find((t) => !existingSlugs.includes(t.slug)) || null;
+  const articleHtml = buildArticleHtml(a, dateISO, dateLabel);
 
-    // 生成（最大2回まで slug 重複/簡易検証で再試行）
-    let a = null, lastErr = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const gen = await generateArticle({ apiKey: APIKEY, model: MODEL, chosen, existingSlugs });
-      let slug = String(gen.slug || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
-      if (!slug) { lastErr = "empty slug"; continue; }
-      // 重複回避
-      if (existingSlugs.includes(slug)) {
-        let n = 2; while (existingSlugs.includes(`${slug}-${n}`)) n++;
-        slug = `${slug}-${n}`;
-      }
-      gen.slug = slug;
-      // 簡易検証
-      if (!gen.bodyHtml || gen.bodyHtml.length < 800) { lastErr = "body too short"; continue; }
-      if (!Array.isArray(gen.faq) || gen.faq.length < 3) { lastErr = "faq too few"; continue; }
-      a = gen; break;
-    }
-    if (!a) return res.status(502).json({ error: "記事生成に失敗しました: " + lastErr });
+  // 自己検証（壊れていたら PR を作らせない）
+  if (!articleHtml.includes("</article>") || !articleHtml.includes("</html>")) { console.error("検証失敗: </article>/</html> がありません"); process.exit(1); }
+  const ldBlocks = articleHtml.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) || [];
+  if (ldBlocks.length !== 3) { console.error("検証失敗: JSON-LDが3個ではありません"); process.exit(1); }
+  for (const b of ldBlocks) { try { JSON.parse(b.replace(/<script type="application\/ld\+json">/, "").replace(/<\/script>/, "")); } catch (e) { console.error("検証失敗: JSON-LDのパースに失敗: " + e.message); process.exit(1); } }
 
-    // 日付
-    const now = new Date();
-    const y = now.getFullYear(), m = String(now.getMonth() + 1).padStart(2, "0"), d = String(now.getDate()).padStart(2, "0");
-    const dateISO = `${y}-${m}-${d}`;
-    const dateLabel = `${y}/${m}/${d}`;
+  const indexHtml = readFileSync(INDEX_PATH, "utf8");
+  const sitemapXml = readFileSync(SITEMAP_PATH, "utf8");
 
-    // 既存 index.html / sitemap.xml を取得して更新
-    const idxMeta = await ghGetJson(`https://api.github.com/repos/${REPO}/contents/public/tips/index.html?ref=${encodeURIComponent(BRANCH)}`, TOKEN);
-    const smMeta = await ghGetJson(`https://api.github.com/repos/${REPO}/contents/public/sitemap.xml?ref=${encodeURIComponent(BRANCH)}`, TOKEN);
-    const indexHtml = b64decode(idxMeta.content);
-    const sitemapXml = b64decode(smMeta.content);
+  writeFileSync(`${TIPS_DIR}/${a.slug}.html`, articleHtml, "utf8");
+  writeFileSync(INDEX_PATH, insertIndexCard(indexHtml, a, dateLabel), "utf8");
+  writeFileSync(SITEMAP_PATH, insertSitemapUrl(sitemapXml, a.slug, dateISO), "utf8");
 
-    const articleHtml = buildArticleHtml(a, dateISO, dateLabel);
-    const newIndex = insertIndexCard(indexHtml, a, dateLabel);
-    const newSitemap = insertSitemapUrl(sitemapXml, a.slug, dateISO);
-
-    const commit = await commitFiles(REPO, BRANCH, TOKEN, [
-      { path: `public/tips/${a.slug}.html`, content: articleHtml },
-      { path: "public/tips/index.html", content: newIndex },
-      { path: "public/sitemap.xml", content: newSitemap },
-    ], `content: 週次TIPS自動追加「${a.title}」(${a.slug})`);
-
-    return res.status(200).json({
-      ok: true, slug: a.slug, title: a.title, category: a.category,
-      url: `${SITE}/tips/${a.slug}.html`,
-      commit: commit.sha, fromQueue: !!chosen,
-      message: "記事をコミットしました。Vercel 再デプロイ後（約1〜2分）に本番反映されます。",
-    });
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
+  console.log(`作成: public/tips/${a.slug}.html （${a.title}）`);
+  setOutput("created", "true");
+  setOutput("slug", a.slug);
+  setOutput("title", a.title);
+  setOutput("category", a.category);
 }
+
+main().catch((e) => { console.error(e); process.exit(1); });

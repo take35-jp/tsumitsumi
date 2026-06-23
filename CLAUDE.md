@@ -17,7 +17,7 @@
 - **プライバシーポリシー**: https://tsumitsumi.vercel.app/privacy.html
 - **GitHub**: https://github.com/take35-jp/tsumitsumi
 - **公式X**: @tsumitsumi_pla
-- **ホスティング**: Vercel（**Pro Plan**／$20月〜）。**広告(AdSense)・アフィリエイト掲載は商用利用にあたり、VercelではPro以上が必須**（Hobby無料枠は非商用限定なので解約・降格は規約違反＝停止リスク）。Hobbyにあった「Function 12個上限」は**Proでは撤廃**され、個数上限の心配は不要。現在のFunctionは13個。
+- **ホスティング**: Vercel（**Pro Plan**／$20月〜）。**広告(AdSense)・アフィリエイト掲載は商用利用にあたり、VercelではPro以上が必須**（Hobby無料枠は非商用限定なので解約・降格は規約違反＝停止リスク）。Hobbyにあった「Function 12個上限」は**Proでは撤廃**され、個数上限の心配は不要。現在のFunctionは12個。
 - **DB**: Supabase（PostgreSQL）
 - **Supabase URL**: https://oxtfwmcdtngvicrcjyue.supabase.co
 - **正式リリース日**: 2026/5/1
@@ -65,7 +65,7 @@
 - **v1.42**: モデラーズアルバムの一覧ヘッダーに「**このアプリを共有**」ボタンを追加（バックアップ(DL)アイコンの左、HELPの並び）。`ModelerAlbum` 内に `maShareApp()` を新設し、share-nodes 風 SVG アイコンの `ma.ghost` ボタンから起動。共有先 URL は `https://tsumitsumi.vercel.app/?modeler`（専用アイコン/名称で直接アルバムが開く導線）、テキストは `あなたの作品をカンタンにアルバム化。新作投稿も楽チン。ビフォー・アフターも作れちゃう。Webアプリ「モデラーズアルバム」\n#モデラーズアルバム #TSUMITSUMI`。`navigator.share` 対応端末（主にスマホ）はネイティブ共有シート、非対応（PC等）は `navigator.clipboard.writeText` で URL コピー＋alert、clipboard も不可なら X intent にフォールバック。実機(headless)で配置順 `[共有][バックアップ][HELP][ロゴ]`・コピー動作・ビルド通過を確認済み。
 - **v1.43**: モデラーズアルバムの一覧（list）画面**左下に「TIPS」「TOOLS」のリンクボタンを縦並びで追加**。TSUMITSUMI本体の「プラモを預ける」と同じ `position:fixed; bottom; left` の左下フロート方式。リンク先は TIPS→`/tips/`、TOOLS→`/gears.html`（いずれも別タブ）。スタイルは `ma.corner`（白地・黒枠・`fontSize:10`・`minWidth:58`・letter-spacing 広め）でB&Wミニマルに馴染ませ、やや小さめ＝目立たせない。list返却ブロック末尾（`renderBackup()` 直後）に配置し、view/edit画面には出ない。実機で左下fixed・縦並び・同幅・リンク先を確認済み。
 - **v1.44**: モデラーズアルバムに**初回アクセス時の案内ポップアップ**を追加（「ホーム画面追加推奨！「HELP」から操作方法をしっかり読んでねっ！」）。`ModelerAlbum` に `maIntro` state ＋ `MA_INTRO_KEY="tsumitsumi_modeler_intro_seen"` を新設。マウント時の useEffect で `localStorage` にフラグが無ければ `setMaIntro(true)`、`dismissIntro()`（OKボタン or 背景タップ）でフラグ"1"を保存して閉じる＝**1端末1回のみ**表示。`renderIntro()` は中央配置のオーバーレイ（`position:fixed; inset:0; zIndex:500`・半透明黒背景）＋白地黒枠カード（`WELCOME`ラベル＋本文＋`ma.black`のOKボタン）でB&Wミニマルに統一。ポップアップを閉じてもアルバム自体は開いたまま。list返却ブロックで `{renderIntro()}` を描画。実機で「初回表示→OKで閉じてフラグ保存→2回目以降は非表示」を検証済み。
-- **v1.45**: **TIPS記事の週次自動生成**を新設（バックエンドのみ・アプリUI無変更）。`api/weekly-tips.js` を追加し、`vercel.json` の cron（`19 18 * * 1`＝毎週月曜 18:19 UTC ≒ 火曜 03:19 JST）で起動。①`public/tips` のファイル一覧をGitHub APIで取得し、用意済み `TOPIC_QUEUE`（初心者〜脱初心者向け14トピック）の未公開分を先頭から採用。尽きたら Claude に新規トピックを発案させる（既出スラッグを渡して重複回避＝無限運用）。②Claude API（`ANTHROPIC_API_KEY`・既定`claude-opus-4-8`・`output_config.format`の構造化出力）で「本文HTML＋メタ情報＋FAQ5問＋一覧説明」だけを生成。図解(inline SVG)3〜4枚を指示。③**外枠HTML（head/メタ/3種JSON-LD〔Article/Breadcrumb/FAQPage〕/グローバルナビ/スタイル/CTA/関連記事/免責/フッター/loader.js/AdSense）はサーバ側で決め打ち組み立て**＝既存テンプレと同体裁・有効な構造化データを常時保証。④`GITHUB_TOKEN`でGit Data API（blob無しのtree `content`方式）を使い「`public/tips/<slug>.html`＋`index.html`（カードを先頭挿入）＋`sitemap.xml`（URL追記）」を**1コミットで原子追加**→Vercel自動再デプロイ。⑤認証：`CRON_SECRET`設定時は Vercel Cron の `Authorization: Bearer` 一致を必須化、手動実行は `?secret=<CRON_SECRET>`。⑥生成は最大2回リトライ（slug重複は`-2`等にリネーム／本文・FAQの簡易検証）。費用は1記事あたり概ね数十円。※アプリ内 versions 配列/HelpModal は本件未掲載（バックエンド施策のため）。
+- **v1.45**: **TIPS記事の週次自動生成**を新設（インフラのみ・アプリUI無変更）。**GitHub Actions → Pull Request 方式**を採用（自動公開ではなく、人がレビュー＆マージしてから本番反映＝誤情報や体裁崩れの自動公開を防ぐ品質ゲート）。`.github/workflows/weekly-tips.yml`（cron `19 18 * * 1`＝毎週月曜 18:19 UTC ≒ 火曜 03:19 JST／手動 `workflow_dispatch` 可）が `scripts/generate-weekly-tip.mjs` を実行。①作業ツリーの `public/tips` を走査し、用意済み `TOPIC_QUEUE`（初心者〜脱初心者向け14トピック）の未公開分を採用。尽きたら Claude に新規発案させる（既出スラッグを渡して重複回避＝無限運用）。②Claude API（`ANTHROPIC_API_KEY` リポジトリSecret・既定 `claude-opus-4-8`・`output_config.format` 構造化出力）で「本文HTML＋メタ＋FAQ5問＋一覧説明」だけを生成。図解(inline SVG)3〜4枚指示。③**外枠HTML（head/メタ/3種JSON-LD〔Article/Breadcrumb/FAQPage〕/ナビ/スタイル/CTA/関連記事/免責/フッター/loader.js/AdSense）はスクリプトが決め打ち組み立て**＝既存テンプレと同体裁・有効な構造化データを常時保証。④スクリプトは `public/tips/<slug>.html` 新規＋`index.html`（カード先頭挿入）＋`sitemap.xml`（URL追記）を作業ツリーに書き込み、`</article>`/`</html>`/JSON-LD parse/本文・FAQ件数を自己検証（NGなら非ゼロ終了＝PRを作らない）。⑤`peter-evans/create-pull-request@v6` が `weekly-tips/<slug>` ブランチでPR作成（標準 `GITHUB_TOKEN`＋`permissions: contents:write/pull-requests:write`）。⑥要設定：リポジトリSecret `ANTHROPIC_API_KEY`、Settings→Actions→General で「Read and write」＋「Allow GitHub Actions to create and approve pull requests」有効化。費用は1記事あたり概ね数十円。※当初 `api/weekly-tips.js`＋Vercel Cron で直接コミットする実装も作ったが、レビュー無しの自動公開を避けるためユーザー選択で GitHub Actions→PR 方式に変更（Vercel側は撤去済み）。※アプリ内 versions 配列/HelpModal は本件未掲載（インフラ施策のため）。
 
 ---
 
@@ -92,8 +92,7 @@ tsumitsumi/
 │   ├── seed-bandai.js
 │   ├── seed-maker.js
 │   ├── auto-seed.js
-│   ├── rakuten-books.js
-│   └── weekly-tips.js   # 週次cron：Claudeで新TIPS記事を自動生成→GitHubへコミット
+│   └── rakuten-books.js
 ├── local-tools/         # ローカル支援スクリプト群（Node.js）
 │   ├── .env             # 環境変数（gitignore）
 │   ├── check-prices.js
@@ -101,6 +100,10 @@ tsumitsumi/
 │   ├── debug-headers.js
 │   ├── inspect-shops.js
 │   └── bandai-jan-mapper.js
+├── scripts/
+│   └── generate-weekly-tip.mjs  # 週次TIPS自動生成（GitHub Actionsから実行・PR作成用）
+├── .github/workflows/
+│   └── weekly-tips.yml          # 週次cron：記事生成→Pull Request 作成
 └── CLAUDE.md            # このファイル
 ```
 
@@ -167,7 +170,7 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 
 ---
 
-## 7. APIエンドポイント一覧（Vercel Function 現在13個・Proのため個数上限の懸念なし）
+## 7. APIエンドポイント一覧（Vercel Function 現在12個・Proのため個数上限の懸念なし）
 
 | エンドポイント | 用途 | メモ |
 |---|---|---|
@@ -183,7 +186,8 @@ RLS 有効、anon に INSERT/SELECT/UPDATE 許可（暫定）。
 | `/api/auto-seed` | 月次cron | |
 | `/api/rakuten-books` | 楽天本API | 価格用途では不採用 |
 | `/api/tips-save` | TIPS記事をGitHubへコミット | admin「📝 TIPS編集」専用。`GITHUB_TOKEN`/`TIPS_EDIT_SECRET` 必須。書込先は `public/tips/*.html` に限定 |
-| `/api/weekly-tips` | 週次cronで新TIPS記事を自動生成・公開 | `vercel.json` の cron（毎週月曜 18:19 UTC）で起動。Claude API（`ANTHROPIC_API_KEY`・既定`claude-opus-4-8`）で記事本文＋FAQを構造化出力→外枠HTML（メタ/3種JSON-LD/ナビ/CTA/免責/loader.js/AdSense）はサーバ側で決め打ち組み立て→`GITHUB_TOKEN`でGit Data API経由に「記事HTML＋index.htmlカード＋sitemap.xml」を1コミット原子追加。トピックは`TOPIC_QUEUE`の未公開分を順に採用し、尽きたらClaudeに新規発案させる（無限運用）。図解(inline SVG)多め。`CRON_SECRET`設定時はBearer必須。手動実行は`?secret=<CRON_SECRET>`|
+
+※ TIPS記事の**週次自動生成は Vercel ではなく GitHub Actions**（`.github/workflows/weekly-tips.yml` → `scripts/generate-weekly-tip.mjs`）で実装。詳細は §18。
 
 ---
 
@@ -259,13 +263,16 @@ REFERER=https://tsumitsumi.vercel.app/
 SUPABASE_URL=https://oxtfwmcdtngvicrcjyue.supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...
 YAHOO_CLIENT_ID=...  # /api/search、/api/admin-search で使用
-GITHUB_TOKEN=...        # /api/tips-save・/api/weekly-tips 用。リポジトリ Contents read/write 権限のトークン
+GITHUB_TOKEN=...        # /api/tips-save 用。リポジトリ Contents read/write 権限のトークン
 TIPS_EDIT_SECRET=...    # /api/tips-save 用。admin「TIPS編集」で保存時に入力する合言葉
-ANTHROPIC_API_KEY=...   # /api/weekly-tips 用。Claude API キー（必須）
-CRON_SECRET=...         # /api/weekly-tips 用（任意）。設定時はVercel CronのBearer一致を必須化＋手動実行は ?secret= で許可
-WEEKLY_TIPS_MODEL=...   # /api/weekly-tips 用（任意）。既定 claude-opus-4-8
 # GITHUB_REPO（省略時 take35-jp/tsumitsumi）/ GITHUB_BRANCH（省略時 main）も任意で指定可
 ```
+
+### GitHub 側（週次TIPS自動生成 = GitHub Actions）の設定 ※Vercel環境変数ではない
+- **`ANTHROPIC_API_KEY`**（リポジトリ Secret・必須）… Settings → Secrets and variables → Actions → New repository secret
+- **`WEEKLY_TIPS_MODEL`**（リポジトリ Variable・任意）… 既定 `claude-opus-4-8`
+- リポジトリ設定で **Settings → Actions → General → Workflow permissions** を「Read and write」にし、**「Allow GitHub Actions to create and approve pull requests」を有効化**（PR自動作成に必須）
+- PR作成は Actions の標準 `GITHUB_TOKEN`（`permissions: contents:write / pull-requests:write`）で行うため、別途トークン登録は不要
 
 ### 楽天新API（openapi.rakuten.co.jp）の注意
 - 必須ヘッダー: Referer / Origin / User-Agent
