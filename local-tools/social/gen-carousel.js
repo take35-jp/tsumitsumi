@@ -33,7 +33,7 @@ const C = {
 };
 const IG_HANDLE = "@take35_pla"; // 投稿先Instagramアカウント（実ハンドル）
 const BASE_TAGS = [
-  "#ガンプラ", "#プラモデル", "#ガンプラ初心者", "#TSUMITSUMI",
+  "#ガンプラ", "#プラモデル", "#積みプラ", "#TSUMITSUMI",
 ]; // ハッシュタグは4つまで
 
 // ---------- HTML 抽出 ----------
