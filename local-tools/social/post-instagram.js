@@ -33,20 +33,31 @@ if (!SLUG) { console.error("使い方: node post-instagram.js <slug> [--dry]"); 
 const LOG = path.join(__dirname, "social-post.log");
 function log(m) { const l = `[${new Date().toISOString()}] ${m}`; try { fs.appendFileSync(LOG, l + "\n"); } catch (e) {} console.log(m); }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// graph.facebook.com への接続は稀に "fetch failed"(一時的な通信揺れ)になるので
+// ネットワーク層の失敗だけ最大3回までリトライする（API側のエラーは即throw）。
+async function fetchRetry(url, init, tries = 3) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try { return await fetch(url, init); }
+    catch (e) { last = e; if (i < tries - 1) await sleep(2000 * (i + 1)); }
+  }
+  throw last;
+}
 async function gpost(url, params) {
   const body = new URLSearchParams({ ...params, access_token: TOKEN }).toString();
-  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+  const r = await fetchRetry(url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
   const j = await r.json();
   if (!r.ok || j.error) throw new Error(`${r.status} ${JSON.stringify(j.error || j)}`);
   return j;
 }
 async function gget(url) {
-  const r = await fetch(url);
+  const r = await fetchRetry(url);
   const j = await r.json();
   if (!r.ok || j.error) throw new Error(`${r.status} ${JSON.stringify(j.error || j)}`);
   return j;
 }
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // コンテナが FINISHED になるまで待つ（画像は通常すぐ）
 async function waitReady(id, label) {
