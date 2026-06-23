@@ -3,6 +3,10 @@
     {
       "path": "/api/auto-seed",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/weekly-tips",
+      "schedule": "19 18 * * 1"
     }
   ],
   "headers": [
