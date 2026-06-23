@@ -31,6 +31,7 @@ const C = {
   paper: "#ffffff", line: "#e5e7eb", chip: "#eef2f7",
   green: "#16a34a", orange: "#f59e0b", white: "#ffffff",
 };
+const IG_HANDLE = "@take35_pla"; // 投稿先Instagramアカウント（実ハンドル）
 const BASE_TAGS = [
   "#ガンプラ", "#プラモデル", "#ガンプラ初心者", "#プラモ初心者", "#模型",
   "#ガンプラ部", "#プラモ好きと繋がりたい", "#積みプラ", "#ガンプラ製作", "#TSUMITSUMI",
@@ -159,7 +160,7 @@ function drawContent(ctx, sec, idx, total) {
   drawLines(ctx, bl, 80, y, 62);
   // フッター
   ctx.fillStyle = C.soft; ctx.font = `600 26px ${FONT}`;
-  ctx.fillText("@tsumitsumi_pla", 80, H - 70);
+  ctx.fillText(IG_HANDLE, 80, H - 70);
   ctx.textAlign = "right"; ctx.fillText(`${idx} / ${total}`, W - 80, H - 70); ctx.textAlign = "left";
 }
 function drawCta(ctx, logo) {
@@ -178,7 +179,7 @@ function drawCta(ctx, logo) {
   ctx.fillStyle = C.ink; ctx.font = `800 36px ${FONT}`;
   ctx.fillText("詳しくは プロフィールのリンク から", W / 2, 962);
   ctx.fillStyle = C.white; ctx.font = `700 32px ${FONT}`; ctx.globalAlpha = 0.95;
-  ctx.fillText("@tsumitsumi_pla", W / 2, 1120);
+  ctx.fillText(IG_HANDLE, W / 2, 1120);
   ctx.globalAlpha = 1; ctx.textAlign = "left";
 }
 
@@ -218,7 +219,7 @@ function drawCta(ctx, logo) {
     "",
     "▼続きと他のTIPSはプロフィールのリンクから",
     "積みプラ管理アプリ「TSUMI TSUMI」も無料公開中",
-    "@tsumitsumi_pla",
+    IG_HANDLE,
     "",
     BASE_TAGS.join(" "),
   ].join("\n");
