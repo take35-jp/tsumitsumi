@@ -2,9 +2,13 @@ name: Weekly TIPS
 
 # 毎週月曜 18:19 UTC（≒火曜 03:19 JST）に新TIPS記事を生成し、Pull Request を作成する。
 # レビューしてマージすると本番（Vercel）へ反映される。手動実行も可（Actions タブ → Run workflow）。
+#
+# ⏸ 2026/06: AdSense「有用性の低いコンテンツ（scaled content）」対策のため、週次の自動スケジュールは
+#    一時停止中。AdSense 承認後に下記 schedule のコメントを外して再開する。
+#    （手動実行 workflow_dispatch は残しているので、必要時は Actions タブから単発実行可能）
 on:
-  schedule:
-    - cron: "19 18 * * 1"
+  # schedule:
+  #   - cron: "19 18 * * 1"
   workflow_dispatch: {}
 
 permissions:
