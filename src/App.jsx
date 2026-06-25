@@ -1411,7 +1411,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.44", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加とHELPの確認を案内・1回のみ表示）"] },
+    { ver: "v1.46", date: "2026/06/25", isNew: true, items: ["塗料の在庫管理「マイパレット」を新設。上部の「キット⇄🎨塗料」切替から、手持ちの塗料を色見本つきで登録・管理できます（メーカー/色番号/種類/仕上げ/残量/メモ・要補充の絞り込み）。データは端末内に保存"] },
+    { ver: "v1.44", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加とHELPの確認を案内・1回のみ表示）"] },
     { ver: "v1.43", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加（プラモTIPS・おすすめ定番アイテムへ）"] },
     { ver: "v1.42", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左。対応端末は共有シート、PCはURLコピー）"] },
     { ver: "v1.41", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
@@ -1660,10 +1661,20 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.44 */}
+          {/* v1.46 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.46</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/25</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・塗料の在庫管理「マイパレット」を新設（上部の「キット⇄🎨塗料」切替から、色見本つきで手持ち塗料を登録・管理）
+            </div>
+          </div>
+          {/* v1.44 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.44</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
             </div>
@@ -1679,16 +1690,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加
-            </div>
-          </div>
-          {/* v1.42 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.42</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左）
             </div>
           </div>
         </div>
@@ -4687,6 +4688,7 @@ export default function App() {
   const [showShare, setShowShare] = useState(false);
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
   const [showModelerAlbum, setShowModelerAlbum] = useState(false); // モデラーズアルバム（ポートフォリオ）表示
+  const [showPaints, setShowPaints] = useState(false); // 塗料ストック（マイパレット）表示
   // 入口ボタンは非公開中だが、?modeler または #modeler 付きURLで直接開ける（仕上げのプレビュー用）
   useEffect(() => {
     try {
@@ -5461,6 +5463,15 @@ export default function App() {
         </div>
       )}
 
+      {!bulkMode && (
+        <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 14px", display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", border: "1.5px solid #111", overflow: "hidden" }}>
+            <button style={{ padding: "6px 18px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: "#111", color: "#fff" }}>キット</button>
+            <button style={{ padding: "6px 18px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: "#fff", color: "#111" }} onClick={() => setShowPaints(true)}>🎨 塗料</button>
+          </div>
+        </div>
+      )}
+
       <div style={{ ...s.stats, display: bulkMode ? "none" : "flex" }}>
         {[["積みプラ", pending, "#ef4444", "pending"], ["完成", done, "#22c55e", "done"], ["総数", kits.reduce((sum, k) => sum + (k.count || 1), 0), "#111", "all"]].map(([label, num, color, f]) => (
           <div key={f} style={s.statBox} onClick={() => setFilter(f)}>
@@ -6021,6 +6032,8 @@ export default function App() {
           setKits={setKits} />
       )}
 
+      {showPaints && <PaintStock onClose={() => setShowPaints(false)} />}
+
       {shareKit && (
         <div style={s.overlay} onClick={() => setShareKit(null)}>
           <div style={{ width: "100%", maxWidth: 480, overflowX: "hidden", boxSizing: "border-box" }} onClick={(e) => e.stopPropagation()}>
@@ -6267,6 +6280,211 @@ export default function App() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ====== 塗料ストック（マイパレット）======
+// キット管理と同じ発想で「持っている塗料」を端末内（localStorage）で管理する独立機能。
+// 既存のキット一覧ロジックには一切触れず、上部セグメントから全画面で開く（ModelerAlbum と同じ安全パターン）。
+const PAINT_LS_KEY = "tsumitsumi_paints";
+const PAINT_BRANDS = ["GSIクレオス Mr.カラー", "GSIクレオス 水性ホビーカラー", "Mr.カラー GX", "ガイアカラー", "ガイア 水性", "タミヤ ラッカー(LP)", "タミヤ アクリル", "タミヤ エナメル", "フィニッシャーズ", "Vallejo", "シタデルカラー", "その他"];
+const PAINT_TYPES = ["ラッカー", "水性アクリル", "エナメル", "その他"];
+const PAINT_FINISHES = ["光沢", "半光沢", "つや消し", "メタリック", "クリア", "サーフェイサー", "その他"];
+const PAINT_REMAIN = ["なし", "少ない", "半分", "多い", "新品"]; // index 0..4
+function makePaintId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function PaintStock({ onClose }) {
+  const [paints, setPaints] = useState([]);
+  const [editing, setEditing] = useState(null); // 編集/追加中の塗料 or null
+  const [q, setQ] = useState("");
+  const [fBrand, setFBrand] = useState("");
+  const [fType, setFType] = useState("");
+  const [onlyLow, setOnlyLow] = useState(false);
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    try { const v = JSON.parse(localStorage.getItem(PAINT_LS_KEY) || "[]"); if (Array.isArray(v)) setPaints(v); } catch (e) {}
+    loaded.current = true;
+  }, []);
+  useEffect(() => {
+    if (!loaded.current) return; // 初回マウントの保存スキップ（既存データの空上書き防止）
+    try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
+  }, [paints]);
+
+  const blank = () => ({ id: makePaintId(), brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, memo: "", createdAt: Date.now() });
+  const save = () => {
+    if (!editing) return;
+    const d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim() };
+    if (!d.name && !d.code) { alert("色名または色番号のどちらかを入力してください。"); return; }
+    setPaints(prev => prev.some(x => x.id === d.id) ? prev.map(x => x.id === d.id ? d : x) : [d, ...prev]);
+    setEditing(null);
+  };
+  const remove = (id) => { if (!window.confirm("この塗料を削除しますか？")) return; setPaints(prev => prev.filter(x => x.id !== id)); setEditing(null); };
+  const upd = (patch) => setEditing(e => ({ ...e, ...patch }));
+
+  const filtered = paints.filter(p => {
+    if (onlyLow && (p.remain ?? 4) > 1) return false;
+    if (fBrand && p.brand !== fBrand) return false;
+    if (fType && p.type !== fType) return false;
+    if (q) { const hay = `${p.name} ${p.code} ${p.brand} ${p.finish}`.toLowerCase(); if (!hay.includes(q.toLowerCase())) return false; }
+    return true;
+  });
+
+  const ps = {
+    wrap: { position: "fixed", inset: 0, zIndex: 300, background: "#f6f7f8", color: "#111", display: "flex", flexDirection: "column", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', Meiryo, sans-serif" },
+    bar: { background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 },
+    seg: { display: "flex", border: "1.5px solid #111", borderRadius: 0, overflow: "hidden", flexShrink: 0 },
+    segBtn: (on) => ({ padding: "6px 14px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: on ? "#111" : "#fff", color: on ? "#fff" : "#111" }),
+    body: { flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "10px 14px 90px" },
+    row: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, padding: "10px 12px", display: "flex", alignItems: "center", gap: 11, marginBottom: 8, cursor: "pointer" },
+    swatch: (c) => ({ width: 40, height: 40, flexShrink: 0, background: c || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }),
+    tag: { display: "inline-block", fontSize: 10, fontWeight: 700, padding: "1px 7px", border: "1px solid #d1d5db", color: "#4b5563", marginRight: 4 },
+    label: { display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", margin: "12px 0 4px" },
+    input: { width: "100%", boxSizing: "border-box", border: "1px solid #d1d5db", borderRadius: 0, padding: "8px 10px", fontSize: 15, outline: "none", background: "#fff" },
+    fab: { position: "fixed", right: 18, bottom: 22, height: 50, padding: "0 18px", borderRadius: 0, background: "#111", color: "#fff", border: "none", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.25)", zIndex: 2 },
+    black: { background: "#111", color: "#fff", border: "1px solid #111", padding: "11px 18px", fontSize: 13, fontWeight: 800, cursor: "pointer", borderRadius: 0 },
+    ghost: { background: "#fff", color: "#111", border: "1px solid #111", padding: "11px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: 0 },
+  };
+
+  const RemainBar = ({ v }) => (
+    <span style={{ display: "inline-flex", gap: 2, verticalAlign: "middle" }}>
+      {[0, 1, 2, 3].map(i => (
+        <span key={i} style={{ width: 7, height: 12, background: i < (v ?? 4) ? (v <= 1 ? "#ef4444" : v === 2 ? "#f59e0b" : "#22c55e") : "#e5e7eb" }} />
+      ))}
+    </span>
+  );
+
+  // ---- 追加/編集フォーム ----
+  if (editing) {
+    const e = editing;
+    return (
+      <div style={ps.wrap}>
+        <div style={ps.bar}>
+          <button style={ps.ghost} onClick={() => setEditing(null)}>キャンセル</button>
+          <div style={{ flex: 1, textAlign: "center", fontSize: 13, fontWeight: 800 }}>{paints.some(x => x.id === e.id) ? "塗料を編集" : "塗料を追加"}</div>
+          <button style={ps.black} onClick={save}>保存</button>
+        </div>
+        <div style={ps.body}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fff", border: "1px solid #e5e7eb", padding: 12 }}>
+            <div style={ps.swatch(e.swatch)} />
+            <div style={{ flex: 1 }}>
+              <label style={{ ...ps.label, margin: "0 0 4px" }}>色（カラーピッカー）</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input type="color" value={e.swatch} onChange={ev => upd({ swatch: ev.target.value })} style={{ width: 46, height: 34, border: "1px solid #d1d5db", background: "#fff", padding: 0, cursor: "pointer" }} />
+                <input style={{ ...ps.input, width: 110, flex: "none" }} value={e.swatch} onChange={ev => upd({ swatch: ev.target.value })} />
+              </div>
+            </div>
+          </div>
+
+          <label style={ps.label}>メーカー / シリーズ</label>
+          <select style={ps.input} value={e.brand} onChange={ev => upd({ brand: ev.target.value })}>
+            {PAINT_BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label style={ps.label}>色名</label>
+              <input style={ps.input} value={e.name} onChange={ev => upd({ name: ev.target.value })} placeholder="例：ニュートラルグレー" />
+            </div>
+            <div style={{ width: 120 }}>
+              <label style={ps.label}>色番号</label>
+              <input style={ps.input} value={e.code} onChange={ev => upd({ code: ev.target.value })} placeholder="例：13" />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label style={ps.label}>種類</label>
+              <select style={ps.input} value={e.type} onChange={ev => upd({ type: ev.target.value })}>
+                {PAINT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={ps.label}>仕上げ</label>
+              <select style={ps.input} value={e.finish} onChange={ev => upd({ finish: ev.target.value })}>
+                {PAINT_FINISHES.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <label style={ps.label}>残量</label>
+          <div style={{ display: "flex", gap: 6 }}>
+            {PAINT_REMAIN.map((r, i) => (
+              <button key={i} onClick={() => upd({ remain: i })}
+                style={{ flex: 1, padding: "8px 0", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: e.remain === i ? "#111" : "#fff", color: e.remain === i ? "#fff" : "#111" }}>{r}</button>
+            ))}
+          </div>
+
+          <label style={ps.label}>所持数</label>
+          <input type="number" min="1" style={{ ...ps.input, width: 100 }} value={e.count} onChange={ev => upd({ count: Math.max(1, parseInt(ev.target.value) || 1) })} />
+
+          <label style={ps.label}>メモ（調色レシピ・使い道など）</label>
+          <textarea style={{ ...ps.input, minHeight: 70, resize: "vertical" }} value={e.memo} onChange={ev => upd({ memo: ev.target.value })} placeholder="例：本体色のベース。○○と1:1で調色。" />
+
+          {paints.some(x => x.id === e.id) && (
+            <button onClick={() => remove(e.id)} style={{ ...ps.ghost, borderColor: "#c00", color: "#c00", width: "100%", marginTop: 22 }}>この塗料を削除</button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ---- 一覧 ----
+  const brandsInUse = [...new Set(paints.map(p => p.brand))];
+  return (
+    <div style={ps.wrap}>
+      <div style={ps.bar}>
+        <div style={ps.seg}>
+          <button style={ps.segBtn(false)} onClick={onClose}>キット</button>
+          <button style={ps.segBtn(true)}>🎨 塗料</button>
+        </div>
+        <div style={{ flex: 1, textAlign: "right", fontSize: 11, color: "#6b7280" }}>所持 {paints.length} 色 / {paints.reduce((a, p) => a + (p.count || 1), 0)} 本</div>
+      </div>
+
+      <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "8px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <input style={ps.input} value={q} onChange={ev => setQ(ev.target.value)} placeholder="色名・番号・メーカーで検索…" />
+        <div style={{ display: "flex", gap: 6 }}>
+          <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={fBrand} onChange={ev => setFBrand(ev.target.value)}>
+            <option value="">全メーカー</option>
+            {brandsInUse.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+          <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={fType} onChange={ev => setFType(ev.target.value)}>
+            <option value="">全種類</option>
+            {PAINT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <button onClick={() => setOnlyLow(v => !v)} style={{ flexShrink: 0, padding: "0 12px", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: onlyLow ? "#ef4444" : "#fff", color: onlyLow ? "#fff" : "#111" }}>要補充</button>
+        </div>
+      </div>
+
+      <div style={ps.body}>
+        {paints.length === 0 && (
+          <div style={{ textAlign: "center", color: "#9ca3af", padding: "60px 20px", fontSize: 13, lineHeight: 1.9 }}>
+            まだ塗料が登録されていません。<br />右下の「＋ 塗料を追加」から、手持ちの塗料を登録しましょう。
+          </div>
+        )}
+        {paints.length > 0 && filtered.length === 0 && (
+          <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 20px", fontSize: 13 }}>条件に合う塗料がありません。</div>
+        )}
+        {filtered.map(p => (
+          <div key={p.id} style={ps.row} onClick={() => setEditing({ ...p })}>
+            <div style={ps.swatch(p.swatch)} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
+              <div style={{ marginTop: 3 }}>
+                <span style={ps.tag}>{p.type}</span><span style={ps.tag}>{p.finish}</span>
+              </div>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <RemainBar v={p.remain} />
+              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>{PAINT_REMAIN[p.remain ?? 4]} ×{p.count || 1}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button style={ps.fab} onClick={() => setEditing(blank())}>＋ 塗料を追加</button>
     </div>
   );
 }
