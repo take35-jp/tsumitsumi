@@ -1411,8 +1411,7 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.46", date: "2026/06/25", isNew: true, items: ["塗料の在庫管理「マイパレット」を新設。上部の「キット⇄🎨塗料」切替から、手持ちの塗料を色見本つきで登録・管理できます（メーカー/色番号/種類/仕上げ/残量/メモ・要補充の絞り込み）。データは端末内に保存"] },
-    { ver: "v1.44", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加とHELPの確認を案内・1回のみ表示）"] },
+    { ver: "v1.44", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加とHELPの確認を案内・1回のみ表示）"] },
     { ver: "v1.43", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加（プラモTIPS・おすすめ定番アイテムへ）"] },
     { ver: "v1.42", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左。対応端末は共有シート、PCはURLコピー）"] },
     { ver: "v1.41", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
@@ -1661,20 +1660,10 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.46 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.46</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/25</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・塗料の在庫管理「マイパレット」を新設（上部の「キット⇄🎨塗料」切替から、色見本つきで手持ち塗料を登録・管理）
-            </div>
-          </div>
           {/* v1.44 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.44</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
             </div>
@@ -1690,6 +1679,16 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加
+            </div>
+          </div>
+          {/* v1.42 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.42</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左）
             </div>
           </div>
         </div>
@@ -4694,6 +4693,8 @@ export default function App() {
     try {
       const p = new URLSearchParams(window.location.search);
       if (p.has("modeler") || window.location.hash === "#modeler") setShowModelerAlbum(true);
+      // 塗料（マイパレット）も完成までは非公開。?paint / #paint でのみ起動（プレビュー用）
+      if (p.has("paint") || window.location.hash === "#paint") setShowPaints(true);
     } catch (e) {}
   }, []);
   const [shareKit, setShareKit] = useState(null); // 単一キットの完成品シェア対象
@@ -5463,6 +5464,7 @@ export default function App() {
         </div>
       )}
 
+      {/* 塗料（マイパレット）の入口は完成まで非公開。公開時に下記セグメント切替を戻す：
       {!bulkMode && (
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 14px", display: "flex", justifyContent: "center" }}>
           <div style={{ display: "flex", border: "1.5px solid #111", overflow: "hidden" }}>
@@ -5471,6 +5473,7 @@ export default function App() {
           </div>
         </div>
       )}
+      */}
 
       <div style={{ ...s.stats, display: bulkMode ? "none" : "flex" }}>
         {[["積みプラ", pending, "#ef4444", "pending"], ["完成", done, "#22c55e", "done"], ["総数", kits.reduce((sum, k) => sum + (k.count || 1), 0), "#111", "all"]].map(([label, num, color, f]) => (
