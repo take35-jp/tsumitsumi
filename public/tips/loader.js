@@ -1,4 +1,4 @@
-/* TIPS記事・塗料大全・トップコート大全の商品カードに、
+/* TIPS記事・PAINT GUIDE・TOPCOAT GUIDEの商品カードに、
    gears_catalog または asin_map のデータから
    画像・価格・Amazon ASIN 直リンクを注入する共通スクリプト。
 
@@ -92,7 +92,7 @@
       priceSel: ".product-price-slot",
       priceWrap: (s) => s + " ※Amazonで最新価格をご確認ください",
     },
-    // 塗料大全
+    // PAINT GUIDE
     {
       cardSel:  ".paint-card",
       linkSel:  ".paint-amazon",
@@ -100,7 +100,7 @@
       priceSel: ".paint-price",
       priceWrap: (s) => "¥" + s + " ※最新価格はAmazonで",
     },
-    // トップコート大全
+    // TOPCOAT GUIDE
     {
       cardSel:  ".pc",
       linkSel:  ".pc-amazon",

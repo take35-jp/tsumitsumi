@@ -5918,7 +5918,7 @@ export default function App() {
           <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>運営者情報</a>
           <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>利用規約</a>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プライバシーポリシー</a>
-          <a href="/paint/" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>塗料大全</a>
+          <a href="/paint/" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>PAINT GUIDE</a>
           <a href="/sell.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>積みを売る</a>
           <a href="/storage.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#9ca3af", textDecoration: "underline" }}>プラモを預ける</a>
         </div>
@@ -6497,7 +6497,7 @@ const PAINT_FINISHES = ["光沢", "半光沢", "つや消し", "メタリック"
 const PAINT_REMAIN = ["なし", "少ない", "半分", "多い", "新品"]; // index 0..4
 function makePaintId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
-// ---- 塗料大全/トップコート大全カタログ（public/paint-catalog.json）----
+// ---- PAINT GUIDE/TOPCOAT GUIDEカタログ（public/paint-catalog.json）----
 let _paintCatalog = null;
 async function loadPaintCatalog() {
   if (_paintCatalog) return _paintCatalog;
@@ -6678,7 +6678,7 @@ function PaintStock({ onClose }) {
       <div style={{ padding: "8px 14px", borderBottom: "1px solid #e5e7eb", display: "flex", flexDirection: "column", gap: 6 }}>
         <div style={{ display: "flex", gap: 6 }}>
           {["塗料", "トップコート"].map(t => (
-            <button key={t} onClick={() => setCatTab(t)} style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: catTab === t ? "#111" : "#fff", color: catTab === t ? "#fff" : "#111" }}>{t === "塗料" ? "塗料大全" : "トップコート大全"}</button>
+            <button key={t} onClick={() => setCatTab(t)} style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: catTab === t ? "#111" : "#fff", color: catTab === t ? "#fff" : "#111" }}>{t === "塗料" ? "PAINT GUIDE" : "TOPCOAT GUIDE"}</button>
           ))}
         </div>
         <input style={ps.input} autoFocus value={catQ} onChange={e => setCatQ(e.target.value)} placeholder="色名・番号・メーカー・シリーズで検索…" />
@@ -6756,7 +6756,7 @@ function PaintStock({ onClose }) {
           <button style={ps.black} onClick={save}>保存</button>
         </div>
         <div style={ps.body}>
-          <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e)}>📚 塗料大全・トップコート大全から自動入力</button>
+          <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e)}>📚 PAINT GUIDE・TOPCOAT GUIDEから自動入力</button>
 
           <label style={{ ...ps.label, marginTop: 0 }}>種別</label>
           <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
@@ -6890,7 +6890,7 @@ function PaintStock({ onClose }) {
           </select>
           <button onClick={() => setOnlyLow(v => !v)} style={{ flexShrink: 0, padding: "0 12px", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: onlyLow ? "#ef4444" : "#fff", color: onlyLow ? "#fff" : "#111" }}>要補充</button>
         </div>
-        <button style={{ ...ps.black, width: "100%" }} onClick={() => openCatalog(null)}>📚 塗料大全・トップコート大全から探して追加</button>
+        <button style={{ ...ps.black, width: "100%" }} onClick={() => openCatalog(null)}>📚 PAINT GUIDE・TOPCOAT GUIDEから探して追加</button>
       </div>
 
       <div style={ps.body}>
