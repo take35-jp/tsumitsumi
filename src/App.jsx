@@ -6303,6 +6303,7 @@ function PaintStock({ onClose }) {
   const [q, setQ] = useState("");
   const [fBrand, setFBrand] = useState("");
   const [fType, setFType] = useState("");
+  const [fCat, setFCat] = useState(""); // "" | "塗料" | "トップコート"
   const [onlyLow, setOnlyLow] = useState(false);
   const [scanning, setScanning] = useState(false); // バーコードスキャナ表示
   const [looking, setLooking] = useState(false); // JAN→商品情報の取得中
@@ -6317,7 +6318,7 @@ function PaintStock({ onClose }) {
     try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
   }, [paints]);
 
-  const blank = () => ({ id: makePaintId(), jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, memo: "", createdAt: Date.now() });
+  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", memo: "", createdAt: Date.now() });
 
   // 商品名からメーカー/種類を推測（Yahoo検索結果の補助。確実ではないので後から手で直せる）
   const guessBrand = (name) => {
@@ -6385,6 +6386,7 @@ function PaintStock({ onClose }) {
   const upd = (patch) => setEditing(e => ({ ...e, ...patch }));
 
   const filtered = paints.filter(p => {
+    if (fCat && (p.category || "塗料") !== fCat) return false;
     if (onlyLow && (p.remain ?? 4) > 1) return false;
     if (fBrand && p.brand !== fBrand) return false;
     if (fType && p.type !== fType) return false;
@@ -6427,6 +6429,14 @@ function PaintStock({ onClose }) {
           <button style={ps.black} onClick={save}>保存</button>
         </div>
         <div style={ps.body}>
+          <label style={{ ...ps.label, marginTop: 0 }}>種別</label>
+          <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+            {["塗料", "トップコート"].map(c => (
+              <button key={c} onClick={() => upd({ category: c })}
+                style={{ flex: 1, padding: "8px 0", fontSize: 12, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: (e.category || "塗料") === c ? "#111" : "#fff", color: (e.category || "塗料") === c ? "#fff" : "#111" }}>{c}</button>
+            ))}
+          </div>
+
           <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fff", border: "1px solid #e5e7eb", padding: 12 }}>
             <div style={ps.swatch(e.swatch)} />
             <div style={{ flex: 1 }}>
@@ -6487,8 +6497,16 @@ function PaintStock({ onClose }) {
             ))}
           </div>
 
-          <label style={ps.label}>所持数</label>
-          <input type="number" min="1" style={{ ...ps.input, width: 100 }} value={e.count} onChange={ev => upd({ count: Math.max(1, parseInt(ev.target.value) || 1) })} />
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ width: 110 }}>
+              <label style={ps.label}>所持数</label>
+              <input type="number" min="1" style={ps.input} value={e.count} onChange={ev => upd({ count: Math.max(1, parseInt(ev.target.value) || 1) })} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={ps.label}>購入日</label>
+              <input type="date" style={ps.input} value={e.purchaseDate || ""} onChange={ev => upd({ purchaseDate: ev.target.value })} />
+            </div>
+          </div>
 
           <label style={ps.label}>メモ（調色レシピ・使い道など）</label>
           <textarea style={{ ...ps.input, minHeight: 70, resize: "vertical" }} value={e.memo} onChange={ev => upd({ memo: ev.target.value })} placeholder="例：本体色のベース。○○と1:1で調色。" />
@@ -6516,6 +6534,12 @@ function PaintStock({ onClose }) {
       </div>
 
       <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "8px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["", "塗料", "トップコート"].map(c => (
+            <button key={c || "all"} onClick={() => setFCat(c)}
+              style={{ flex: 1, padding: "6px 0", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: fCat === c ? "#111" : "#fff", color: fCat === c ? "#fff" : "#111" }}>{c || "すべて"}</button>
+          ))}
+        </div>
         <input style={ps.input} value={q} onChange={ev => setQ(ev.target.value)} placeholder="色名・番号・メーカーで検索…" />
         <div style={{ display: "flex", gap: 6 }}>
           <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={fBrand} onChange={ev => setFBrand(ev.target.value)}>
@@ -6546,6 +6570,7 @@ function PaintStock({ onClose }) {
               <div style={{ fontSize: 11, color: "#6b7280" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
               <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
               <div style={{ marginTop: 3 }}>
+                {(p.category === "トップコート") && <span style={{ ...ps.tag, borderColor: "#111", color: "#111", fontWeight: 800 }}>トップコート</span>}
                 <span style={ps.tag}>{p.type}</span><span style={ps.tag}>{p.finish}</span>
               </div>
             </div>
