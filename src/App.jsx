@@ -6785,13 +6785,13 @@ function PaintStock({ onClose }) {
           <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e)}>PAINT GUIDE・TOPCOAT GUIDEから自動入力</button>
 
           <label style={ps.label}>色（系統）</label>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 6 }}>
-            {PAINT_COLOR_FAMILIES.map(f => (
-              <button key={f.label} onClick={() => upd({ colorFamily: f.label, swatch: f.hex })}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 8px", border: e.colorFamily === f.label ? "2px solid #111" : "1px solid #d1d5db", borderRadius: 0, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>
-                <span style={{ width: 16, height: 16, flexShrink: 0, background: f.hex, border: "1px solid rgba(0,0,0,0.2)" }} />{f.label}
-              </button>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 30, height: 30, flexShrink: 0, background: e.colorFamily ? (e.swatch || "#ccc") : "#fff", border: "1px solid rgba(0,0,0,0.2)" }} />
+            <select style={ps.input} value={e.colorFamily || ""}
+              onChange={ev => { const f = PAINT_COLOR_FAMILIES.find(x => x.label === ev.target.value); upd({ colorFamily: ev.target.value, swatch: f ? f.hex : (e.swatch || "#9aa0a6") }); }}>
+              <option value="">選択してください</option>
+              {PAINT_COLOR_FAMILIES.map(f => <option key={f.label} value={f.label}>{f.label}</option>)}
+            </select>
           </div>
 
           <label style={ps.label}>JANコード（任意・スキャンや手入力から商品名を取得）</label>
