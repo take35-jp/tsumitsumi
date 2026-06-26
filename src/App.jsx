@@ -6567,6 +6567,8 @@ function PaintStock({ onClose }) {
   const [catQ, setCatQ] = useState("");
   const [catTab, setCatTab] = useState("塗料"); // "塗料" | "トップコート"
   const [catBase, setCatBase] = useState(null); // 大全選択時にマージする下書き（編集中なら editing）
+  const [catMulti, setCatMulti] = useState(false); // true=複数選択して一括登録 / false=1件選んで下書きに反映
+  const [catSel, setCatSel] = useState({}); // 複数選択 { key: {c,isTop} }
   const firstSave = useRef(true);
 
   useEffect(() => {
@@ -6670,19 +6672,32 @@ function PaintStock({ onClose }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 410, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 14, fontWeight: 700 }}>商品情報を取得中…</div>
   );
 
-  // 大全検索を開く（base＝選択時にマージする下書き。編集中ならその下書き、無ければ新規）
-  const openCatalog = async (base) => {
+  const catKey = (c) => `${c.mfr}|${c.lineup}|${c.code}|${c.name}`;
+  // 大全検索を開く（multi=true：複数選択して一括登録／false：1件で下書きへ反映）
+  const openCatalog = async (base, multi) => {
     setCatBase(base || null);
+    setCatMulti(!!multi);
+    setCatSel({});
     setCatTab((base && base.category) || "塗料");
     setCatQ("");
     setCatOpen(true);
-    if (!cat) { try { setCat(await loadPaintCatalog()); } catch (e) { alert("大全データの読み込みに失敗しました。"); setCatOpen(false); } }
+    if (!cat) { try { setCat(await loadPaintCatalog()); } catch (e) { alert("大全データの読み込みに失敗しました。通信状況をご確認ください。"); setCatOpen(false); } }
   };
   const pickCatalog = (entry, isTopcoat) => {
     // 編集中ならその最新下書きへ、無ければ開いた時のスナップショット、どちらも無ければ新規にマージ
     const mapped = catalogToPaint(entry, isTopcoat, cat && cat.mfrNames, editing || catBase || blank());
     setEditing(mapped);
     setCatOpen(false);
+  };
+  const toggleCatSel = (c, isTop) => setCatSel(s => { const k = catKey(c); const n = { ...s }; if (n[k]) delete n[k]; else n[k] = { c, isTop }; return n; });
+  const addCatalogSelected = () => {
+    const items = Object.values(catSel);
+    if (!items.length) { setCatOpen(false); return; }
+    const mn = cat && cat.mfrNames;
+    const news = items.map(({ c, isTop }) => catalogToPaint(c, isTop, mn, blank()));
+    setPaints(prev => [...news, ...prev]);
+    setCatOpen(false);
+    setCatSel({});
   };
   const catList = (() => {
     if (!cat) return [];
@@ -6714,19 +6729,29 @@ function PaintStock({ onClose }) {
       <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "8px 14px 40px" }}>
         {!cat && <div style={{ textAlign: "center", color: "#9ca3af", padding: 40, fontSize: 13 }}>読み込み中…</div>}
         {cat && catList.length === 0 && <div style={{ textAlign: "center", color: "#9ca3af", padding: 40, fontSize: 13 }}>該当なし</div>}
-        {catList.map(({ c, isTop, brand, swatch }, i) => (
-          <div key={i} onClick={() => pickCatalog(c, isTop)} style={{ ...ps.row, marginBottom: 6 }}>
-            <div style={ps.swatch(swatch)} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>{brand}{c.lineup ? ` ${c.lineup}` : ""}{c.code ? ` ・ ${c.code}` : ""}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name || c.lineup}</div>
-              <div style={{ marginTop: 2 }}><span style={ps.tag}>{catTypeToApp(c.type)}</span><span style={ps.tag}>{catFinishToApp(c.finish, c.color)}</span></div>
+        {catList.map(({ c, isTop, brand, swatch }, i) => {
+          const sel = catMulti && !!catSel[catKey(c)];
+          return (
+            <div key={i} onClick={() => catMulti ? toggleCatSel(c, isTop) : pickCatalog(c, isTop)} style={{ ...ps.row, marginBottom: 6, border: sel ? "2px solid #111" : ps.row.border, background: sel ? "#f3f4f6" : "#fff" }}>
+              <div style={ps.swatch(swatch)} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>{brand}{c.lineup ? ` ${c.lineup}` : ""}{c.code ? ` ・ ${c.code}` : ""}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name || c.lineup}</div>
+                <div style={{ marginTop: 2 }}><span style={ps.tag}>{catTypeToApp(c.type)}</span><span style={ps.tag}>{catFinishToApp(c.finish, c.color)}</span></div>
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: sel ? "#111" : "#9ca3af", flexShrink: 0 }}>{catMulti ? (sel ? "✓" : "＋") : "＋"}</div>
             </div>
-            <div style={{ fontSize: 18, color: "#9ca3af", flexShrink: 0 }}>＋</div>
-          </div>
-        ))}
+          );
+        })}
         {cat && catList.length >= 80 && <div style={{ textAlign: "center", color: "#9ca3af", padding: "16px 0", fontSize: 11 }}>上位80件を表示中。検索で絞り込んでください。</div>}
       </div>
+      {catMulti && (
+        <div style={{ borderTop: "1px solid #e5e7eb", padding: "10px 14px", background: "#fff" }}>
+          <button style={{ ...ps.black, width: "100%", opacity: Object.keys(catSel).length ? 1 : 0.5 }} disabled={!Object.keys(catSel).length} onClick={addCatalogSelected}>
+            選択中 {Object.keys(catSel).length} 件を追加
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -6848,7 +6873,7 @@ function PaintStock({ onClose }) {
           <button style={ps.black} onClick={save}>保存</button>
         </div>
         <div style={ps.body}>
-          <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e)}>PAINT GUIDE・TOPCOAT GUIDEから自動入力</button>
+          <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e, false)}>PAINT GUIDE・TOPCOAT GUIDEから自動入力</button>
 
           <label style={ps.label}>色（系統）</label>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -6965,7 +6990,7 @@ function PaintStock({ onClose }) {
             <option value="name">名前順</option>
           </select>
         </div>
-        <button style={{ ...ps.black, width: "100%" }} onClick={() => openCatalog(null)}>PAINT GUIDE・TOPCOAT GUIDEから探して追加</button>
+        <button style={{ ...ps.black, width: "100%" }} onClick={() => openCatalog(null, true)}>PAINT GUIDE・TOPCOAT GUIDEから探して追加（複数可）</button>
       </div>
 
       <div style={ps.body}>
@@ -7004,12 +7029,15 @@ function PaintStock({ onClose }) {
         ))}
       </div>
 
-      <div style={{ position: "fixed", right: 18, bottom: 22, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, zIndex: 2 }}>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button style={{ ...ps.fab, position: "static", background: "#fff", color: "#111", border: "1.5px solid #111" }} onClick={() => { scanTargetRef.current = "paint"; setScanning(true); }}>スキャン登録</button>
-          <button style={{ ...ps.fab, position: "static" }} onClick={() => setEditing(blank())}>直接入力</button>
-        </div>
-        <button style={{ ...ps.fab, position: "static", background: "#111", color: "#fff", width: "auto" }} onClick={() => setEditing(blankMix())}>調色レシピ</button>
+      <div style={{ position: "fixed", right: 18, bottom: 22, display: "flex", flexDirection: "column", alignItems: "stretch", gap: 8, zIndex: 2 }}>
+        {(() => {
+          const fab = { ...ps.fab, position: "static", width: 124, height: 46, padding: 0, fontSize: 13, justifyContent: "center" };
+          return (<>
+            <button style={{ ...fab, background: "#fff", color: "#111", border: "1.5px solid #111" }} onClick={() => { scanTargetRef.current = "paint"; setScanning(true); }}>スキャン登録</button>
+            <button style={fab} onClick={() => setEditing(blank())}>直接入力</button>
+            <button style={fab} onClick={() => setEditing(blankMix())}>調色レシピ</button>
+          </>);
+        })()}
       </div>
 
       {scannerOverlay}
