@@ -6554,14 +6554,14 @@ function PaintStock({ onClose }) {
   const [catQ, setCatQ] = useState("");
   const [catTab, setCatTab] = useState("塗料"); // "塗料" | "トップコート"
   const [catBase, setCatBase] = useState(null); // 大全選択時にマージする下書き（編集中なら editing）
-  const loaded = useRef(false);
+  const firstSave = useRef(true);
 
   useEffect(() => {
     try { const v = JSON.parse(localStorage.getItem(PAINT_LS_KEY) || "[]"); if (Array.isArray(v)) setPaints(v); } catch (e) {}
-    loaded.current = true;
   }, []);
   useEffect(() => {
-    if (!loaded.current) return; // 初回マウントの保存スキップ（既存データの空上書き防止）
+    // 初回マウントの保存はスキップ（ロード前の空[]で既存データを上書きしないため）。
+    if (firstSave.current) { firstSave.current = false; return; }
     try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
   }, [paints]);
 
@@ -6651,7 +6651,8 @@ function PaintStock({ onClose }) {
     if (!cat) { try { setCat(await loadPaintCatalog()); } catch (e) { alert("大全データの読み込みに失敗しました。"); setCatOpen(false); } }
   };
   const pickCatalog = (entry, isTopcoat) => {
-    const mapped = catalogToPaint(entry, isTopcoat, cat && cat.mfrNames, catBase || blank());
+    // 編集中ならその最新下書きへ、無ければ開いた時のスナップショット、どちらも無ければ新規にマージ
+    const mapped = catalogToPaint(entry, isTopcoat, cat && cat.mfrNames, editing || catBase || blank());
     setEditing(mapped);
     setCatOpen(false);
   };
