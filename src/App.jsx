@@ -6507,6 +6507,15 @@ async function loadPaintCatalog() {
   return _paintCatalog;
 }
 const CAT_COLOR_HEX = { white: "#f3f3f3", black: "#1c1c1c", red: "#cf2f2f", yellow: "#f1c40f", blue: "#2a5fd6", green: "#2a9d4a", brown: "#7a4b25", metal: "#9aa0a6", gray: "#8b9097", clear: "#cfd8e3", orange: "#e8731c", purple: "#7a3fb0", fluorescent: "#ff4f9d", surfacer: "#8a8a8a" };
+// 色は「系統」を言葉で選ぶ（カラーピッカーは使わない）。label を colorFamily に保存し、表示用 swatch に hex を入れる。
+const PAINT_COLOR_FAMILIES = [
+  { label: "白", hex: "#f3f3f3" }, { label: "黒", hex: "#1c1c1c" }, { label: "グレー", hex: "#8b9097" },
+  { label: "赤系", hex: "#cf2f2f" }, { label: "青系", hex: "#2a5fd6" }, { label: "緑系", hex: "#2a9d4a" },
+  { label: "黄系", hex: "#f1c40f" }, { label: "オレンジ系", hex: "#e8731c" }, { label: "紫系", hex: "#7a3fb0" },
+  { label: "茶系", hex: "#7a4b25" }, { label: "メタリック", hex: "#9aa0a6" }, { label: "クリア", hex: "#cfd8e3" },
+  { label: "蛍光", hex: "#ff4f9d" }, { label: "サーフェイサー", hex: "#8a8a8a" },
+];
+const CAT_COLOR_FAMILY = { white: "白", black: "黒", gray: "グレー", red: "赤系", blue: "青系", green: "緑系", yellow: "黄系", orange: "オレンジ系", purple: "紫系", brown: "茶系", metal: "メタリック", clear: "クリア", fluorescent: "蛍光", surfacer: "サーフェイサー" };
 function catTypeToApp(t) {
   if (t === "lacquer") return "ラッカー";
   if (t === "water" || t === "acrijon" || t === "acrylic") return "水性アクリル";
@@ -6536,6 +6545,7 @@ function catalogToPaint(c, isTopcoat, mfrNames, base) {
     type: catTypeToApp(c.type),
     finish: catFinishToApp(c.finish, c.color),
     swatch: isTopcoat ? "#cfd8e3" : (CAT_COLOR_HEX[c.color] || "#9aa0a6"),
+    colorFamily: isTopcoat ? "クリア" : (CAT_COLOR_FAMILY[c.color] || ""),
   };
 }
 
@@ -6565,7 +6575,7 @@ function PaintStock({ onClose }) {
     try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
   }, [paints]);
 
-  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", asin: "", amazonUrl: "", memo: "", createdAt: Date.now() });
+  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], colorFamily: "", swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", asin: "", amazonUrl: "", amazonImage: "", memo: "", createdAt: Date.now() });
   const AMZ_TAG = "tsumitsumi232-22";
   const amazonSearchUrl = (p) => `https://www.amazon.co.jp/s?k=${encodeURIComponent([p.brand, p.code, p.name].filter(Boolean).join(" "))}&tag=${AMZ_TAG}`;
   // PA-API（Creators API）でJAN/商品名→ASIN直リンクを解決（/api/paapi-search を経由）
@@ -6702,10 +6712,26 @@ function PaintStock({ onClose }) {
     </div>
   );
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
     const d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim() };
     if (!d.name && !d.code) { alert("色名または色番号のどちらかを入力してください。"); return; }
+    // Amazonリンク未取得なら保存時に自動取得（PA-API）。JAN優先→無ければ商品名で検索。
+    if (!d.amazonUrl) {
+      const hasJan = d.jan && d.jan.replace(/[^0-9]/g, "").length >= 8;
+      const kw = [d.brand, d.code, d.name].filter(Boolean).join(" ").trim();
+      if (hasJan || kw) {
+        setLooking(true);
+        try {
+          const param = hasJan ? `jan=${encodeURIComponent(d.jan)}` : `q=${encodeURIComponent(kw)}`;
+          const r = await fetch(`/api/paapi-search?${param}`);
+          const j = await r.json().catch(() => ({}));
+          const top = (j.results || [])[0];
+          if (top) { d.asin = top.asin; d.amazonUrl = top.url; d.amazonImage = top.image || ""; }
+        } catch (e) {}
+        finally { setLooking(false); }
+      }
+    }
     setPaints(prev => prev.some(x => x.id === d.id) ? prev.map(x => x.id === d.id ? d : x) : [d, ...prev]);
     setEditing(null);
   };
@@ -6758,15 +6784,14 @@ function PaintStock({ onClose }) {
         <div style={ps.body}>
           <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e)}>PAINT GUIDE・TOPCOAT GUIDEから自動入力</button>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fff", border: "1px solid #e5e7eb", padding: 12 }}>
-            <div style={ps.swatch(e.swatch)} />
-            <div style={{ flex: 1 }}>
-              <label style={{ ...ps.label, margin: "0 0 4px" }}>色（カラーピッカー）</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input type="color" value={e.swatch} onChange={ev => upd({ swatch: ev.target.value })} style={{ width: 46, height: 34, border: "1px solid #d1d5db", background: "#fff", padding: 0, cursor: "pointer" }} />
-                <input style={{ ...ps.input, width: 110, flex: "none" }} value={e.swatch} onChange={ev => upd({ swatch: ev.target.value })} />
-              </div>
-            </div>
+          <label style={ps.label}>色（系統）</label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 6 }}>
+            {PAINT_COLOR_FAMILIES.map(f => (
+              <button key={f.label} onClick={() => upd({ colorFamily: f.label, swatch: f.hex })}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 8px", border: e.colorFamily === f.label ? "2px solid #111" : "1px solid #d1d5db", borderRadius: 0, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>
+                <span style={{ width: 16, height: 16, flexShrink: 0, background: f.hex, border: "1px solid rgba(0,0,0,0.2)" }} />{f.label}
+              </button>
+            ))}
           </div>
 
           <label style={ps.label}>JANコード（任意・スキャンや手入力から商品名を取得）</label>
@@ -6829,13 +6854,7 @@ function PaintStock({ onClose }) {
             </div>
           </div>
 
-          <label style={ps.label}>Amazonリンク（任意・再購入用の直リンク）{e.asin ? `　［ASIN: ${e.asin}］` : ""}</label>
-          <input style={ps.input} value={e.amazonUrl || ""} onChange={ev => upd({ amazonUrl: ev.target.value, asin: "" })} placeholder="https://www.amazon.co.jp/dp/..." />
-          <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-            <button style={{ ...ps.black, flex: "1 1 100%" }} disabled={looking} onClick={() => fetchAmazonLink(e)}>{looking ? "取得中…" : "Amazonで商品リンクを取得（PA-API）"}</button>
-            <button style={{ ...ps.ghost, flex: 1 }} onClick={() => upd({ amazonUrl: amazonSearchUrl(e), asin: "" })}>検索リンクを作成</button>
-            {e.amazonUrl && <a href={e.amazonUrl} target="_blank" rel="noopener noreferrer" style={{ ...ps.ghost, flex: 1, textAlign: "center", textDecoration: "none" }}>開く</a>}
-          </div>
+          <div style={{ fontSize: 11, color: "#9ca3af", margin: "4px 0 2px" }}>保存時にAmazonの商品リンク・画像を自動取得します（一覧の「補充」から開けます）。</div>
 
           <label style={ps.label}>メモ（調色レシピ・使い道など）</label>
           <textarea style={{ ...ps.input, minHeight: 70, resize: "vertical" }} value={e.memo} onChange={ev => upd({ memo: ev.target.value })} placeholder="例：本体色のベース。○○と1:1で調色。" />
@@ -6890,7 +6909,9 @@ function PaintStock({ onClose }) {
         )}
         {filtered.map(p => (
           <div key={p.id} style={ps.row} onClick={() => setEditing({ ...p })}>
-            <div style={ps.swatch(p.swatch)} />
+            {p.amazonImage
+              ? <img src={p.amazonImage} alt="" style={{ width: 40, height: 40, flexShrink: 0, objectFit: "contain", background: "#fff", border: "1px solid rgba(0,0,0,0.12)" }} />
+              : <div style={ps.swatch(p.swatch)} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, color: "#6b7280" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
               <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
@@ -6903,8 +6924,8 @@ function PaintStock({ onClose }) {
               <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>{PAINT_REMAIN[p.remain ?? 4]} ×{p.count || 1}</div>
             </div>
             {p.amazonUrl && (
-              <a href={p.amazonUrl} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title="Amazonで見る"
-                style={{ flexShrink: 0, marginLeft: 8, padding: "0 10px", height: 34, border: "1px solid #111", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#111", textDecoration: "none" }}>Amazon</a>
+              <a href={p.amazonUrl} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title="Amazonで補充"
+                style={{ flexShrink: 0, marginLeft: 8, padding: "0 10px", height: 34, border: "1px solid #111", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#111", textDecoration: "none" }}>補充</a>
             )}
           </div>
         ))}
