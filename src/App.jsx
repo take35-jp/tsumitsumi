@@ -6558,6 +6558,7 @@ function PaintStock({ onClose }) {
   const [fColor, setFColor] = useState(""); // 色（系統）フィルタ
   const [pSort, setPSort] = useState("date"); // 並び替え: date(登録順) | color(色順) | brand(メーカー順) | name(名前順)
   const [scanning, setScanning] = useState(false); // バーコードスキャナ表示
+  const scanTargetRef = useRef("paint"); // "paint" | "mixpart"（スキャン結果の流し先）
   const [looking, setLooking] = useState(false); // JAN→商品情報の取得中
   const [catOpen, setCatOpen] = useState(false); // 大全検索オーバーレイ
   const [cat, setCat] = useState(null); // 大全データ { mfrNames, paints, topcoats }
@@ -6575,7 +6576,12 @@ function PaintStock({ onClose }) {
     try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
   }, [paints]);
 
-  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], colorFamily: "", swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", asin: "", amazonUrl: "", amazonImage: "", memo: "", createdAt: Date.now() });
+  const blank = () => ({ id: makePaintId(), kind: "paint", category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], colorFamily: "", swatch: "#9aa0a6", count: 1, purchaseDate: "", asin: "", amazonUrl: "", amazonImage: "", mixParts: [], memo: "", createdAt: Date.now() });
+  const blankMix = () => ({ ...blank(), kind: "mix", name: "", colorFamily: "", mixParts: [] });
+  // 調色レシピの材料操作
+  const addMixPart = (src) => setEditing(e => ({ ...e, mixParts: [...(e.mixParts || []), src ? { name: src.name || "", jan: src.jan || "", percent: "" } : { name: "", jan: "", percent: "" }] }));
+  const updMixPart = (i, patch) => setEditing(e => ({ ...e, mixParts: (e.mixParts || []).map((x, j) => j === i ? { ...x, ...patch } : x) }));
+  const delMixPart = (i) => setEditing(e => ({ ...e, mixParts: (e.mixParts || []).filter((_, j) => j !== i) }));
   const AMZ_TAG = "tsumitsumi232-22";
   const amazonSearchUrl = (p) => `https://www.amazon.co.jp/s?k=${encodeURIComponent([p.brand, p.code, p.name].filter(Boolean).join(" "))}&tag=${AMZ_TAG}`;
   // PA-API（Creators API）でJAN/商品名→ASIN直リンクを解決（/api/paapi-search を経由）
@@ -6636,6 +6642,17 @@ function PaintStock({ onClose }) {
     setScanning(false);
     const jan = String(code || "").replace(/[^0-9]/g, "");
     if (!jan) return;
+    // 調色レシピの材料スキャン：商品名を取得して材料に追加（％は手入力）
+    if (scanTargetRef.current === "mixpart") {
+      scanTargetRef.current = "paint";
+      setLooking(true);
+      let name = "";
+      try { const r = await fetch(`/api/search?jan=${encodeURIComponent(jan)}`); const d = r.ok ? await r.json() : null; if (d && d.name) name = d.name; } catch (e) {}
+      setLooking(false);
+      setEditing(e => ({ ...e, mixParts: [...(e.mixParts || []), { name, jan, percent: "" }] }));
+      if (!name) alert("商品名が見つかりませんでした。材料名は手入力してください。");
+      return;
+    }
     const base = editing || blank();
     const filled = await lookupJan(jan, base);
     if (filled) setEditing(filled);
@@ -6715,9 +6732,11 @@ function PaintStock({ onClose }) {
   const save = async () => {
     if (!editing) return;
     const d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim(), count: Math.max(1, parseInt(editing.count, 10) || 1) };
-    if (!d.name && !d.code) { alert("色名または色番号のどちらかを入力してください。"); return; }
-    // Amazonリンク未取得なら保存時に自動取得（PA-API）。JAN優先→無ければ商品名で検索。
-    if (!d.amazonUrl) {
+    if (d.kind === "mix") {
+      if (!d.name) { alert("調色レシピ名（色名）を入力してください。"); return; }
+    } else if (!d.name && !d.code) { alert("色名または色番号のどちらかを入力してください。"); return; }
+    // Amazonリンク未取得なら保存時に自動取得（PA-API）。調色レシピ(mix)は商品が無いのでスキップ。
+    if (d.kind !== "mix" && !d.amazonUrl) {
       const hasJan = d.jan && d.jan.replace(/[^0-9]/g, "").length >= 8;
       const kw = [d.brand, d.code, d.name].filter(Boolean).join(" ").trim();
       if (hasJan || kw) {
@@ -6768,13 +6787,56 @@ function PaintStock({ onClose }) {
     ghost: { background: "#fff", color: "#111", border: "1px solid #111", padding: "11px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: 0 },
   };
 
-  const RemainBar = ({ v }) => (
-    <span style={{ display: "inline-flex", gap: 2, verticalAlign: "middle" }}>
-      {[0, 1, 2, 3].map(i => (
-        <span key={i} style={{ width: 7, height: 12, background: i < (v ?? 4) ? (v <= 1 ? "#ef4444" : v === 2 ? "#f59e0b" : "#22c55e") : "#e5e7eb" }} />
-      ))}
-    </span>
-  );
+  // ---- 調色レシピ 編集フォーム ----
+  if (editing && editing.kind === "mix") {
+    const e = editing;
+    return (
+      <div style={ps.wrap}>
+        <div style={ps.bar}>
+          <button style={ps.ghost} onClick={() => setEditing(null)}>キャンセル</button>
+          <div style={{ flex: 1, textAlign: "center", fontSize: 13, fontWeight: 800 }}>{paints.some(x => x.id === e.id) ? "調色レシピを編集" : "調色レシピ"}</div>
+          <button style={ps.black} onClick={save}>保存</button>
+        </div>
+        <div style={ps.body}>
+          <label style={ps.label}>レシピ名 / 調色名</label>
+          <input style={ps.input} value={e.name} onChange={ev => upd({ name: ev.target.value })} placeholder="例：自作ジオン系グリーン" />
+
+          <label style={ps.label}>仕上がりの色（系統）</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 30, height: 30, flexShrink: 0, background: e.colorFamily ? (e.swatch || "#ccc") : "#fff", border: "1px solid rgba(0,0,0,0.2)" }} />
+            <select style={ps.input} value={e.colorFamily || ""}
+              onChange={ev => { const f = PAINT_COLOR_FAMILIES.find(x => x.label === ev.target.value); upd({ colorFamily: ev.target.value, swatch: f ? f.hex : (e.swatch || "#9aa0a6") }); }}>
+              <option value="">選択してください</option>
+              {PAINT_COLOR_FAMILIES.map(f => <option key={f.label} value={f.label}>{f.label}</option>)}
+            </select>
+          </div>
+
+          <label style={{ ...ps.label, marginTop: 18 }}>調色に使った塗料（割合 %）</label>
+          {(e.mixParts || []).map((m, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <input style={{ ...ps.input, flex: 1 }} value={m.name} onChange={ev => updMixPart(i, { name: ev.target.value })} placeholder="塗料名" />
+              <input style={{ ...ps.input, width: 76, flex: "none" }} inputMode="numeric" value={m.percent} onChange={ev => updMixPart(i, { percent: ev.target.value.replace(/[^0-9.]/g, "") })} placeholder="%" />
+              <button style={{ ...ps.ghost, padding: "8px 10px" }} onClick={() => delMixPart(i)}>✕</button>
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+            <button style={{ ...ps.black, flex: 1 }} onClick={() => { scanTargetRef.current = "mixpart"; setScanning(true); }}>スキャンで追加</button>
+            <button style={{ ...ps.ghost, flex: 1 }} onClick={() => addMixPart(null)}>手入力で追加</button>
+          </div>
+          {(() => { const tot = (e.mixParts || []).reduce((a, m) => a + (parseFloat(m.percent) || 0), 0); return tot > 0 ? <div style={{ fontSize: 11, color: tot === 100 ? "#16a34a" : "#9ca3af", marginTop: 6 }}>合計 {tot}％{tot !== 100 ? "（100％でなくてもOK）" : ""}</div> : null; })()}
+
+          <label style={{ ...ps.label, marginTop: 18 }}>メモ</label>
+          <textarea style={{ ...ps.input, minHeight: 70, resize: "vertical" }} value={e.memo} onChange={ev => upd({ memo: ev.target.value })} placeholder="希釈・手順・使った機体など" />
+
+          {paints.some(x => x.id === e.id) && (
+            <button onClick={() => remove(e.id)} style={{ ...ps.ghost, borderColor: "#c00", color: "#c00", width: "100%", marginTop: 22 }}>この調色レシピを削除</button>
+          )}
+        </div>
+        {scannerOverlay}
+        {lookingOverlay}
+      </div>
+    );
+  }
 
   // ---- 追加/編集フォーム ----
   if (editing) {
@@ -6918,20 +6980,24 @@ function PaintStock({ onClose }) {
         )}
         {filtered.map(p => (
           <div key={p.id} style={ps.row} onClick={() => setEditing({ ...p })}>
-            {p.amazonImage
+            {(p.kind !== "mix" && p.amazonImage)
               ? <img src={p.amazonImage} alt="" style={{ width: 40, height: 40, flexShrink: 0, objectFit: "contain", background: "#fff", border: "1px solid rgba(0,0,0,0.12)" }} />
               : <div style={ps.swatch(p.swatch)} />}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>{p.kind === "mix" ? "調色レシピ" : `${p.brand}${p.code ? ` ・ No.${p.code}` : ""}`}</div>
               <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
-              <div style={{ marginTop: 3 }}>
-                <span style={ps.tag}>{p.type}</span><span style={ps.tag}>{p.finish}</span>
+              <div style={{ marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {p.kind === "mix"
+                  ? (<span style={{ fontSize: 11, color: "#6b7280" }}>{(p.mixParts || []).map(m => `${m.name || "?"}${m.percent ? ` ${m.percent}%` : ""}`).join(" ／ ") || "材料未設定"}</span>)
+                  : (<><span style={ps.tag}>{p.type}</span><span style={ps.tag}>{p.finish}</span></>)}
               </div>
             </div>
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 700 }}>{p.count || 1}個</div>
-            </div>
-            {p.amazonUrl && (
+            {p.kind !== "mix" && (
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 700 }}>{p.count || 1}個</div>
+              </div>
+            )}
+            {p.kind !== "mix" && p.amazonUrl && (
               <a href={p.amazonUrl} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title="Amazonで補充"
                 style={{ flexShrink: 0, marginLeft: 8, padding: "0 10px", height: 34, border: "1px solid #111", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#111", textDecoration: "none" }}>補充</a>
             )}
@@ -6939,9 +7005,12 @@ function PaintStock({ onClose }) {
         ))}
       </div>
 
-      <div style={{ position: "fixed", right: 18, bottom: 22, display: "flex", gap: 8, zIndex: 2 }}>
-        <button style={{ ...ps.fab, position: "static", background: "#fff", color: "#111", border: "1.5px solid #111" }} onClick={() => setScanning(true)}>スキャン登録</button>
-        <button style={{ ...ps.fab, position: "static" }} onClick={() => setEditing(blank())}>直接入力</button>
+      <div style={{ position: "fixed", right: 18, bottom: 22, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, zIndex: 2 }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button style={{ ...ps.fab, position: "static", background: "#fff", color: "#111", border: "1.5px solid #111" }} onClick={() => { scanTargetRef.current = "paint"; setScanning(true); }}>スキャン登録</button>
+          <button style={{ ...ps.fab, position: "static" }} onClick={() => setEditing(blank())}>直接入力</button>
+        </div>
+        <button style={{ ...ps.fab, position: "static", background: "#111", color: "#fff", width: "auto" }} onClick={() => setEditing(blankMix())}>調色レシピ</button>
       </div>
 
       {scannerOverlay}
