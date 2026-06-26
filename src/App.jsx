@@ -3276,6 +3276,53 @@ async function generateModelerPhotoImage(photo, album) {
   maDrawCover(ctx, img, 0, headerH, W, imgH);
   return await new Promise(r => canvas.toBlob(r, "image/png"));
 }
+// 使用色シェア：写真1枚（左）＋使用塗料リスト（右）の 16:9 横長画像（X投稿向け）
+async function generateUsedColorsImage(photo, paints, album) {
+  const S = 2, W = 1600, H = 900, M = 40;
+  const img = await maLoadImage(photo && photo.url);
+  const canvas = document.createElement("canvas");
+  canvas.width = W * S; canvas.height = H * S;
+  const ctx = canvas.getContext("2d"); ctx.scale(S, S); ctx.imageSmoothingQuality = "high"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+  const photoW = 820;
+  if (img) maDrawCover(ctx, img, 0, 0, photoW, H);
+  else { ctx.fillStyle = "#f0f0f0"; ctx.fillRect(0, 0, photoW, H); }
+  const px = photoW + M, pw = W - photoW - M * 2;
+  let y = M + 16;
+  try { ctx.letterSpacing = "2px"; } catch (e) {}
+  ctx.fillStyle = "#9aa0a6"; ctx.font = `700 17px ${MA_FONT}`; ctx.fillText("USED COLORS / 使用した塗料", px, y);
+  try { ctx.letterSpacing = "0px"; } catch (e) {}
+  const title = (album && album.title) || "";
+  if (title) {
+    let fs = 40; ctx.font = `800 ${fs}px ${MA_FONT}`;
+    while (ctx.measureText(title).width > pw && fs > 22) { fs -= 2; ctx.font = `800 ${fs}px ${MA_FONT}`; }
+    let shown = title;
+    if (ctx.measureText(shown).width > pw) { while (shown.length > 1 && ctx.measureText(shown + "…").width > pw) shown = shown.slice(0, -1); shown += "…"; }
+    y += fs + 14; ctx.fillStyle = "#111"; ctx.fillText(shown, px, y);
+  }
+  y += 26;
+  ctx.strokeStyle = "#e5e7eb"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
+  y += 24;
+  const all = paints || [];
+  const list = all.slice(0, 12);
+  const areaH = H - y - 56;
+  const rowH = Math.min(60, Math.max(36, Math.floor(areaH / Math.max(1, list.length))));
+  const sw = Math.min(42, rowH - 12);
+  for (const p of list) {
+    ctx.fillStyle = p.swatch || "#ccc"; ctx.fillRect(px, y, sw, sw);
+    ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; ctx.strokeRect(px, y, sw, sw);
+    const txtY = y + sw - Math.round((sw - 22) / 2) - 4;
+    ctx.fillStyle = "#111"; ctx.font = `700 24px ${MA_FONT}`;
+    let nm = p.name || "（無名）"; const maxW = pw - sw - 16 - (p.part ? 140 : 0);
+    while (ctx.measureText(nm).width > maxW && nm.length > 1) nm = nm.slice(0, -1);
+    ctx.fillText(nm, px + sw + 14, txtY);
+    if (p.part) { ctx.fillStyle = "#888"; ctx.font = `600 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(p.part, px + pw, txtY); ctx.textAlign = "left"; }
+    y += rowH;
+  }
+  if (all.length > 12) { ctx.fillStyle = "#999"; ctx.font = `600 16px ${MA_FONT}`; ctx.fillText(`ほか ${all.length - 12} 色`, px, y + 14); }
+  ctx.fillStyle = "#9aa0a6"; ctx.font = `800 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText("My PALETTE", W - M, H - 22); ctx.textAlign = "left";
+  return await new Promise(r => canvas.toBlob(r, "image/png"));
+}
 // アルバム全体：全写真を4枚ずつ複数画像に分割（24枚→6画像）。1枚目＝表紙(大)＋他3＋ヘッダー、2枚目以降＝2x2グリッド。
 async function maRenderAlbumPage(album, group, page, total) {
   const S = 2, W = 1080, H = 1350, M = 46, GAP = 8;
@@ -3545,6 +3592,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
   const [picker, setPicker] = useState(null); // 塗料選択 { kind:"paint" } | { kind:"part", mixId }
   const [mixRecipes, setMixRecipes] = useState([]); // 名前付き調色レシピ集
   const [recallOpen, setRecallOpen] = useState(false); // レシピ集から呼び出すオーバーレイ
+  const [colorShare, setColorShare] = useState(null); // 使用色シェア：写真選択中のアルバム
   const recipesLoaded = useRef(false);
 
   useEffect(() => {
@@ -3987,6 +4035,44 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
     grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 },
     label: { display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888", marginBottom: 6, textTransform: "uppercase" },
     input: { width: "100%", boxSizing: "border-box", border: "none", borderBottom: "1px solid #111", padding: "8px 2px", fontSize: 16, fontFamily: MA_FONT, color: "#111", background: "transparent", outline: "none" },
+  };
+
+  // ---- 使用色シェア：写真を1枚選んで 16:9 画像を生成→シェア ----
+  const doColorShare = async (album, photo) => {
+    setColorShare(null);
+    setSharing(true);
+    try {
+      const blob = await generateUsedColorsImage(photo, album.paints || [], album);
+      if (!blob) { alert("画像の生成に失敗しました"); return; }
+      const file = new File([blob], `mypalette_colors_${album.id || "x"}.png`, { type: "image/png" });
+      const url = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result || ""); fr.onerror = () => res(""); fr.readAsDataURL(blob); });
+      setShareResult({ files: [file], urls: [url], text: `「${album.title || "作品"}」の使用色\n${MA_TAGS}` });
+    } catch (e) { alert("生成に失敗しました: " + (e.message || e)); }
+    finally { setSharing(false); }
+  };
+  const renderColorShare = () => {
+    if (!colorShare) return null;
+    const ph = maNormPhotos(colorShare.photos);
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "#fff", display: "flex", flexDirection: "column", fontFamily: MA_FONT }}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => setColorShare(null)}>閉じる</button>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.1em" }}>使用色シェア：写真を選択</div>
+          <div style={{ width: 64 }} />
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "12px 16px 40px", maxWidth: 940, margin: "0 auto", width: "100%" }}>
+          <div style={{ fontSize: 12, color: "#666", marginBottom: 12 }}>選んだ写真の右に「使用した塗料」を並べた16:9画像を作成します（{(colorShare.paints || []).length}色）。</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 8 }}>
+            {ph.map((p, i) => (
+              <div key={i} onClick={() => doColorShare(colorShare, p)} style={{ aspectRatio: "1/1", background: "#f4f4f4", overflow: "hidden", cursor: "pointer", border: "1px solid #e5e7eb" }}>
+                <MaThumb src={p.url} maxPx={480} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </div>
+            ))}
+          </div>
+          {ph.length === 0 && <div style={{ color: "#bbb", fontSize: 12, padding: "40px 0", textAlign: "center" }}>写真がありません</div>}
+        </div>
+      </div>
+    );
   };
 
   // ---- 塗料ピッカー（マイパレットから選択 or 手入力）----
@@ -4497,7 +4583,10 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
 
           {paintPreview && (a.paints || []).length > 0 && (
             <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid #eee" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888", marginBottom: 10 }}>PAINTS USED / 使用した塗料</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888" }}>PAINTS USED / 使用した塗料</div>
+                {maNormPhotos(a.photos).length > 0 && <button style={{ ...ma.black, padding: "7px 12px" }} disabled={sharing} onClick={() => setColorShare(a)}>{sharing ? "..." : "使用色をXにシェア"}</button>}
+              </div>
               {a.paints.map((p, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #f4f4f4" }}>
                   <div style={{ width: 22, height: 22, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
@@ -4532,6 +4621,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
         {renderShareSelect()}
         {renderBeforeAfter()}
         {renderShareResult()}
+        {renderColorShare()}
       </div>
     );
   }
@@ -6517,7 +6607,7 @@ function makePaintId() { return "p" + Date.now().toString(36) + Math.random().to
 function MyPaletteLogo({ size = 32 }) {
   const [err, setErr] = useState(false);
   if (!err) {
-    return <img src="/mypalette-logo.png" alt="My PALETTE" onError={() => setErr(true)} style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }} />;
+    return <img src="/MyPALETTE2.png" alt="My PALETTE" onError={() => setErr(true)} style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }} />;
   }
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-label="My PALETTE" style={{ display: "block", flexShrink: 0 }}>
@@ -6601,6 +6691,9 @@ function PaintStock({ onClose, onOpenModeler }) {
   const [pSort, setPSort] = useState("date"); // 並び替え: date(登録順) | color(色順) | brand(メーカー順) | name(名前順)
   const [scanning, setScanning] = useState(false); // バーコードスキャナ表示
   const scanTargetRef = useRef("paint"); // "paint" | "mixpart"（スキャン結果の流し先）
+  const [pCont, setPCont] = useState(false); // 連続スキャンモード
+  const [scanQueue, setScanQueue] = useState([]); // 連続スキャンの登録待ちキュー
+  const scanCoolRef = useRef({ jan: "", ts: 0 }); // 同一JAN連射防止
   const [looking, setLooking] = useState(false); // JAN→商品情報の取得中
   const [catOpen, setCatOpen] = useState(false); // 大全検索オーバーレイ
   const [cat, setCat] = useState(null); // 大全データ { mfrNames, paints, topcoats }
@@ -6617,6 +6710,8 @@ function PaintStock({ onClose, onOpenModeler }) {
 
   useEffect(() => {
     try { const v = JSON.parse(localStorage.getItem(PAINT_LS_KEY) || "[]"); if (Array.isArray(v)) setPaints(v); } catch (e) {}
+    // 大全データを先読み（ボタン押下時に即座に表示できるよう。失敗は無視＝開いた時に再試行可能）
+    loadPaintCatalog().then(c => setCat(c)).catch(() => {});
   }, []);
   useEffect(() => {
     // 初回マウントの保存はスキップ（ロード前の空[]で既存データを上書きしないため）。
@@ -6686,11 +6781,15 @@ function PaintStock({ onClose, onOpenModeler }) {
   };
   // スキャナでJAN検出 → 商品情報を引いてフォームを開く（編集中ならその下書きに上書き、無ければ新規）
   const onScanDetected = async (code) => {
-    setScanning(false);
     const jan = String(code || "").replace(/[^0-9]/g, "");
     if (!jan) return;
+    // 連続スキャン：同一JANの連射を抑止
+    const now = Date.now();
+    if (jan === scanCoolRef.current.jan && now - scanCoolRef.current.ts < 2500) { scanCoolRef.current.ts = now; return; }
+    scanCoolRef.current = { jan, ts: now };
     // 調色レシピの材料スキャン：商品名を取得して材料に追加（％は手入力）
     if (scanTargetRef.current === "mixpart") {
+      setScanning(false);
       scanTargetRef.current = "paint";
       setLooking(true);
       let name = "";
@@ -6700,15 +6799,38 @@ function PaintStock({ onClose, onOpenModeler }) {
       if (!name) alert("商品名が見つかりませんでした。材料名は手入力してください。");
       return;
     }
+    // 連続スキャンモード：スキャナを閉じずにキューへ追加（商品名はYahooで取得）
+    if (pCont) {
+      setLooking(true);
+      const filled = await lookupJan(jan, blank());
+      setLooking(false);
+      setScanQueue(q => [...q, filled || { ...blank(), jan }]);
+      return;
+    }
+    setScanning(false);
     const base = editing || blank();
     const filled = await lookupJan(jan, base);
     if (filled) setEditing(filled);
     else { alert("商品情報が見つかりませんでした。JANを保存したので、色名などは手入力してください。"); setEditing({ ...base, jan }); }
   };
+  const closeScanner = () => {
+    setScanning(false);
+    if (scanTargetRef.current === "paint" && scanQueue.length) {
+      setPaints(prev => [...scanQueue, ...prev]);
+      setScanQueue([]);
+    }
+  };
   const scannerOverlay = scanning && (
-    <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-start", justifyContent: "center" }} onClick={() => setScanning(false)}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-start", justifyContent: "center" }} onClick={closeScanner}>
       <div onClick={(ev) => ev.stopPropagation()} style={{ width: "100%", maxWidth: 480 }}>
-        <BarcodeScanner onDetected={onScanDetected} onClose={() => setScanning(false)} />
+        {scanTargetRef.current === "paint" && (
+          <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "8px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => setPCont(v => !v)} style={{ padding: "6px 12px", fontSize: 12, fontWeight: 800, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: pCont ? "#111" : "#fff", color: pCont ? "#fff" : "#111" }}>{pCont ? "連続ON" : "1回のみ"}</button>
+            <div style={{ flex: 1, fontSize: 11, color: "#6b7280" }}>{pCont ? `スキャン済み ${scanQueue.length} 件（閉じると登録）` : "1個ずつ登録"}</div>
+            {pCont && scanQueue.length > 0 && <button onClick={closeScanner} style={{ padding: "6px 12px", fontSize: 12, fontWeight: 800, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: "#111", color: "#fff" }}>{scanQueue.length}件を登録</button>}
+          </div>
+        )}
+        <BarcodeScanner onDetected={onScanDetected} onClose={closeScanner} continuous={scanTargetRef.current === "paint" && pCont} />
       </div>
     </div>
   );
@@ -7054,14 +7176,6 @@ function PaintStock({ onClose, onOpenModeler }) {
           <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "0.06em", color: "#111" }}>My <span style={{ letterSpacing: "0.12em" }}>PALETTE</span></span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button title="TSUMITSUMI（キット管理）へ" onClick={onClose} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, width: 32, height: 32, padding: 0, overflow: "hidden", cursor: "pointer" }}>
-            <img src="/LOGO.png" alt="TSUMITSUMI" style={{ width: 32, height: 32, objectFit: "contain", display: "block" }} />
-          </button>
-          {onOpenModeler && (
-            <button title="モデラーズアルバムへ" onClick={onOpenModeler} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, width: 32, height: 32, padding: 0, overflow: "hidden", cursor: "pointer" }}>
-              <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ width: 32, height: 32, objectFit: "cover", display: "block" }} />
-            </button>
-          )}
           <button title="使い方・取扱説明書" onClick={() => setPHelp(true)} style={{ background: "#fff", border: "1px solid #111", borderRadius: 0, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#111" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.2 9.2a2.8 2.8 0 015.4 1c0 1.8-2.6 2.2-2.6 4" /><line x1="12" y1="17.5" x2="12" y2="17.51" /></svg>
           </button>
@@ -7071,6 +7185,14 @@ function PaintStock({ onClose, onOpenModeler }) {
               <path d="M12 8v8M8 12l4 4 4-4" />
             </svg>
           </button>
+          <button title="TSUMITSUMI（キット管理）へ" onClick={onClose} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, width: 32, height: 32, padding: 0, overflow: "hidden", cursor: "pointer" }}>
+            <img src="/LOGO.png" alt="TSUMITSUMI" style={{ width: 32, height: 32, objectFit: "contain", display: "block" }} />
+          </button>
+          {onOpenModeler && (
+            <button title="モデラーズアルバムへ" onClick={onOpenModeler} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, width: 32, height: 32, padding: 0, overflow: "hidden", cursor: "pointer" }}>
+              <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ width: 32, height: 32, objectFit: "cover", display: "block" }} />
+            </button>
+          )}
         </div>
       </div>
 
