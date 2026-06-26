@@ -6318,7 +6318,9 @@ function PaintStock({ onClose }) {
     try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
   }, [paints]);
 
-  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", memo: "", createdAt: Date.now() });
+  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", amazonUrl: "", memo: "", createdAt: Date.now() });
+  const AMZ_TAG = "tsumitsumi232-22";
+  const amazonSearchUrl = (p) => `https://www.amazon.co.jp/s?k=${encodeURIComponent([p.brand, p.code, p.name].filter(Boolean).join(" "))}&tag=${AMZ_TAG}`;
 
   // 商品名からメーカー/種類を推測（Yahoo検索結果の補助。確実ではないので後から手で直せる）
   const guessBrand = (name) => {
@@ -6508,6 +6510,13 @@ function PaintStock({ onClose }) {
             </div>
           </div>
 
+          <label style={ps.label}>Amazonリンク（任意・再購入用の直リンク）</label>
+          <input style={ps.input} value={e.amazonUrl || ""} onChange={ev => upd({ amazonUrl: ev.target.value })} placeholder="https://www.amazon.co.jp/dp/..." />
+          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <button style={{ ...ps.ghost, flex: 1 }} onClick={() => upd({ amazonUrl: amazonSearchUrl(e) })}>商品名で検索リンクを作成</button>
+            {e.amazonUrl && <a href={e.amazonUrl} target="_blank" rel="noopener noreferrer" style={{ ...ps.black, flex: 1, textAlign: "center", textDecoration: "none" }}>🛒 リンクを開く</a>}
+          </div>
+
           <label style={ps.label}>メモ（調色レシピ・使い道など）</label>
           <textarea style={{ ...ps.input, minHeight: 70, resize: "vertical" }} value={e.memo} onChange={ev => upd({ memo: ev.target.value })} placeholder="例：本体色のベース。○○と1:1で調色。" />
 
@@ -6578,6 +6587,10 @@ function PaintStock({ onClose }) {
               <RemainBar v={p.remain} />
               <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>{PAINT_REMAIN[p.remain ?? 4]} ×{p.count || 1}</div>
             </div>
+            {p.amazonUrl && (
+              <a href={p.amazonUrl} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title="Amazonで見る"
+                style={{ flexShrink: 0, marginLeft: 8, width: 34, height: 34, border: "1px solid #111", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, textDecoration: "none" }}>🛒</a>
+            )}
           </div>
         ))}
       </div>
