@@ -3519,7 +3519,7 @@ function BaAdjust({ url, t, onChange }) {
   );
 }
 
-function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits, paintPreview }) {
+function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits, paintPreview, onOpenPaints }) {
   const [albums, setAlbums] = useState([]);
   const [mode, setMode] = useState("list"); // "list" | "edit" | "view"
   const [draft, setDraft] = useState(null);  // 編集中アルバム
@@ -4393,6 +4393,11 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
             <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={() => setMaBackup(true)} title="バックアップ">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
             </button>
+            {onOpenPaints && (
+              <button style={{ ...ma.ghost, padding: "6px 8px", display: "flex", alignItems: "center" }} onClick={onOpenPaints} title="My PALETTE（塗料管理）へ">
+                <MyPaletteLogo size={22} />
+              </button>
+            )}
             <button style={ma.ghost} onClick={() => setMaHelp(true)}>HELP</button>
             <a href="/" title="ツミツミへ" style={{ display: "flex", alignItems: "center" }}>
               <img src="/LOGO.png" alt="TSUMI TSUMI" style={{ height: 28, width: "auto", display: "block" }} />
@@ -5630,6 +5635,11 @@ export default function App() {
           <button style={{ ...s.searchIconBtn, width: 30, height: 30, padding: 0, overflow: "hidden" }} onClick={() => setShowModelerAlbum(true)} title="モデラーズアルバム">
             <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ width: 30, height: 30, objectFit: "cover", display: "block" }} />
           </button>
+          {paintPreview && (
+            <button style={{ ...s.searchIconBtn, width: 30, height: 30, padding: 0, overflow: "hidden", background: "#fff", border: "1px solid #e5e7eb" }} onClick={() => setShowPaints(true)} title="My PALETTE（塗料管理）">
+              <MyPaletteLogo size={22} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -6232,10 +6242,13 @@ export default function App() {
           setTagMasterList={setTagMasterList}
           kits={kits}
           setKits={setKits}
-          paintPreview={paintPreview} />
+          paintPreview={paintPreview}
+          onOpenPaints={paintPreview ? () => { setShowModelerAlbum(false); setShowPaints(true); } : null} />
       )}
 
-      {showPaints && <PaintStock onClose={() => setShowPaints(false)} />}
+      {showPaints && <PaintStock
+        onClose={() => setShowPaints(false)}
+        onOpenModeler={() => { setShowPaints(false); setShowModelerAlbum(true); }} />}
 
       {shareKit && (
         <div style={s.overlay} onClick={() => setShareKit(null)}>
@@ -6518,9 +6531,13 @@ function MyPaletteLogo({ size = 32 }) {
 let _paintCatalog = null;
 async function loadPaintCatalog() {
   if (_paintCatalog) return _paintCatalog;
-  const r = await fetch("/paint-catalog.json");
-  if (!r.ok) throw new Error("catalog " + r.status);
-  _paintCatalog = await r.json();
+  // キャッシュバスター＋no-store：古い404/HTMLがキャッシュされていても確実に最新JSONを取得
+  const r = await fetch("/paint-catalog.json?v=3", { cache: "no-store" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const text = await r.text();
+  let data; try { data = JSON.parse(text); } catch (e) { throw new Error("JSONとして読めません（先頭: " + text.slice(0, 20) + "…）"); }
+  if (!data || !Array.isArray(data.paints)) throw new Error("データ形式が不正です");
+  _paintCatalog = data;
   return _paintCatalog;
 }
 const CAT_COLOR_HEX = { white: "#f3f3f3", black: "#1c1c1c", red: "#cf2f2f", yellow: "#f1c40f", blue: "#2a5fd6", green: "#2a9d4a", brown: "#7a4b25", metal: "#9aa0a6", gray: "#8b9097", clear: "#cfd8e3", orange: "#e8731c", purple: "#7a3fb0", fluorescent: "#ff4f9d", surfacer: "#8a8a8a" };
@@ -6566,7 +6583,7 @@ function catalogToPaint(c, isTopcoat, mfrNames, base) {
   };
 }
 
-function PaintStock({ onClose }) {
+function PaintStock({ onClose, onOpenModeler }) {
   const [paints, setPaints] = useState([]);
   const [editing, setEditing] = useState(null); // 編集/追加中の塗料 or null
   const [q, setQ] = useState("");
@@ -6582,6 +6599,7 @@ function PaintStock({ onClose }) {
   const [catQ, setCatQ] = useState("");
   const [catTab, setCatTab] = useState("塗料"); // "塗料" | "トップコート"
   const [catBase, setCatBase] = useState(null); // 大全選択時にマージする下書き（編集中なら editing）
+  const [catErr, setCatErr] = useState(""); // 大全読み込みエラー（オーバーレイ内に表示＋再試行）
   const [catMulti, setCatMulti] = useState(false); // true=複数選択して一括登録 / false=1件選んで下書きに反映
   const [catSel, setCatSel] = useState({}); // 複数選択 { key: {c,isTop} }
   const [pBackup, setPBackup] = useState(false); // バックアップ画面
@@ -6692,14 +6710,20 @@ function PaintStock({ onClose }) {
 
   const catKey = (c) => `${c.mfr}|${c.lineup}|${c.code}|${c.name}`;
   // 大全検索を開く（multi=true：複数選択して一括登録／false：1件で下書きへ反映）
+  const loadCat = async () => {
+    setCatErr("");
+    try { setCat(await loadPaintCatalog()); }
+    catch (e) { setCatErr("大全データを読み込めませんでした：" + (e.message || e)); }
+  };
   const openCatalog = async (base, multi) => {
     setCatBase(base || null);
     setCatMulti(!!multi);
     setCatSel({});
     setCatTab((base && base.category) || "塗料");
     setCatQ("");
+    setCatErr("");
     setCatOpen(true);
-    if (!cat) { try { setCat(await loadPaintCatalog()); } catch (e) { alert("大全データの読み込みに失敗しました。通信状況をご確認ください。"); setCatOpen(false); } }
+    if (!cat) loadCat();
   };
   const pickCatalog = (entry, isTopcoat) => {
     // 編集中ならその最新下書きへ、無ければ開いた時のスナップショット、どちらも無ければ新規にマージ
@@ -6779,7 +6803,13 @@ function PaintStock({ onClose }) {
         <input style={ps.input} autoFocus value={catQ} onChange={e => setCatQ(e.target.value)} placeholder="色名・番号・メーカー・シリーズで検索…" />
       </div>
       <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "8px 14px 40px" }}>
-        {!cat && <div style={{ textAlign: "center", color: "#9ca3af", padding: 40, fontSize: 13 }}>読み込み中…</div>}
+        {catErr && (
+          <div style={{ textAlign: "center", color: "#b91c1c", padding: "30px 16px", fontSize: 13, lineHeight: 1.8 }}>
+            {catErr}<br />
+            <button style={{ ...ps.black, marginTop: 12 }} onClick={loadCat}>再試行</button>
+          </div>
+        )}
+        {!cat && !catErr && <div style={{ textAlign: "center", color: "#9ca3af", padding: 40, fontSize: 13 }}>読み込み中…</div>}
         {cat && catList.length === 0 && <div style={{ textAlign: "center", color: "#9ca3af", padding: 40, fontSize: 13 }}>該当なし</div>}
         {catList.map(({ c, isTop, brand, swatch }, i) => {
           const sel = catMulti && !!catSel[catKey(c)];
@@ -7015,9 +7045,17 @@ function PaintStock({ onClose }) {
           <MyPaletteLogo size={32} />
           <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "0.06em", color: "#111" }}>My <span style={{ letterSpacing: "0.12em" }}>PALETTE</span></span>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button title="使い方・取扱説明書" onClick={() => setPHelp(true)} style={{ ...ps.ghost, padding: "6px 12px", fontSize: 11, fontWeight: 800 }}>HELP</button>
-          <button title="バックアップ" onClick={() => setPBackup(true)} style={{ background: "#fff", border: "1px solid #111", borderRadius: 0, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#111" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button title="TSUMITSUMI（キット管理）へ" onClick={onClose} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, width: 32, height: 32, padding: 0, overflow: "hidden", cursor: "pointer" }}>
+            <img src="/LOGO.png" alt="TSUMITSUMI" style={{ width: 32, height: 32, objectFit: "contain", display: "block" }} />
+          </button>
+          {onOpenModeler && (
+            <button title="モデラーズアルバムへ" onClick={onOpenModeler} style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, width: 32, height: 32, padding: 0, overflow: "hidden", cursor: "pointer" }}>
+              <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ width: 32, height: 32, objectFit: "cover", display: "block" }} />
+            </button>
+          )}
+          <button title="使い方・取扱説明書" onClick={() => setPHelp(true)} style={{ ...ps.ghost, padding: "6px 10px", fontSize: 11, fontWeight: 800 }}>HELP</button>
+          <button title="バックアップ" onClick={() => setPBackup(true)} style={{ background: "#fff", border: "1px solid #111", borderRadius: 0, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#111" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" />
               <path d="M12 8v8M8 12l4 4 4-4" />
@@ -7025,15 +7063,9 @@ function PaintStock({ onClose }) {
           </button>
         </div>
       </div>
-      <div style={ps.bar}>
-        <div style={ps.seg}>
-          <button style={ps.segBtn(false)} onClick={onClose}>キット</button>
-          <button style={ps.segBtn(true)}>塗料</button>
-        </div>
-        <div style={{ flex: 1, textAlign: "right", fontSize: 11, color: "#6b7280" }}>所持 {paints.length} 色 / {paints.reduce((a, p) => a + (p.count || 1), 0)} 本</div>
-      </div>
 
       <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "8px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ fontSize: 11, color: "#6b7280", textAlign: "right" }}>所持 {paints.length} 色 / {paints.reduce((a, p) => a + (p.count || 1), 0)} 本</div>
         <input style={ps.input} value={q} onChange={ev => setQ(ev.target.value)} placeholder="色名・番号・メーカーで検索…" />
         <div style={{ display: "flex", gap: 6 }}>
           <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={fColor} onChange={ev => setFColor(ev.target.value)}>
