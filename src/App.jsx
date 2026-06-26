@@ -5668,7 +5668,7 @@ export default function App() {
         <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "8px 14px", display: "flex", justifyContent: "center" }}>
           <div style={{ display: "flex", border: "1.5px solid #111", overflow: "hidden" }}>
             <button style={{ padding: "6px 18px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: "#111", color: "#fff" }}>キット</button>
-            <button style={{ padding: "6px 18px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: "#fff", color: "#111" }} onClick={() => setShowPaints(true)}>🎨 塗料</button>
+            <button style={{ padding: "6px 18px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: "#fff", color: "#111" }} onClick={() => setShowPaints(true)}>塗料</button>
           </div>
         </div>
       )}
@@ -6756,15 +6756,7 @@ function PaintStock({ onClose }) {
           <button style={ps.black} onClick={save}>保存</button>
         </div>
         <div style={ps.body}>
-          <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e)}>📚 PAINT GUIDE・TOPCOAT GUIDEから自動入力</button>
-
-          <label style={{ ...ps.label, marginTop: 0 }}>種別</label>
-          <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
-            {["塗料", "トップコート"].map(c => (
-              <button key={c} onClick={() => upd({ category: c })}
-                style={{ flex: 1, padding: "8px 0", fontSize: 12, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: (e.category || "塗料") === c ? "#111" : "#fff", color: (e.category || "塗料") === c ? "#fff" : "#111" }}>{c}</button>
-            ))}
-          </div>
+          <button style={{ ...ps.black, width: "100%", marginBottom: 12 }} onClick={() => openCatalog(e)}>PAINT GUIDE・TOPCOAT GUIDEから自動入力</button>
 
           <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fff", border: "1px solid #e5e7eb", padding: 12 }}>
             <div style={ps.swatch(e.swatch)} />
@@ -6784,7 +6776,7 @@ function PaintStock({ onClose }) {
               onClick={async () => { const f = await lookupJan(e.jan, e); if (f) setEditing(f); else alert("商品情報が見つかりませんでした。"); }}>
               {looking ? "取得中…" : "商品名を取得"}
             </button>
-            <button style={{ ...ps.ghost, whiteSpace: "nowrap" }} onClick={() => setScanning(true)}>📷</button>
+            <button style={{ ...ps.ghost, whiteSpace: "nowrap" }} onClick={() => setScanning(true)}>スキャン</button>
           </div>
 
           <label style={ps.label}>メーカー / シリーズ</label>
@@ -6840,9 +6832,9 @@ function PaintStock({ onClose }) {
           <label style={ps.label}>Amazonリンク（任意・再購入用の直リンク）{e.asin ? `　［ASIN: ${e.asin}］` : ""}</label>
           <input style={ps.input} value={e.amazonUrl || ""} onChange={ev => upd({ amazonUrl: ev.target.value, asin: "" })} placeholder="https://www.amazon.co.jp/dp/..." />
           <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-            <button style={{ ...ps.black, flex: "1 1 100%" }} disabled={looking} onClick={() => fetchAmazonLink(e)}>{looking ? "取得中…" : "🔎 Amazonで商品リンクを取得（PA-API）"}</button>
+            <button style={{ ...ps.black, flex: "1 1 100%" }} disabled={looking} onClick={() => fetchAmazonLink(e)}>{looking ? "取得中…" : "Amazonで商品リンクを取得（PA-API）"}</button>
             <button style={{ ...ps.ghost, flex: 1 }} onClick={() => upd({ amazonUrl: amazonSearchUrl(e), asin: "" })}>検索リンクを作成</button>
-            {e.amazonUrl && <a href={e.amazonUrl} target="_blank" rel="noopener noreferrer" style={{ ...ps.ghost, flex: 1, textAlign: "center", textDecoration: "none" }}>🛒 開く</a>}
+            {e.amazonUrl && <a href={e.amazonUrl} target="_blank" rel="noopener noreferrer" style={{ ...ps.ghost, flex: 1, textAlign: "center", textDecoration: "none" }}>開く</a>}
           </div>
 
           <label style={ps.label}>メモ（調色レシピ・使い道など）</label>
@@ -6866,18 +6858,12 @@ function PaintStock({ onClose }) {
       <div style={ps.bar}>
         <div style={ps.seg}>
           <button style={ps.segBtn(false)} onClick={onClose}>キット</button>
-          <button style={ps.segBtn(true)}>🎨 塗料</button>
+          <button style={ps.segBtn(true)}>塗料</button>
         </div>
         <div style={{ flex: 1, textAlign: "right", fontSize: 11, color: "#6b7280" }}>所持 {paints.length} 色 / {paints.reduce((a, p) => a + (p.count || 1), 0)} 本</div>
       </div>
 
       <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "8px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ display: "flex", gap: 6 }}>
-          {["", "塗料", "トップコート"].map(c => (
-            <button key={c || "all"} onClick={() => setFCat(c)}
-              style={{ flex: 1, padding: "6px 0", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: fCat === c ? "#111" : "#fff", color: fCat === c ? "#fff" : "#111" }}>{c || "すべて"}</button>
-          ))}
-        </div>
         <input style={ps.input} value={q} onChange={ev => setQ(ev.target.value)} placeholder="色名・番号・メーカーで検索…" />
         <div style={{ display: "flex", gap: 6 }}>
           <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={fBrand} onChange={ev => setFBrand(ev.target.value)}>
@@ -6890,13 +6876,13 @@ function PaintStock({ onClose }) {
           </select>
           <button onClick={() => setOnlyLow(v => !v)} style={{ flexShrink: 0, padding: "0 12px", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: onlyLow ? "#ef4444" : "#fff", color: onlyLow ? "#fff" : "#111" }}>要補充</button>
         </div>
-        <button style={{ ...ps.black, width: "100%" }} onClick={() => openCatalog(null)}>📚 PAINT GUIDE・TOPCOAT GUIDEから探して追加</button>
+        <button style={{ ...ps.black, width: "100%" }} onClick={() => openCatalog(null)}>PAINT GUIDE・TOPCOAT GUIDEから探して追加</button>
       </div>
 
       <div style={ps.body}>
         {paints.length === 0 && (
           <div style={{ textAlign: "center", color: "#9ca3af", padding: "60px 20px", fontSize: 13, lineHeight: 1.9 }}>
-            まだ塗料が登録されていません。<br />右下の「＋ 塗料を追加」から、手持ちの塗料を登録しましょう。
+            まだ塗料が登録されていません。<br />右下の「直接入力」または「スキャン登録」から、手持ちの塗料を登録しましょう。
           </div>
         )}
         {paints.length > 0 && filtered.length === 0 && (
@@ -6909,7 +6895,6 @@ function PaintStock({ onClose }) {
               <div style={{ fontSize: 11, color: "#6b7280" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
               <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
               <div style={{ marginTop: 3 }}>
-                {(p.category === "トップコート") && <span style={{ ...ps.tag, borderColor: "#111", color: "#111", fontWeight: 800 }}>トップコート</span>}
                 <span style={ps.tag}>{p.type}</span><span style={ps.tag}>{p.finish}</span>
               </div>
             </div>
@@ -6919,15 +6904,15 @@ function PaintStock({ onClose }) {
             </div>
             {p.amazonUrl && (
               <a href={p.amazonUrl} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title="Amazonで見る"
-                style={{ flexShrink: 0, marginLeft: 8, width: 34, height: 34, border: "1px solid #111", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, textDecoration: "none" }}>🛒</a>
+                style={{ flexShrink: 0, marginLeft: 8, padding: "0 10px", height: 34, border: "1px solid #111", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#111", textDecoration: "none" }}>Amazon</a>
             )}
           </div>
         ))}
       </div>
 
       <div style={{ position: "fixed", right: 18, bottom: 22, display: "flex", gap: 8, zIndex: 2 }}>
-        <button style={{ ...ps.fab, position: "static", background: "#fff", color: "#111", border: "1.5px solid #111" }} onClick={() => setScanning(true)}>📷 バーコード</button>
-        <button style={{ ...ps.fab, position: "static" }} onClick={() => setEditing(blank())}>＋ 追加</button>
+        <button style={{ ...ps.fab, position: "static", background: "#fff", color: "#111", border: "1.5px solid #111" }} onClick={() => setScanning(true)}>スキャン登録</button>
+        <button style={{ ...ps.fab, position: "static" }} onClick={() => setEditing(blank())}>直接入力</button>
       </div>
 
       {scannerOverlay}
