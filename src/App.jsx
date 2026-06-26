@@ -3518,7 +3518,7 @@ function BaAdjust({ url, t, onChange }) {
   );
 }
 
-function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits }) {
+function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits, paintPreview }) {
   const [albums, setAlbums] = useState([]);
   const [mode, setMode] = useState("list"); // "list" | "edit" | "view"
   const [draft, setDraft] = useState(null);  // 編集中アルバム
@@ -3540,12 +3540,15 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
   const [editTagVal, setEditTagVal] = useState("");
   const savedRef = useRef(false);
   const maFileRef = useRef(null); // バックアップ読み込み用 file input
+  const [palette, setPalette] = useState([]); // マイパレット（塗料在庫）＝選択元（読み取り専用）
+  const [picker, setPicker] = useState(null); // 塗料選択 { kind:"paint" } | { kind:"part", mixId }
 
   useEffect(() => {
     try {
       const s = JSON.parse(localStorage.getItem(MA_LS_KEY) || "[]");
       if (Array.isArray(s)) setAlbums(s.map(a => ({ ...a, photos: maNormPhotos(a.photos) }))); // 旧データ（文字列）を {url,caption} へ移行
     } catch (e) {}
+    try { const p = JSON.parse(localStorage.getItem("tsumitsumi_paints") || "[]"); if (Array.isArray(p)) setPalette(p); } catch (e) {}
     try { if (!localStorage.getItem(MA_INTRO_KEY)) setMaIntro(true); } catch (e) {} // 初回アクセスのみ案内ポップアップ
   }, []);
   const dismissIntro = () => { try { localStorage.setItem(MA_INTRO_KEY, "1"); } catch (e) {} setMaIntro(false); };
@@ -3556,8 +3559,27 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
 
   const viewing = viewId ? albums.find(a => a.id === viewId) : null;
 
-  const startNew = () => { setDraft({ id: makePhotoId(), title: "", createdYM: "", tags: [], comment: "", photos: [], cover: 0, createdAt: Date.now(), updatedAt: Date.now() }); setTagInput(""); setMode("edit"); };
-  const startEdit = (a) => { setDraft({ ...a, tags: [...(a.tags || [])], photos: maNormPhotos(a.photos).map(p => ({ ...p })) }); setTagInput(""); setTagManage(false); setMode("edit"); };
+  const startNew = () => { setDraft({ id: makePhotoId(), title: "", createdYM: "", tags: [], comment: "", photos: [], cover: 0, paints: [], mixes: [], createdAt: Date.now(), updatedAt: Date.now() }); setTagInput(""); setMode("edit"); };
+  const startEdit = (a) => { setDraft({ ...a, tags: [...(a.tags || [])], photos: maNormPhotos(a.photos).map(p => ({ ...p })), paints: [...(a.paints || [])], mixes: (a.mixes || []).map(m => ({ ...m, parts: [...(m.parts || [])] })) }); setTagInput(""); setTagManage(false); setMode("edit"); };
+
+  // ---- 使用塗料・調色レシピ（draft.paints / draft.mixes）----
+  const paintLabel = (p) => [p.brand, p.code ? `No.${p.code}` : "", p.name].filter(Boolean).join(" ").trim() || "（無名）";
+  const addUsedPaint = (src) => setDraft(d => ({ ...d, paints: [...(d.paints || []), src ? { paintId: src.id, name: paintLabel(src), swatch: src.swatch || "#999", part: "" } : { paintId: null, name: "", swatch: "#9aa0a6", part: "" }] }));
+  const updUsedPaint = (i, patch) => setDraft(d => ({ ...d, paints: (d.paints || []).map((x, j) => j === i ? { ...x, ...patch } : x) }));
+  const delUsedPaint = (i) => setDraft(d => ({ ...d, paints: (d.paints || []).filter((_, j) => j !== i) }));
+  const addMix = () => setDraft(d => ({ ...d, mixes: [...(d.mixes || []), { id: makePhotoId(), label: "", resultSwatch: "#9aa0a6", note: "", parts: [] }] }));
+  const updMix = (id, patch) => setDraft(d => ({ ...d, mixes: (d.mixes || []).map(m => m.id === id ? { ...m, ...patch } : m) }));
+  const delMix = (id) => setDraft(d => ({ ...d, mixes: (d.mixes || []).filter(m => m.id !== id) }));
+  const addMixPart = (mixId, src) => setDraft(d => ({ ...d, mixes: (d.mixes || []).map(m => m.id === mixId ? { ...m, parts: [...(m.parts || []), src ? { paintId: src.id, name: paintLabel(src), swatch: src.swatch || "#999", ratio: "" } : { paintId: null, name: "", swatch: "#9aa0a6", ratio: "" }] } : m) }));
+  const updMixPart = (mixId, i, patch) => setDraft(d => ({ ...d, mixes: (d.mixes || []).map(m => m.id === mixId ? { ...m, parts: m.parts.map((p, j) => j === i ? { ...p, ...patch } : p) } : m) }));
+  const delMixPart = (mixId, i) => setDraft(d => ({ ...d, mixes: (d.mixes || []).map(m => m.id === mixId ? { ...m, parts: m.parts.filter((_, j) => j !== i) } : m) }));
+  // 塗料ピッカーで選択 or 手入力 → picker.kind に応じて使用塗料／調色材料へ
+  const pickPaint = (src) => {
+    if (!picker) return;
+    if (picker.kind === "paint") addUsedPaint(src);
+    else if (picker.kind === "part") addMixPart(picker.mixId, src);
+    setPicker(null);
+  };
 
   const addPhotos = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -3942,6 +3964,37 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
     grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 },
     label: { display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888", marginBottom: 6, textTransform: "uppercase" },
     input: { width: "100%", boxSizing: "border-box", border: "none", borderBottom: "1px solid #111", padding: "8px 2px", fontSize: 16, fontFamily: MA_FONT, color: "#111", background: "transparent", outline: "none" },
+  };
+
+  // ---- 塗料ピッカー（マイパレットから選択 or 手入力）----
+  const renderPaintPicker = () => {
+    if (!picker) return null;
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "#fff", display: "flex", flexDirection: "column", fontFamily: MA_FONT }}>
+        <div style={ma.bar}>
+          <button style={ma.ghost} onClick={() => setPicker(null)}>閉じる</button>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.1em" }}>塗料を選ぶ</div>
+          <button style={ma.ghost} onClick={() => pickPaint(null)}>手入力で追加</button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "12px 18px 40px", maxWidth: 940, margin: "0 auto", width: "100%" }}>
+          {palette.length === 0 && (
+            <div style={{ color: "#999", fontSize: 13, lineHeight: 1.9, textAlign: "center", padding: "40px 0" }}>
+              マイパレットに塗料がありません。<br />「手入力で追加」から直接入力できます。
+            </div>
+          )}
+          {palette.map(p => (
+            <div key={p.id} onClick={() => pickPaint(p)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 4px", borderBottom: "1px solid #eee", cursor: "pointer" }}>
+              <div style={{ width: 30, height: 30, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 10, color: "#888" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
+              </div>
+              <span style={{ fontSize: 18, color: "#999" }}>＋</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   // ---- 拡大ライトボックス ----
@@ -4376,6 +4429,39 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
               {ph.length === 0 && <div style={{ color: "#bbb", fontSize: 12, padding: "40px 0", textAlign: "center" }}>写真がありません</div>}
             </>);
           })()}
+
+          {paintPreview && (a.paints || []).length > 0 && (
+            <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid #eee" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888", marginBottom: 10 }}>PAINTS USED / 使用した塗料</div>
+              {a.paints.map((p, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #f4f4f4" }}>
+                  <div style={{ width: 22, height: 22, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
+                  <div style={{ flex: 1, fontSize: 14 }}>{p.name || "（無名）"}</div>
+                  {p.part && <div style={{ fontSize: 11, color: "#888" }}>{p.part}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {paintPreview && (a.mixes || []).length > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", color: "#888", marginBottom: 10 }}>MIX RECIPES / 調色レシピ</div>
+              {a.mixes.map(m => (
+                <div key={m.id} style={{ border: "1px solid #111", padding: 12, marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div style={{ width: 20, height: 20, flexShrink: 0, background: m.resultSwatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{m.label || "（調色名なし）"}</div>
+                  </div>
+                  <div style={{ fontSize: 13, color: "#333", lineHeight: 1.8 }}>
+                    {(m.parts || []).map((p, i) => (
+                      <span key={i}>{i > 0 ? " ＋ " : ""}{p.name || "?"}{p.ratio ? ` ×${p.ratio}` : ""}</span>
+                    ))}
+                  </div>
+                  {m.note && <div style={{ fontSize: 11, color: "#888", marginTop: 6 }}>{m.note}</div>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         {renderLightbox()}
         {renderShareSelect()}
@@ -4441,6 +4527,54 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             <label style={ma.label}>制作コメント / Notes</label>
             <textarea value={draft.comment} onChange={e => setDraft(d => ({ ...d, comment: e.target.value }))} placeholder="制作のこだわり・使用塗料・反省点など自由に" style={{ width: "100%", boxSizing: "border-box", minHeight: 90, border: "1px solid #111", padding: "10px", fontSize: 14, lineHeight: 1.7, fontFamily: MA_FONT, resize: "vertical", outline: "none" }} />
           </div>
+
+          {paintPreview && (<>
+          {/* 使用した塗料 */}
+          <div style={{ marginBottom: 26 }}>
+            <label style={ma.label}>使用した塗料 / Paints used</label>
+            {(draft.paints || []).map((p, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <input type="color" value={p.swatch || "#9aa0a6"} onChange={e => updUsedPaint(i, { swatch: e.target.value })} style={{ width: 34, height: 34, flexShrink: 0, border: "1px solid #111", background: "#fff", padding: 0, cursor: "pointer" }} />
+                <input value={p.name} onChange={e => updUsedPaint(i, { name: e.target.value })} placeholder="塗料名" style={{ ...ma.input, flex: 2, fontSize: 14 }} />
+                <input value={p.part} onChange={e => updUsedPaint(i, { part: e.target.value })} placeholder="部位（任意）" style={{ ...ma.input, flex: 1, fontSize: 14 }} />
+                <button onClick={() => delUsedPaint(i)} style={{ ...ma.ghost, padding: "6px 10px" }}>✕</button>
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button style={ma.black} onClick={() => setPicker({ kind: "paint" })}>＋ パレットから追加</button>
+              <button style={ma.ghost} onClick={() => addUsedPaint(null)}>＋ 手入力</button>
+            </div>
+          </div>
+
+          {/* 調色レシピ */}
+          <div style={{ marginBottom: 26 }}>
+            <label style={ma.label}>調色レシピ / Mix recipes</label>
+            {(draft.mixes || []).map(m => (
+              <div key={m.id} style={{ border: "1px solid #111", padding: 12, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <input type="color" value={m.resultSwatch || "#9aa0a6"} onChange={e => updMix(m.id, { resultSwatch: e.target.value })} style={{ width: 34, height: 34, flexShrink: 0, border: "1px solid #111", background: "#fff", padding: 0, cursor: "pointer" }} />
+                  <input value={m.label} onChange={e => updMix(m.id, { label: e.target.value })} placeholder="調色名／部位（例：本体色）" style={{ ...ma.input, flex: 1, fontSize: 14 }} />
+                  <button onClick={() => delMix(m.id)} style={{ ...ma.ghost, padding: "6px 10px" }}>削除</button>
+                </div>
+                {(m.parts || []).map((p, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingLeft: 6 }}>
+                    <div style={{ width: 16, height: 16, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
+                    <input value={p.name} onChange={e => updMixPart(m.id, i, { name: e.target.value })} placeholder="塗料名" style={{ ...ma.input, flex: 2, fontSize: 13 }} />
+                    <input value={p.ratio} onChange={e => updMixPart(m.id, i, { ratio: e.target.value })} placeholder="比率(例:2)" style={{ ...ma.input, width: 70, flex: "none", fontSize: 13 }} />
+                    <button onClick={() => delMixPart(m.id, i)} style={{ ...ma.ghost, padding: "5px 9px", fontSize: 10 }}>✕</button>
+                  </div>
+                ))}
+                <div style={{ display: "flex", gap: 8, margin: "8px 0 8px 6px" }}>
+                  <button style={{ ...ma.ghost, fontSize: 10 }} onClick={() => setPicker({ kind: "part", mixId: m.id })}>＋ パレットから材料</button>
+                  <button style={{ ...ma.ghost, fontSize: 10 }} onClick={() => addMixPart(m.id, null)}>＋ 手入力</button>
+                </div>
+                <input value={m.note} onChange={e => updMix(m.id, { note: e.target.value })} placeholder="メモ（希釈・手順など）" style={{ ...ma.input, fontSize: 13 }} />
+              </div>
+            ))}
+            <button style={ma.black} onClick={addMix}>＋ 調色レシピを追加</button>
+          </div>
+          </>)}
+
           <div>
             <label style={ma.label}>写真 / Photos（最大{MAX_ALBUM_PHOTOS}枚・高画質のまま保存／各写真にコメント可／長押しで並べ替え・‹›でも移動）</label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10 }}>
@@ -4471,6 +4605,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits 
             </div>
           </div>
         </div>
+        {renderPaintPicker()}
         {dragView && (
           <div style={{ position: "fixed", left: dragView.x, top: dragView.y, transform: "translate(-50%, -50%)", width: 116, height: 116, zIndex: 500, pointerEvents: "none", background: "#fff", overflow: "hidden", border: "2px solid #111", boxShadow: "0 10px 30px rgba(0,0,0,0.45)" }}>
             <KitImage src={dragView.url} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
@@ -4688,13 +4823,14 @@ export default function App() {
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
   const [showModelerAlbum, setShowModelerAlbum] = useState(false); // モデラーズアルバム（ポートフォリオ）表示
   const [showPaints, setShowPaints] = useState(false); // 塗料ストック（マイパレット）表示
+  const [paintPreview, setPaintPreview] = useState(false); // 塗料機能のプレビュー解放（?paint/#paint時のみ）。アルバムの使用塗料/調色UIの表示制御にも使う
   // 入口ボタンは非公開中だが、?modeler または #modeler 付きURLで直接開ける（仕上げのプレビュー用）
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search);
       if (p.has("modeler") || window.location.hash === "#modeler") setShowModelerAlbum(true);
       // 塗料（マイパレット）も完成までは非公開。?paint / #paint でのみ起動（プレビュー用）
-      if (p.has("paint") || window.location.hash === "#paint") setShowPaints(true);
+      if (p.has("paint") || window.location.hash === "#paint") { setShowPaints(true); setPaintPreview(true); }
     } catch (e) {}
   }, []);
   const [shareKit, setShareKit] = useState(null); // 単一キットの完成品シェア対象
@@ -6032,7 +6168,8 @@ export default function App() {
           tagMasterList={tagMasterList}
           setTagMasterList={setTagMasterList}
           kits={kits}
-          setKits={setKits} />
+          setKits={setKits}
+          paintPreview={paintPreview} />
       )}
 
       {showPaints && <PaintStock onClose={() => setShowPaints(false)} />}
