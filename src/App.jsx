@@ -6569,6 +6569,8 @@ function PaintStock({ onClose }) {
   const [catBase, setCatBase] = useState(null); // 大全選択時にマージする下書き（編集中なら editing）
   const [catMulti, setCatMulti] = useState(false); // true=複数選択して一括登録 / false=1件選んで下書きに反映
   const [catSel, setCatSel] = useState({}); // 複数選択 { key: {c,isTop} }
+  const [pBackup, setPBackup] = useState(false); // バックアップ画面
+  const pFileRef = useRef(null); // インポート用 file input
   const firstSave = useRef(true);
 
   useEffect(() => {
@@ -6688,6 +6690,40 @@ function PaintStock({ onClose }) {
     const mapped = catalogToPaint(entry, isTopcoat, cat && cat.mfrNames, editing || catBase || blank());
     setEditing(mapped);
     setCatOpen(false);
+  };
+  // ---- バックアップ（書き出し/読み込み）。塗料は画像Blob無しなのでJSONのみで完結 ----
+  const exportPaints = () => {
+    try {
+      const data = JSON.stringify({ version: 1, type: "tsumitsumi_paints", exportedAt: new Date().toISOString(), paints }, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tsumitsumi_paints_${new Date().toLocaleDateString("ja-JP").replace(/\//g, "-")}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) { alert("バックアップの作成に失敗しました。"); }
+  };
+  const importPaints = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        const arr = data.paints || (Array.isArray(data) ? data : null);
+        if (!Array.isArray(arr)) throw new Error();
+        // 同id は置換・無ければ追加（既存データを消さずに統合）
+        const map = new Map(paints.map(p => [p.id, p]));
+        let added = 0;
+        for (const p of arr) { if (p && p.id) { map.set(p.id, p); added++; } }
+        setPaints(Array.from(map.values()));
+        setPBackup(false);
+        alert(`${added}件の塗料を取り込みました（既存に統合）。`);
+      } catch (err) { alert("ファイルの読み込みに失敗しました。正しいバックアップファイルを選択してください。"); }
+    };
+    reader.readAsText(file);
   };
   const toggleCatSel = (c, isTop) => setCatSel(s => { const k = catKey(c); const n = { ...s }; if (n[k]) delete n[k]; else n[k] = { c, isTop }; return n; });
   const addCatalogSelected = () => {
@@ -6963,6 +6999,7 @@ function PaintStock({ onClose }) {
           <button style={ps.segBtn(true)}>塗料</button>
         </div>
         <div style={{ flex: 1, textAlign: "right", fontSize: 11, color: "#6b7280" }}>所持 {paints.length} 色 / {paints.reduce((a, p) => a + (p.count || 1), 0)} 本</div>
+        <button style={{ ...ps.ghost, padding: "6px 10px", fontSize: 11 }} onClick={() => setPBackup(true)}>バックアップ</button>
       </div>
 
       <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "8px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
@@ -7043,6 +7080,20 @@ function PaintStock({ onClose }) {
       {scannerOverlay}
       {lookingOverlay}
       {catalogOverlay}
+
+      {pBackup && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 440, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }} onClick={() => setPBackup(false)}>
+          <div onClick={(ev) => ev.stopPropagation()} style={{ width: "100%", maxWidth: 380, background: "#fff", border: "1px solid #111", padding: 18 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>塗料データのバックアップ</div>
+            <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.7, marginBottom: 14 }}>データはこの端末（ブラウザ）にのみ保存されます。機種変更・初期化の前に書き出しておくと安心です。</div>
+            <button style={{ ...ps.black, width: "100%", marginBottom: 8 }} onClick={exportPaints}>書き出し（JSONをダウンロード）</button>
+            <button style={{ ...ps.ghost, width: "100%", marginBottom: 8 }} onClick={() => pFileRef.current && pFileRef.current.click()}>読み込み（ファイルから復元・統合）</button>
+            <input ref={pFileRef} type="file" accept="application/json,.json" style={{ display: "none" }} onChange={importPaints} />
+            <button style={{ ...ps.ghost, width: "100%", borderColor: "#d1d5db", color: "#6b7280" }} onClick={() => setPBackup(false)}>閉じる</button>
+            <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 12, lineHeight: 1.7 }}>※ 読み込みは既存データに統合します（同じ塗料は上書き）。別ブラウザ間の移行は必ず書き出し→読み込みで。</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
