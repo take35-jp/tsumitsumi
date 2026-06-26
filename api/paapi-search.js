@@ -59,6 +59,29 @@ async function searchItems(token, keywords, tag, itemCount) {
   return data.searchResult?.items || [];
 }
 
+// 正規品らしさの採点（local-tools/paapi-paint-search.js の scoreCandidate 軽量版）。
+// 検索上位に紛れる転売・非正規・中古・無関係品（溶剤/筆等）を下げ、正規の塗料/トップコートを先頭にする。
+function normTitle(s) {
+  return String(s || "").toLowerCase().replace(/[\s　・()（）「」【】［］\[\].,、。/\-]/g, "");
+}
+const HARD_BAD = /中古|訳あり|ジャンク|used|未使用に近い|難あり/i; // 完全除外対象
+const SOFT_BAD = [
+  { re: /溶剤|うすめ液|薄め液|シンナー|クリーナー|リムーバー|洗浄|スポイト|かくはん|撹拌|マスキング|ツール|工具|筆|刷毛/, p: 40 }, // 塗料本体でない関連品
+  { re: /オリジナルロゴ|オリジナルパッケージ|オリジナル包装|詰替|詰め替え|小分け|分売|量り売り|まとめ売り/, p: 25 }, // 転売・非正規っぽい表記
+];
+function scoreCandidate(keywords, title) {
+  const t = normTitle(title);
+  if (!t) return -999;
+  let s = 0;
+  for (const tok of String(keywords).split(/[\s　]+/)) { // キーワードのトークン一致で加点（"C1"/"ホワイト"/"Mr.カラー" 等）
+    const n = normTitle(tok);
+    if (n.length >= 2 && t.includes(n)) s += 3;
+  }
+  if (HARD_BAD.test(title)) s -= 100;
+  for (const b of SOFT_BAD) if (b.re.test(title)) s -= b.p;
+  return s;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -79,14 +102,20 @@ export default async function handler(req, res) {
 
   try {
     const token = await getToken(CID, SEC);
-    const items = await searchItems(token, keywords, TAG, 3);
-    const results = items.map((c) => ({
+    const items = await searchItems(token, keywords, TAG, 6); // 多めに取得して採点・並べ替え
+    let scored = items
+      .filter((c) => c.asin)
+      .map((c) => ({ c, score: scoreCandidate(keywords, c.itemInfo?.title?.displayValue) }));
+    // 明確にNG（中古/転売/関連品）を除外。ただし全滅するなら元の並びを残す（検索リンクより直リンクを優先）。
+    const kept = scored.filter((x) => x.score > -40);
+    const use = (kept.length ? kept : scored).sort((a, b) => b.score - a.score);
+    const results = use.map(({ c }) => ({
       asin: c.asin,
       title: c.itemInfo?.title?.displayValue || "",
       image: c.images?.primary?.large?.url || c.images?.primary?.medium?.url || null,
       price: c.offersV2?.listings?.[0]?.price?.money?.amount ?? null,
       url: `https://www.amazon.co.jp/dp/${encodeURIComponent(c.asin)}/?tag=${encodeURIComponent(TAG)}`,
-    })).filter((x) => x.asin);
+    }));
     return res.status(200).json({ keywords, count: results.length, results });
   } catch (e) {
     return res.status(502).json({ error: String(e.message || e) });
