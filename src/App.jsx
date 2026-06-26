@@ -6513,7 +6513,7 @@ const PAINT_COLOR_FAMILIES = [
   { label: "赤系", hex: "#cf2f2f" }, { label: "青系", hex: "#2a5fd6" }, { label: "緑系", hex: "#2a9d4a" },
   { label: "黄系", hex: "#f1c40f" }, { label: "オレンジ系", hex: "#e8731c" }, { label: "紫系", hex: "#7a3fb0" },
   { label: "茶系", hex: "#7a4b25" }, { label: "メタリック", hex: "#9aa0a6" }, { label: "クリア", hex: "#cfd8e3" },
-  { label: "蛍光", hex: "#ff4f9d" }, { label: "サーフェイサー", hex: "#8a8a8a" },
+  { label: "蛍光", hex: "#ff4f9d" }, { label: "サーフェイサー", hex: "#8a8a8a" }, { label: "トップコート", hex: "#cfd8e3" },
 ];
 const CAT_COLOR_FAMILY = { white: "白", black: "黒", gray: "グレー", red: "赤系", blue: "青系", green: "緑系", yellow: "黄系", orange: "オレンジ系", purple: "紫系", brown: "茶系", metal: "メタリック", clear: "クリア", fluorescent: "蛍光", surfacer: "サーフェイサー" };
 function catTypeToApp(t) {
@@ -6545,7 +6545,7 @@ function catalogToPaint(c, isTopcoat, mfrNames, base) {
     type: catTypeToApp(c.type),
     finish: catFinishToApp(c.finish, c.color),
     swatch: isTopcoat ? "#cfd8e3" : (CAT_COLOR_HEX[c.color] || "#9aa0a6"),
-    colorFamily: isTopcoat ? "クリア" : (CAT_COLOR_FAMILY[c.color] || ""),
+    colorFamily: isTopcoat ? "トップコート" : (CAT_COLOR_FAMILY[c.color] || ""),
   };
 }
 
