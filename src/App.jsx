@@ -6304,6 +6304,8 @@ function PaintStock({ onClose }) {
   const [fBrand, setFBrand] = useState("");
   const [fType, setFType] = useState("");
   const [onlyLow, setOnlyLow] = useState(false);
+  const [scanning, setScanning] = useState(false); // バーコードスキャナ表示
+  const [looking, setLooking] = useState(false); // JAN→商品情報の取得中
   const loaded = useRef(false);
 
   useEffect(() => {
@@ -6315,7 +6317,63 @@ function PaintStock({ onClose }) {
     try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
   }, [paints]);
 
-  const blank = () => ({ id: makePaintId(), brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, memo: "", createdAt: Date.now() });
+  const blank = () => ({ id: makePaintId(), jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, memo: "", createdAt: Date.now() });
+
+  // 商品名からメーカー/種類を推測（Yahoo検索結果の補助。確実ではないので後から手で直せる）
+  const guessBrand = (name) => {
+    const n = name || "";
+    if (/水性\s*ホビー/.test(n)) return "GSIクレオス 水性ホビーカラー";
+    if (/(Mr\.?\s*カラー|クレオス|GSI).*GX|GX\s*メタル|スーパーメタリック/i.test(n)) return "Mr.カラー GX";
+    if (/Mr\.?\s*カラー|クレオス|GSI|ガンダムカラー/i.test(n)) return "GSIクレオス Mr.カラー";
+    if (/ガイア.*水性|水性.*ガイア/.test(n)) return "ガイア 水性";
+    if (/ガイア|GAIA/i.test(n)) return "ガイアカラー";
+    if (/タミヤ|TAMIYA/i.test(n)) { if (/エナメル/.test(n)) return "タミヤ エナメル"; if (/LP-?\d|ラッカー/.test(n)) return "タミヤ ラッカー(LP)"; return "タミヤ アクリル"; }
+    if (/フィニッシャーズ|Finisher/i.test(n)) return "フィニッシャーズ";
+    if (/vallejo|ファレホ/i.test(n)) return "Vallejo";
+    if (/citadel|シタデル/i.test(n)) return "シタデルカラー";
+    return "その他";
+  };
+  const typeOfBrand = (brand) => {
+    if (/水性|アクリル|Vallejo|シタデル/.test(brand)) return "水性アクリル";
+    if (/エナメル/.test(brand)) return "エナメル";
+    if (/Mr\.|GX|ガイア|ラッカー|フィニッシャーズ/.test(brand)) return "ラッカー";
+    return PAINT_TYPES[0];
+  };
+  // JANで商品情報を取得（キット登録と同じ /api/search を流用：マスタ→Rakuten→Yahoo の順で名前/画像を返す）
+  const lookupJan = async (jan, base) => {
+    setLooking(true);
+    try {
+      const r = await fetch(`/api/search?jan=${encodeURIComponent(jan)}`);
+      const d = r.ok ? await r.json() : null;
+      if (d && d.name) {
+        const brand = guessBrand(d.name);
+        return { ...(base || blank()), jan, name: d.name, brand, type: typeOfBrand(brand) };
+      }
+      return null;
+    } catch (e) { return null; }
+    finally { setLooking(false); }
+  };
+  // スキャナでJAN検出 → 商品情報を引いてフォームを開く（編集中ならその下書きに上書き、無ければ新規）
+  const onScanDetected = async (code) => {
+    setScanning(false);
+    const jan = String(code || "").replace(/[^0-9]/g, "");
+    if (!jan) return;
+    const base = editing || blank();
+    const filled = await lookupJan(jan, base);
+    if (filled) setEditing(filled);
+    else { alert("商品情報が見つかりませんでした。JANを保存したので、色名などは手入力してください。"); setEditing({ ...base, jan }); }
+  };
+  const scannerOverlay = scanning && (
+    <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-start", justifyContent: "center" }} onClick={() => setScanning(false)}>
+      <div onClick={(ev) => ev.stopPropagation()} style={{ width: "100%", maxWidth: 480 }}>
+        <BarcodeScanner onDetected={onScanDetected} onClose={() => setScanning(false)} />
+      </div>
+    </div>
+  );
+  const lookingOverlay = looking && (
+    <div style={{ position: "fixed", inset: 0, zIndex: 410, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 14, fontWeight: 700 }}>商品情報を取得中…</div>
+  );
+
   const save = () => {
     if (!editing) return;
     const d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim() };
@@ -6380,6 +6438,16 @@ function PaintStock({ onClose }) {
             </div>
           </div>
 
+          <label style={ps.label}>JANコード（任意・スキャンや手入力から商品名を取得）</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input style={{ ...ps.input, flex: 1 }} inputMode="numeric" value={e.jan || ""} onChange={ev => upd({ jan: ev.target.value.replace(/[^0-9]/g, "") })} placeholder="例：4973028000000" />
+            <button style={{ ...ps.ghost, whiteSpace: "nowrap" }} disabled={looking || !(e.jan && e.jan.length >= 8)}
+              onClick={async () => { const f = await lookupJan(e.jan, e); if (f) setEditing(f); else alert("商品情報が見つかりませんでした。"); }}>
+              {looking ? "取得中…" : "商品名を取得"}
+            </button>
+            <button style={{ ...ps.ghost, whiteSpace: "nowrap" }} onClick={() => setScanning(true)}>📷</button>
+          </div>
+
           <label style={ps.label}>メーカー / シリーズ</label>
           <select style={ps.input} value={e.brand} onChange={ev => upd({ brand: ev.target.value })}>
             {PAINT_BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
@@ -6429,6 +6497,8 @@ function PaintStock({ onClose }) {
             <button onClick={() => remove(e.id)} style={{ ...ps.ghost, borderColor: "#c00", color: "#c00", width: "100%", marginTop: 22 }}>この塗料を削除</button>
           )}
         </div>
+        {scannerOverlay}
+        {lookingOverlay}
       </div>
     );
   }
@@ -6487,7 +6557,13 @@ function PaintStock({ onClose }) {
         ))}
       </div>
 
-      <button style={ps.fab} onClick={() => setEditing(blank())}>＋ 塗料を追加</button>
+      <div style={{ position: "fixed", right: 18, bottom: 22, display: "flex", gap: 8, zIndex: 2 }}>
+        <button style={{ ...ps.fab, position: "static", background: "#fff", color: "#111", border: "1.5px solid #111" }} onClick={() => setScanning(true)}>📷 バーコード</button>
+        <button style={{ ...ps.fab, position: "static" }} onClick={() => setEditing(blank())}>＋ 追加</button>
+      </div>
+
+      {scannerOverlay}
+      {lookingOverlay}
     </div>
   );
 }
