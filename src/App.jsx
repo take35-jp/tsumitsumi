@@ -6318,9 +6318,27 @@ function PaintStock({ onClose }) {
     try { localStorage.setItem(PAINT_LS_KEY, JSON.stringify(paints)); } catch (e) {}
   }, [paints]);
 
-  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", amazonUrl: "", memo: "", createdAt: Date.now() });
+  const blank = () => ({ id: makePaintId(), category: "塗料", jan: "", brand: PAINT_BRANDS[0], name: "", code: "", type: PAINT_TYPES[0], finish: PAINT_FINISHES[0], swatch: "#9aa0a6", remain: 4, count: 1, purchaseDate: "", asin: "", amazonUrl: "", memo: "", createdAt: Date.now() });
   const AMZ_TAG = "tsumitsumi232-22";
   const amazonSearchUrl = (p) => `https://www.amazon.co.jp/s?k=${encodeURIComponent([p.brand, p.code, p.name].filter(Boolean).join(" "))}&tag=${AMZ_TAG}`;
+  // PA-API（Creators API）でJAN/商品名→ASIN直リンクを解決（/api/paapi-search を経由）
+  const fetchAmazonLink = async (e) => {
+    const hasJan = e.jan && e.jan.replace(/[^0-9]/g, "").length >= 8;
+    const kw = [e.brand, e.code, e.name].filter(Boolean).join(" ");
+    if (!hasJan && !kw.trim()) { alert("JANまたは商品名を入力してください。"); return; }
+    const param = hasJan ? `jan=${encodeURIComponent(e.jan)}` : `q=${encodeURIComponent(kw)}`;
+    setLooking(true);
+    try {
+      const r = await fetch(`/api/paapi-search?${param}`);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { alert("Amazon商品リンクの取得に失敗しました：" + (d.error || r.status)); return; }
+      const top = (d.results || [])[0];
+      if (!top) { alert("Amazonで該当商品が見つかりませんでした。検索リンク（下のボタン）をご利用ください。"); return; }
+      upd({ asin: top.asin, amazonUrl: top.url });
+      alert("Amazon商品リンクを取得しました：\n" + (top.title || top.asin));
+    } catch (err) { alert("通信エラー：" + (err.message || err)); }
+    finally { setLooking(false); }
+  };
 
   // 商品名からメーカー/種類を推測（Yahoo検索結果の補助。確実ではないので後から手で直せる）
   const guessBrand = (name) => {
@@ -6510,11 +6528,12 @@ function PaintStock({ onClose }) {
             </div>
           </div>
 
-          <label style={ps.label}>Amazonリンク（任意・再購入用の直リンク）</label>
-          <input style={ps.input} value={e.amazonUrl || ""} onChange={ev => upd({ amazonUrl: ev.target.value })} placeholder="https://www.amazon.co.jp/dp/..." />
-          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-            <button style={{ ...ps.ghost, flex: 1 }} onClick={() => upd({ amazonUrl: amazonSearchUrl(e) })}>商品名で検索リンクを作成</button>
-            {e.amazonUrl && <a href={e.amazonUrl} target="_blank" rel="noopener noreferrer" style={{ ...ps.black, flex: 1, textAlign: "center", textDecoration: "none" }}>🛒 リンクを開く</a>}
+          <label style={ps.label}>Amazonリンク（任意・再購入用の直リンク）{e.asin ? `　［ASIN: ${e.asin}］` : ""}</label>
+          <input style={ps.input} value={e.amazonUrl || ""} onChange={ev => upd({ amazonUrl: ev.target.value, asin: "" })} placeholder="https://www.amazon.co.jp/dp/..." />
+          <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+            <button style={{ ...ps.black, flex: "1 1 100%" }} disabled={looking} onClick={() => fetchAmazonLink(e)}>{looking ? "取得中…" : "🔎 Amazonで商品リンクを取得（PA-API）"}</button>
+            <button style={{ ...ps.ghost, flex: 1 }} onClick={() => upd({ amazonUrl: amazonSearchUrl(e), asin: "" })}>検索リンクを作成</button>
+            {e.amazonUrl && <a href={e.amazonUrl} target="_blank" rel="noopener noreferrer" style={{ ...ps.ghost, flex: 1, textAlign: "center", textDecoration: "none" }}>🛒 開く</a>}
           </div>
 
           <label style={ps.label}>メモ（調色レシピ・使い道など）</label>
