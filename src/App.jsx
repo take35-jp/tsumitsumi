@@ -6801,15 +6801,13 @@ function PaintStock({ onClose }) {
           <label style={ps.label}>レシピ名 / 調色名</label>
           <input style={ps.input} value={e.name} onChange={ev => upd({ name: ev.target.value })} placeholder="例：自作ジオン系グリーン" />
 
-          <label style={ps.label}>仕上がりの色（系統）</label>
+          <label style={ps.label}>仕上がりの色（自由に指定）</label>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 30, height: 30, flexShrink: 0, background: e.colorFamily ? (e.swatch || "#ccc") : "#fff", border: "1px solid rgba(0,0,0,0.2)" }} />
-            <select style={ps.input} value={e.colorFamily || ""}
-              onChange={ev => { const f = PAINT_COLOR_FAMILIES.find(x => x.label === ev.target.value); upd({ colorFamily: ev.target.value, swatch: f ? f.hex : (e.swatch || "#9aa0a6") }); }}>
-              <option value="">選択してください</option>
-              {PAINT_COLOR_FAMILIES.map(f => <option key={f.label} value={f.label}>{f.label}</option>)}
-            </select>
+            <span style={{ width: 34, height: 34, flexShrink: 0, background: e.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
+            <input type="color" value={e.swatch || "#9aa0a6"} onChange={ev => upd({ swatch: ev.target.value })} style={{ width: 50, height: 36, border: "1px solid #d1d5db", background: "#fff", padding: 0, cursor: "pointer", flexShrink: 0 }} />
+            <input style={{ ...ps.input, width: 120, flex: "none" }} value={e.swatch || ""} onChange={ev => upd({ swatch: ev.target.value })} placeholder="#RRGGBB" />
           </div>
+          <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>調色した実際の色に近づけて指定できます。</div>
 
           <label style={{ ...ps.label, marginTop: 18 }}>調色に使った塗料（割合 %）</label>
           {(e.mixParts || []).map((m, i) => (
