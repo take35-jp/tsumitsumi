@@ -6491,7 +6491,9 @@ export default function App() {
 // キット管理と同じ発想で「持っている塗料」を端末内（localStorage）で管理する独立機能。
 // 既存のキット一覧ロジックには一切触れず、上部セグメントから全画面で開く（ModelerAlbum と同じ安全パターン）。
 const PAINT_LS_KEY = "tsumitsumi_paints";
-const PAINT_BRANDS = ["GSIクレオス Mr.カラー", "GSIクレオス 水性ホビーカラー", "Mr.カラー GX", "ガイアカラー", "ガイア 水性", "タミヤ ラッカー(LP)", "タミヤ アクリル", "タミヤ エナメル", "フィニッシャーズ", "Vallejo", "シタデルカラー", "その他"];
+const PAINT_BRANDS = ["クレオス", "ガイアノーツ", "タミヤ", "フィニッシャーズ", "シタデルカラー", "Vallejo", "Showup", "その他"];
+// 大全(mfrコード) → メーカー名（PAINT_BRANDS に揃える）
+const CAT_MFR_BRAND = { gsi: "クレオス", gaia: "ガイアノーツ", tamiya: "タミヤ", finishers: "フィニッシャーズ" };
 const PAINT_TYPES = ["ラッカー", "水性アクリル", "エナメル", "その他"];
 const PAINT_FINISHES = ["光沢", "半光沢", "つや消し", "メタリック", "クリア", "サーフェイサー", "その他"];
 const PAINT_REMAIN = ["なし", "少ない", "半分", "多い", "新品"]; // index 0..4
@@ -6532,7 +6534,7 @@ function catFinishToApp(finish, color) {
   return "光沢";
 }
 function catBrand(mfrNames, mfr, lineup) {
-  return [(mfrNames && mfrNames[mfr]) || mfr || "", lineup || ""].filter(Boolean).join(" ").trim();
+  return CAT_MFR_BRAND[mfr] || "その他"; // メーカー名のみ（シリーズ/lineupは付けない）
 }
 // 大全エントリ → マイパレットの塗料オブジェクト（base に既存下書きを渡すと count/残量/JAN等を維持）
 function catalogToPaint(c, isTopcoat, mfrNames, base) {
@@ -6603,24 +6605,24 @@ function PaintStock({ onClose }) {
     finally { setLooking(false); }
   };
 
-  // 商品名からメーカー/種類を推測（Yahoo検索結果の補助。確実ではないので後から手で直せる）
+  // 商品名からメーカーを推測（Yahoo検索結果の補助。確実ではないので後から手で直せる）
   const guessBrand = (name) => {
     const n = name || "";
-    if (/水性\s*ホビー/.test(n)) return "GSIクレオス 水性ホビーカラー";
-    if (/(Mr\.?\s*カラー|クレオス|GSI).*GX|GX\s*メタル|スーパーメタリック/i.test(n)) return "Mr.カラー GX";
-    if (/Mr\.?\s*カラー|クレオス|GSI|ガンダムカラー/i.test(n)) return "GSIクレオス Mr.カラー";
-    if (/ガイア.*水性|水性.*ガイア/.test(n)) return "ガイア 水性";
-    if (/ガイア|GAIA/i.test(n)) return "ガイアカラー";
-    if (/タミヤ|TAMIYA/i.test(n)) { if (/エナメル/.test(n)) return "タミヤ エナメル"; if (/LP-?\d|ラッカー/.test(n)) return "タミヤ ラッカー(LP)"; return "タミヤ アクリル"; }
+    if (/Mr\.?\s*カラー|クレオス|GSI|水性\s*ホビー|ガンダムカラー/i.test(n)) return "クレオス";
+    if (/ガイア|GAIA/i.test(n)) return "ガイアノーツ";
+    if (/タミヤ|TAMIYA/i.test(n)) return "タミヤ";
     if (/フィニッシャーズ|Finisher/i.test(n)) return "フィニッシャーズ";
-    if (/vallejo|ファレホ/i.test(n)) return "Vallejo";
     if (/citadel|シタデル/i.test(n)) return "シタデルカラー";
+    if (/vallejo|ファレホ/i.test(n)) return "Vallejo";
+    if (/show\s*up|ショウアップ|ショーアップ/i.test(n)) return "Showup";
     return "その他";
   };
-  const typeOfBrand = (brand) => {
-    if (/水性|アクリル|Vallejo|シタデル/.test(brand)) return "水性アクリル";
-    if (/エナメル/.test(brand)) return "エナメル";
-    if (/Mr\.|GX|ガイア|ラッカー|フィニッシャーズ/.test(brand)) return "ラッカー";
+  // 商品名から塗料の種類を推測
+  const guessType = (name) => {
+    const n = name || "";
+    if (/エナメル/.test(n)) return "エナメル";
+    if (/水性|アクリジョン|アクリル|vallejo|ファレホ|citadel|シタデル/i.test(n)) return "水性アクリル";
+    if (/ラッカー|Mr\.?\s*カラー|ガイアカラー|フィニッシャーズ|LP-?\d/i.test(n)) return "ラッカー";
     return PAINT_TYPES[0];
   };
   // JANで商品情報を取得（キット登録と同じ /api/search を流用：マスタ→Rakuten→Yahoo の順で名前/画像を返す）
@@ -6630,8 +6632,7 @@ function PaintStock({ onClose }) {
       const r = await fetch(`/api/search?jan=${encodeURIComponent(jan)}`);
       const d = r.ok ? await r.json() : null;
       if (d && d.name) {
-        const brand = guessBrand(d.name);
-        return { ...(base || blank()), jan, name: d.name, brand, type: typeOfBrand(brand) };
+        return { ...(base || blank()), jan, name: d.name, brand: guessBrand(d.name), type: guessType(d.name) };
       }
       return null;
     } catch (e) { return null; }
@@ -6717,7 +6718,7 @@ function PaintStock({ onClose }) {
           <div key={i} onClick={() => pickCatalog(c, isTop)} style={{ ...ps.row, marginBottom: 6 }}>
             <div style={ps.swatch(swatch)} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>{brand}{c.code ? ` ・ ${c.code}` : ""}</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>{brand}{c.lineup ? ` ${c.lineup}` : ""}{c.code ? ` ・ ${c.code}` : ""}</div>
               <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name || c.lineup}</div>
               <div style={{ marginTop: 2 }}><span style={ps.tag}>{catTypeToApp(c.type)}</span><span style={ps.tag}>{catFinishToApp(c.finish, c.color)}</span></div>
             </div>
@@ -6869,7 +6870,7 @@ function PaintStock({ onClose }) {
             <button style={{ ...ps.ghost, whiteSpace: "nowrap" }} onClick={() => setScanning(true)}>スキャン</button>
           </div>
 
-          <label style={ps.label}>メーカー / シリーズ</label>
+          <label style={ps.label}>メーカー</label>
           <select style={ps.input} value={e.brand} onChange={ev => upd({ brand: ev.target.value })}>
             {[...new Set([...(e.brand ? [e.brand] : []), ...PAINT_BRANDS])].map(b => <option key={b} value={b}>{b}</option>)}
           </select>
