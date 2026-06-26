@@ -6714,7 +6714,7 @@ function PaintStock({ onClose }) {
 
   const save = async () => {
     if (!editing) return;
-    const d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim() };
+    const d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim(), count: Math.max(1, parseInt(editing.count, 10) || 1) };
     if (!d.name && !d.code) { alert("色名または色番号のどちらかを入力してください。"); return; }
     // Amazonリンク未取得なら保存時に自動取得（PA-API）。JAN優先→無ければ商品名で検索。
     if (!d.amazonUrl) {
@@ -6846,7 +6846,7 @@ function PaintStock({ onClose }) {
           <div style={{ display: "flex", gap: 10 }}>
             <div style={{ width: 110 }}>
               <label style={ps.label}>所持数</label>
-              <input type="number" min="1" style={ps.input} value={e.count} onChange={ev => upd({ count: Math.max(1, parseInt(ev.target.value) || 1) })} />
+              <input type="number" min="1" inputMode="numeric" style={ps.input} value={e.count} onChange={ev => upd({ count: ev.target.value.replace(/[^0-9]/g, "") })} />
             </div>
             <div style={{ flex: 1 }}>
               <label style={ps.label}>購入日</label>
