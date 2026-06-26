@@ -4393,15 +4393,17 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
             <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={() => setMaBackup(true)} title="バックアップ">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
             </button>
-            {onOpenPaints && (
-              <button style={{ ...ma.ghost, padding: "6px 8px", display: "flex", alignItems: "center" }} onClick={onOpenPaints} title="My PALETTE（塗料管理）へ">
-                <MyPaletteLogo size={22} />
-              </button>
-            )}
-            <button style={ma.ghost} onClick={() => setMaHelp(true)}>HELP</button>
+            <button style={{ ...ma.ghost, padding: "8px 11px", display: "flex", alignItems: "center" }} onClick={() => setMaHelp(true)} title="使い方・ヘルプ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.2 9.2a2.8 2.8 0 015.4 1c0 1.8-2.6 2.2-2.6 4" /><line x1="12" y1="17.5" x2="12" y2="17.51" /></svg>
+            </button>
             <a href="/" title="ツミツミへ" style={{ display: "flex", alignItems: "center" }}>
               <img src="/LOGO.png" alt="TSUMI TSUMI" style={{ height: 28, width: "auto", display: "block" }} />
             </a>
+            {onOpenPaints && (
+              <button style={{ ...ma.ghost, padding: "4px 6px", display: "flex", alignItems: "center" }} onClick={onOpenPaints} title="My PALETTE（塗料管理）へ">
+                <MyPaletteLogo size={26} />
+              </button>
+            )}
           </div>
         </div>
         <div style={ma.body}>
@@ -6511,18 +6513,24 @@ const PAINT_TYPES = ["ラッカー", "水性アクリル", "エナメル", "そ�
 const PAINT_FINISHES = ["光沢", "半光沢", "つや消し", "メタリック", "クリア", "サーフェイサー", "その他"];
 const PAINT_REMAIN = ["なし", "少ない", "半分", "多い", "新品"]; // index 0..4
 function makePaintId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-// My PALETTE ロゴ（パレット＋筆。添付画像に近いミニマルB&W。SVG再現）
+// My PALETTE ロゴ。public/mypalette-logo.png があればそれを使用。無ければ黒地のフォールバックSVG。
 function MyPaletteLogo({ size = 32 }) {
+  const [err, setErr] = useState(false);
+  if (!err) {
+    return <img src="/mypalette-logo.png" alt="My PALETTE" onError={() => setErr(true)} style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }} />;
+  }
   return (
-    <svg width={size} height={size} viewBox="0 0 64 60" aria-label="My PALETTE" style={{ display: "block", flexShrink: 0 }}>
-      <path d="M30 6 C15 6 5 15 5 28 C5 40 14 48 26 48 C30 48 31 44 34 42 C38 40 44 43 49 39 C56 34 61 27 59 18 C56 8 44 6 30 6 Z" fill="none" stroke="#111" strokeWidth="3.2" strokeLinejoin="round" />
-      <circle cx="27" cy="13" r="3.6" fill="#111" />
-      <circle cx="17" cy="18" r="3.6" fill="#111" />
-      <circle cx="13" cy="29" r="3.6" fill="#111" />
-      <circle cx="17" cy="40" r="3.6" fill="#111" />
-      <line x1="58" y1="7" x2="40" y2="31" stroke="#111" strokeWidth="3.4" strokeLinecap="round" />
-      <path d="M40 30 l-6 4 5.5 4 3-5 z" fill="#111" />
-      <line x1="36.5" y1="33" x2="40" y2="36" stroke="#fff" strokeWidth="1.2" />
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-label="My PALETTE" style={{ display: "block", flexShrink: 0 }}>
+      <rect x="0" y="0" width="64" height="64" rx="10" fill="#111" />
+      <g transform="translate(2,1)">
+        <path d="M30 10 C16 10 7 18 7 30 C7 41 15 48 26 48 C30 48 31 44 34 42 C38 40 44 43 49 39 C55 34 60 28 58 20 C55 11 44 10 30 10 Z" fill="none" stroke="#fff" strokeWidth="3" strokeLinejoin="round" />
+        <circle cx="27" cy="17" r="3.4" fill="#fff" />
+        <circle cx="18" cy="22" r="3.4" fill="#fff" />
+        <circle cx="14" cy="32" r="3.4" fill="#fff" />
+        <circle cx="18" cy="42" r="3.4" fill="#fff" />
+        <line x1="57" y1="11" x2="40" y2="33" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" />
+        <path d="M40 32 l-6 4 5.5 4 3-5 z" fill="#fff" />
+      </g>
     </svg>
   );
 }
@@ -7054,7 +7062,9 @@ function PaintStock({ onClose, onOpenModeler }) {
               <img src="/modelers-logo.jpg" alt="Modelers Album" style={{ width: 32, height: 32, objectFit: "cover", display: "block" }} />
             </button>
           )}
-          <button title="使い方・取扱説明書" onClick={() => setPHelp(true)} style={{ ...ps.ghost, padding: "6px 10px", fontSize: 11, fontWeight: 800 }}>HELP</button>
+          <button title="使い方・取扱説明書" onClick={() => setPHelp(true)} style={{ background: "#fff", border: "1px solid #111", borderRadius: 0, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#111" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.2 9.2a2.8 2.8 0 015.4 1c0 1.8-2.6 2.2-2.6 4" /><line x1="12" y1="17.5" x2="12" y2="17.51" /></svg>
+          </button>
           <button title="バックアップ" onClick={() => setPBackup(true)} style={{ background: "#fff", border: "1px solid #111", borderRadius: 0, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#111" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" />
