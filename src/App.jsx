@@ -6555,8 +6555,8 @@ function PaintStock({ onClose }) {
   const [q, setQ] = useState("");
   const [fBrand, setFBrand] = useState("");
   const [fType, setFType] = useState("");
-  const [fCat, setFCat] = useState(""); // "" | "塗料" | "トップコート"
-  const [onlyLow, setOnlyLow] = useState(false);
+  const [fColor, setFColor] = useState(""); // 色（系統）フィルタ
+  const [pSort, setPSort] = useState("date"); // 並び替え: date(登録順) | color(色順) | brand(メーカー順) | name(名前順)
   const [scanning, setScanning] = useState(false); // バーコードスキャナ表示
   const [looking, setLooking] = useState(false); // JAN→商品情報の取得中
   const [catOpen, setCatOpen] = useState(false); // 大全検索オーバーレイ
@@ -6655,7 +6655,7 @@ function PaintStock({ onClose }) {
   // 大全検索を開く（base＝選択時にマージする下書き。編集中ならその下書き、無ければ新規）
   const openCatalog = async (base) => {
     setCatBase(base || null);
-    setCatTab((base && base.category) || fCat || "塗料");
+    setCatTab((base && base.category) || "塗料");
     setCatQ("");
     setCatOpen(true);
     if (!cat) { try { setCat(await loadPaintCatalog()); } catch (e) { alert("大全データの読み込みに失敗しました。"); setCatOpen(false); } }
@@ -6738,13 +6738,18 @@ function PaintStock({ onClose }) {
   const remove = (id) => { if (!window.confirm("この塗料を削除しますか？")) return; setPaints(prev => prev.filter(x => x.id !== id)); setEditing(null); };
   const upd = (patch) => setEditing(e => ({ ...e, ...patch }));
 
+  const colorOrder = (cf) => { const i = PAINT_COLOR_FAMILIES.findIndex(f => f.label === cf); return i < 0 ? 999 : i; };
   const filtered = paints.filter(p => {
-    if (fCat && (p.category || "塗料") !== fCat) return false;
-    if (onlyLow && (p.remain ?? 4) > 1) return false;
+    if (fColor && (p.colorFamily || "") !== fColor) return false;
     if (fBrand && p.brand !== fBrand) return false;
     if (fType && p.type !== fType) return false;
-    if (q) { const hay = `${p.name} ${p.code} ${p.brand} ${p.finish}`.toLowerCase(); if (!hay.includes(q.toLowerCase())) return false; }
+    if (q) { const hay = `${p.name} ${p.code} ${p.brand} ${p.finish} ${p.colorFamily || ""}`.toLowerCase(); if (!hay.includes(q.toLowerCase())) return false; }
     return true;
+  }).sort((a, b) => {
+    if (pSort === "color") return colorOrder(a.colorFamily) - colorOrder(b.colorFamily) || (b.createdAt || 0) - (a.createdAt || 0);
+    if (pSort === "brand") return String(a.brand || "").localeCompare(String(b.brand || ""), "ja") || colorOrder(a.colorFamily) - colorOrder(b.colorFamily);
+    if (pSort === "name") return String(a.name || "").localeCompare(String(b.name || ""), "ja");
+    return (b.createdAt || 0) - (a.createdAt || 0); // date（登録順・新しい順）
   });
 
   const ps = {
@@ -6835,14 +6840,6 @@ function PaintStock({ onClose }) {
             </div>
           </div>
 
-          <label style={ps.label}>残量</label>
-          <div style={{ display: "flex", gap: 6 }}>
-            {PAINT_REMAIN.map((r, i) => (
-              <button key={i} onClick={() => upd({ remain: i })}
-                style={{ flex: 1, padding: "8px 0", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: e.remain === i ? "#111" : "#fff", color: e.remain === i ? "#fff" : "#111" }}>{r}</button>
-            ))}
-          </div>
-
           <div style={{ display: "flex", gap: 10 }}>
             <div style={{ width: 110 }}>
               <label style={ps.label}>所持数</label>
@@ -6885,6 +6882,10 @@ function PaintStock({ onClose }) {
       <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "8px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
         <input style={ps.input} value={q} onChange={ev => setQ(ev.target.value)} placeholder="色名・番号・メーカーで検索…" />
         <div style={{ display: "flex", gap: 6 }}>
+          <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={fColor} onChange={ev => setFColor(ev.target.value)}>
+            <option value="">全色</option>
+            {PAINT_COLOR_FAMILIES.map(f => <option key={f.label} value={f.label}>{f.label}</option>)}
+          </select>
           <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={fBrand} onChange={ev => setFBrand(ev.target.value)}>
             <option value="">全メーカー</option>
             {brandsInUse.map(b => <option key={b} value={b}>{b}</option>)}
@@ -6893,7 +6894,15 @@ function PaintStock({ onClose }) {
             <option value="">全種類</option>
             {PAINT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <button onClick={() => setOnlyLow(v => !v)} style={{ flexShrink: 0, padding: "0 12px", fontSize: 11, fontWeight: 700, border: "1px solid #111", borderRadius: 0, cursor: "pointer", background: onlyLow ? "#ef4444" : "#fff", color: onlyLow ? "#fff" : "#111" }}>要補充</button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, color: "#6b7280", flexShrink: 0 }}>並び替え</span>
+          <select style={{ ...ps.input, fontSize: 12, padding: "6px 8px" }} value={pSort} onChange={ev => setPSort(ev.target.value)}>
+            <option value="date">登録順</option>
+            <option value="color">色順</option>
+            <option value="brand">メーカー順</option>
+            <option value="name">名前順</option>
+          </select>
         </div>
         <button style={{ ...ps.black, width: "100%" }} onClick={() => openCatalog(null)}>PAINT GUIDE・TOPCOAT GUIDEから探して追加</button>
       </div>
@@ -6920,8 +6929,7 @@ function PaintStock({ onClose }) {
               </div>
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <RemainBar v={p.remain} />
-              <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>{PAINT_REMAIN[p.remain ?? 4]} ×{p.count || 1}</div>
+              <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 700 }}>{p.count || 1}個</div>
             </div>
             {p.amazonUrl && (
               <a href={p.amazonUrl} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title="Amazonで補充"
