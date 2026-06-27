@@ -3356,7 +3356,7 @@ async function generateUsedColorsImage(photo, paints, album) {
       const txtY = y + sw - Math.round((sw - 22) / 2) - 4;
       ctx.fillStyle = "#111"; const ml_ = fit(m.label || "（調色名なし）", pw - sw - 16, 800, 22, 13); ctx.fillText(ml_, px + sw + 14, txtY);
       y += rowH;
-      const partsStr = (m.parts || []).map(p => `${p.name || "?"}${p.percent ? ` ${p.percent}%` : ""}`).join("  +  ");
+      const partsStr = (m.parts || []).map(p => `${p.name || "?"}${p.ratio ? ` ×${p.ratio}` : (p.percent ? ` ${p.percent}%` : "")}`).join("  +  ");
       if (partsStr) { ctx.fillStyle = "#666"; const ps_ = fit(partsStr, pw - sw - 4, 500, 17, 11); ctx.fillText(ps_, px + sw + 14, y + 4); }
       y += Math.round(rowH * 0.7);
     }
