@@ -6801,6 +6801,21 @@ function PaintStock({ onClose, onOpenModeler }) {
     } catch (err) { alert("通信エラー：" + (err.message || err)); }
     finally { setLooking(false); }
   };
+  // PA-APIでAmazon商品リンク・画像を補完（非破壊：補完できたら新オブジェクトを返す）。
+  const enrichAmazon = async (d) => {
+    if (!d || d.kind === "mix" || d.amazonUrl) return d;
+    const hasJan = d.jan && d.jan.replace(/[^0-9]/g, "").length >= 8;
+    const kw = [d.brand, d.code, d.name].filter(Boolean).join(" ").trim();
+    if (!hasJan && !kw) return d;
+    try {
+      const param = hasJan ? `jan=${encodeURIComponent(d.jan)}` : `q=${encodeURIComponent(kw)}`;
+      const r = await fetch(`/api/paapi-search?${param}`);
+      const j = await r.json().catch(() => ({}));
+      const top = (j.results || [])[0];
+      if (top) return { ...d, asin: top.asin, amazonUrl: top.url, amazonImage: top.image || "" };
+    } catch (e) {}
+    return d;
+  };
 
   // 商品名からメーカーを推測（Yahoo検索結果の補助。確実ではないので後から手で直せる）
   const guessBrand = (name) => {
@@ -6980,14 +6995,22 @@ function PaintStock({ onClose, onOpenModeler }) {
     reader.readAsText(file);
   };
   const toggleCatSel = (c, isTop) => setCatSel(s => { const k = catKey(c); const n = { ...s }; if (n[k]) delete n[k]; else n[k] = { c, isTop }; return n; });
-  const addCatalogSelected = () => {
+  const addCatalogSelected = async () => {
     const items = Object.values(catSel);
     if (!items.length) { setCatOpen(false); return; }
     const mn = cat && cat.mfrNames;
     const news = items.map(({ c, isTop }) => catalogToPaint(c, isTop, mn, blank()));
-    setPaints(prev => [...news, ...prev]);
+    setPaints(prev => [...news, ...prev]); // まず登録（商品画像・補充リンクは後追いで補完）
     setCatOpen(false);
     setCatSel({});
+    // PA-APIで各商品の画像・補充リンクを補完（4件ずつ並列・取得できた分から順次反映）
+    setLooking(true);
+    try {
+      for (let i = 0; i < news.length; i += 4) {
+        const enriched = await Promise.all(news.slice(i, i + 4).map(enrichAmazon));
+        setPaints(prev => prev.map(x => { const m = enriched.find(n => n.id === x.id); return m || x; }));
+      }
+    } finally { setLooking(false); }
   };
   const catList = (() => {
     if (!cat) return [];
@@ -7053,25 +7076,14 @@ function PaintStock({ onClose, onOpenModeler }) {
 
   const save = async () => {
     if (!editing) return;
-    const d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim(), count: Math.max(1, parseInt(editing.count, 10) || 1) };
+    let d = { ...editing, name: (editing.name || "").trim(), code: (editing.code || "").trim(), count: Math.max(1, parseInt(editing.count, 10) || 1) };
     if (d.kind === "mix") {
       if (!d.name) { alert("調色レシピ名（色名）を入力してください。"); return; }
     } else if (!d.name && !d.code) { alert("色名または色番号のどちらかを入力してください。"); return; }
     // Amazonリンク未取得なら保存時に自動取得（PA-API）。調色レシピ(mix)は商品が無いのでスキップ。
     if (d.kind !== "mix" && !d.amazonUrl) {
-      const hasJan = d.jan && d.jan.replace(/[^0-9]/g, "").length >= 8;
-      const kw = [d.brand, d.code, d.name].filter(Boolean).join(" ").trim();
-      if (hasJan || kw) {
-        setLooking(true);
-        try {
-          const param = hasJan ? `jan=${encodeURIComponent(d.jan)}` : `q=${encodeURIComponent(kw)}`;
-          const r = await fetch(`/api/paapi-search?${param}`);
-          const j = await r.json().catch(() => ({}));
-          const top = (j.results || [])[0];
-          if (top) { d.asin = top.asin; d.amazonUrl = top.url; d.amazonImage = top.image || ""; }
-        } catch (e) {}
-        finally { setLooking(false); }
-      }
+      setLooking(true);
+      try { d = await enrichAmazon(d); } finally { setLooking(false); }
     }
     setPaints(prev => prev.some(x => x.id === d.id) ? prev.map(x => x.id === d.id ? d : x) : [d, ...prev]);
     setEditing(null);
