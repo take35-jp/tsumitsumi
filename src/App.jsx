@@ -6937,7 +6937,7 @@ function PaintStock({ onClose, onOpenModeler }) {
   // ---- このアプリ（My PALETTE）を共有 ----
   const shareApp = async () => {
     const url = "https://tsumitsumi.vercel.app/?paint";
-    const text = `持っている塗料・調色を色見本つきでカンタン管理。バーコードや塗料大全からも登録できる無料Webアプリ「My PALETTE」\n#マイパレット #TSUMITSUMI`;
+    const text = `持っている塗料をカンタン管理。調色レシピのきろくも。バーコードをスキャンして登録。無料Webアプリ「My PALETTE」\n#マイパレット #TSUMITSUMI`;
     try {
       if (typeof navigator !== "undefined" && navigator.share) { await navigator.share({ title: "My PALETTE", text, url }); return; }
     } catch (e) { if (e && e.name === "AbortError") return; }
