@@ -647,7 +647,9 @@
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn" onclick="bulkFetchMissingImages()" style="background:#3b82f6; color:#fff;">📷 画像なし商品の画像を一括取得</button>
+          <button class="btn" onclick="bulkFetchPaapiImages()" style="background:#1d4ed8; color:#fff;" title="JANでAmazon PA-API検索→商品画像を補完（中古/訳あり除外）">🅰 PA-APIで画像を補完</button>
           <button class="btn" onclick="bulkFetchMissingPrices()" style="background:#059669; color:#fff;">💴 希望小売価格を一括取得</button>
+          <button class="btn" onclick="bulkFetchPaapiPrices()" style="background:#b45309; color:#fff;" title="⚠ Amazon販売価格のため転売プレミア混入注意。まず「希望小売価格を一括取得」推奨">🅰 PA-API価格補完(販売価格)</button>
           <button class="btn" onclick="bulkFillScaleSeries()" style="background:#10b981; color:#fff;">📊 スケール・シリーズ自動補完</button>
           <button class="btn" onclick="bulkCleanAllNames()" style="background:#fbbf24; color:#78350f;">🧹 商品名を一括クリーニング</button>
           <button class="btn" onclick="bulkReorderNames()" style="background:#a855f7; color:#fff;">🔄 商品名を並び替え(実験的)</button>
@@ -3834,6 +3836,193 @@ function showMsg(id, text, type) {
       summary += ' / 経過 ' + totalMin + '分' + totalSec + '秒(処理対象 ' + targets.length + '件)';
       msgEl.innerHTML = '<div class="msg msg-ok">' + summary + '</div>';
 
+      await loadMaster();
+    }
+
+    // ===== PA-API（Amazon）による画像・価格の補完 =====
+    // 画像はそのまま採用（安全）。価格はAmazonの「販売価格」のため、品切れ/プレミアキットでは
+    // 転売プレミアが混入し得る（CLAUDE.md §4-3）。価格補完は別ボタン＋警告のうえ任意実行。
+    async function paapiLookupByJan(jan) {
+      // /api/paapi-search?jan= で先頭候補（中古/訳あり除外済み）を返す。失敗時 null。
+      try {
+        const r = await fetch('/api/paapi-search?jan=' + encodeURIComponent(jan));
+        if (!r.ok) return null;
+        const d = await r.json();
+        const top = ((d && d.results) || [])[0];
+        if (!top) return null;
+        return { image: top.image || null, price: (typeof top.price === 'number' ? top.price : null), title: top.title || '', asin: top.asin || null };
+      } catch (_) { return null; }
+    }
+
+    // 画像なし商品の画像を PA-API で一括補完（JAN検索）
+    async function bulkFetchPaapiImages(silent = false) {
+      const msgEl = document.getElementById('master-msg');
+      if (!msgEl) { alert('メッセージ表示領域が見つかりません'); return; }
+      const SLEEP_MS = 1200;
+      const SKIP_KEY = 'tsumitsumi_admin_paapi_image_skip';
+      let skipSet;
+      try { skipSet = new Set(JSON.parse(localStorage.getItem(SKIP_KEY) || '[]')); } catch (_) { skipSet = new Set(); }
+
+      msgEl.innerHTML = '<div class="msg msg-info">画像なし商品を抽出中...</div>';
+      let targets = [];
+      try {
+        let from = 0; const pageSize = 1000;
+        while (true) {
+          const r = await fetch(
+            SUPABASE_URL + '/rest/v1/products?select=id,jan,name,image_url' +
+            '&jan=not.is.null' +
+            '&or=(image_url.is.null,image_url.eq.)' +
+            '&order=id.desc' +
+            '&limit=' + pageSize + '&offset=' + from,
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+          );
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const batch = await r.json();
+          if (!Array.isArray(batch) || batch.length === 0) break;
+          targets = targets.concat(batch);
+          if (batch.length < pageSize) break;
+          from += pageSize;
+        }
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg msg-err">対象抽出エラー: ' + escEdit(e.message) + '</div>';
+        return;
+      }
+      const beforeFilter = targets.length;
+      targets = targets.filter(t => !skipSet.has(t.jan));
+      const skippedFromSet = beforeFilter - targets.length;
+      if (targets.length === 0) {
+        msgEl.innerHTML = '<div class="msg msg-ok">✅ PA-API画像補完の対象はありませんでした' + (skippedFromSet > 0 ? '（前回スキップ済み ' + skippedFromSet + ' 件を除外）' : '') + '</div>';
+        return;
+      }
+      if (!silent) {
+        const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
+        const ok = confirm(
+          'PA-API（Amazon）で画像なし商品 ' + targets.length + ' 件の画像を補完します。\n\n' +
+          (skippedFromSet > 0 ? '（前回スキップ済み ' + skippedFromSet + ' 件は今回除外）\n\n' : '') +
+          '各商品をJANでPA-API検索し、最初にヒットした商品画像をマスタに登録します（中古/訳ありは除外）。\n' +
+          'API負荷軽減のため1件あたり約1.2秒の間隔で処理します。\n' +
+          '推定処理時間: 約 ' + estMin + ' 分\n\n' +
+          '⚠️ 処理中はadminのタブを閉じないでください\n' +
+          '⚠️ Amazonにヒットしない/JANが古い商品はスキップされます\n\n' +
+          '続行しますか？'
+        );
+        if (!ok) { msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>'; return; }
+      }
+      let updated = 0, notFound = 0, failed = 0;
+      const startTime = Date.now();
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        if (i % 20 === 0 || i === targets.length - 1) {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const remaining = targets.length - i - 1;
+          const remainingMin = Math.ceil(remaining * SLEEP_MS / 60000);
+          msgEl.innerHTML = '<div class="msg msg-info">PA-API画像補完中... (' + (i + 1) + '/' + targets.length + ') ✅' + updated + ' / 不在 ' + notFound + ' / 失敗 ' + failed + ' / 経過 ' + elapsed + '秒 / 残り推定 ' + remainingMin + '分</div>';
+        }
+        try {
+          const hit = await paapiLookupByJan(t.jan);
+          const imageUrl = hit && hit.image;
+          if (!imageUrl) {
+            notFound++;
+            if (t.jan) { skipSet.add(t.jan); try { localStorage.setItem(SKIP_KEY, JSON.stringify([...skipSet])); } catch (_) {} }
+            await new Promise(r => setTimeout(r, SLEEP_MS)); continue;
+          }
+          const updateRes = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + t.id, {
+            method: 'PATCH',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ image_url: imageUrl, updated_at: new Date().toISOString() }),
+          });
+          if (updateRes.ok) updated++; else failed++;
+        } catch (e) { failed++; console.error('bulkFetchPaapiImages error:', e); }
+        await new Promise(r => setTimeout(r, SLEEP_MS));
+      }
+      const totalElapsed = Math.floor((Date.now() - startTime) / 1000);
+      msgEl.innerHTML = '<div class="msg msg-ok">✅ PA-API画像補完完了: 更新 ' + updated + '件 / Amazon不在 ' + notFound + '件' + (failed > 0 ? ' / 失敗 ' + failed + '件' : '') + ' / 経過 ' + Math.floor(totalElapsed / 60) + '分' + (totalElapsed % 60) + '秒（対象 ' + targets.length + '件）</div>';
+      await loadMaster();
+    }
+
+    // 価格なし商品の価格を PA-API で一括補完（⚠ Amazon販売価格＝転売プレミア混入リスク）
+    async function bulkFetchPaapiPrices(silent = false) {
+      const msgEl = document.getElementById('master-msg');
+      if (!msgEl) { alert('メッセージ表示領域が見つかりません'); return; }
+      const SLEEP_MS = 1200;
+      const SKIP_KEY = 'tsumitsumi_admin_paapi_price_skip';
+      let skipSet;
+      try { skipSet = new Set(JSON.parse(localStorage.getItem(SKIP_KEY) || '[]')); } catch (_) { skipSet = new Set(); }
+
+      msgEl.innerHTML = '<div class="msg msg-info">価格未設定の商品を抽出中...</div>';
+      let targets = [];
+      try {
+        let from = 0; const pageSize = 1000;
+        while (true) {
+          const r = await fetch(
+            SUPABASE_URL + '/rest/v1/products?select=id,jan,name,retail_price' +
+            '&jan=not.is.null' +
+            '&retail_price=is.null' +
+            '&order=id.desc' +
+            '&limit=' + pageSize + '&offset=' + from,
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+          );
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const batch = await r.json();
+          if (!Array.isArray(batch) || batch.length === 0) break;
+          targets = targets.concat(batch);
+          if (batch.length < pageSize) break;
+          from += pageSize;
+        }
+      } catch (e) {
+        msgEl.innerHTML = '<div class="msg msg-err">対象抽出エラー: ' + escEdit(e.message) + '</div>';
+        return;
+      }
+      const beforeFilter = targets.length;
+      targets = targets.filter(t => !skipSet.has(t.jan));
+      const skippedFromSet = beforeFilter - targets.length;
+      if (targets.length === 0) {
+        msgEl.innerHTML = '<div class="msg msg-ok">✅ PA-API価格補完の対象はありませんでした' + (skippedFromSet > 0 ? '（前回スキップ済み ' + skippedFromSet + ' 件を除外）' : '') + '</div>';
+        return;
+      }
+      if (!silent) {
+        const estMin = Math.ceil(targets.length * SLEEP_MS / 60000);
+        const ok = confirm(
+          '⚠️【販売価格 注意】PA-API価格補完\n\n' +
+          'PA-APIが返すのはAmazonの「販売価格」です。品切れ/プレミアキットでは\n' +
+          '転売プレミアが混入し、希望小売価格(retail_price)の方針に反する恐れがあります。\n' +
+          '（通常はまず「💴 希望小売価格を一括取得」＝ホビーサーチ/Yahoo fixedPrice を使ってください）\n\n' +
+          '価格未設定の商品 ' + targets.length + ' 件を対象に、JANでPA-API検索し、\n' +
+          '最初にヒットした商品（中古/訳あり除外）の価格をretail_priceに登録します。\n' +
+          'API負荷軽減のため1件あたり約1.2秒間隔・推定 約 ' + estMin + ' 分。\n\n' +
+          'それでも実行しますか？'
+        );
+        if (!ok) { msgEl.innerHTML = '<div class="msg msg-info">中止しました</div>'; return; }
+      }
+      let updated = 0, notFound = 0, failed = 0;
+      const startTime = Date.now();
+      for (let i = 0; i < targets.length; i++) {
+        const t = targets[i];
+        if (i % 20 === 0 || i === targets.length - 1) {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const remaining = targets.length - i - 1;
+          const remainingMin = Math.ceil(remaining * SLEEP_MS / 60000);
+          msgEl.innerHTML = '<div class="msg msg-info">PA-API価格補完中... (' + (i + 1) + '/' + targets.length + ') ✅' + updated + ' / 不在 ' + notFound + ' / 失敗 ' + failed + ' / 経過 ' + elapsed + '秒 / 残り推定 ' + remainingMin + '分</div>';
+        }
+        try {
+          const hit = await paapiLookupByJan(t.jan);
+          const price = (hit && Number.isFinite(hit.price)) ? Math.round(hit.price) : null;
+          if (!price || price <= 0) {
+            notFound++;
+            if (t.jan) { skipSet.add(t.jan); try { localStorage.setItem(SKIP_KEY, JSON.stringify([...skipSet])); } catch (_) {} }
+            await new Promise(r => setTimeout(r, SLEEP_MS)); continue;
+          }
+          const updateRes = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + t.id, {
+            method: 'PATCH',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ retail_price: price, updated_at: new Date().toISOString() }),
+          });
+          if (updateRes.ok) updated++; else failed++;
+        } catch (e) { failed++; console.error('bulkFetchPaapiPrices error:', e); }
+        await new Promise(r => setTimeout(r, SLEEP_MS));
+      }
+      const totalElapsed = Math.floor((Date.now() - startTime) / 1000);
+      msgEl.innerHTML = '<div class="msg msg-ok">✅ PA-API価格補完完了: 更新 ' + updated + '件 / Amazon不在 ' + notFound + '件' + (failed > 0 ? ' / 失敗 ' + failed + '件' : '') + ' / 経過 ' + Math.floor(totalElapsed / 60) + '分' + (totalElapsed % 60) + '秒（対象 ' + targets.length + '件）</div>';
       await loadMaster();
     }
 
