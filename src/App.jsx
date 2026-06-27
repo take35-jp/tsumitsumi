@@ -6630,7 +6630,13 @@ function MyPaletteLogo({ size = 32 }) {
 let _paintCatalog = null;
 async function loadPaintCatalog() {
   if (_paintCatalog) return _paintCatalog;
-  // キャッシュバスター＋no-store：古い404/HTMLがキャッシュされていても確実に最新JSONを取得
+  // ① アプリ同梱データを優先（実行時fetch不要＝iOSホーム画面アプリでも確実）。Vite が別チャンク化。
+  try {
+    const m = await import("../public/paint-catalog.json");
+    const data = m.default || m;
+    if (data && Array.isArray(data.paints)) { _paintCatalog = data; return data; }
+  } catch (e) {}
+  // ② フォールバック：静的ファイルを fetch（同梱が何らかの理由で使えない場合）
   const r = await fetch("/paint-catalog.json?v=3", { cache: "no-store" });
   if (!r.ok) throw new Error("HTTP " + r.status);
   const text = await r.text();
