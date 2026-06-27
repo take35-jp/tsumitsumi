@@ -3313,13 +3313,20 @@ async function generateUsedColorsImage(photo, paints, album) {
   const units = pl.length + (ml.length ? 0.7 + ml.length * 1.7 : 0);
   const rowH = Math.min(54, Math.max(30, Math.floor(areaH / Math.max(1, units))));
   const sw = Math.min(40, rowH - 10);
-  const clip = (s, maxW, font) => { ctx.font = font; let t = s; if (ctx.measureText(t).width <= maxW) return t; while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1); return t + "…"; };
+  // 1行に収まるようフォントを縮小（min以上）。それでも超える極端な長さのみ末尾省略。返り値の font を ctx に適用済み。
+  const fit = (s, maxW, weight, base, min) => {
+    let fs = base; ctx.font = `${weight} ${fs}px ${MA_FONT}`;
+    while (ctx.measureText(s).width > maxW && fs > min) { fs -= 1; ctx.font = `${weight} ${fs}px ${MA_FONT}`; }
+    let t = s;
+    if (ctx.measureText(t).width > maxW) { while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1); t += "…"; }
+    return t;
+  };
   // 使用塗料
   for (const p of pl) {
     ctx.fillStyle = p.swatch || "#ccc"; ctx.fillRect(px, y, sw, sw);
     ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; ctx.strokeRect(px, y, sw, sw);
     const txtY = y + sw - Math.round((sw - 22) / 2) - 4;
-    ctx.fillStyle = "#111"; const nm = clip(p.name || "（無名）", pw - sw - 16 - (p.part ? 130 : 0), `700 23px ${MA_FONT}`);
+    ctx.fillStyle = "#111"; const nm = fit(p.name || "（無名）", pw - sw - 16 - (p.part ? 120 : 0), 700, 23, 13);
     ctx.fillText(nm, px + sw + 14, txtY);
     if (p.part) { ctx.fillStyle = "#888"; ctx.font = `600 17px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(p.part, px + pw, txtY); ctx.textAlign = "left"; }
     y += rowH;
@@ -3338,10 +3345,10 @@ async function generateUsedColorsImage(photo, paints, album) {
       ctx.fillStyle = m.resultSwatch || "#ccc"; ctx.fillRect(px, y, sw, sw);
       ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; ctx.strokeRect(px, y, sw, sw);
       const txtY = y + sw - Math.round((sw - 22) / 2) - 4;
-      ctx.fillStyle = "#111"; ctx.fillText(clip(m.label || "（調色名なし）", pw - sw - 16, `800 22px ${MA_FONT}`), px + sw + 14, txtY);
+      ctx.fillStyle = "#111"; const ml_ = fit(m.label || "（調色名なし）", pw - sw - 16, 800, 22, 13); ctx.fillText(ml_, px + sw + 14, txtY);
       y += rowH;
       const partsStr = (m.parts || []).map(p => `${p.name || "?"}${p.percent ? ` ${p.percent}%` : ""}`).join("  +  ");
-      if (partsStr) { ctx.fillStyle = "#666"; ctx.fillText(clip(partsStr, pw - sw - 4, `500 17px ${MA_FONT}`), px + sw + 14, y + 4); }
+      if (partsStr) { ctx.fillStyle = "#666"; const ps_ = fit(partsStr, pw - sw - 4, 500, 17, 11); ctx.fillText(ps_, px + sw + 14, y + 4); }
       y += Math.round(rowH * 0.7);
     }
     if (mixesAll.length > ml.length) { ctx.fillStyle = "#999"; ctx.font = `600 15px ${MA_FONT}`; ctx.fillText(`ほか ${mixesAll.length - ml.length} レシピ`, px, y + 13); }
