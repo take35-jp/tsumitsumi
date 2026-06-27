@@ -3277,6 +3277,13 @@ async function generateModelerPhotoImage(photo, album) {
   return await new Promise(r => canvas.toBlob(r, "image/png"));
 }
 // 使用色シェア：写真1枚（左）＋使用塗料リスト（右）の 16:9 横長画像（X投稿向け）
+// 連続して重複する語を畳む（既存データの「ガイアノーツ ガイアノーツ …」二重表記の表示時クリーン）
+function dedupeWords(s) {
+  const w = String(s || "").split(/\s+/).filter(Boolean);
+  const out = [];
+  for (const t of w) { if (t === out[out.length - 1]) continue; out.push(t); }
+  return out.join(" ").trim();
+}
 async function generateUsedColorsImage(photo, paints, album) {
   const S = 2, W = 1600, H = 900, M = 40;
   const img = await maLoadImage(photo && photo.url);
@@ -3326,7 +3333,7 @@ async function generateUsedColorsImage(photo, paints, album) {
     ctx.fillStyle = p.swatch || "#ccc"; ctx.fillRect(px, y, sw, sw);
     ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; ctx.strokeRect(px, y, sw, sw);
     const txtY = y + sw - Math.round((sw - 22) / 2) - 4;
-    ctx.fillStyle = "#111"; const nm = fit(p.name || "（無名）", pw - sw - 16 - (p.part ? 120 : 0), 700, 23, 13);
+    ctx.fillStyle = "#111"; const nm = fit(dedupeWords(p.name) || "（無名）", pw - sw - 16 - (p.part ? 120 : 0), 700, 23, 13);
     ctx.fillText(nm, px + sw + 14, txtY);
     if (p.part) { ctx.fillStyle = "#888"; ctx.font = `600 17px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(p.part, px + pw, txtY); ctx.textAlign = "left"; }
     y += rowH;
@@ -3653,7 +3660,14 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
   const startEdit = (a) => { setDraft({ ...a, tags: [...(a.tags || [])], photos: maNormPhotos(a.photos).map(p => ({ ...p })), paints: [...(a.paints || [])], mixes: (a.mixes || []).map(m => ({ ...m, parts: [...(m.parts || [])] })) }); setTagInput(""); setTagManage(false); setMode("edit"); };
 
   // ---- 使用塗料・調色レシピ（draft.paints / draft.mixes）----
-  const paintLabel = (p) => [p.brand, p.code ? `No.${p.code}` : "", p.name].filter(Boolean).join(" ").trim() || "（無名）";
+  const paintLabel = (p) => {
+    const name = (p.name || "").trim(), brand = (p.brand || "").trim(), code = (p.code || "").trim();
+    const parts = [];
+    if (brand && !name.includes(brand)) parts.push(brand);
+    if (code && !name.includes(code)) parts.push(`No.${code}`);
+    parts.push(name);
+    return parts.filter(Boolean).join(" ").trim() || brand || "（無名）";
+  };
   const addUsedPaint = (src) => setDraft(d => ({ ...d, paints: [...(d.paints || []), src ? { paintId: src.id, name: paintLabel(src), swatch: src.swatch || "#999", part: "" } : { paintId: null, name: "", swatch: "#9aa0a6", part: "" }] }));
   const updUsedPaint = (i, patch) => setDraft(d => ({ ...d, paints: (d.paints || []).map((x, j) => j === i ? { ...x, ...patch } : x) }));
   const delUsedPaint = (i) => setDraft(d => ({ ...d, paints: (d.paints || []).filter((_, j) => j !== i) }));
@@ -4623,7 +4637,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
               {a.paints.map((p, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #f4f4f4" }}>
                   <div style={{ width: 22, height: 22, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
-                  <div style={{ flex: 1, fontSize: 14 }}>{p.name || "（無名）"}</div>
+                  <div style={{ flex: 1, fontSize: 14 }}>{dedupeWords(p.name) || "（無名）"}</div>
                   {p.part && <div style={{ fontSize: 11, color: "#888" }}>{p.part}</div>}
                 </div>
               ))}
