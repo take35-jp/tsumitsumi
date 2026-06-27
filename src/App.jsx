@@ -6934,6 +6934,17 @@ function PaintStock({ onClose, onOpenModeler }) {
     setEditing(mapped);
     setCatOpen(false);
   };
+  // ---- このアプリ（My PALETTE）を共有 ----
+  const shareApp = async () => {
+    const url = "https://tsumitsumi.vercel.app/?paint";
+    const text = `持っている塗料・調色を色見本つきでカンタン管理。バーコードや塗料大全からも登録できる無料Webアプリ「My PALETTE」\n#マイパレット #TSUMITSUMI`;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) { await navigator.share({ title: "My PALETTE", text, url }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(url); alert("アプリのURLをコピーしました。\n" + url); }
+    catch (_) { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + "\n" + url)}`, "_blank"); }
+  };
+
   // ---- バックアップ（書き出し/読み込み）。塗料は画像Blob無しなのでJSONのみで完結 ----
   const exportPaints = () => {
     try {
@@ -7233,6 +7244,9 @@ function PaintStock({ onClose, onOpenModeler }) {
           <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "0.06em", color: "#111" }}>My <span style={{ letterSpacing: "0.12em" }}>PALETTE</span></span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button title="このアプリを共有" onClick={shareApp} style={{ background: "#fff", border: "1px solid #111", borderRadius: 0, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#111" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+          </button>
           <button title="使い方・取扱説明書" onClick={() => setPHelp(true)} style={{ background: "#fff", border: "1px solid #111", borderRadius: 0, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#111" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.2 9.2a2.8 2.8 0 015.4 1c0 1.8-2.6 2.2-2.6 4" /><line x1="12" y1="17.5" x2="12" y2="17.51" /></svg>
           </button>
