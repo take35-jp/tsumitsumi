@@ -6827,6 +6827,23 @@ function PaintStock({ onClose, onOpenModeler }) {
       setScanQueue([]);
     }
   };
+
+  const ps = {
+    wrap: { position: "fixed", inset: 0, zIndex: 300, background: "#f6f7f8", color: "#111", display: "flex", flexDirection: "column", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', Meiryo, sans-serif" },
+    bar: { background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 },
+    seg: { display: "flex", border: "1.5px solid #111", borderRadius: 0, overflow: "hidden", flexShrink: 0 },
+    segBtn: (on) => ({ padding: "6px 14px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: on ? "#111" : "#fff", color: on ? "#fff" : "#111" }),
+    body: { flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "10px 14px 90px" },
+    row: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, padding: "10px 12px", display: "flex", alignItems: "center", gap: 11, marginBottom: 8, cursor: "pointer" },
+    swatch: (c) => ({ width: 40, height: 40, flexShrink: 0, background: c || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }),
+    tag: { display: "inline-block", fontSize: 10, fontWeight: 700, padding: "1px 7px", border: "1px solid #d1d5db", color: "#4b5563", marginRight: 4 },
+    label: { display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", margin: "12px 0 4px" },
+    input: { width: "100%", boxSizing: "border-box", border: "1px solid #d1d5db", borderRadius: 0, padding: "8px 10px", fontSize: 15, outline: "none", background: "#fff" },
+    fab: { position: "fixed", right: 18, bottom: 22, height: 50, padding: "0 18px", borderRadius: 0, background: "#111", color: "#fff", border: "none", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.25)", zIndex: 2 },
+    black: { background: "#111", color: "#fff", border: "1px solid #111", padding: "11px 18px", fontSize: 13, fontWeight: 800, cursor: "pointer", borderRadius: 0 },
+    ghost: { background: "#fff", color: "#111", border: "1px solid #111", padding: "11px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: 0 },
+  };
+
   const scannerOverlay = scanning && (
     <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-start", justifyContent: "center" }} onClick={closeScanner}>
       <div onClick={(ev) => ev.stopPropagation()} style={{ width: "100%", maxWidth: 480 }}>
@@ -7015,22 +7032,6 @@ function PaintStock({ onClose, onOpenModeler }) {
     if (pSort === "name") return String(a.name || "").localeCompare(String(b.name || ""), "ja");
     return (b.createdAt || 0) - (a.createdAt || 0); // date（登録順・新しい順）
   });
-
-  const ps = {
-    wrap: { position: "fixed", inset: 0, zIndex: 300, background: "#f6f7f8", color: "#111", display: "flex", flexDirection: "column", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', Meiryo, sans-serif" },
-    bar: { background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 },
-    seg: { display: "flex", border: "1.5px solid #111", borderRadius: 0, overflow: "hidden", flexShrink: 0 },
-    segBtn: (on) => ({ padding: "6px 14px", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", background: on ? "#111" : "#fff", color: on ? "#fff" : "#111" }),
-    body: { flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "10px 14px 90px" },
-    row: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 0, padding: "10px 12px", display: "flex", alignItems: "center", gap: 11, marginBottom: 8, cursor: "pointer" },
-    swatch: (c) => ({ width: 40, height: 40, flexShrink: 0, background: c || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }),
-    tag: { display: "inline-block", fontSize: 10, fontWeight: 700, padding: "1px 7px", border: "1px solid #d1d5db", color: "#4b5563", marginRight: 4 },
-    label: { display: "block", fontSize: 11, fontWeight: 700, color: "#6b7280", margin: "12px 0 4px" },
-    input: { width: "100%", boxSizing: "border-box", border: "1px solid #d1d5db", borderRadius: 0, padding: "8px 10px", fontSize: 15, outline: "none", background: "#fff" },
-    fab: { position: "fixed", right: 18, bottom: 22, height: 50, padding: "0 18px", borderRadius: 0, background: "#111", color: "#fff", border: "none", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.25)", zIndex: 2 },
-    black: { background: "#111", color: "#fff", border: "1px solid #111", padding: "11px 18px", fontSize: 13, fontWeight: 800, cursor: "pointer", borderRadius: 0 },
-    ghost: { background: "#fff", color: "#111", border: "1px solid #111", padding: "11px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: 0 },
-  };
 
   // ---- 調色レシピ 編集フォーム ----
   if (editing && editing.kind === "mix") {
