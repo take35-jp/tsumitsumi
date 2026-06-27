@@ -292,16 +292,8 @@
 
   <div style="font-size:12px;color:#9ca3af;margin:0 0 14px;padding:6px 12px;background:#f9fafb;border-left:3px solid #d1d5db;border-radius:4px;">※ 本ページはアフィリエイト広告（PR・Amazonアソシエイト等）を含みます。詳細は<a href="/privacy.html" style="color:#6b7280;text-decoration:underline;">プライバシーポリシー</a>をご確認ください。</div>
   <p class="lead">
-    塗料を<strong>色相環順</strong>に並べ、各色の中で<strong>メーカーごとにグループ</strong>表示しています。「<strong>同じ色を各社で比較したい</strong>」「<strong>欲しい色の選択肢を一望したい</strong>」というニーズに応える、色×メーカーのマトリクスDBです。<strong>サーフェイサー（下地塗料）</strong>はメーカー横断で1つのブロックに集約。メタリック・クリアー・蛍光色も別ブロックに分けています。
+    塗料を<strong>色相環順</strong>に並べ、各色をメーカー別に比較できるデータベースです。下のフィルターでメーカー・タイプ・色・仕上げを絞り込めます。
   </p>
-
-  <p style="font-size:14px;color:#374151;line-height:1.85;margin:0 0 18px;">
-    塗料は「色」だけでなく<strong>「種類（ラッカー・水性・エナメル・ウレタン）」</strong>で選ぶのが失敗しないコツです。種類によって塗膜の強さ・匂い・うすめ液・<strong>重ね塗りの相性</strong>が変わります。初めての方や、下地→本塗装→スミ入れの順番に迷う方は、先に <a href="/tips/paint-compatibility.html" style="color:#15803d;font-weight:700;">塗料の種類と重ね塗りの相性 完全ガイド</a> を読んでから、このページで具体的な色・製品を選ぶのがおすすめです。下のフィルターで<strong>メーカー・タイプ・色・仕上げ</strong>を絞り込めます。
-  </p>
-
-  <div class="placeholder-notice">
-    📌 各カードの商品画像は Amazonアソシエイト Product Advertising API 承認後に順次反映されます。それまでは画像placeholder＋Amazon検索リンクとして動作。掲載点数も継続して拡充中。
-  </div>
 
   <!-- 塗料タイプ特性・相性ガイド -->
   <details class="paint-guide">
@@ -411,51 +403,67 @@
   </details>
 
   <!-- Filter Bar -->
+  <style>
+    .filter-bar .filter-selects { display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-end; }
+    .filter-bar .filter-field { display:flex; flex-direction:column; gap:3px; }
+    .filter-bar .filter-field > span { font-size:11px; color:#6b7280; font-weight:700; }
+    .filter-bar .filter-field select { font-size:13px; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; background:#fff; color:#374151; min-width:130px; }
+    .filter-bar .filter-selects .reset-btn { margin-left:auto; align-self:flex-end; }
+  </style>
   <div class="filter-bar">
-    <div class="filter-row view-row">
-      <span class="filter-label">表示</span>
-      <button class="filter-pill view-pill active" data-view="color">🎨 カラー軸</button>
-      <button class="filter-pill view-pill" data-view="mfr">🏭 メーカー軸</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">メーカー</span>
-      <button class="filter-pill mfr-gsi" data-cat="mfr" data-val="gsi">GSI クレオス</button>
-      <button class="filter-pill mfr-gaia" data-cat="mfr" data-val="gaia">ガイアノーツ</button>
-      <button class="filter-pill mfr-tamiya" data-cat="mfr" data-val="tamiya">タミヤ</button>
-      <button class="filter-pill mfr-finishers" data-cat="mfr" data-val="finishers">フィニッシャーズ</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">タイプ</span>
-      <button class="filter-pill" data-cat="type" data-val="lacquer">ラッカー</button>
-      <button class="filter-pill" data-cat="type" data-val="water">水性</button>
-      <button class="filter-pill" data-cat="type" data-val="acrijon">アクリジョン</button>
-      <button class="filter-pill" data-cat="type" data-val="acrylic">水性アクリル</button>
-      <button class="filter-pill" data-cat="type" data-val="enamel">エナメル</button>
-      <button class="filter-pill" data-cat="type" data-val="urethane">ウレタン</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">色</span>
-      <button class="filter-pill" data-cat="color" data-val="red">レッド</button>
-      <button class="filter-pill" data-cat="color" data-val="orange">オレンジ</button>
-      <button class="filter-pill" data-cat="color" data-val="yellow">イエロー</button>
-      <button class="filter-pill" data-cat="color" data-val="green">グリーン</button>
-      <button class="filter-pill" data-cat="color" data-val="blue">ブルー</button>
-      <button class="filter-pill" data-cat="color" data-val="purple">パープル</button>
-      <button class="filter-pill" data-cat="color" data-val="brown">ブラウン</button>
-      <button class="filter-pill" data-cat="color" data-val="white">ホワイト</button>
-      <button class="filter-pill" data-cat="color" data-val="gray">グレー</button>
-      <button class="filter-pill" data-cat="color" data-val="black">ブラック</button>
-      <button class="filter-pill" data-cat="color" data-val="surfacer">サーフェイサー</button>
-      <button class="filter-pill" data-cat="color" data-val="metal">メタリック</button>
-      <button class="filter-pill" data-cat="color" data-val="clear">クリアー</button>
-      <button class="filter-pill" data-cat="color" data-val="fluorescent">蛍光</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">仕上げ</span>
-      <button class="filter-pill" data-cat="finish" data-val="gloss">光沢</button>
-      <button class="filter-pill" data-cat="finish" data-val="semi">半光沢</button>
-      <button class="filter-pill" data-cat="finish" data-val="flat">つや消し</button>
-      <button class="reset-btn" onclick="resetFilters()" style="margin-left:auto;">✕ 全リセット</button>
+    <div class="filter-selects">
+      <label class="filter-field">
+        <span>メーカー</span>
+        <select id="sel-mfr" data-cat="mfr">
+          <option value="">（全メーカー）</option>
+          <option value="gsi">GSI クレオス</option>
+          <option value="gaia">ガイアノーツ</option>
+          <option value="tamiya">タミヤ</option>
+          <option value="finishers">フィニッシャーズ</option>
+        </select>
+      </label>
+      <label class="filter-field">
+        <span>タイプ</span>
+        <select id="sel-type" data-cat="type">
+          <option value="">（全タイプ）</option>
+          <option value="lacquer">ラッカー</option>
+          <option value="water">水性</option>
+          <option value="acrijon">アクリジョン</option>
+          <option value="acrylic">水性アクリル</option>
+          <option value="enamel">エナメル</option>
+          <option value="urethane">ウレタン</option>
+        </select>
+      </label>
+      <label class="filter-field">
+        <span>色</span>
+        <select id="sel-color" data-cat="color">
+          <option value="">（全色）</option>
+          <option value="red">レッド</option>
+          <option value="orange">オレンジ</option>
+          <option value="yellow">イエロー</option>
+          <option value="green">グリーン</option>
+          <option value="blue">ブルー</option>
+          <option value="purple">パープル</option>
+          <option value="brown">ブラウン</option>
+          <option value="white">ホワイト</option>
+          <option value="gray">グレー</option>
+          <option value="black">ブラック</option>
+          <option value="surfacer">サーフェイサー</option>
+          <option value="metal">メタリック</option>
+          <option value="clear">クリアー</option>
+          <option value="fluorescent">蛍光</option>
+        </select>
+      </label>
+      <label class="filter-field">
+        <span>仕上げ</span>
+        <select id="sel-finish" data-cat="finish">
+          <option value="">（全仕上げ）</option>
+          <option value="gloss">光沢</option>
+          <option value="semi">半光沢</option>
+          <option value="flat">つや消し</option>
+        </select>
+      </label>
+      <button class="reset-btn" onclick="resetFilters()">✕ 全リセット</button>
     </div>
   </div>
 
@@ -495,6 +503,15 @@
 
   <div class="disclosure">
     ※ 本ページの商品リンクは Amazon アソシエイトです。Amazon のアソシエイトとして、当サイトは適格販売により収入を得ています。リンク経由で商品をご購入いただくと、一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。Product Advertising API 利用承認後に、商品ページ直リンク・リアルタイム価格・商品画像表示への切り替えを順次行います。
+  </div>
+
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;">
+    <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0 0 12px;">
+      塗料は「色」だけでなく<strong>「種類（ラッカー・水性・エナメル・ウレタン）」</strong>で選ぶのが失敗しないコツです。種類によって塗膜の強さ・匂い・うすめ液・<strong>重ね塗りの相性</strong>が変わります。初めての方や、下地→本塗装→スミ入れの順番に迷う方は、先に <a href="/tips/paint-compatibility.html" style="color:#15803d;font-weight:700;">塗料の種類と重ね塗りの相性 完全ガイド</a> を読んでから、このページで具体的な色・製品を選ぶのがおすすめです。
+    </p>
+    <p style="font-size:12px;color:#9ca3af;line-height:1.7;margin:0;">
+      📌 各カードの商品画像は Amazonアソシエイト Product Advertising API 承認後に順次反映されます。それまでは画像placeholder＋Amazon検索リンクとして動作。掲載点数も継続して拡充中。
+    </p>
   </div>
 </main>
 
@@ -1685,8 +1702,7 @@ const MFR_NAMES = { gsi: "GSI クレオス", gaia: "ガイアノーツ", tamiya:
 const MFR_ORDER = ["gsi", "gaia", "tamiya", "finishers"];
 const FINISH_LABEL = { gloss: "光沢", semi: "半光沢", flat: "つや消し" };
 
-const FILTERS = { mfr: new Set(), type: new Set(), color: new Set(), finish: new Set() };
-let viewMode = "color"; // "color" | "mfr"
+const FILTERS = { mfr: "", type: "", color: "", finish: "" };
 
 // 管理ツールのオーバーレイ（非表示=欠番削除 / 名前上書き）。paint_overrides テーブルから読む。
 const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
@@ -1839,10 +1855,10 @@ function renderByMfrAxis(list) {
 function render() {
   const list = PAINTS.filter(p => {
     if (ovr(p).hidden) return false; // 管理ツールで非表示(欠番削除)
-    if (FILTERS.mfr.size > 0 && !FILTERS.mfr.has(p.mfr)) return false;
-    if (FILTERS.type.size > 0 && !FILTERS.type.has(p.type)) return false;
-    if (FILTERS.color.size > 0 && !FILTERS.color.has(p.color)) return false;
-    if (FILTERS.finish.size > 0 && !FILTERS.finish.has(p.finish)) return false;
+    if (FILTERS.mfr && p.mfr !== FILTERS.mfr) return false;
+    if (FILTERS.type && p.type !== FILTERS.type) return false;
+    if (FILTERS.color && p.color !== FILTERS.color) return false;
+    if (FILTERS.finish && p.finish !== FILTERS.finish) return false;
     return true;
   });
 
@@ -1858,42 +1874,22 @@ function render() {
   }
   empty.style.display = "none";
 
-  root.innerHTML = viewMode === "mfr" ? renderByMfrAxis(list) : renderByColorAxis(list);
+  root.innerHTML = renderByColorAxis(list);
   // 描画後、loader.js に通知（asin_map から画像・直リンクを反映）
   document.dispatchEvent(new CustomEvent('tsumitsumi:cards-rendered'));
 }
 
-function setViewMode(mode) {
-  viewMode = mode;
-  document.querySelectorAll(".view-pill").forEach(b => {
-    b.classList.toggle("active", b.dataset.view === mode);
-  });
-  render();
-}
-
-function toggleFilter(category, value, btn) {
-  if (FILTERS[category].has(value)) {
-    FILTERS[category].delete(value);
-    btn.classList.remove("active");
-  } else {
-    FILTERS[category].add(value);
-    btn.classList.add("active");
-  }
-  render();
-}
-
 function resetFilters() {
-  Object.values(FILTERS).forEach(s => s.clear());
-  document.querySelectorAll(".filter-pill.active").forEach(b => b.classList.remove("active"));
+  Object.keys(FILTERS).forEach(k => FILTERS[k] = "");
+  document.querySelectorAll(".filter-selects select[data-cat]").forEach(s => { s.value = ""; });
   render();
 }
 
-document.querySelectorAll(".filter-pill[data-cat]").forEach(btn => {
-  btn.addEventListener("click", () => toggleFilter(btn.dataset.cat, btn.dataset.val, btn));
-});
-
-document.querySelectorAll(".view-pill[data-view]").forEach(btn => {
-  btn.addEventListener("click", () => setViewMode(btn.dataset.view));
+document.querySelectorAll(".filter-selects select[data-cat]").forEach(sel => {
+  sel.addEventListener("change", () => {
+    FILTERS[sel.dataset.cat] = sel.value;
+    render();
+  });
 });
 
 // オーバーレイ(非表示/改名)を読み込んでから初回描画

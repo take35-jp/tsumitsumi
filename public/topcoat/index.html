@@ -90,6 +90,9 @@
   .filter-pill.mfr-finishers.active { background: #18181b; border-color: #18181b; }
   .reset-btn { font-size: 11px; color: #6b7280; background: none; border: none; cursor: pointer; padding: 4px 10px; text-decoration: underline; }
   .reset-btn:hover { color: #111827; }
+  .filter-select-wrap { display: inline-flex; flex-direction: column; gap: 3px; }
+  .filter-select { background: #f3f4f6; border: 1px solid #e5e7eb; color: #374151; font-size: 12px; font-weight: 700; padding: 5px 8px; border-radius: 8px; cursor: pointer; line-height: 1.5; min-width: 110px; }
+  .filter-select:focus { outline: none; border-color: #22c55e; }
 
   .stats { font-size: 12px; color: #6b7280; margin-bottom: 14px; padding: 0 4px; }
   .stats strong { color: #111827; font-size: 14px; }
@@ -225,45 +228,53 @@
   <h1>TOPCOAT GUIDE<small>― 缶スプレー × エアブラシ用ビン × メーカー横断比較 ―</small></h1>
 
   <p class="lead">
-    完成したガンプラ・カーモデルの<strong>仕上げ＝トップコート</strong>を、メーカー横断で一望できる比較データベース。<strong>缶スプレー</strong>（手軽・初心者向け）と<strong>ビン</strong>（エアブラシ用・コスパ良）の両方を、<strong>仕上げ（光沢／半光沢／つや消し）・系統（ラッカー／水性／ウレタン）・UVカット有無</strong>でフィルター可能。ベースの色塗料は <a href="/paint/" style="color:#15803d;font-weight:700;">PAINT GUIDE</a>、種類別の相性は <a href="/tips/paint-compatibility.html" style="color:#15803d;font-weight:700;">塗料の重ね塗りガイド</a> をどうぞ。
+    トップコート（仕上げ剤）を、缶スプレー・エアブラシ用ビン横断で比較できるデータベースです。下のフィルターで絞り込めます。ベースの色塗料は <a href="/paint/" style="color:#15803d;font-weight:700;">PAINT GUIDE</a> をどうぞ。
   </p>
 
   <div class="pr-notice">※ 本ページはアフィリエイト広告（PR・Amazonアソシエイト等）を含みます。詳細は<a href="/privacy.html">プライバシーポリシー</a>をご確認ください。</div>
 
-  <div class="placeholder-notice">
-    📌 商品画像はAmazonアソシエイト Product Advertising API 承認後に順次反映。それまでは画像placeholder＋Amazon検索リンクとして動作します。品番は変更・廃番の可能性があるので、Amazonページで最新情報をご確認ください。
-  </div>
-
   <div class="filter-bar">
     <div class="filter-row">
-      <span class="filter-label">メーカー</span>
-      <button class="filter-pill mfr-gsi" data-cat="mfr" data-val="gsi">GSI クレオス</button>
-      <button class="filter-pill mfr-gaia" data-cat="mfr" data-val="gaia">ガイアノーツ</button>
-      <button class="filter-pill mfr-tamiya" data-cat="mfr" data-val="tamiya">タミヤ</button>
-      <button class="filter-pill mfr-finishers" data-cat="mfr" data-val="finishers">フィニッシャーズ</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">仕上げ</span>
-      <button class="filter-pill" data-cat="finish" data-val="gloss">光沢</button>
-      <button class="filter-pill" data-cat="finish" data-val="semi">半光沢</button>
-      <button class="filter-pill" data-cat="finish" data-val="flat">つや消し</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">形態</span>
-      <button class="filter-pill" data-cat="form" data-val="spray">🥫 缶スプレー</button>
-      <button class="filter-pill" data-cat="form" data-val="bottle">🍶 ビン（エアブラシ）</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">系統</span>
-      <button class="filter-pill" data-cat="type" data-val="lacquer">ラッカー</button>
-      <button class="filter-pill" data-cat="type" data-val="water">水性</button>
-      <button class="filter-pill" data-cat="type" data-val="acrylic">アクリル</button>
-      <button class="filter-pill" data-cat="type" data-val="enamel">エナメル</button>
-      <button class="filter-pill" data-cat="type" data-val="urethane">ウレタン</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">機能</span>
-      <button class="filter-pill" data-cat="uv" data-val="yes">UVカット</button>
+      <label class="filter-select-wrap"><span class="filter-label">メーカー</span>
+        <select class="filter-select" data-cat="mfr">
+          <option value="">すべて</option>
+          <option value="gsi">GSI クレオス</option>
+          <option value="gaia">ガイアノーツ</option>
+          <option value="tamiya">タミヤ</option>
+          <option value="finishers">フィニッシャーズ</option>
+        </select>
+      </label>
+      <label class="filter-select-wrap"><span class="filter-label">仕上げ</span>
+        <select class="filter-select" data-cat="finish">
+          <option value="">すべて</option>
+          <option value="gloss">光沢</option>
+          <option value="semi">半光沢</option>
+          <option value="flat">つや消し</option>
+        </select>
+      </label>
+      <label class="filter-select-wrap"><span class="filter-label">形態</span>
+        <select class="filter-select" data-cat="form">
+          <option value="">すべて</option>
+          <option value="spray">🥫 缶スプレー</option>
+          <option value="bottle">🍶 ビン（エアブラシ）</option>
+        </select>
+      </label>
+      <label class="filter-select-wrap"><span class="filter-label">系統</span>
+        <select class="filter-select" data-cat="type">
+          <option value="">すべて</option>
+          <option value="lacquer">ラッカー</option>
+          <option value="water">水性</option>
+          <option value="acrylic">アクリル</option>
+          <option value="enamel">エナメル</option>
+          <option value="urethane">ウレタン</option>
+        </select>
+      </label>
+      <label class="filter-select-wrap"><span class="filter-label">機能</span>
+        <select class="filter-select" data-cat="uv">
+          <option value="">すべて</option>
+          <option value="yes">UVカット</option>
+        </select>
+      </label>
       <button class="reset-btn" onclick="resetFilters()" style="margin-left:auto;">✕ 全リセット</button>
     </div>
   </div>
@@ -465,6 +476,10 @@
     </ul>
   </div>
 
+  <div class="pr-notice" style="margin-bottom:24px;">
+    📌 商品画像はAmazonアソシエイト Product Advertising API 承認後に順次反映。それまでは画像placeholder＋Amazon検索リンクとして動作します。品番は変更・廃番の可能性があるので、Amazonページで最新情報をご確認ください。関連：<a href="/paint/">PAINT GUIDE</a> / <a href="/tips/paint-compatibility.html">塗料の重ね塗りガイド</a>。
+  </div>
+
   <div class="disclosure">
     ※ 本ページの商品リンクは Amazon アソシエイトです。Amazon のアソシエイトとして、当サイトは適格販売により収入を得ています。リンク経由で商品をご購入いただくと、一部が運営費に充てられます。商品の選定は運営者が独自に行っており、外部からの依頼は受けていません。Product Advertising API 利用承認後に商品ページ直リンク・リアルタイム価格・商品画像表示への切り替えを順次行います。
   </div>
@@ -595,7 +610,7 @@ const FORM_LABEL   = { spray:"🥫 缶スプレー", bottle:"🍶 ビン" };
 const MFR_NAMES    = { gsi:"GSI クレオス", gaia:"ガイアノーツ", tamiya:"タミヤ", finishers:"フィニッシャーズ" };
 const MFR_ORDER    = ["gsi", "gaia", "tamiya", "finishers"];
 
-const FILTERS = { mfr:new Set(), finish:new Set(), form:new Set(), type:new Set(), uv:new Set() };
+const FILTERS = { mfr:"", finish:"", form:"", type:"", uv:"" };
 
 // 管理ツールのオーバーレイ（非表示=欠番削除 / 名前上書き）
 const SUPABASE_URL = "https://oxtfwmcdtngvicrcjyue.supabase.co";
@@ -645,11 +660,11 @@ function renderCard(p){
 function render(){
   const list = ITEMS.filter(p =>
     !ovr(p).hidden &&
-    (FILTERS.mfr.size===0    || FILTERS.mfr.has(p.mfr)) &&
-    (FILTERS.finish.size===0 || FILTERS.finish.has(p.finish)) &&
-    (FILTERS.form.size===0   || FILTERS.form.has(p.form)) &&
-    (FILTERS.type.size===0   || FILTERS.type.has(p.type)) &&
-    (FILTERS.uv.size===0     || (FILTERS.uv.has("yes") && p.uv === true))
+    (!FILTERS.mfr    || FILTERS.mfr === p.mfr) &&
+    (!FILTERS.finish || FILTERS.finish === p.finish) &&
+    (!FILTERS.form   || FILTERS.form === p.form) &&
+    (!FILTERS.type   || FILTERS.type === p.type) &&
+    (!FILTERS.uv     || (FILTERS.uv === "yes" && p.uv === true))
   );
   document.getElementById("count").textContent = list.length + " 件";
   document.getElementById("total").textContent = ITEMS.length;
@@ -679,18 +694,13 @@ function render(){
   document.dispatchEvent(new CustomEvent('tsumitsumi:cards-rendered'));
 }
 
-function toggleFilter(cat, val, btn){
-  if (FILTERS[cat].has(val)){ FILTERS[cat].delete(val); btn.classList.remove("active"); }
-  else { FILTERS[cat].add(val); btn.classList.add("active"); }
-  render();
-}
 function resetFilters(){
-  Object.values(FILTERS).forEach(s => s.clear());
-  document.querySelectorAll(".filter-pill.active").forEach(b => b.classList.remove("active"));
+  Object.keys(FILTERS).forEach(k => FILTERS[k] = "");
+  document.querySelectorAll(".filter-select[data-cat]").forEach(sel => sel.value = "");
   render();
 }
-document.querySelectorAll(".filter-pill[data-cat]").forEach(btn => {
-  btn.addEventListener("click", () => toggleFilter(btn.dataset.cat, btn.dataset.val, btn));
+document.querySelectorAll(".filter-select[data-cat]").forEach(sel => {
+  sel.addEventListener("change", () => { FILTERS[sel.dataset.cat] = sel.value; render(); });
 });
 loadOverrides().then(render);
 </script>
