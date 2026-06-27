@@ -3290,7 +3290,7 @@ async function generateUsedColorsImage(photo, paints, album) {
   const px = photoW + M, pw = W - photoW - M * 2;
   let y = M + 16;
   try { ctx.letterSpacing = "2px"; } catch (e) {}
-  ctx.fillStyle = "#9aa0a6"; ctx.font = `700 17px ${MA_FONT}`; ctx.fillText("USED COLORS / 使用した塗料", px, y);
+  ctx.fillStyle = "#9aa0a6"; ctx.font = `700 17px ${MA_FONT}`; ctx.fillText("USED COLORS & MIX / 使用色・調色", px, y);
   try { ctx.letterSpacing = "0px"; } catch (e) {}
   const title = (album && album.title) || "";
   if (title) {
@@ -3303,23 +3303,49 @@ async function generateUsedColorsImage(photo, paints, album) {
   y += 26;
   ctx.strokeStyle = "#e5e7eb"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
   y += 24;
-  const all = paints || [];
-  const list = all.slice(0, 12);
-  const areaH = H - y - 56;
-  const rowH = Math.min(60, Math.max(36, Math.floor(areaH / Math.max(1, list.length))));
-  const sw = Math.min(42, rowH - 12);
-  for (const p of list) {
+  const paintsAll = paints || [];
+  const mixesAll = (album && album.mixes) || [];
+  // 収まり優先で表示件数を制限。調色がある場合は塗料を絞る。
+  const pl = paintsAll.slice(0, mixesAll.length ? 7 : 12);
+  const ml = mixesAll.slice(0, 4);
+  const areaH = H - y - 52;
+  // 行高の単位：塗料=1、調色=1.7（ラベル行＋材料行）、調色見出し=0.7
+  const units = pl.length + (ml.length ? 0.7 + ml.length * 1.7 : 0);
+  const rowH = Math.min(54, Math.max(30, Math.floor(areaH / Math.max(1, units))));
+  const sw = Math.min(40, rowH - 10);
+  const clip = (s, maxW, font) => { ctx.font = font; let t = s; if (ctx.measureText(t).width <= maxW) return t; while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1); return t + "…"; };
+  // 使用塗料
+  for (const p of pl) {
     ctx.fillStyle = p.swatch || "#ccc"; ctx.fillRect(px, y, sw, sw);
     ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; ctx.strokeRect(px, y, sw, sw);
     const txtY = y + sw - Math.round((sw - 22) / 2) - 4;
-    ctx.fillStyle = "#111"; ctx.font = `700 24px ${MA_FONT}`;
-    let nm = p.name || "（無名）"; const maxW = pw - sw - 16 - (p.part ? 140 : 0);
-    while (ctx.measureText(nm).width > maxW && nm.length > 1) nm = nm.slice(0, -1);
+    ctx.fillStyle = "#111"; const nm = clip(p.name || "（無名）", pw - sw - 16 - (p.part ? 130 : 0), `700 23px ${MA_FONT}`);
     ctx.fillText(nm, px + sw + 14, txtY);
-    if (p.part) { ctx.fillStyle = "#888"; ctx.font = `600 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(p.part, px + pw, txtY); ctx.textAlign = "left"; }
+    if (p.part) { ctx.fillStyle = "#888"; ctx.font = `600 17px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText(p.part, px + pw, txtY); ctx.textAlign = "left"; }
     y += rowH;
   }
-  if (all.length > 12) { ctx.fillStyle = "#999"; ctx.font = `600 16px ${MA_FONT}`; ctx.fillText(`ほか ${all.length - 12} 色`, px, y + 14); }
+  if (paintsAll.length > pl.length) { ctx.fillStyle = "#999"; ctx.font = `600 15px ${MA_FONT}`; ctx.fillText(`ほか ${paintsAll.length - pl.length} 色`, px, y + 13); y += Math.round(rowH * 0.6); }
+  // 調色レシピ
+  if (ml.length) {
+    y += Math.round(rowH * 0.2);
+    ctx.strokeStyle = "#e5e7eb"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px + pw, y); ctx.stroke();
+    y += Math.round(rowH * 0.5);
+    try { ctx.letterSpacing = "2px"; } catch (e) {}
+    ctx.fillStyle = "#9aa0a6"; ctx.font = `700 15px ${MA_FONT}`; ctx.fillText("MIX RECIPES / 調色", px, y);
+    try { ctx.letterSpacing = "0px"; } catch (e) {}
+    y += Math.round(rowH * 0.55);
+    for (const m of ml) {
+      ctx.fillStyle = m.resultSwatch || "#ccc"; ctx.fillRect(px, y, sw, sw);
+      ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; ctx.strokeRect(px, y, sw, sw);
+      const txtY = y + sw - Math.round((sw - 22) / 2) - 4;
+      ctx.fillStyle = "#111"; ctx.fillText(clip(m.label || "（調色名なし）", pw - sw - 16, `800 22px ${MA_FONT}`), px + sw + 14, txtY);
+      y += rowH;
+      const partsStr = (m.parts || []).map(p => `${p.name || "?"}${p.percent ? ` ${p.percent}%` : ""}`).join("  +  ");
+      if (partsStr) { ctx.fillStyle = "#666"; ctx.fillText(clip(partsStr, pw - sw - 4, `500 17px ${MA_FONT}`), px + sw + 14, y + 4); }
+      y += Math.round(rowH * 0.7);
+    }
+    if (mixesAll.length > ml.length) { ctx.fillStyle = "#999"; ctx.font = `600 15px ${MA_FONT}`; ctx.fillText(`ほか ${mixesAll.length - ml.length} レシピ`, px, y + 13); }
+  }
   ctx.fillStyle = "#9aa0a6"; ctx.font = `800 18px ${MA_FONT}`; ctx.textAlign = "right"; ctx.fillText("My PALETTE", W - M, H - 22); ctx.textAlign = "left";
   return await new Promise(r => canvas.toBlob(r, "image/png"));
 }
