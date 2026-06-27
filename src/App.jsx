@@ -1411,7 +1411,8 @@ function TagInput({ tags, onChange, allTags = [] }) {
 // ---- 全バージョン履歴モーダル ----
 function AllVersionsModal({ onClose }) {
   const versions = [
-    { ver: "v1.44", date: "2026/06/20", isNew: true, items: ["モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加とHELPの確認を案内・1回のみ表示）"] },
+    { ver: "v1.47", date: "2026/06/27", isNew: true, items: ["塗料管理「My PALETTE」を公開。手持ちの塗料・トップコートを色見本つきで管理（メーカー/色番号/種類/仕上げ/購入日、検索・並び替え、バーコード/直接入力/塗料大全からの登録）", "調色レシピの記録、Amazonでの補充リンク、データのバックアップに対応", "モデラーズアルバムの各作品に「使用した塗料・調色」を記録でき、使用色をX用の画像でシェア可能に", "ヘッダーに各アプリ（キット管理／モデラーズアルバム／My PALETTE）への切替アイコンを設置"] },
+    { ver: "v1.44", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに初回アクセス時の案内ポップアップを追加（ホーム画面追加とHELPの確認を案内・1回のみ表示）"] },
     { ver: "v1.43", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加（プラモTIPS・おすすめ定番アイテムへ）"] },
     { ver: "v1.42", date: "2026/06/20", isNew: false, items: ["モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左。対応端末は共有シート、PCはURLコピー）"] },
     { ver: "v1.41", date: "2026/06/19", isNew: false, items: ["モデラーズアルバムの一覧・サムネを縮小表示にして軽量化（写真の多いアルバムでの動作を安定化。拡大時は元の高画質を表示）"] },
@@ -1660,10 +1661,21 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* v1.44 */}
+          {/* v1.47 */}
           <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ background: "#22c55e", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 0, padding: "1px 7px" }}>NEW</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.47</span>
+              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/27</span>
+            </div>
+            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
+              ・塗料管理「My PALETTE」を公開（ヘッダーのパレットアイコンから）。手持ち塗料を色見本つきで管理・登録（スキャン/直接入力/塗料大全）、調色レシピ、Amazon補充、バックアップに対応<br/>
+              ・モデラーズアルバムの作品に「使用塗料・調色」を記録／使用色をX画像でシェア
+            </div>
+          </div>
+          {/* v1.44 */}
+          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.44</span>
               <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
             </div>
@@ -1679,16 +1691,6 @@ function HelpModal({ onClose, onResetUserImages, imageResetLoading, imageResetPr
             </div>
             <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
               ・モデラーズアルバムの左下に「TIPS」「TOOLS」へのリンクボタンを追加
-            </div>
-          </div>
-          {/* v1.42 */}
-          <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 0, padding: "10px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>v1.42</span>
-              <span style={{ fontSize: 10, color: "#9ca3af" }}>2026/06/20</span>
-            </div>
-            <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.8 }}>
-              ・モデラーズアルバムに「このアプリを共有」ボタンを追加（画面右上・バックアップの左）
             </div>
           </div>
         </div>
@@ -5030,7 +5032,7 @@ export default function App() {
   const [albumKit, setAlbumKit] = useState(null); // 完成品アルバムビューアで開いているキット
   const [showModelerAlbum, setShowModelerAlbum] = useState(false); // モデラーズアルバム（ポートフォリオ）表示
   const [showPaints, setShowPaints] = useState(false); // 塗料ストック（マイパレット）表示
-  const [paintPreview, setPaintPreview] = useState(false); // 塗料機能のプレビュー解放（?paint/#paint時のみ）。アルバムの使用塗料/調色UIの表示制御にも使う
+  const [paintPreview, setPaintPreview] = useState(true); // 塗料機能（My PALETTE）正式公開（v1.47）。ヘッダーのMy PALETTEアイコン／アルバムの使用塗料・調色UIを一般表示
   // 入口ボタンは非公開中だが、?modeler または #modeler 付きURLで直接開ける（仕上げのプレビュー用）
   useEffect(() => {
     try {
