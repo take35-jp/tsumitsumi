@@ -6801,19 +6801,28 @@ function PaintStock({ onClose, onOpenModeler }) {
     } catch (err) { alert("通信エラー：" + (err.message || err)); }
     finally { setLooking(false); }
   };
-  // PA-APIでAmazon商品リンク・画像を補完（非破壊：補完できたら新オブジェクトを返す）。
-  const enrichAmazon = async (d) => {
-    if (!d || d.kind === "mix" || d.amazonUrl) return d;
-    const hasJan = d.jan && d.jan.replace(/[^0-9]/g, "").length >= 8;
-    const kw = [d.brand, d.code, d.name].filter(Boolean).join(" ").trim();
-    if (!hasJan && !kw) return d;
+  // PA-API を1回叩いて先頭候補を返す（失敗時 null）
+  const paapiTop = async (param) => {
     try {
-      const param = hasJan ? `jan=${encodeURIComponent(d.jan)}` : `q=${encodeURIComponent(kw)}`;
       const r = await fetch(`/api/paapi-search?${param}`);
       const j = await r.json().catch(() => ({}));
-      const top = (j.results || [])[0];
+      return (j.results || [])[0] || null;
+    } catch (e) { return null; }
+  };
+  // PA-APIでAmazon商品リンク・画像を補完（非破壊：補完できたら新オブジェクトを返す）。
+  // queries に複数の検索語を渡すと、見つかるまで順に試す（カタログ登録でシリーズ名込みの精度の高い語から緩い語へ）。
+  const enrichAmazon = async (d, queries) => {
+    if (!d || d.kind === "mix" || d.amazonUrl) return d;
+    const cands = [];
+    const jan = (d.jan || "").replace(/[^0-9]/g, "");
+    if (jan.length >= 8) cands.push(`jan=${encodeURIComponent(jan)}`);
+    const qs = (queries && queries.length ? queries : [[d.brand, d.code, d.name].filter(Boolean).join(" ")])
+      .map(s => (s || "").trim()).filter(Boolean);
+    for (const s of Array.from(new Set(qs))) cands.push(`q=${encodeURIComponent(s)}`);
+    for (const param of cands) {
+      const top = await paapiTop(param);
       if (top) return { ...d, asin: top.asin, amazonUrl: top.url, amazonImage: top.image || "" };
-    } catch (e) {}
+    }
     return d;
   };
 
@@ -6999,15 +7008,28 @@ function PaintStock({ onClose, onOpenModeler }) {
     const items = Object.values(catSel);
     if (!items.length) { setCatOpen(false); return; }
     const mn = cat && cat.mfrNames;
-    const news = items.map(({ c, isTop }) => catalogToPaint(c, isTop, mn, blank()));
+    // 塗料オブジェクトと、検索精度を上げるための元カタログ情報（lineup＝シリーズ名込み）を保持
+    const rows = items.map(({ c, isTop }) => {
+      const paint = catalogToPaint(c, isTop, mn, blank());
+      const brand = catBrand(mn, c.mfr, c.lineup);
+      // シリーズ名込みの精度の高い語 → 緩い語の順に試す
+      const queries = [
+        [brand, c.lineup, c.code, c.name].filter(Boolean).join(" "),
+        [c.lineup, c.code, c.name].filter(Boolean).join(" "),
+        [brand, c.lineup, c.name].filter(Boolean).join(" "),
+        [c.lineup, c.name].filter(Boolean).join(" "),
+      ];
+      return { paint, queries };
+    });
+    const news = rows.map(r => r.paint);
     setPaints(prev => [...news, ...prev]); // まず登録（商品画像・補充リンクは後追いで補完）
     setCatOpen(false);
     setCatSel({});
     // PA-APIで各商品の画像・補充リンクを補完（4件ずつ並列・取得できた分から順次反映）
     setLooking(true);
     try {
-      for (let i = 0; i < news.length; i += 4) {
-        const enriched = await Promise.all(news.slice(i, i + 4).map(enrichAmazon));
+      for (let i = 0; i < rows.length; i += 4) {
+        const enriched = await Promise.all(rows.slice(i, i + 4).map(r => enrichAmazon(r.paint, r.queries)));
         setPaints(prev => prev.map(x => { const m = enriched.find(n => n.id === x.id); return m || x; }));
       }
     } finally { setLooking(false); }
@@ -7336,8 +7358,8 @@ function PaintStock({ onClose, onOpenModeler }) {
                 <div style={{ fontSize: 12, color: "#6b7280", fontWeight: 700 }}>{p.count || 1}個</div>
               </div>
             )}
-            {p.kind !== "mix" && p.amazonUrl && (
-              <a href={p.amazonUrl} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title="Amazonで補充"
+            {p.kind !== "mix" && (
+              <a href={p.amazonUrl || amazonSearchUrl(p)} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()} title={p.amazonUrl ? "Amazonで補充" : "Amazonで検索して補充"}
                 style={{ flexShrink: 0, marginLeft: 8, padding: "0 10px", height: 34, border: "1px solid #111", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#111", textDecoration: "none" }}>補充</a>
             )}
           </div>
