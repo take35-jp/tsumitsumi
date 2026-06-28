@@ -3632,6 +3632,8 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
   const maFileRef = useRef(null); // バックアップ読み込み用 file input
   const [palette, setPalette] = useState([]); // マイパレット（塗料在庫）＝選択元（読み取り専用）
   const [picker, setPicker] = useState(null); // 塗料選択 { kind:"paint" } | { kind:"part", mixId }
+  const [pickerQ, setPickerQ] = useState(""); // 塗料ピッカーの検索語
+  const [pickerSort, setPickerSort] = useState("color"); // 塗料ピッカーの並び替え: color|brand|code|name
   const [mixRecipes, setMixRecipes] = useState([]); // 名前付き調色レシピ集
   const [recallOpen, setRecallOpen] = useState(false); // レシピ集から呼び出すオーバーレイ
   const [colorShare, setColorShare] = useState(null); // 使用色シェア：写真選択中のアルバム
@@ -4127,6 +4129,22 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
   // ---- 塗料ピッカー（マイパレットから選択 or 手入力）----
   const renderPaintPicker = () => {
     if (!picker) return null;
+    // 調色レシピ(kind:"part")は色材＝塗料のみ対象。調色エントリ(kind:"mix")は除外。
+    const colorRank = (cf) => { const i = PAINT_COLOR_FAMILIES.findIndex(f => f.label === cf); return i < 0 ? 999 : i; };
+    const q = pickerQ.trim().toLowerCase();
+    const list = palette
+      .filter(p => p.kind !== "mix")
+      .filter(p => !q || `${p.name || ""} ${p.code || ""} ${p.brand || ""} ${p.colorFamily || ""}`.toLowerCase().includes(q))
+      .slice()
+      .sort((a, b) => {
+        if (pickerSort === "brand") return String(a.brand || "").localeCompare(String(b.brand || ""), "ja") || colorRank(a.colorFamily) - colorRank(b.colorFamily);
+        if (pickerSort === "code") return String(a.code || "").localeCompare(String(b.code || ""), "ja", { numeric: true });
+        if (pickerSort === "name") return String(a.name || "").localeCompare(String(b.name || ""), "ja");
+        return colorRank(a.colorFamily) - colorRank(b.colorFamily) || String(a.brand || "").localeCompare(String(b.brand || ""), "ja"); // color（既定）
+      });
+    const sortBtn = (key, label) => (
+      <button onClick={() => setPickerSort(key)} style={{ fontSize: 11, fontWeight: 700, padding: "5px 11px", border: "1px solid #111", background: pickerSort === key ? "#111" : "#fff", color: pickerSort === key ? "#fff" : "#111", cursor: "pointer", fontFamily: MA_FONT }}>{label}</button>
+    );
     return (
       <div style={{ position: "fixed", inset: 0, zIndex: 460, background: "#fff", display: "flex", flexDirection: "column", fontFamily: MA_FONT }}>
         <div style={ma.bar}>
@@ -4134,17 +4152,28 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
           <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.1em" }}>塗料を選ぶ</div>
           <button style={ma.ghost} onClick={() => pickPaint(null)}>手入力で追加</button>
         </div>
+        <div style={{ padding: "10px 18px", borderBottom: "1px solid #eee", maxWidth: 940, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+          <input value={pickerQ} onChange={e => setPickerQ(e.target.value)} placeholder="色名・No.・メーカーで検索"
+            style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid #ccc", fontSize: 14, fontFamily: MA_FONT, marginBottom: 8 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 10, color: "#888", letterSpacing: "0.1em", marginRight: 2 }}>並び替え</span>
+            {sortBtn("color", "色順")}{sortBtn("brand", "メーカー順")}{sortBtn("code", "No.順")}{sortBtn("name", "名前順")}
+          </div>
+        </div>
         <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "12px 18px 40px", maxWidth: 940, margin: "0 auto", width: "100%" }}>
-          {palette.length === 0 && (
+          {palette.filter(p => p.kind !== "mix").length === 0 && (
             <div style={{ color: "#999", fontSize: 13, lineHeight: 1.9, textAlign: "center", padding: "40px 0" }}>
               マイパレットに塗料がありません。<br />「手入力で追加」から直接入力できます。
             </div>
           )}
-          {palette.map(p => (
+          {list.length === 0 && palette.filter(p => p.kind !== "mix").length > 0 && (
+            <div style={{ color: "#999", fontSize: 13, textAlign: "center", padding: "40px 0" }}>「{pickerQ}」に一致する塗料がありません。</div>
+          )}
+          {list.map(p => (
             <div key={p.id} onClick={() => pickPaint(p)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 4px", borderBottom: "1px solid #eee", cursor: "pointer" }}>
               <div className="tt-keepcolor" style={{ width: 30, height: 30, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 10, color: "#888" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
+                <div style={{ fontSize: 10, color: "#888" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}{p.colorFamily ? ` ・ ${p.colorFamily}` : ""}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
               </div>
               <span style={{ fontSize: 18, color: "#999" }}>＋</span>
