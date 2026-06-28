@@ -207,6 +207,11 @@
         const d = new Date(data.generatedAt);
         if (!isNaN(d)) document.getElementById("updated").textContent = "最終更新：" + d.toLocaleDateString("ja-JP");
       }
+      // 描画後に #brandkey へスクロール（JS描画なのでブラウザ標準のハッシュ移動では届かないため）
+      if (location.hash && location.hash.length > 1) {
+        const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        if (target) requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+      }
     } catch (e) {
       root.innerHTML = '<div class="empty">商品情報を読み込めませんでした。時間をおいて再度お試しください。</div>';
     }
