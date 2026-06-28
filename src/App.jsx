@@ -4142,7 +4142,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
           )}
           {palette.map(p => (
             <div key={p.id} onClick={() => pickPaint(p)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 4px", borderBottom: "1px solid #eee", cursor: "pointer" }}>
-              <div style={{ width: 30, height: 30, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
+              <div className="tt-keepcolor" style={{ width: 30, height: 30, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 10, color: "#888" }}>{p.brand}{p.code ? ` ・ No.${p.code}` : ""}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>
@@ -4174,7 +4174,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
           {mixRecipes.map(r => (
             <div key={r.id} style={{ border: "1px solid #111", padding: 12, marginBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <div style={{ width: 20, height: 20, flexShrink: 0, background: r.resultSwatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
+                <div className="tt-keepcolor" style={{ width: 20, height: 20, flexShrink: 0, background: r.resultSwatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
                 <div style={{ flex: 1, fontSize: 14, fontWeight: 700 }}>{r.name}</div>
                 <button style={{ ...ma.black, padding: "7px 12px" }} onClick={() => recallRecipe(r)}>この作品に追加</button>
                 <button style={{ ...ma.ghost, padding: "7px 10px" }} onClick={() => deleteRecipe(r.id)}>✕</button>
@@ -4638,7 +4638,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
               </div>
               {a.paints.map((p, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #f4f4f4" }}>
-                  <div style={{ width: 22, height: 22, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
+                  <div className="tt-keepcolor" style={{ width: 22, height: 22, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.18)" }} />
                   <div style={{ flex: 1, fontSize: 14 }}>{dedupeWords(p.name) || "（無名）"}</div>
                   {p.part && <div style={{ fontSize: 11, color: "#888" }}>{p.part}</div>}
                 </div>
@@ -4652,7 +4652,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
               {a.mixes.map(m => (
                 <div key={m.id} style={{ border: "1px solid #111", padding: 12, marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <div style={{ width: 20, height: 20, flexShrink: 0, background: m.resultSwatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
+                    <div className="tt-keepcolor" style={{ width: 20, height: 20, flexShrink: 0, background: m.resultSwatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
                     <div style={{ fontSize: 14, fontWeight: 700 }}>{m.label || "（調色名なし）"}</div>
                   </div>
                   <div style={{ fontSize: 13, color: "#333", lineHeight: 1.8 }}>
@@ -4738,7 +4738,7 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
             <label style={ma.label}>使用した塗料 / Paints used</label>
             {(draft.paints || []).map((p, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <input type="color" value={p.swatch || "#9aa0a6"} onChange={e => updUsedPaint(i, { swatch: e.target.value })} style={{ width: 34, height: 34, flexShrink: 0, border: "1px solid #111", background: "#fff", padding: 0, cursor: "pointer" }} />
+                <input className="tt-keepcolor" type="color" value={p.swatch || "#9aa0a6"} onChange={e => updUsedPaint(i, { swatch: e.target.value })} style={{ width: 34, height: 34, flexShrink: 0, border: "1px solid #111", background: "#fff", padding: 0, cursor: "pointer" }} />
                 <input value={p.name} onChange={e => updUsedPaint(i, { name: e.target.value })} placeholder="塗料名" style={{ ...ma.input, flex: 2, fontSize: 14 }} />
                 <input value={p.part} onChange={e => updUsedPaint(i, { part: e.target.value })} placeholder="部位（任意）" style={{ ...ma.input, flex: 1, fontSize: 14 }} />
                 <button onClick={() => delUsedPaint(i)} style={{ ...ma.ghost, padding: "6px 10px" }}>✕</button>
@@ -4756,14 +4756,14 @@ function ModelerAlbum({ onClose, tagMasterList, setTagMasterList, kits, setKits,
             {(draft.mixes || []).map(m => (
               <div key={m.id} style={{ border: "1px solid #111", padding: 12, marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <input type="color" value={m.resultSwatch || "#9aa0a6"} onChange={e => updMix(m.id, { resultSwatch: e.target.value })} style={{ width: 34, height: 34, flexShrink: 0, border: "1px solid #111", background: "#fff", padding: 0, cursor: "pointer" }} />
+                  <input className="tt-keepcolor" type="color" value={m.resultSwatch || "#9aa0a6"} onChange={e => updMix(m.id, { resultSwatch: e.target.value })} style={{ width: 34, height: 34, flexShrink: 0, border: "1px solid #111", background: "#fff", padding: 0, cursor: "pointer" }} />
                   <input value={m.label} onChange={e => updMix(m.id, { label: e.target.value })} placeholder="調色名／部位（例：本体色）" style={{ ...ma.input, flex: 1, fontSize: 14 }} />
                   <button onClick={() => saveMixToLibrary(m)} style={{ ...ma.ghost, padding: "6px 10px" }} title="レシピ集に保存">★保存</button>
                   <button onClick={() => delMix(m.id)} style={{ ...ma.ghost, padding: "6px 10px" }}>削除</button>
                 </div>
                 {(m.parts || []).map((p, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingLeft: 6 }}>
-                    <div style={{ width: 16, height: 16, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
+                    <div className="tt-keepcolor" style={{ width: 16, height: 16, flexShrink: 0, background: p.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
                     <input value={p.name} onChange={e => updMixPart(m.id, i, { name: e.target.value })} placeholder="塗料名" style={{ ...ma.input, flex: 2, fontSize: 13 }} />
                     <input value={p.ratio} onChange={e => updMixPart(m.id, i, { ratio: e.target.value })} placeholder="比率(例:2)" style={{ ...ma.input, width: 70, flex: "none", fontSize: 13 }} />
                     <button onClick={() => delMixPart(m.id, i)} style={{ ...ma.ghost, padding: "5px 9px", fontSize: 10 }}>✕</button>
@@ -7074,7 +7074,7 @@ function PaintStock({ onClose, onOpenModeler }) {
           const sel = catMulti && !!catSel[catKey(c)];
           return (
             <div key={i} onClick={() => catMulti ? toggleCatSel(c, isTop) : pickCatalog(c, isTop)} style={{ ...ps.row, marginBottom: 6, border: sel ? "2px solid #111" : ps.row.border, background: sel ? "#f3f4f6" : "#fff" }}>
-              <div style={ps.swatch(swatch)} />
+              <div className="tt-keepcolor" style={ps.swatch(swatch)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: "#6b7280" }}>{brand}{c.lineup ? ` ${c.lineup}` : ""}{c.code ? ` ・ ${c.code}` : ""}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name || c.lineup}</div>
@@ -7143,8 +7143,8 @@ function PaintStock({ onClose, onOpenModeler }) {
 
           <label style={ps.label}>仕上がりの色（自由に指定）</label>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 34, height: 34, flexShrink: 0, background: e.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
-            <input type="color" value={e.swatch || "#9aa0a6"} onChange={ev => upd({ swatch: ev.target.value })} style={{ width: 50, height: 36, border: "1px solid #d1d5db", background: "#fff", padding: 0, cursor: "pointer", flexShrink: 0 }} />
+            <span className="tt-keepcolor" style={{ width: 34, height: 34, flexShrink: 0, background: e.swatch || "#ccc", border: "1px solid rgba(0,0,0,0.2)" }} />
+            <input className="tt-keepcolor" type="color" value={e.swatch || "#9aa0a6"} onChange={ev => upd({ swatch: ev.target.value })} style={{ width: 50, height: 36, border: "1px solid #d1d5db", background: "#fff", padding: 0, cursor: "pointer", flexShrink: 0 }} />
             <input style={{ ...ps.input, width: 120, flex: "none" }} value={e.swatch || ""} onChange={ev => upd({ swatch: ev.target.value })} placeholder="#RRGGBB" />
           </div>
           <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>調色した実際の色に近づけて指定できます。</div>
@@ -7191,7 +7191,7 @@ function PaintStock({ onClose, onOpenModeler }) {
 
           <label style={ps.label}>色（系統）</label>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 30, height: 30, flexShrink: 0, background: e.colorFamily ? (e.swatch || "#ccc") : "#fff", border: "1px solid rgba(0,0,0,0.2)" }} />
+            <span className="tt-keepcolor" style={{ width: 30, height: 30, flexShrink: 0, background: e.colorFamily ? (e.swatch || "#ccc") : "#fff", border: "1px solid rgba(0,0,0,0.2)" }} />
             <select style={ps.input} value={e.colorFamily || ""}
               onChange={ev => { const f = PAINT_COLOR_FAMILIES.find(x => x.label === ev.target.value); upd({ colorFamily: ev.target.value, swatch: f ? f.hex : (e.swatch || "#9aa0a6") }); }}>
               <option value="">選択してください</option>
@@ -7343,7 +7343,7 @@ function PaintStock({ onClose, onOpenModeler }) {
           <div key={p.id} style={ps.row} onClick={() => setEditing({ ...p })}>
             {(p.kind !== "mix" && p.amazonImage)
               ? <img src={p.amazonImage} alt="" style={{ width: 40, height: 40, flexShrink: 0, objectFit: "contain", background: "#fff", border: "1px solid rgba(0,0,0,0.12)" }} />
-              : <div style={ps.swatch(p.swatch)} />}
+              : <div className="tt-keepcolor" style={ps.swatch(p.swatch)} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, color: "#6b7280" }}>{p.kind === "mix" ? "調色レシピ" : `${p.brand}${p.code ? ` ・ No.${p.code}` : ""}`}</div>
               <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name || "（色名なし）"}</div>

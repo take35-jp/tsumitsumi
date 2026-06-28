@@ -77,6 +77,10 @@
       :root[data-theme="dark"] iframe {
         filter: invert(1) hue-rotate(180deg);
       }
+      /* 実際の色を見せたい要素（塗料スウォッチ等）は再反転して true color を保つ */
+      :root[data-theme="dark"] .tt-keepcolor {
+        filter: invert(1) hue-rotate(180deg);
+      }
     </style>
     <!-- ZBar WASM 事前読み込み -->
     <script type="module">
