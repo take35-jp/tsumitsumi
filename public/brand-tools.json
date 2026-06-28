@@ -1,18 +1,349 @@
 {
-  "generatedAt": null,
+  "generatedAt": "2026-06-28T14:26:08.832Z",
   "partnerTag": "tsumitsumi232-22",
   "brands": [
     {
       "key": "plamo-kojo",
       "name": "プラモ向上委員会",
       "blurb": "切削・研磨・マスキングなど、痒い所に手が届くアイテムを展開する日本のモデリングツールブランド。コスパと使い勝手のバランスがよく、ステップアップにも定番。",
-      "items": []
+      "items": [
+        {
+          "asin": "B0FX7SC4GT",
+          "title": "プラモ向上委員会(Plamokojoiinkai) プラモドライオーブン FIT ホビー用工具 PMKJ038",
+          "image": "https://m.media-amazon.com/images/I/41pfV2uoCrL._SL500_.jpg",
+          "price": 18078,
+          "url": "https://www.amazon.co.jp/dp/B0FX7SC4GT/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BJCRH6XN",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ワークステーションVer2.0 Pro ホビー用工具 PMKJ019",
+          "image": "https://m.media-amazon.com/images/I/31DS5fcC+bL._SL500_.jpg",
+          "price": 6873,
+          "url": "https://www.amazon.co.jp/dp/B0BJCRH6XN/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BLRMY5P1",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ボルテックスターラーTurbo ホビー用工具 PMKJ020",
+          "image": "https://m.media-amazon.com/images/I/41vnAW7BMpL._SL500_.jpg",
+          "price": 5773,
+          "url": "https://www.amazon.co.jp/dp/B0BLRMY5P1/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GYN42XNJ",
+          "title": "プラモ向上委員会(Plamokojoiinkai) 無限ブラシヤスリ 荒目 ホビー用工具 PMKJ040-06",
+          "image": "https://m.media-amazon.com/images/I/41pMAhofTjL._SL500_.jpg",
+          "price": 3490,
+          "url": "https://www.amazon.co.jp/dp/B0GYN42XNJ/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BJCRQ86S",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ワークステーションVer2.0 Basic ホビー用工具 PMKJ018",
+          "image": "https://m.media-amazon.com/images/I/31UmO9oGvOL._SL500_.jpg",
+          "price": 4173,
+          "url": "https://www.amazon.co.jp/dp/B0BJCRQ86S/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GNLMK1VH",
+          "title": "プラモ向上委員会 ワークライトルミナス ホビー用ツール PMKJ039",
+          "image": "https://m.media-amazon.com/images/I/21v8ulfAcsL._SL500_.jpg",
+          "price": 11881,
+          "url": "https://www.amazon.co.jp/dp/B0GNLMK1VH/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BHS22VYL",
+          "title": "プラモ向上委員会(Plamokojoiinkai) 水転写デカール用 デカーリングQuickトレイ (樹脂製ピンセット・曲線ハサミ付属) ホビー用工具 PMKJ008",
+          "image": "https://m.media-amazon.com/images/I/31vzVqUvdJL._SL500_.jpg",
+          "price": 1436,
+          "url": "https://www.amazon.co.jp/dp/B0BHS22VYL/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BDYCW344",
+          "title": "プラモ向上委員会(Plamokojoiinkai) 仕分けトレイ for プラモ 2個セット ホビー用工具 PMKJ004W",
+          "image": "https://m.media-amazon.com/images/I/31GHv+UwP3L._SL500_.jpg",
+          "price": 879,
+          "url": "https://www.amazon.co.jp/dp/B0BDYCW344/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BDD2Y9PN",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ランナーinドック ホビー用工具 PMKJ010",
+          "image": "https://m.media-amazon.com/images/I/61m4npv3s8L._SL500_.jpg",
+          "price": 2736,
+          "url": "https://www.amazon.co.jp/dp/B0BDD2Y9PN/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BL29B4TD",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ランナータグClip ホビー用工具 PMKJ011",
+          "image": "https://m.media-amazon.com/images/I/414B0b3Yx4L._SL500_.jpg",
+          "price": 791,
+          "url": "https://www.amazon.co.jp/dp/B0BL29B4TD/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0FGX7HGY9",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ハリヌリSHEET ホビー用工具 PMKJ036",
+          "image": "https://m.media-amazon.com/images/I/41iGYHtZsAL._SL500_.jpg",
+          "price": 439,
+          "url": "https://www.amazon.co.jp/dp/B0FGX7HGY9/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B08984QZ69",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ザ・指ほうき (ブラック) ホビー用工具 PMKJ013BK",
+          "image": "https://m.media-amazon.com/images/I/41PkRAw3vWL._SL500_.jpg",
+          "price": 616,
+          "url": "https://www.amazon.co.jp/dp/B08984QZ69/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BNSVFP1D",
+          "title": "プラモ向上委員会(Plamokojoiinkai) プラモ工具ポーチEVA (ブルー) ホビー用工具 PMKJ009BL",
+          "image": "https://m.media-amazon.com/images/I/511-K9jmcfL._SL500_.jpg",
+          "price": 1300,
+          "url": "https://www.amazon.co.jp/dp/B0BNSVFP1D/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BQXP2YZT",
+          "title": "プラモ向上委員会(Plamokojoiinkai) モデリングコンテナ054 (スモーク) ホビー用工具 PMKJ016BK",
+          "image": "https://m.media-amazon.com/images/I/31Dpntfg0cL._SL500_.jpg",
+          "price": 1745,
+          "url": "https://www.amazon.co.jp/dp/B0BQXP2YZT/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CN8WCF7S",
+          "title": "プラモ向上委員会(Puramokoujouiinkai) サステナニッパーADVANCE Verレーシングミク2023 ホビー用工具 PMKJ-RM03",
+          "image": "https://m.media-amazon.com/images/I/31gUUiwWgTL._SL500_.jpg",
+          "price": 3945,
+          "url": "https://www.amazon.co.jp/dp/B0CN8WCF7S/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CB59WHJ7",
+          "title": "プラモ向上委員会 plamokojo サステナニッパーAdvance ホビー用工具 PMKJ025",
+          "image": "https://m.media-amazon.com/images/I/316tXBS74yL._SL500_.jpg",
+          "price": 3473,
+          "url": "https://www.amazon.co.jp/dp/B0CB59WHJ7/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0DRBKJY9S",
+          "title": "プラモ向上委員会(Plamokojoiinkai) サステナブレードSHARP# 3枚入 ホビー用工具 PMKJ026S",
+          "image": "https://m.media-amazon.com/images/I/31j6a6iOmML._SL500_.jpg",
+          "price": 1302,
+          "url": "https://www.amazon.co.jp/dp/B0DRBKJY9S/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BL2C3N6V",
+          "title": "プラモ向上委員会(Plamokojoiinkai) ザ・指ほうき (ブルー) ホビー用工具 PMKJ013BL",
+          "image": "https://m.media-amazon.com/images/I/31zCsYFLhQL._SL500_.jpg",
+          "price": 535,
+          "url": "https://www.amazon.co.jp/dp/B0BL2C3N6V/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BNT9HGZ6",
+          "title": "プラモ向上委員会(Plamokojoiinkai) マステスライサーV ホビー用工具 PMKJ014",
+          "image": "https://m.media-amazon.com/images/I/41XssMHwBHL._SL500_.jpg",
+          "price": 1309,
+          "url": "https://www.amazon.co.jp/dp/B0BNT9HGZ6/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0F4QBXLBL",
+          "title": "プラモ向上委員会(Plamokojoiinkai) カーペインターHANDLE ホビー用工具 PMKJ035",
+          "image": "https://m.media-amazon.com/images/I/31zDf3QjY9L._SL500_.jpg",
+          "price": 2103,
+          "url": "https://www.amazon.co.jp/dp/B0F4QBXLBL/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0G5H45YN1",
+          "title": "プラモ向上委員会 plamokojo ランナータグClip ホビー用工具 PMKJ011 グレー (× 2)",
+          "image": "https://m.media-amazon.com/images/I/31IpCKARjGL._SL500_.jpg",
+          "price": 1582,
+          "url": "https://www.amazon.co.jp/dp/B0G5H45YN1/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0DHKGSHQ3",
+          "title": "プラモ向上委員会(Plamokojoiinkai) Myスミ入れペン (MY PANEL LINE PEN) 3本入り ホビー用工具 PMKJ028",
+          "image": "https://m.media-amazon.com/images/I/21FXC0Sod8L._SL500_.jpg",
+          "price": 1880,
+          "url": "https://www.amazon.co.jp/dp/B0DHKGSHQ3/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B095Z8BVTD",
+          "title": "プラモ向上委員会 たれなインナーCap 05 (G社 50mlボトル用) 4個入り ホビー用ツール PMKJ015GA05",
+          "image": "https://m.media-amazon.com/images/I/31DhiB-dAWL._SL500_.jpg",
+          "price": 469,
+          "url": "https://www.amazon.co.jp/dp/B095Z8BVTD/?tag=tsumitsumi232-22"
+        }
+      ]
     },
     {
       "key": "dspiae",
       "name": "DSPIAE（ディスペイ）",
       "blurb": "ニッパーや電動ヤスリ（ペンサンダー）など、精密モデリングツールで人気のブランド。電動工具のラインナップが豊富で、作業の効率と仕上がりを底上げしてくれる。",
-      "items": []
+      "items": [
+        {
+          "asin": "B0FQVBVPZ8",
+          "title": "DSPIAE マルチファンクションキューブ【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/31GWi+qWM-L._SL500_.jpg",
+          "price": 9333,
+          "url": "https://www.amazon.co.jp/dp/B0FQVBVPZ8/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CV7VRXNX",
+          "title": "DSPIAE MKF-01~03, 06, 07 水性アクリルマーカー5色セット - 蛍光グリーン、蛍光レッド、蛍光オレンジ、蛍光イエロー、蛍光ピンク + マーカーペン収納ボックス【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/31albFRQGbL._SL500_.jpg",
+          "price": 1710,
+          "url": "https://www.amazon.co.jp/dp/B0CV7VRXNX/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0DTK3ZBXZ",
+          "title": "DSPIAE MKA-01~12 メタリックカラーマーカー12色セット-メタリックレッド・メタリックオレンジ・メタリックイエロー・メタリックイエローグリーン・メタリックグリーン・メタリックブルー・メタリックインディゴブルー・メタリックパープル・メタリックパープルレッド・ナイトゴールド・メタリックシルバー・メタリックカッパー【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/51hqI3fuveL._SL500_.jpg",
+          "price": 5020,
+          "url": "https://www.amazon.co.jp/dp/B0DTK3ZBXZ/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CPDY12ZC",
+          "title": "DSPIAE ハンドサンダー【日本正規代理店】… (平面タイプ（レッド）)",
+          "image": "https://m.media-amazon.com/images/I/21wPP25iMQL._SL500_.jpg",
+          "price": 1320,
+          "url": "https://www.amazon.co.jp/dp/B0CPDY12ZC/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GTV7G7KF",
+          "title": "DSPIAE XSM 水性プレミックス塗料メタリック【日本正規代理店】 (XSM-202 水性プレミックス塗料(ピュアシルバー))",
+          "image": "https://m.media-amazon.com/images/I/21Sbjba9I9L._SL500_.jpg",
+          "price": 1395,
+          "url": "https://www.amazon.co.jp/dp/B0GTV7G7KF/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GSFK78P9",
+          "title": "DSPIAE ハンドピンバイスMobius【日本正規代理店】 (AT-MHD ハンドピンバイスMobius)",
+          "image": "https://m.media-amazon.com/images/I/31SRsRUcLsL._SL500_.jpg",
+          "price": 2805,
+          "url": "https://www.amazon.co.jp/dp/B0GSFK78P9/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GHMH6XTL",
+          "title": "DSPIAE DLCコートステンレスヤスリ【日本正規代理店】 (DLCコートステンレスヤスリ　AT-FX01（＃400/＃800）)",
+          "image": "https://m.media-amazon.com/images/I/31nRKjlod8L._SL500_.jpg",
+          "price": 3449,
+          "url": "https://www.amazon.co.jp/dp/B0GHMH6XTL/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GTVDGTSG",
+          "title": "DSPIAE XSM 水性プレミックス塗料メタリック【日本正規代理店】 (XSM-007 水性プレミックス塗料(メタリックディープブルー))",
+          "image": "https://m.media-amazon.com/images/I/21tiTwHKwrL._SL500_.jpg",
+          "price": 750,
+          "url": "https://www.amazon.co.jp/dp/B0GTVDGTSG/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GTV32QBY",
+          "title": "DSPIAE XSM 水性プレミックス塗料メタリック【日本正規代理店】 (XSM-101 水性プレミックス塗料(スターダストゴールド))",
+          "image": "https://m.media-amazon.com/images/I/21ydKu7o0qL._SL500_.jpg",
+          "price": 1395,
+          "url": "https://www.amazon.co.jp/dp/B0GTV32QBY/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CP36HPDC",
+          "title": "DSPIAE ST-A3.0 極薄片刃ニッパー【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/41rCXxE-3nL._SL500_.jpg",
+          "price": 5153,
+          "url": "https://www.amazon.co.jp/dp/B0CP36HPDC/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B097ZGVTBJ",
+          "title": "ST-A 3.0 シングルブレードニッパー DSPIAE ガンダム ガンプラ ホビーキット用 精密カッター 鋭い刃 人間工学に基づいたハンドル レザーカバー",
+          "image": "https://m.media-amazon.com/images/I/41JCbm4HNtL._SL500_.jpg",
+          "price": 6480,
+          "url": "https://www.amazon.co.jp/dp/B097ZGVTBJ/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CG9JJPFX",
+          "title": "DSPIAE 4.72インチ プロ 超極細片刃ニッパー プラモデル用 簡単 スムーズ クリーンカット",
+          "image": "https://m.media-amazon.com/images/I/41v3rD3rYzL._SL500_.jpg",
+          "price": 8465,
+          "url": "https://www.amazon.co.jp/dp/B0CG9JJPFX/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CV7H11DK",
+          "title": "DSPIAE AT-MV ステンレス精密小形バイス【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/31FEsdnSxkL._SL500_.jpg",
+          "price": 2188,
+          "url": "https://www.amazon.co.jp/dp/B0CV7H11DK/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0F9YMH1P2",
+          "title": "zmart DSPIAE ES-A レシプロサンダー 電動グラインディングペン DIY プラモデル用サンディングペーパー ミリタリーモデル用 サンドペーパー クラフトツール ヤスリ 耐水ペーパー 研磨紙 フィニッシングペーパー 紙やすり スポンジヤスリ サンディングスティック 研磨材 仕上げ研磨 バフ掛け プラモ工具 模型仕上げ 表面処理 細目やすり 超細目 研磨スポンジ",
+          "image": "https://m.media-amazon.com/images/I/51emtNzEbiL._SL500_.jpg",
+          "price": 8537,
+          "url": "https://www.amazon.co.jp/dp/B0F9YMH1P2/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CPDXSZX6",
+          "title": "DSPIAE ハンドサンダー【日本正規代理店】… (平面タイプ（ブラック）)",
+          "image": "https://m.media-amazon.com/images/I/21XoTngTy9L._SL500_.jpg",
+          "price": 1320,
+          "url": "https://www.amazon.co.jp/dp/B0CPDXSZX6/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CPDZNB8T",
+          "title": "DSPIAE AS-25FPGR ハンドサンダー 平面タイプ（グレー）【日本正規代理店】Amazon限定販売カラー",
+          "image": "https://m.media-amazon.com/images/I/21OYALuK5IL._SL500_.jpg",
+          "price": 1320,
+          "url": "https://www.amazon.co.jp/dp/B0CPDZNB8T/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CV416DX6",
+          "title": "DSPIAE SF-15, SF-16＆SF-17精密鏡面ガラスヤスリ #10000-#12000 （先細）（先尖） セット【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/31iD0fnlE6L._SL500_.jpg",
+          "price": 2640,
+          "url": "https://www.amazon.co.jp/dp/B0CV416DX6/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GHMGDCL3",
+          "title": "DSPIAE DLCコートステンレスヤスリ【日本正規代理店】 (DLCコートステンレスヤスリ　AT-FX02（＃600/＃1200）)",
+          "image": "https://m.media-amazon.com/images/I/31bn559ig6L._SL500_.jpg",
+          "price": 3449,
+          "url": "https://www.amazon.co.jp/dp/B0GHMGDCL3/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GF8HW6RT",
+          "title": "DSPIAE パワースポンジヤスリ【日本正規代理店】 (XS3-2000 3mm#2000)",
+          "image": "https://m.media-amazon.com/images/I/31Z7xwbtGXL._SL500_.jpg",
+          "price": 650,
+          "url": "https://www.amazon.co.jp/dp/B0GF8HW6RT/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0FTSLPJ2K",
+          "title": "DSPIAE PRO レシプロ電動サンダー、サンディングヘッド8個、シリコンサンドペーパーセット 7グリット(180-1200)、電源コード&ケース、サンディング速度5400rpm",
+          "image": "https://m.media-amazon.com/images/I/31PEFnjnfbL._SL500_.jpg",
+          "price": 8389,
+          "url": "https://www.amazon.co.jp/dp/B0FTSLPJ2K/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0DQQ97SST",
+          "title": "DSPIAE ポータブル電動サンディングペン、ロータリーツール、コードレスシャープニングペン、クラフトやホビー用プロフェッショナルサンダー",
+          "image": "https://m.media-amazon.com/images/I/21JBHBr6K-L._SL500_.jpg",
+          "price": 12440,
+          "url": "https://www.amazon.co.jp/dp/B0DQQ97SST/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CP95W4RM",
+          "title": "DSPIAE AT-TZ07 静電気防止尖先 精密ピンセット【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/21VqFlycKgL._SL500_.jpg",
+          "price": 1050,
+          "url": "https://www.amazon.co.jp/dp/B0CP95W4RM/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CP8TSFDG",
+          "title": "DSPIAE AT-TZ02 イルカ型平先 精密ピンセット【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/21NpdKmixGL._SL500_.jpg",
+          "price": 1100,
+          "url": "https://www.amazon.co.jp/dp/B0CP8TSFDG/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CV9FWTP2",
+          "title": "DSPIAE PSP-01 スジ彫りノギス専用ニードルセット【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/31JOvjpQrSL._SL500_.jpg",
+          "price": 825,
+          "url": "https://www.amazon.co.jp/dp/B0CV9FWTP2/?tag=tsumitsumi232-22"
+        }
+      ]
     }
   ]
 }
