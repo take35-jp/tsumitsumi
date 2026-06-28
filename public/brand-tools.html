@@ -57,10 +57,10 @@
   .brand-amazon:hover { filter: brightness(1.07); }
   .brand-blurb { color: #4b5563; font-size: 13px; margin: 0 0 16px; line-height: 1.7; }
   @media (max-width: 540px) { .brand-name { font-size: 25px; } .brand-banner { padding: 18px 18px 16px; } }
-  .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .product-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; display: flex; gap: 14px; align-items: stretch; transition: border-color 0.15s, box-shadow 0.15s; }
+  .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .product-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s, box-shadow 0.15s; }
   .product-card:hover { border-color: #fed7aa; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-  .product-thumb { flex: 0 0 96px; width: 96px; height: 96px; border-radius: 8px; background: #f3f4f6; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .product-thumb { width: 100%; height: 130px; border-radius: 8px; background: #f3f4f6; overflow: hidden; display: flex; align-items: center; justify-content: center; }
   .product-thumb img { width: 100%; height: 100%; object-fit: contain; }
   .product-thumb .no-img { font-size: 32px; color: #d1d5db; }
   .product-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -77,21 +77,20 @@
   footer a { color: #6b7280; text-decoration: none; }
   footer a:hover { color: #22c55e; }
   @media (max-width: 720px) {
-    .product-card { flex-direction: column; gap: 10px; padding: 12px; }
-    .product-thumb { flex-basis: auto; width: 100%; height: 120px; }
-    .product-grid { gap: 10px; }
+    .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .product-thumb { height: 120px; }
   }
   @media (max-width: 540px) {
     h1 { font-size: 21px; }
     main { padding: 24px 16px 50px; }
     .product-card { padding: 10px; }
-    .product-thumb { height: 100px; }
+    .product-thumb { height: 110px; }
     .product-name { font-size: 13px; }
     .product-grid { gap: 8px; }
   }
   @media (max-width: 380px) {
     .product-card { padding: 8px; }
-    .product-thumb { height: 80px; }
+    .product-thumb { height: 96px; }
     .product-link { padding: 5px 9px; font-size: 10px; }
   }
 </style>

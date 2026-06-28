@@ -7,7 +7,7 @@
  *
  *   node local-tools/paapi-brand-collect.js            # 収集して public/brand-tools.json を更新
  *   node local-tools/paapi-brand-collect.js --dry      # 収集結果を表示するだけ（書き込み無し）
- *   node local-tools/paapi-brand-collect.js --max 30   # 1ブランドあたりの最大件数（既定24）
+ *   node local-tools/paapi-brand-collect.js --max 80   # 1ブランドあたりの最大件数（既定60）
  *
  * 必要な local-tools/.env（paapi-paint-search.js と同じ）:
  *   AMAZON_PAAPI_ACCESS_KEY / AMAZON_PAAPI_SECRET_KEY / AMAZON_PARTNER_TAG
@@ -31,7 +31,7 @@ const MARKETPLACE = "www.amazon.co.jp";
 
 const ARGV = process.argv.slice(2);
 const DRY = ARGV.includes("--dry");
-const MAX = ARGV.includes("--max") ? parseInt(ARGV[ARGV.indexOf("--max") + 1], 10) : 24;
+const MAX = ARGV.includes("--max") ? parseInt(ARGV[ARGV.indexOf("--max") + 1], 10) : 60;
 
 const OUT_JSON = path.join(__dirname, "..", "public", "brand-tools.json");
 
@@ -51,6 +51,14 @@ const BRANDS = [
       "プラモ向上委員会 接着剤",
       "プラモ向上委員会 ピンセット",
       "プラモ向上委員会 デザインナイフ",
+      "プラモ向上委員会 持ち手",
+      "プラモ向上委員会 塗装",
+      "プラモ向上委員会 トレイ",
+      "プラモ向上委員会 コンテナ",
+      "プラモ向上委員会 ランナー",
+      "プラモ向上委員会 スジ彫り",
+      "プラモ向上委員会 ニッパー サステナ",
+      "plamokojo",
     ],
   },
   {
@@ -67,7 +75,14 @@ const BRANDS = [
       "DSPIAE デザインナイフ",
       "DSPIAE 筆",
       "DSPIAE カッティングマット",
+      "DSPIAE スポンジヤスリ",
+      "DSPIAE ハンドピース",
+      "DSPIAE 接着剤",
+      "DSPIAE 定規",
+      "DSPIAE 超硬",
+      "DSPIAE ブレード",
       "ディスペイ 工具",
+      "ディスペイ ニッパー",
     ],
   },
   {
@@ -75,7 +90,6 @@ const BRANDS = [
     name: "ゴッドハンド",
     blurb: "「アルティメットニッパー」や「神ヤスリ」で知られる国産プレミアムツールブランド。切れ味・仕上がりにこだわるモデラーの定番。",
     match: ["ゴッドハンド", "godhand"],
-    max: 40, // 人気ブランドのため多めに掲載
     queries: [
       "ゴッドハンド",
       "ゴッドハンド ニッパー",
@@ -108,6 +122,11 @@ const BRANDS = [
       "アルゴファイル リューター",
       "アルゴファイル ハンドピース",
       "アルゴファイル 研磨",
+      "アルゴファイル ダイヤモンド",
+      "アルゴファイル 軸付",
+      "アルゴファイル ビット",
+      "アルゴファイル サンディング",
+      "アルゴファイル 替刃",
       "アルゴファイルジャパン",
       "ARGOFILE 工具",
     ],
