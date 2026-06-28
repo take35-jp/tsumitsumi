@@ -275,6 +275,7 @@
       <button class="tab-btn" onclick="switchTab('gears')">🛠 工具カタログ</button>
       <button class="tab-btn" onclick="switchTab('paintfix')">🎨 塗料/TC補完</button>
       <button class="tab-btn" onclick="switchTab('tips')">📝 TIPS編集</button>
+      <button class="tab-btn" onclick="switchTab('brand')">🏷 ブランド特集</button>
     </div>
 
     <!-- TAB: Yahoo検索 -->
@@ -800,6 +801,25 @@
       </div>
     </div>
 
+    <!-- TAB: ブランド特集 並び替え -->
+    <div class="tab-panel" id="tab-brand">
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:14px; font-size:12px; color:#1e40af; line-height:1.7;">
+        🏷 <b>ツールブランド特集の並び替え</b>：各ブランド内の商品を ▲▼ で並び替え → 「保存」でGitHubにコミット（約1〜2分で本番反映）。<br>
+        週次の自動更新でもこの並び順は保持されます（新商品は末尾に追加・販売終了品は自動で消えます）。※ <code>GITHUB_TOKEN</code> と <code>TIPS_EDIT_SECRET</code> が必要（TIPS編集と共用）。
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+        <button onclick="brandReload()" style="padding:8px 14px; background:#2563eb; color:#fff; border:none; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">↻ 読み込み直す</button>
+        <span id="brand-meta" style="font-size:12px; color:#6b7280;"></span>
+      </div>
+      <div id="brand-editor"><div style="color:#9ca3af; padding:20px;">「読み込み直す」を押してください。</div></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; position:sticky; bottom:0; background:#fff; padding:10px 0; border-top:1px solid #e5e7eb;">
+        <input id="brand-secret" type="password" placeholder="合言葉（TIPS_EDIT_SECRET）" autocomplete="off"
+          style="padding:8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; min-width:220px;">
+        <button onclick="brandSave()" id="brand-save-btn" style="padding:9px 18px; background:#16a34a; color:#fff; border:none; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">💾 保存（GitHubへコミット）</button>
+        <span id="brand-status" style="font-size:12px; color:#6b7280; align-self:center;"></span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -835,17 +855,90 @@ function logout() {
 
 // ---- TABS ----
 function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['search','direct','master','excel','reports','gears','paintfix','tips'][i] === name);
+  // ボタン/パネルは onclick の対象名・パネルidで判定（DOM順に依存しない堅牢な方式）
+  document.querySelectorAll('.tab-btn').forEach((b) => {
+    const oc = b.getAttribute('onclick') || '';
+    b.classList.toggle('active', oc.indexOf(`switchTab('${name}')`) !== -1);
   });
-  document.querySelectorAll('.tab-panel').forEach((p, i) => {
-    p.classList.toggle('active', ['tab-search','tab-direct','tab-excel','tab-master','tab-reports','tab-gears','tab-paintfix','tab-tips'][i] === `tab-${name}`);
+  document.querySelectorAll('.tab-panel').forEach((p) => {
+    p.classList.toggle('active', p.id === `tab-${name}`);
   });
   if (name === 'master') loadMaster();
   if (name === 'reports') loadReports();
   if (name === 'gears') gearsReload();
   if (name === 'paintfix') paintfixLoad();
   if (name === 'tips') tipsInit();
+  if (name === 'brand') brandReload();
+}
+
+// ================= ブランド特集 並び替え =================
+// brand-tools.json を読み込み、各ブランド内の商品を ▲▼ で並び替え → /api/brand-tools-save でコミット。
+let brandData = null;
+function brandEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+async function brandReload() {
+  const ed = document.getElementById('brand-editor');
+  ed.innerHTML = '<div style="color:#9ca3af; padding:20px;">読み込み中…</div>';
+  try {
+    const r = await fetch('/brand-tools.json?ts=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    brandData = await r.json();
+    renderBrandEditor();
+    const n = (brandData.brands || []).reduce((a, b) => a + (b.items || []).length, 0);
+    document.getElementById('brand-meta').textContent =
+      (brandData.brands || []).length + 'ブランド / 合計 ' + n + '商品'
+      + (brandData.generatedAt ? '（最終収集: ' + new Date(brandData.generatedAt).toLocaleString('ja-JP') + '）' : '');
+    const s = document.getElementById('brand-status'); s.textContent = ''; s.style.color = '#6b7280';
+  } catch (e) {
+    ed.innerHTML = '<div style="color:#b91c1c; padding:20px;">読み込み失敗: ' + brandEsc(e.message || e) + '</div>';
+  }
+}
+function renderBrandEditor() {
+  const ed = document.getElementById('brand-editor');
+  if (!brandData || !Array.isArray(brandData.brands)) { ed.innerHTML = '<div style="padding:20px;">データがありません</div>'; return; }
+  ed.innerHTML = brandData.brands.map((b, bi) => {
+    const items = b.items || [];
+    const rows = items.map((p, pi) => `
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <button onclick="brandMove(${bi},${pi},-1)" ${pi === 0 ? 'disabled' : ''} style="font-size:11px; padding:2px 7px; cursor:pointer;">▲</button>
+          <button onclick="brandMove(${bi},${pi},1)" ${pi === items.length - 1 ? 'disabled' : ''} style="font-size:11px; padding:2px 7px; cursor:pointer;">▼</button>
+        </div>
+        <div style="width:30px; text-align:center; font-size:11px; color:#9ca3af;">${pi + 1}</div>
+        ${p.image ? `<img src="${brandEsc(p.image)}" style="width:40px; height:40px; object-fit:contain; border:1px solid #eee; flex:none;">` : '<div style="width:40px; height:40px; background:#f3f4f6; flex:none;"></div>'}
+        <div style="flex:1; min-width:0; font-size:12px; line-height:1.4;">${brandEsc(p.title)}</div>
+        <div style="font-size:12px; color:#b91c1c; font-weight:700; white-space:nowrap;">${p.price != null ? ('¥' + Number(p.price).toLocaleString('ja-JP')) : ''}</div>
+      </div>`).join('');
+    return `<div style="border:1px solid #e5e7eb; border-radius:8px; margin-bottom:14px; overflow:hidden;">
+      <div style="background:#0f172a; color:#fff; padding:8px 12px; font-weight:800;">${brandEsc(b.name)} <span style="font-size:11px; color:#cbd5e1; font-weight:600;">(${items.length})</span></div>
+      <div>${rows || '<div style="padding:10px; color:#9ca3af;">商品なし</div>'}</div>
+    </div>`;
+  }).join('');
+}
+function brandMove(bi, pi, dir) {
+  const items = brandData.brands[bi].items;
+  const ni = pi + dir;
+  if (ni < 0 || ni >= items.length) return;
+  const t = items[pi]; items[pi] = items[ni]; items[ni] = t;
+  renderBrandEditor();
+  const s = document.getElementById('brand-status'); s.textContent = '並び替えました（未保存）'; s.style.color = '#f59e0b';
+}
+async function brandSave() {
+  if (!brandData) { alert('先に「読み込み直す」を押してください'); return; }
+  const secret = document.getElementById('brand-secret').value.trim();
+  if (!secret) { alert('合言葉（TIPS_EDIT_SECRET）を入力してください'); return; }
+  const btn = document.getElementById('brand-save-btn'); const st = document.getElementById('brand-status');
+  btn.disabled = true; st.textContent = '保存中…'; st.style.color = '#6b7280';
+  try {
+    const r = await fetch('/api/brand-tools-save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: JSON.stringify(brandData, null, 2), secret }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    st.textContent = '✅ ' + (j.message || '保存しました'); st.style.color = '#16a34a';
+  } catch (e) {
+    st.textContent = '❌ ' + (e.message || e); st.style.color = '#b91c1c';
+  } finally { btn.disabled = false; }
 }
 
 // ================= TIPS 記事エディタ =================

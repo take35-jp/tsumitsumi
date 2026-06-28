@@ -163,6 +163,17 @@ async function search(tok, keywords) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 既存 brand-tools.json の手動並び順（adminで保存した順）を読み込む。
+// { brandKey: [asin, asin, ...] } を返す。収集後にこの順を保持する（手動順が自動更新で消えないように）。
+function loadExistingOrder() {
+  try {
+    const prev = JSON.parse(fs.readFileSync(OUT_JSON, "utf8"));
+    const map = {};
+    for (const b of (prev.brands || [])) map[b.key] = (b.items || []).map((i) => i.asin);
+    return map;
+  } catch (e) { return {}; }
+}
+
 (async () => {
   if (!CID || !SEC || !TAG) {
     console.error("local-tools/.env に AMAZON_PAAPI_ACCESS_KEY / AMAZON_PAAPI_SECRET_KEY / AMAZON_PARTNER_TAG を設定してください。");
@@ -173,6 +184,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   let first = true;
   const out = { generatedAt: new Date().toISOString(), partnerTag: TAG, brands: [] };
+  const prevOrder = loadExistingOrder(); // admin保存の手動順を保持するため
 
   for (const b of BRANDS) {
     const seen = new Map(); // asin -> item
@@ -199,10 +211,16 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       }
       console.log(`  ${b.name} / "${q}" → 累計 ${seen.size} 件`);
     }
-    // 画像のある商品を優先し、価格ありを次点で前に
-    const items = [...seen.values()]
+    // 画像のある商品を優先し、価格ありを次点で前に（初回や新規商品の既定順）
+    let items = [...seen.values()]
       .sort((x, y) => (!!y.image - !!x.image) || (!!y.price - !!x.price))
       .slice(0, b.max || MAX); // ブランド個別の上限 b.max があれば優先
+    // adminで保存済みの手動順があれば、その順を保持（既存ASINは保存順、新規は末尾）。
+    const order = prevOrder[b.key];
+    if (order && order.length) {
+      const rank = new Map(order.map((asin, i) => [asin, i]));
+      items.sort((x, y) => (rank.has(x.asin) ? rank.get(x.asin) : 1e9) - (rank.has(y.asin) ? rank.get(y.asin) : 1e9));
+    }
     out.brands.push({ key: b.key, name: b.name, blurb: b.blurb, items });
     console.log(`✅ ${b.name}: ${items.length} 件（画像あり ${items.filter((i) => i.image).length}）`);
   }

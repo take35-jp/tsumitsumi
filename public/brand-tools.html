@@ -155,26 +155,6 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const yen = (n) => (n == null ? "" : "¥" + Number(n).toLocaleString("ja-JP"));
 
-  // 商品名から種類を推定（上から順に最初に一致したものを採用）
-  const CATS = [
-    ["ニッパー", /ニッパー|nipper/i],
-    ["電動・パワー", /電動|ペンサンダー|サンダー|リューター|ルーター|スターラー|オーブン|乾燥|コンプレッサー/i],
-    ["ヤスリ・研磨", /ヤスリ|やすり|研磨|サンディング|スポンジ|ペーパー|ダイヤモンド|砥/i],
-    ["ナイフ・刃", /ナイフ|替刃|替え刃|ブレード|blade|knife|カッター/i],
-    ["ピンセット", /ピンセット|tweezer/i],
-    ["マスキング", /マスキング|マステ|マスク/i],
-    ["接着・パテ", /接着|セメント|パテ|グルー|glue/i],
-    ["スミ入れ・塗装", /スミ入れ|墨入れ|塗装|塗料|ペイント|筆|マーカー|パネルライン/i],
-    ["持ち手・スタンド", /持ち手|ハンドル|クリップ|スタンド|ベース|台/i],
-    ["収納・整理", /トレイ|コンテナ|ケース|ポーチ|収納|仕分け|ランナー|ドック|タグ|ボックス|オーガナイ/i],
-  ];
-  function classify(title) {
-    const t = String(title || "");
-    for (const [name, re] of CATS) if (re.test(t)) return name;
-    return "その他";
-  }
-  const CAT_ORDER = [...CATS.map((c) => c[0]), "その他"];
-
   function renderCard(p) {
     const thumb = p.image
       ? `<div class="product-thumb"><img src="${esc(p.image)}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<span class=&quot;no-img&quot;>🛠</span>'"></div>`
@@ -194,10 +174,9 @@
 
   function renderBrand(b) {
     const items = Array.isArray(b.items) ? b.items : [];
-    // 種類別に並べ替え（CATSの順、その他は末尾。同種内は元の並び＝画像/価格優先を維持）
-    const sorted = [...items].sort((a, x) => CAT_ORDER.indexOf(classify(a.title)) - CAT_ORDER.indexOf(classify(x.title)));
-    const body = sorted.length
-      ? `<div class="product-grid">${sorted.map(renderCard).join("")}</div>`
+    // 並び順は brand-tools.json の順（admin で手動管理）をそのまま表示
+    const body = items.length
+      ? `<div class="product-grid">${items.map(renderCard).join("")}</div>`
       : `<div class="empty">この特集は準備中です。もうしばらくお待ちください。</div>`;
     // ブランド名から検索キーワードを作り、Amazonのブランド検索（アフィリタグ付き）へ
     const kw = String(b.name || "").replace(/（.*?）|\(.*?\)/g, "").trim();
