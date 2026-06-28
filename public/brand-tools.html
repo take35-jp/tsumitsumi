@@ -48,11 +48,15 @@
   h1 { font-size: 25px; font-weight: 800; margin: 0 0 8px; line-height: 1.4; }
   .lead { color: #4b5563; margin-bottom: 22px; font-size: 14px; }
   .disclosure { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #92400e; margin-top: 32px; line-height: 1.65; }
-  .brand-section { margin-bottom: 44px; scroll-margin-top: 70px; }
-  .brand-head { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; }
-  .brand-head h2 { font-size: 19px; font-weight: 800; margin: 0; padding-left: 10px; border-left: 4px solid #22c55e; }
-  .brand-count { font-size: 11px; color: #9ca3af; font-weight: 600; }
-  .brand-blurb { color: #4b5563; font-size: 13px; margin: 8px 0 16px; line-height: 1.7; }
+  .brand-section { margin-bottom: 52px; scroll-margin-top: 70px; }
+  .brand-banner { background: linear-gradient(135deg,#0f172a,#1e3a8a); border-radius: 14px; padding: 22px 22px 20px; color: #fff; margin: 0 0 14px; }
+  .brand-eyebrow { font-size: 11px; letter-spacing: 2px; color: #93c5fd; font-weight: 700; margin: 0 0 4px; }
+  .brand-name { font-size: 30px; font-weight: 900; margin: 0; line-height: 1.2; letter-spacing: 0.5px; }
+  .brand-count { display: inline-block; font-size: 11px; color: #cbd5e1; font-weight: 600; margin-top: 6px; }
+  .brand-amazon { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 9px 16px; background: #ff9900; color: #111; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; transition: filter 0.15s; }
+  .brand-amazon:hover { filter: brightness(1.07); }
+  .brand-blurb { color: #4b5563; font-size: 13px; margin: 0 0 16px; line-height: 1.7; }
+  @media (max-width: 540px) { .brand-name { font-size: 25px; } .brand-banner { padding: 18px 18px 16px; } }
   .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .product-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; display: flex; gap: 14px; align-items: stretch; transition: border-color 0.15s, box-shadow 0.15s; }
   .product-card:hover { border-color: #fed7aa; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
@@ -148,6 +152,7 @@
 </footer>
 
 <script>
+  let PARTNER_TAG = "tsumitsumi232-22";
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const yen = (n) => (n == null ? "" : "¥" + Number(n).toLocaleString("ja-JP"));
 
@@ -173,8 +178,16 @@
     const body = items.length
       ? `<div class="product-grid">${items.map(renderCard).join("")}</div>`
       : `<div class="empty">この特集は準備中です。もうしばらくお待ちください。</div>`;
+    // ブランド名から検索キーワードを作り、Amazonのブランド検索（アフィリタグ付き）へ
+    const kw = String(b.name || "").replace(/（.*?）|\(.*?\)/g, "").trim();
+    const amazon = `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}&tag=${encodeURIComponent(PARTNER_TAG)}`;
     return `<div class="brand-section" id="${esc(b.key || "")}">
-      <div class="brand-head"><h2>${esc(b.name)}</h2><span class="brand-count">${items.length ? items.length + " 商品" : ""}</span></div>
+      <div class="brand-banner">
+        <p class="brand-eyebrow">BRAND</p>
+        <h2 class="brand-name">${esc(b.name)}</h2>
+        ${items.length ? `<span class="brand-count">${items.length} 商品をピックアップ</span>` : ""}
+        <div><a class="brand-amazon" href="${esc(amazon)}" target="_blank" rel="nofollow sponsored noopener">Amazonで「${esc(kw)}」の商品を見る →</a></div>
+      </div>
       ${b.blurb ? `<p class="brand-blurb">${esc(b.blurb)}</p>` : ""}
       ${body}
     </div>`;
@@ -187,6 +200,7 @@
       if (!r.ok) throw new Error("HTTP " + r.status);
       const data = await r.json();
       const brands = Array.isArray(data.brands) ? data.brands : [];
+      if (data.partnerTag) PARTNER_TAG = data.partnerTag;
       if (!brands.length) { root.innerHTML = '<div class="empty">特集は準備中です。</div>'; return; }
       root.innerHTML = brands.map(renderBrand).join("");
       if (data.generatedAt) {
