@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-28T14:26:08.832Z",
+  "generatedAt": "2026-06-28T14:51:41.405Z",
   "partnerTag": "tsumitsumi232-22",
   "brands": [
     {
@@ -342,6 +342,356 @@
           "image": "https://m.media-amazon.com/images/I/31JOvjpQrSL._SL500_.jpg",
           "price": 825,
           "url": "https://www.amazon.co.jp/dp/B0CV9FWTP2/?tag=tsumitsumi232-22"
+        }
+      ]
+    },
+    {
+      "key": "godhand",
+      "name": "ゴッドハンド",
+      "blurb": "「アルティメットニッパー」や「神ヤスリ」で知られる国産プレミアムツールブランド。切れ味・仕上がりにこだわるモデラーの定番。",
+      "items": [
+        {
+          "asin": "B0GT2W6L9S",
+          "title": "ゴッドハンド(GodHand) アルティメットニッパー＆ステッカーセット GH-SPN-120-E 現行モデル ホビー用 工具",
+          "image": "https://m.media-amazon.com/images/I/41-qdA2+FjL._SL500_.jpg",
+          "price": 5940,
+          "url": "https://www.amazon.co.jp/dp/B0GT2W6L9S/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B09HZ34QY6",
+          "title": "ゴッドハンド(GodHand) ショートパワーピンバイス GH-PBS-DC ディープコレットタイプ φ2.5~3.2mm軸対応 プラモデル用工具 青",
+          "image": "https://m.media-amazon.com/images/I/315bxCnZWrL._SL500_.jpg",
+          "price": 3191,
+          "url": "https://www.amazon.co.jp/dp/B09HZ34QY6/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRW8RG6",
+          "title": "ゴッドハンド(GodHand) スピンモールド GH-CSB-1-3 ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/41ojl5uKXLL._SL500_.jpg",
+          "price": 4223,
+          "url": "https://www.amazon.co.jp/dp/B0CWRW8RG6/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRXGH25",
+          "title": "ゴッドハンド(GodHand) ブレードワンニッパー GH-PN-120 ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/31LSPQeblhL._SL500_.jpg",
+          "price": 4280,
+          "url": "https://www.amazon.co.jp/dp/B0CWRXGH25/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRY766Q",
+          "title": "ゴッドハンド(GodHand) ドリルビット５本組(B) GH-DB-5B ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/51dnbHls0ZL._SL500_.jpg",
+          "price": 1345,
+          "url": "https://www.amazon.co.jp/dp/B0CWRY766Q/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRYH7LK",
+          "title": "ゴッドハンド(GodHand) ニッパー専用メンテナンス油 GH-NMO-SET ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/313VWvLe17L._SL500_.jpg",
+          "price": 1282,
+          "url": "https://www.amazon.co.jp/dp/B0CWRYH7LK/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWS17K8Z",
+          "title": "ゴッドハンド(GodHand) スピンブレード GH-SB-1-3 ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/31WHxhFghjL._SL500_.jpg",
+          "price": 2834,
+          "url": "https://www.amazon.co.jp/dp/B0CWS17K8Z/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRX1FFM",
+          "title": "ゴッドハンド GH-BBH-1-3 ビットブレード 平刀 5本セット",
+          "image": "https://m.media-amazon.com/images/I/51UIbrF1GpL._SL500_.jpg",
+          "price": 3000,
+          "url": "https://www.amazon.co.jp/dp/B0CWRX1FFM/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRXGQ87",
+          "title": "ゴッドハンド(GodHand) リーゲルニードル GH-RN-SET ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/21xK58DgX1L._SL500_.jpg",
+          "price": 1318,
+          "url": "https://www.amazon.co.jp/dp/B0CWRXGQ87/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRW296M",
+          "title": "ゴッドハンド(GodHand) 片刃ニッパーST GH-PNS-135 ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/31PZHEf7ARL._SL500_.jpg",
+          "price": 2778,
+          "url": "https://www.amazon.co.jp/dp/B0CWRW296M/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRVJK3F",
+          "title": "ゴッドハンド(GodHand) SGシリーズ プラニッパー GH-SG-01 ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/31ZNkVvfRqL._SL500_.jpg",
+          "price": 1212,
+          "url": "https://www.amazon.co.jp/dp/B0CWRVJK3F/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0FSD11Z7H",
+          "title": "ゴッドハンド(GodHand) アルティメットニッパー5.0 現行モデル 最新ロット GH-SPN-120 ／ ホビーグッズ対応PART2Cマイクロファイバー クリニーニングクロス ／各1個セット",
+          "image": "https://m.media-amazon.com/images/I/31sufnkO+fL._SL500_.jpg",
+          "price": 6380,
+          "url": "https://www.amazon.co.jp/dp/B0FSD11Z7H/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B09T2K1RZY",
+          "title": "ゴッドハンド(GodHand) アルティメットニッパー5.0 (旧モデル) GH-SPN-120 プラモデル用工具 青 金属",
+          "image": "https://m.media-amazon.com/images/I/314skZsdqOL._SL500_.jpg",
+          "price": 6100,
+          "url": "https://www.amazon.co.jp/dp/B09T2K1RZY/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRY8CBB",
+          "title": "ゴッドハンド(GodHand) ケロロニッパー GH-PN-125-KR ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/31Haw93BubL._SL500_.jpg",
+          "price": 1218,
+          "url": "https://www.amazon.co.jp/dp/B0CWRY8CBB/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B07NWBG938",
+          "title": "ゴッドハンド(GodHand) 普通のニッパー プラモデル用工具 プラニッパー GH-PN-125",
+          "image": "https://m.media-amazon.com/images/I/31LOlpJd1fL._SL500_.jpg",
+          "price": 1487,
+          "url": "https://www.amazon.co.jp/dp/B07NWBG938/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CWRX2NQR",
+          "title": "ゴッドハンド(GodHand) ブレードワンニッパーＬ GH-PN-120-L ホビー用工具",
+          "image": "https://m.media-amazon.com/images/I/31Q15rCid7L._SL500_.jpg",
+          "price": 5045,
+          "url": "https://www.amazon.co.jp/dp/B0CWRX2NQR/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0DRPM322Q",
+          "title": "GodHand アルティメットニッパー 5.0 GH-SPN-120 工具",
+          "image": "https://m.media-amazon.com/images/I/41DDf1F07NL._SL500_.jpg",
+          "price": 7605,
+          "url": "https://www.amazon.co.jp/dp/B0DRPM322Q/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GNH78FKC",
+          "title": "ゴッドハンド(GodHand) アルティメットニッパー5.0 GH-SPN-120 プラモデル用工具",
+          "image": "https://m.media-amazon.com/images/I/31RN4uW86ZL._SL500_.jpg",
+          "price": 6900,
+          "url": "https://www.amazon.co.jp/dp/B0GNH78FKC/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B00U6U0WCU",
+          "title": "ゴッドハンド(GodHand) ブレードワンニッパー (旧モデル) プラモデル用工具 プラニッパー GH-PN-120",
+          "image": "https://m.media-amazon.com/images/I/41R5F0gywRL._SL500_.jpg",
+          "price": 5960,
+          "url": "https://www.amazon.co.jp/dp/B00U6U0WCU/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GHNM354T",
+          "title": "GodHand アルティメットニッパー 5.0 GH-SPN-120 工具",
+          "image": "https://m.media-amazon.com/images/I/41DDf1F07NL._SL500_.jpg",
+          "price": 7580,
+          "url": "https://www.amazon.co.jp/dp/B0GHNM354T/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B07YGBJXS4",
+          "title": "ゴッドハンド(GodHand) 神ヤス! 10mm厚 3種類セットB [#600/#800/#1000] GH-KS10-A3B",
+          "image": "https://m.media-amazon.com/images/I/41SoT5eE7fL._SL500_.jpg",
+          "price": 595,
+          "url": "https://www.amazon.co.jp/dp/B07YGBJXS4/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B08W2D2JZ9",
+          "title": "ゴッドハンド(GodHand) 神ヤス! スペシャルパック スポンジ布ヤスリ 35×20mm 33枚入り 3種類の厚み×11種類の番手 GH-KS-SP",
+          "image": "https://m.media-amazon.com/images/I/51u1OYHhrlL._SL500_.jpg",
+          "price": 991,
+          "url": "https://www.amazon.co.jp/dp/B08W2D2JZ9/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B07YG9XRSH",
+          "title": "ゴッドハンド(GodHand) 神ヤス! 磨10mm厚高番手 5種類セット [#2000/#4000/#6000/#8000/#10000] GH-KS10-KB",
+          "image": "https://m.media-amazon.com/images/I/41WymlNeSYL._SL500_.jpg",
+          "price": 600,
+          "url": "https://www.amazon.co.jp/dp/B07YG9XRSH/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B09Z1XRGG6",
+          "title": "ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 #400 (12枚入り) イエロー 約35x20mm GH-KS10-P400",
+          "image": "https://m.media-amazon.com/images/I/41DUPYqcWqL._SL500_.jpg",
+          "price": 595,
+          "url": "https://www.amazon.co.jp/dp/B09Z1XRGG6/?tag=tsumitsumi232-22"
+        }
+      ]
+    },
+    {
+      "key": "argofile",
+      "name": "アルゴファイル",
+      "blurb": "精密ヤスリや電動リューターを展開するツールメーカー。研磨・切削・仕上げ工程をワンランク引き上げてくれる。",
+      "items": [
+        {
+          "asin": "B09YCJCKMB",
+          "title": "アルゴファイル(Argofile) フィードバック機能搭載ストロークサンダー ゴムスタンド付き アルティマ7 ARTIMA7 ART107 ブルー",
+          "image": "https://m.media-amazon.com/images/I/219IepFnVyL._SL500_.jpg",
+          "price": 10973,
+          "url": "https://www.amazon.co.jp/dp/B09YCJCKMB/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B08WQ32X3F",
+          "title": "アルゴファイル(Argofile) ハイパーハンディミニルーター ARTIMA AT -アルティマ オートトルク- ART120",
+          "image": "https://m.media-amazon.com/images/I/212zl4zd8SL._SL500_.jpg",
+          "price": 9373,
+          "url": "https://www.amazon.co.jp/dp/B08WQ32X3F/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0D22M9RB5",
+          "title": "アルゴファイル(Argofile) ホビー用マルチハンドツール マジ・スク（マルチジルコニアスクレーパー） CKH6015",
+          "image": "https://m.media-amazon.com/images/I/21qZStYuEKL._SL500_.jpg",
+          "price": 2250,
+          "url": "https://www.amazon.co.jp/dp/B0D22M9RB5/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GJCX981M",
+          "title": "アルゴファイル(Argofile) アルゴ・ジルコニアセラミックフィニッシュ 「ジルフィー」 ZCS0560",
+          "image": "https://m.media-amazon.com/images/I/21R5XW0SL5L._SL500_.jpg",
+          "price": 2531,
+          "url": "https://www.amazon.co.jp/dp/B0GJCX981M/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CSFJTX7L",
+          "title": "アルゴファイル 両面テープのいらないアルティマ用アタッチメント アルティマシャークホルダー ASH4000",
+          "image": "https://m.media-amazon.com/images/I/310ws2p3ijL._SL500_.jpg",
+          "price": 3173,
+          "url": "https://www.amazon.co.jp/dp/B0CSFJTX7L/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CCQXHJ42",
+          "title": "アルゴファイル(Argofile) マイクロモーターシステム スターライトネクスト ブラック SNH35STB-3024 【3.0Φコレット+2.35Φスリーブ仕様】",
+          "image": "https://m.media-amazon.com/images/I/31vgldotZPL._SL500_.jpg",
+          "price": 18973,
+          "url": "https://www.amazon.co.jp/dp/B0CCQXHJ42/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B08SHQCWNQ",
+          "title": "アルゴファイル ラップボード５ LB5",
+          "image": "https://m.media-amazon.com/images/I/31tcr-BxZsL._SL500_.jpg",
+          "price": 8152,
+          "url": "https://www.amazon.co.jp/dp/B08SHQCWNQ/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0D9N2FZCD",
+          "title": "アルゴファイル(Argofile) CSヤスリ用ハンドツール CSホルダー フラット CSH-25F",
+          "image": "https://m.media-amazon.com/images/I/31Qohf2zYEL._SL500_.jpg",
+          "price": 1581,
+          "url": "https://www.amazon.co.jp/dp/B0D9N2FZCD/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0C3LWYD2H",
+          "title": "アルゴファイル(Argofile) 小判糊付紙ヤスリ CSヤスリ #400 HCF0400(10枚入)",
+          "image": "https://m.media-amazon.com/images/I/41iEH8CVCJL._SL500_.jpg",
+          "price": 452,
+          "url": "https://www.amazon.co.jp/dp/B0C3LWYD2H/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BB24ZFMV",
+          "title": "アルゴファイル アルティマ５ｅ（ファイブイー） ARE105",
+          "image": "https://m.media-amazon.com/images/I/313OIIubPAL._SL500_.jpg",
+          "price": 7973,
+          "url": "https://www.amazon.co.jp/dp/B0BB24ZFMV/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0C3LWPTQQ",
+          "title": "アルゴファイル(Argofile) 小判糊付紙ヤスリ CSヤスリ #800 HCF0800(10枚入)",
+          "image": "https://m.media-amazon.com/images/I/41t9zwPutbL._SL500_.jpg",
+          "price": 452,
+          "url": "https://www.amazon.co.jp/dp/B0C3LWPTQQ/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B08V1QCKYL",
+          "title": "アルゴファイル(Argofile) DTファイル(テーパーダイヤヤスリ) 2mm #400 HDT0240",
+          "image": "https://m.media-amazon.com/images/I/116H+BdzVTL._SL500_.jpg",
+          "price": 1645,
+          "url": "https://www.amazon.co.jp/dp/B08V1QCKYL/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0C3LWQRKL",
+          "title": "アルゴファイル(Argofile) 小判糊付紙ヤスリ CSヤスリ #600 HCF0600(10枚入)",
+          "image": "https://m.media-amazon.com/images/I/4123vH-BVPL._SL500_.jpg",
+          "price": 452,
+          "url": "https://www.amazon.co.jp/dp/B0C3LWQRKL/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0C3LX5K5J",
+          "title": "アルゴファイル(Argofile) 小判糊付紙ヤスリ CSヤスリ #1000 HCF1000(10枚入)",
+          "image": "https://m.media-amazon.com/images/I/411orE99v3L._SL500_.jpg",
+          "price": 452,
+          "url": "https://www.amazon.co.jp/dp/B0C3LX5K5J/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CSFKPHR2",
+          "title": "アルゴファイル(Argofile) シャークホルダ用スポンジヤスリカッティング台 アルティマスクエアモールド ASM0030",
+          "image": "https://m.media-amazon.com/images/I/31geUzc1pTL._SL500_.jpg",
+          "price": 1585,
+          "url": "https://www.amazon.co.jp/dp/B0CSFKPHR2/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0D9N2VVQ4",
+          "title": "アルゴファイル(Argofile) CSヤスリ用当板 CSカーボンプレート 25mmエッジカット CSP-25F",
+          "image": "https://m.media-amazon.com/images/I/31l1Jp5MJ7L._SL500_.jpg",
+          "price": 973,
+          "url": "https://www.amazon.co.jp/dp/B0D9N2VVQ4/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0D9N3VPQK",
+          "title": "アルゴファイル(Argofile) CSヤスリ用当板 CSカーボンプレート 先2mmセット CSPS-02",
+          "image": "https://m.media-amazon.com/images/I/31Lzy9zHBpL._SL500_.jpg",
+          "price": 973,
+          "url": "https://www.amazon.co.jp/dp/B0D9N3VPQK/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0B7L5ZQSS",
+          "title": "アルゴファイル(Argofile) デザインナイフ形ダイヤモンドヤスリ ダイヤフィニッシュ DiaFinish #600 HDF3060#600 白",
+          "image": "https://m.media-amazon.com/images/I/01Pneq+kw2L._SL500_.jpg",
+          "price": 2383,
+          "url": "https://www.amazon.co.jp/dp/B0B7L5ZQSS/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CD8FJ67G",
+          "title": "アルゴファイル ハイパーハンディミニルーター ARTIMA AT -アルティマ オートトルク- ART120 & 電動ストロークサンダー アルティマ5e ARE105【セット買い】",
+          "image": "https://m.media-amazon.com/images/I/21xaqVkSfjL._SL500_.jpg",
+          "price": 17346,
+          "url": "https://www.amazon.co.jp/dp/B0CD8FJ67G/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CCQRNXLK",
+          "title": "アルゴファイル(Argofile) マイクロモーターシステム スターライトネクスト ホワイト SNH35STW-3024 【3.0Φコレット+2.35Φスリーブ仕様】",
+          "image": "https://m.media-amazon.com/images/I/31gUHW2EZSL._SL500_.jpg",
+          "price": 18810,
+          "url": "https://www.amazon.co.jp/dp/B0CCQRNXLK/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BWRFVXRV",
+          "title": "アルゴファイル ウルトラルーター２セット ULC280",
+          "image": "https://m.media-amazon.com/images/I/41oI89XV7kL._SL500_.jpg",
+          "price": 4409,
+          "url": "https://www.amazon.co.jp/dp/B0BWRFVXRV/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BSC1YZQ8",
+          "title": "CCYCCLネイル集塵機 ネイルダストコレクター 40W 強力 ジェルネイル 4500rpm回転力 電動ネイル機器 卓上集塵機 ネイルファン サロンサクションダ アルゴファイル ネイリストのダスト対策 低騒音 逆流を防ぎ フィルター付き 日本語取扱説明書付き (ホワイト)",
+          "image": "https://m.media-amazon.com/images/I/41wNVtOc5CL._SL500_.jpg",
+          "price": 4199,
+          "url": "https://www.amazon.co.jp/dp/B0BSC1YZQ8/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CCQVTTNH",
+          "title": "アルゴファイル(Argofile) マイクロモーターシステム スターライトネクスト ブラック SNH35STB 【2.35Φコレット仕様】",
+          "image": "https://m.media-amazon.com/images/I/31vgldotZPL._SL500_.jpg",
+          "price": 18809,
+          "url": "https://www.amazon.co.jp/dp/B0CCQVTTNH/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GYQXD4DY",
+          "title": "アルゴファイル(Argofile) マイクロモーターシステム STAR P70（スターP70） ブラック STP70STB",
+          "image": "https://m.media-amazon.com/images/I/31yOLfbcMhL._SL500_.jpg",
+          "price": 32044,
+          "url": "https://www.amazon.co.jp/dp/B0GYQXD4DY/?tag=tsumitsumi232-22"
         }
       ]
     }
