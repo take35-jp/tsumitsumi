@@ -75,14 +75,24 @@ const BRANDS = [
     name: "ゴッドハンド",
     blurb: "「アルティメットニッパー」や「神ヤスリ」で知られる国産プレミアムツールブランド。切れ味・仕上がりにこだわるモデラーの定番。",
     match: ["ゴッドハンド", "godhand"],
+    max: 40, // 人気ブランドのため多めに掲載
     queries: [
       "ゴッドハンド",
       "ゴッドハンド ニッパー",
       "ゴッドハンド アルティメットニッパー",
       "ゴッドハンド 神ヤスリ",
+      "ゴッドハンド 神ヤスリPRO",
       "ゴッドハンド スポンジヤスリ",
       "ゴッドハンド ピンセット",
+      "ゴッドハンド パワーピンセット",
       "ゴッドハンド やすり",
+      "ゴッドハンド ブレードワン",
+      "ゴッドハンド スピンブレード",
+      "ゴッドハンド デザインナイフ",
+      "ゴッドハンド メンテナンス",
+      "ゴッドハンド 接着剤",
+      "ゴッドハンド 持ち手",
+      "GodHand ニッパー",
       "GodHand 工具",
     ],
   },
@@ -173,7 +183,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     // 画像のある商品を優先し、価格ありを次点で前に
     const items = [...seen.values()]
       .sort((x, y) => (!!y.image - !!x.image) || (!!y.price - !!x.price))
-      .slice(0, MAX);
+      .slice(0, b.max || MAX); // ブランド個別の上限 b.max があれば優先
     out.brands.push({ key: b.key, name: b.name, blurb: b.blurb, items });
     console.log(`✅ ${b.name}: ${items.length} 件（画像あり ${items.filter((i) => i.image).length}）`);
   }
