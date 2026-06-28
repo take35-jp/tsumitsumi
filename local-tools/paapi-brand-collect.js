@@ -19,7 +19,8 @@ const path = require("path");
 
 const ENV_PATH = path.join(__dirname, ".env");
 const env = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, "utf8") : "";
-const get = (k) => (env.match(new RegExp("^" + k + "=(.+)$", "m")) || [])[1];
+// ローカルは .env を優先、無ければ環境変数（GitHub Actions の Secrets）から取得＝CIでも動く。
+const get = (k) => (env.match(new RegExp("^" + k + "=(.+)$", "m")) || [])[1] || process.env[k];
 const CID = get("AMAZON_PAAPI_ACCESS_KEY");
 const SEC = get("AMAZON_PAAPI_SECRET_KEY");
 const TAG = get("AMAZON_PARTNER_TAG");

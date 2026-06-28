@@ -1,0 +1,51 @@
+name: Brand Tools Refresh
+
+# おすすめツールブランド特集（プラモ向上委員会・DSPIAE）の商品データを
+# PA-API で収集し、public/brand-tools.json を自動更新して main へ直接コミットする。
+# 変更があった時だけコミット＝Vercel が自動デプロイ。手動実行も可（Actions タブ → Run workflow）。
+#
+# 必要なリポジトリ Secret（Settings → Secrets and variables → Actions）:
+#   AMAZON_PAAPI_ACCESS_KEY / AMAZON_PAAPI_SECRET_KEY / AMAZON_PARTNER_TAG
+# （値は local-tools/.env と同じ。Vercel の My PALETTE 用と同一でOK）
+on:
+  schedule:
+    - cron: "31 18 * * 1"   # 毎週月曜 18:31 UTC（≒火曜 03:31 JST）。価格・在庫を週1で更新
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: brand-tools
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Collect brand products (PA-API)
+        env:
+          AMAZON_PAAPI_ACCESS_KEY: ${{ secrets.AMAZON_PAAPI_ACCESS_KEY }}
+          AMAZON_PAAPI_SECRET_KEY: ${{ secrets.AMAZON_PAAPI_SECRET_KEY }}
+          AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
+        run: node local-tools/paapi-brand-collect.js
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- public/brand-tools.json; then
+            echo "変更なし。コミットしません。"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/brand-tools.json
+          git commit -m "chore(brand): ツールブランド特集の商品データを自動更新"
+          git push
