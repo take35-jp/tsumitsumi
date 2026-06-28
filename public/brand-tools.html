@@ -55,8 +55,13 @@
   .brand-count { display: inline-block; font-size: 11px; color: #cbd5e1; font-weight: 600; margin-top: 6px; }
   .brand-amazon { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 9px 16px; background: #ff9900; color: #111; border-radius: 8px; font-size: 13px; font-weight: 800; text-decoration: none; transition: filter 0.15s; }
   .brand-amazon:hover { filter: brightness(1.07); }
-  .brand-blurb { color: #4b5563; font-size: 13px; margin: 0 0 16px; line-height: 1.7; }
-  @media (max-width: 540px) { .brand-name { font-size: 25px; } .brand-banner { padding: 18px 18px 16px; } }
+  .brand-blurb { color: #4b5563; font-size: 13px; margin: 0 0 12px; line-height: 1.7; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .chip { font-size: 12px; font-weight: 700; color: #374151; background: #fff; border: 1px solid #d1d5db; border-radius: 999px; padding: 5px 12px; cursor: pointer; white-space: nowrap; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .chip:hover { border-color: #2563eb; color: #2563eb; }
+  .chip.active { background: #111827; color: #fff; border-color: #111827; }
+  .product-card.hide { display: none; }
+  @media (max-width: 540px) { .brand-name { font-size: 25px; } .brand-banner { padding: 18px 18px 16px; } .chip { font-size: 11px; padding: 4px 10px; } }
   .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .product-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s, box-shadow 0.15s; }
   .product-card:hover { border-color: #fed7aa; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
@@ -155,6 +160,35 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const yen = (n) => (n == null ? "" : "¥" + Number(n).toLocaleString("ja-JP"));
 
+  // 商品名から種類を推定（上から順に最初に一致したものを採用）
+  const CATS = [
+    ["ニッパー", /ニッパー|nipper/i],
+    ["電動・パワー", /電動|ペンサンダー|サンダー|リューター|ルーター|スターラー|オーブン|乾燥|コンプレッサー/i],
+    ["ヤスリ・研磨", /ヤスリ|やすり|研磨|サンディング|スポンジ|ペーパー|ダイヤモンド|砥/i],
+    ["ナイフ・刃", /ナイフ|替刃|替え刃|ブレード|blade|knife|カッター/i],
+    ["ピンセット", /ピンセット|tweezer/i],
+    ["マスキング", /マスキング|マステ|マスク/i],
+    ["接着・パテ", /接着|セメント|パテ|グルー|glue/i],
+    ["スミ入れ・塗装", /スミ入れ|墨入れ|塗装|塗料|ペイント|筆|マーカー|パネルライン/i],
+    ["持ち手・スタンド", /持ち手|ハンドル|クリップ|スタンド|ベース|台/i],
+    ["収納・整理", /トレイ|コンテナ|ケース|ポーチ|収納|仕分け|ランナー|ドック|タグ|ボックス|オーガナイ/i],
+  ];
+  function classify(title) {
+    const t = String(title || "");
+    for (const [name, re] of CATS) if (re.test(t)) return name;
+    return "その他";
+  }
+  // 種類で絞り込み（ブランドセクション内のカードを表示/非表示）
+  window.ttFilter = function (key, cat, el) {
+    const sec = document.getElementById(key);
+    if (!sec) return;
+    sec.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+    if (el) el.classList.add("active");
+    sec.querySelectorAll(".product-card").forEach((card) => {
+      card.classList.toggle("hide", cat !== "__all" && card.getAttribute("data-cat") !== cat);
+    });
+  };
+
   function renderCard(p) {
     const thumb = p.image
       ? `<div class="product-thumb"><img src="${esc(p.image)}" alt="" loading="lazy" onerror="this.parentNode.innerHTML='<span class=&quot;no-img&quot;>🛠</span>'"></div>`
@@ -162,7 +196,7 @@
     const price = p.price != null
       ? `<div class="product-price"><span class="yen">${esc(yen(p.price))}</span><span class="note">税込・変動あり</span></div>`
       : `<div class="product-price"><span class="note">価格はAmazonで確認</span></div>`;
-    return `<div class="product-card">
+    return `<div class="product-card" data-cat="${esc(classify(p.title))}">
       ${thumb}
       <div class="product-body">
         <div class="product-name">${esc(p.title)}</div>
@@ -174,8 +208,20 @@
 
   function renderBrand(b) {
     const items = Array.isArray(b.items) ? b.items : [];
+    // 種類別の件数を集計し、CATSの順に存在する種類だけチップ化（その他は末尾）
+    const counts = {};
+    items.forEach((p) => { const c = classify(p.title); counts[c] = (counts[c] || 0) + 1; });
+    const order = [...CATS.map((c) => c[0]), "その他"];
+    const present = order.filter((c) => counts[c]);
+    let chips = "";
+    if (items.length && present.length > 1) {
+      chips = `<div class="chips">`
+        + `<button class="chip active" onclick="ttFilter('${esc(b.key)}','__all',this)">すべて ${items.length}</button>`
+        + present.map((c) => `<button class="chip" onclick="ttFilter('${esc(b.key)}','${esc(c)}',this)">${esc(c)} ${counts[c]}</button>`).join("")
+        + `</div>`;
+    }
     const body = items.length
-      ? `<div class="product-grid">${items.map(renderCard).join("")}</div>`
+      ? chips + `<div class="product-grid">${items.map(renderCard).join("")}</div>`
       : `<div class="empty">この特集は準備中です。もうしばらくお待ちください。</div>`;
     // ブランド名から検索キーワードを作り、Amazonのブランド検索（アフィリタグ付き）へ
     const kw = String(b.name || "").replace(/（.*?）|\(.*?\)/g, "").trim();
