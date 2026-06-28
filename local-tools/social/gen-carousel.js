@@ -24,17 +24,21 @@ const MAX = ARGV.includes("--max") ? parseInt(ARGV[ARGV.indexOf("--max") + 1], 1
 if (!SLUG) { console.error("使い方: node gen-carousel.js <slug> [--max N]"); process.exit(1); }
 
 const W = 1080, H = 1350;
-const FONT = '"Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
+const FONT = '"Noto Sans JP", "Yu Gothic", "Meiryo", "IPAGothic", sans-serif';
 const C = {
   brandA: "#4f8ef7", brandB: "#22c55e",
   ink: "#0f172a", sub: "#475569", soft: "#64748b",
   paper: "#ffffff", line: "#e5e7eb", chip: "#eef2f7",
+  card: "#f5f9fd", cardLine: "#dbe7f3", accent: "#2563eb",
   green: "#16a34a", orange: "#f59e0b", white: "#ffffff",
 };
 const IG_HANDLE = "@take35_pla"; // 投稿先Instagramアカウント（実ハンドル）
 const BASE_TAGS = [
-  "#ガンプラ", "#プラモデル", "#積みプラ", "#TSUMITSUMI",
-]; // ハッシュタグは4つまで
+  "#ガンプラ", "#プラモデル", "#プラモ", "#積みプラ", "#積みプラ崩し",
+  "#模型", "#模型好きと繋がりたい", "#ガンプラ好きと繋がりたい",
+  "#プラモデル好きな人と繋がりたい", "#ガンプラ初心者", "#ガンプラ製作",
+  "#TSUMITSUMI", "#ツミツミ",
+]; // Instagram は最大30個まで可。発見性のため関連タグを厚めに
 
 // ---------- HTML 抽出 ----------
 function stripTags(s) {
@@ -61,7 +65,9 @@ function parseArticle(html) {
   let title = h1.replace(/<small[\s\S]*?<\/small>/i, "");
   title = stripTags(title).replace(/^[\s―\-]+|[\s―\-]+$/g, "");
   const cat = stripTags((html.match(/<span class="tag">([\s\S]*?)<\/span>/i) || [])[1] || "製作TIPS");
-  const lead = firstSentences((html.match(/<p class="lead"[^>]*>([\s\S]*?)<\/p>/i) || [])[1] || "", 70);
+  const leadRaw = (html.match(/<p class="lead"[^>]*>([\s\S]*?)<\/p>/i) || [])[1] || "";
+  const lead = firstSentences(leadRaw, 70);
+  const leadFull = firstSentences(leadRaw, 120);
 
   // 本文を h2 単位で分割
   const body = (html.match(/<article[^>]*>([\s\S]*?)<\/article>/i) || [])[1] || html;
@@ -79,7 +85,7 @@ function parseArticle(html) {
     const text = firstSentences(box || para || "", 92);
     if (head) sections.push({ head, text });
   }
-  return { title, cat, lead, sections: sections.slice(0, MAX) };
+  return { title, cat, lead, leadFull, sections: sections.slice(0, MAX) };
 }
 
 // ---------- 描画ヘルパ ----------
@@ -115,48 +121,94 @@ function drawLines(ctx, lines, x, y, lh) {
 }
 
 // ---------- 各スライド ----------
-function drawCover(ctx, art, logo) {
+function drawCover(ctx, art, logo, total) {
   ctx.fillStyle = grad(ctx); ctx.fillRect(0, 0, W, H);
+  // 装飾の半透明サークル
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.beginPath(); ctx.arc(W - 110, 210, 280, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(120, H - 110, 220, 0, Math.PI * 2); ctx.fill();
   // ロゴ＋ワードマーク
-  const ls = 96;
-  if (logo) { ctx.save(); roundRect(ctx, 80, 84, ls, ls, 22); ctx.clip(); ctx.drawImage(logo, 80, 84, ls, ls); ctx.restore(); }
-  ctx.fillStyle = C.white;
-  ctx.font = `800 40px ${FONT}`; ctx.textBaseline = "alphabetic";
-  ctx.fillText("TSUMI TSUMI", 196, 130);
-  ctx.font = `500 26px ${FONT}`; ctx.globalAlpha = 0.9;
-  ctx.fillText("製作TIPS", 196, 168); ctx.globalAlpha = 1;
+  const ls = 92;
+  if (logo) { ctx.save(); roundRect(ctx, 80, 88, ls, ls, 22); ctx.clip(); ctx.drawImage(logo, 80, 88, ls, ls); ctx.restore(); }
+  ctx.fillStyle = C.white; ctx.textBaseline = "alphabetic";
+  ctx.font = `800 38px ${FONT}`; ctx.fillText("TSUMI TSUMI", 192, 132);
+  ctx.font = `500 25px ${FONT}`; ctx.globalAlpha = 0.92;
+  ctx.fillText("製作TIPS / MAKING TIPS", 192, 168); ctx.globalAlpha = 1;
   // カテゴリチップ
   ctx.font = `700 26px ${FONT}`;
-  const cw = ctx.measureText(art.cat).width + 44;
-  ctx.fillStyle = "rgba(255,255,255,0.22)"; roundRect(ctx, 80, 470, cw, 52, 26); ctx.fill();
-  ctx.fillStyle = C.white; ctx.fillText(art.cat, 102, 506);
+  const cw = ctx.measureText(art.cat).width + 48;
+  ctx.fillStyle = "rgba(255,255,255,0.22)"; roundRect(ctx, 80, 430, cw, 54, 27); ctx.fill();
+  ctx.fillStyle = C.white; ctx.fillText(art.cat, 104, 467);
   // タイトル
-  ctx.font = `800 70px ${FONT}`; ctx.fillStyle = C.white;
+  ctx.font = `800 72px ${FONT}`; ctx.fillStyle = C.white;
   const lines = wrap(ctx, art.title, W - 160).slice(0, 5);
-  drawLines(ctx, lines, 80, 640, 96);
-  // スワイプ
-  ctx.font = `700 30px ${FONT}`; ctx.globalAlpha = 0.95;
-  ctx.fillText("スワイプで読む  →", 80, H - 110); ctx.globalAlpha = 1;
+  let y = drawLines(ctx, lines, 80, 600, 96);
+  // リード（プレビュー）
+  if (art.lead) {
+    ctx.font = `500 32px ${FONT}`; ctx.globalAlpha = 0.95;
+    const ll = wrap(ctx, art.lead, W - 170).slice(0, 3);
+    y = drawLines(ctx, ll, 80, y + 40, 48); ctx.globalAlpha = 1;
+  }
+  // 下部：枚数バッジ＋スワイプ
+  ctx.font = `700 28px ${FONT}`;
+  const badge = `全${total}枚でやさしく解説`;
+  const bw = ctx.measureText(badge).width + 48;
+  ctx.fillStyle = "rgba(255,255,255,0.18)"; roundRect(ctx, 80, H - 192, bw, 56, 28); ctx.fill();
+  ctx.fillStyle = C.white; ctx.fillText(badge, 104, H - 154);
+  ctx.font = `800 32px ${FONT}`; ctx.fillText("スワイプで読む  →", 80, H - 92);
+}
+function drawAgenda(ctx, art) {
+  ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = grad(ctx); ctx.fillRect(0, 0, W, 14);
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = C.accent; ctx.font = `800 28px ${FONT}`;
+  ctx.fillText("WHAT YOU'LL LEARN", 80, 142);
+  ctx.fillStyle = C.ink; ctx.font = `800 58px ${FONT}`;
+  ctx.fillText("この記事でわかること", 80, 214);
+  ctx.strokeStyle = C.line; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(80, 252); ctx.lineTo(W - 80, 252); ctx.stroke();
+  let y = 340;
+  art.sections.slice(0, 6).forEach((s, i) => {
+    ctx.fillStyle = C.green; roundRect(ctx, 80, y - 46, 64, 64, 16); ctx.fill();
+    ctx.fillStyle = C.white; ctx.font = `800 34px ${FONT}`; ctx.textAlign = "center";
+    ctx.fillText(String(i + 1), 112, y - 2); ctx.textAlign = "left";
+    ctx.fillStyle = C.ink; ctx.font = `700 38px ${FONT}`;
+    const hl = wrap(ctx, s.head, W - 240).slice(0, 2);
+    drawLines(ctx, hl, 168, y - (hl.length > 1 ? 16 : 0), 46);
+    y += hl.length > 1 ? 148 : 122;
+  });
+  ctx.fillStyle = C.soft; ctx.font = `600 26px ${FONT}`;
+  ctx.fillText(IG_HANDLE, 80, H - 70);
+  ctx.textAlign = "right"; ctx.fillText("INDEX", W - 80, H - 70); ctx.textAlign = "left";
 }
 function drawContent(ctx, sec, idx, total) {
   ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
   // 上部アクセントバー
   ctx.fillStyle = grad(ctx); ctx.fillRect(0, 0, W, 14);
-  // 番号バッジ
-  ctx.fillStyle = C.green; roundRect(ctx, 80, 96, 92, 92, 20); ctx.fill();
+  ctx.textBaseline = "alphabetic";
+  // POINT ラベル＋番号バッジ
+  ctx.fillStyle = C.accent; ctx.font = `800 28px ${FONT}`;
+  ctx.fillText(`POINT ${idx}`, 192, 150);
+  ctx.fillStyle = C.green; roundRect(ctx, 80, 96, 92, 92, 22); ctx.fill();
   ctx.fillStyle = C.white; ctx.font = `800 50px ${FONT}`; ctx.textAlign = "center";
   ctx.fillText(String(idx), 126, 162); ctx.textAlign = "left";
   // 見出し
-  ctx.fillStyle = C.ink; ctx.font = `800 56px ${FONT}`;
+  ctx.fillStyle = C.ink; ctx.font = `800 54px ${FONT}`;
   const hl = wrap(ctx, sec.head, W - 160).slice(0, 3);
-  let y = drawLines(ctx, hl, 80, 300, 74);
+  let y = drawLines(ctx, hl, 80, 290, 72);
   // 区切り線
-  y += 24; ctx.strokeStyle = C.line; ctx.lineWidth = 3;
+  y += 22; ctx.strokeStyle = C.line; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(W - 80, y); ctx.stroke();
-  // 本文（可読性のため濃いめ＋やや太字）
-  y += 70; ctx.fillStyle = "#1f2937"; ctx.font = `600 41px ${FONT}`;
-  const bl = wrap(ctx, sec.text, W - 160).slice(0, 9);
-  drawLines(ctx, bl, 80, y, 64);
+  // 本文カード（可読性のため淡い背景＋左アクセント）
+  y += 44;
+  ctx.font = `600 40px ${FONT}`;
+  const lh = 62;
+  const bl = wrap(ctx, sec.text, W - 240).slice(0, 9);
+  const cardPadX = 40, cardPadY = 46;
+  const cardH = (bl.length - 1) * lh + 40 + cardPadY * 2;
+  ctx.fillStyle = C.card; roundRect(ctx, 80, y, W - 160, cardH, 28); ctx.fill();
+  ctx.fillStyle = C.green; roundRect(ctx, 80, y, 12, cardH, 6); ctx.fill();
+  ctx.fillStyle = "#1f2937"; ctx.font = `600 40px ${FONT}`;
+  drawLines(ctx, bl, 80 + cardPadX + 18, y + cardPadY + 34, lh);
   // フッター
   ctx.fillStyle = C.soft; ctx.font = `600 26px ${FONT}`;
   ctx.fillText(IG_HANDLE, 80, H - 70);
@@ -164,21 +216,38 @@ function drawContent(ctx, sec, idx, total) {
 }
 function drawCta(ctx, logo) {
   ctx.fillStyle = grad(ctx); ctx.fillRect(0, 0, W, H);
-  const ls = 180;
-  if (logo) { ctx.save(); roundRect(ctx, (W - ls) / 2, 250, ls, ls, 40); ctx.clip(); ctx.drawImage(logo, (W - ls) / 2, 250, ls, ls); ctx.restore(); }
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.beginPath(); ctx.arc(W - 90, 150, 240, 0, Math.PI * 2); ctx.fill();
+  ctx.textBaseline = "alphabetic";
+  const ls = 150;
+  if (logo) { ctx.save(); roundRect(ctx, (W - ls) / 2, 150, ls, ls, 36); ctx.clip(); ctx.drawImage(logo, (W - ls) / 2, 150, ls, ls); ctx.restore(); }
   ctx.textAlign = "center"; ctx.fillStyle = C.white;
-  ctx.font = `800 58px ${FONT}`;
-  drawLines(ctx, ["積みプラの管理は", "「TSUMI TSUMI」で"], W / 2, 560, 78);
-  ctx.font = `500 36px ${FONT}`; ctx.globalAlpha = 0.95;
-  drawLines(ctx, ["バーコードでカンタン登録", "完全無料・登録不要のWebアプリ"], W / 2, 760, 54);
-  ctx.globalAlpha = 1;
-  // ボタン風
-  ctx.fillStyle = C.white; const bw = 800, bx = (W - bw) / 2;
-  roundRect(ctx, bx, 900, bw, 100, 50); ctx.fill();
-  ctx.fillStyle = C.ink; ctx.font = `800 36px ${FONT}`;
-  ctx.fillText("詳しくは プロフィールのリンク から", W / 2, 962);
-  ctx.fillStyle = C.white; ctx.font = `700 32px ${FONT}`; ctx.globalAlpha = 0.95;
-  ctx.fillText(IG_HANDLE, W / 2, 1120);
+  ctx.font = `800 56px ${FONT}`;
+  drawLines(ctx, ["積みプラの管理は", "「TSUMI TSUMI」"], W / 2, 400, 74);
+  ctx.font = `500 30px ${FONT}`; ctx.globalAlpha = 0.95;
+  ctx.fillText("完全無料・登録不要のWebアプリ", W / 2, 506); ctx.globalAlpha = 1;
+  // 機能カード3つ
+  const feats = [
+    ["在庫管理", "バーコードでカンタン登録・総額も把握"],
+    ["モデラーズアルバム", "完成作品をポートフォリオ化"],
+    ["My PALETTE", "塗料・調色レシピを色見本つき管理"],
+  ];
+  let fy = 580;
+  feats.forEach((f) => {
+    ctx.fillStyle = "rgba(255,255,255,0.14)"; roundRect(ctx, 120, fy, W - 240, 108, 22); ctx.fill();
+    ctx.textAlign = "left";
+    ctx.fillStyle = C.white; ctx.font = `800 34px ${FONT}`; ctx.fillText(f[0], 160, fy + 46);
+    ctx.font = `500 27px ${FONT}`; ctx.globalAlpha = 0.92; ctx.fillText(f[1], 160, fy + 86); ctx.globalAlpha = 1;
+    fy += 126;
+  });
+  // ボタン風＋ハンドル
+  ctx.textAlign = "center";
+  ctx.fillStyle = C.white; const bw = 820, bx = (W - bw) / 2;
+  roundRect(ctx, bx, fy + 16, bw, 96, 48); ctx.fill();
+  ctx.fillStyle = C.ink; ctx.font = `800 34px ${FONT}`;
+  ctx.fillText("プロフィールのリンクから  →", W / 2, fy + 76);
+  ctx.fillStyle = C.white; ctx.font = `700 30px ${FONT}`; ctx.globalAlpha = 0.95;
+  ctx.fillText(IG_HANDLE, W / 2, fy + 166);
   ctx.globalAlpha = 1; ctx.textAlign = "left";
 }
 
@@ -192,10 +261,14 @@ function drawCta(ctx, logo) {
   const outDir = path.join(OUT_ROOT, SLUG);
   fs.mkdirSync(outDir, { recursive: true });
 
-  const total = art.sections.length + 2; // cover + content + cta
+  // Instagram カルーセルは最大10枚。cover+agenda+cta=3枚を確保し、本文は最大7枚に制限。
+  art.sections = art.sections.slice(0, 7);
+  const total = art.sections.length + 3; // cover + agenda + content + cta
   const slides = [];
   // cover
-  let cv = createCanvas(W, H); drawCover(cv.getContext("2d"), art, logo); slides.push(cv);
+  let cv = createCanvas(W, H); drawCover(cv.getContext("2d"), art, logo, total); slides.push(cv);
+  // agenda（この記事でわかること）
+  let ag = createCanvas(W, H); drawAgenda(ag.getContext("2d"), art); slides.push(ag);
   // content
   art.sections.forEach((sec, i) => {
     const c = createCanvas(W, H); drawContent(c.getContext("2d"), sec, i + 1, art.sections.length); slides.push(c);
@@ -210,14 +283,23 @@ function drawCta(ctx, logo) {
     fs.writeFileSync(path.join(outDir, `slide-${n}.jpg`), buf);
   }
 
-  // キャプション
+  // キャプション（本文の要点リスト＋CTA＋ハッシュタグで読み応えを出す）
+  const points = art.sections.map((s, i) => `${i + 1}. ${s.head}`).slice(0, 6);
   const caption = [
-    art.title,
+    `【${art.cat}】${art.title}`,
     "",
-    art.lead,
+    art.leadFull || art.lead,
     "",
-    "▼続きと他のTIPSはプロフィールのリンクから",
+    "──────────",
+    "◤ この投稿でわかること ◢",
+    ...points,
+    "──────────",
+    "",
+    "保存して、作業中に見返すのがおすすめ。",
+    "図解つきの全文・他のTIPSはプロフィールのリンクから読めます。",
+    "",
     "積みプラ管理アプリ「TSUMI TSUMI」も無料公開中",
+    "・バーコードで在庫管理／完成作品のアルバム／塗料管理 My PALETTE",
     IG_HANDLE,
     "",
     BASE_TAGS.join(" "),
