@@ -214,14 +214,19 @@
         ? `<div style="height:110px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${escapeHtml(p.image)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain;"></div>`
         : `<div style="height:110px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:26px;">🛠</div>`;
       const price = p.price != null ? `<div style="font-size:13px;font-weight:800;color:#b91c1c;margin-top:4px;">${escapeHtml(yen(p.price))}<span style="font-size:9px;color:#9ca3af;font-weight:400;"> 税込・変動あり</span></div>` : `<div style="font-size:10px;color:#9ca3af;margin-top:4px;">価格はAmazonで確認</div>`;
-      return `<a href="${escapeHtml(url)}" target="_blank" rel="nofollow sponsored noopener" style="display:block;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;text-decoration:none;color:#111827;background:#fff;">
-        ${img}
-        <div style="padding:8px 10px 10px;">
-          <div style="font-size:12px;line-height:1.4;font-weight:700;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(p.title)}</div>
-          ${price}
-          <div style="margin-top:6px;font-size:11px;font-weight:700;color:#fff;background:#111;border-radius:6px;text-align:center;padding:5px 0;">Amazonで見る →</div>
+      return `<div style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fff;">
+        <a href="${escapeHtml(url)}" target="_blank" rel="nofollow sponsored noopener" style="display:block;text-decoration:none;color:#111827;">
+          ${img}
+          <div style="padding:8px 10px 2px;">
+            <div style="font-size:12px;line-height:1.4;font-weight:700;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(p.title)}</div>
+            ${price}
+          </div>
+        </a>
+        <div style="display:flex;gap:6px;padding:6px 10px 10px;">
+          <a href="${escapeHtml(url)}" target="_blank" rel="nofollow sponsored noopener" style="flex:1;font-size:11px;font-weight:700;color:#fff;background:#111;border-radius:6px;text-align:center;padding:6px 0;text-decoration:none;">Amazonで見る →</a>
+          <button class="tt-rel-share" data-u="${escapeHtml(url)}" data-t="${escapeHtml(p.title)}" title="Xでシェア" aria-label="Xでシェア" style="flex:none;width:38px;border:1px solid #111;background:#fff;color:#111;border-radius:6px;cursor:pointer;font-size:13px;font-weight:800;">𝕏</button>
         </div>
-      </a>`;
+      </div>`;
     }).join("");
 
     const box = document.createElement("section");
@@ -236,6 +241,16 @@
       <div style="font-size:10px;color:#9ca3af;margin-top:10px;line-height:1.6;">※ Amazonアソシエイトのリンクを含みます。価格・在庫はAmazonの最新情報をご確認ください。</div>`;
     if (slot) slot.appendChild(box);
     else article.insertAdjacentElement("afterend", box);
+    // カードのシェアボタン（X等）。ハッシュタグは #TSUMITSUMI のみ。
+    box.addEventListener("click", function (e) {
+      const b = e.target.closest && e.target.closest(".tt-rel-share");
+      if (!b) return;
+      e.preventDefault();
+      const text = (b.getAttribute("data-t") || "") + "\n#TSUMITSUMI";
+      const url = b.getAttribute("data-u") || "";
+      try { if (navigator.share) { navigator.share({ text: text, url: url }).catch(function () {}); return; } } catch (err) {}
+      window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url), "_blank");
+    });
   }
 
   // 初回実行
