@@ -170,10 +170,79 @@
     loadAll().then(apply);
   });
 
+  // ---- 関連アイテム（PR）ウィジェット ----
+  // brand-tools.json（アフィリタグ付き工具）から、記事の見出しに関連する商品を表示。
+  // 設置: 記事(<article>)があれば末尾に自動挿入。任意で <div id="tt-related-slot"></div> を置けばそこに表示。
+  const REL_KEYWORDS = ["ニッパー", "ヤスリ", "やすり", "研磨", "スポンジ", "ペーパー", "デザインナイフ", "ナイフ", "替刃", "ピンセット", "接着", "セメント", "パテ", "マスキング", "スミ入れ", "墨入れ", "塗装", "塗料", "サーフェイサー", "トップコート", "筆", "電動", "リューター", "ペンサンダー", "持ち手", "クリップ", "コンテナ", "収納", "カッター", "ハサミ", "ピンバイス", "スジ彫り"];
+  let brandItems = null;
+  async function fetchBrandItems() {
+    if (brandItems) return brandItems;
+    brandItems = [];
+    try {
+      const r = await fetch("/brand-tools.json?ts=" + Date.now());
+      if (r.ok) {
+        const d = await r.json();
+        (d.brands || []).forEach(b => (b.items || []).forEach(it => { if (it && it.asin) brandItems.push({ ...it, brand: b.name }); }));
+      }
+    } catch (e) {}
+    return brandItems;
+  }
+  function pageKeywords() {
+    const parts = [document.title || ""];
+    document.querySelectorAll("h1,h2,h3").forEach(h => parts.push(h.textContent || ""));
+    const text = parts.join(" ");
+    return REL_KEYWORDS.filter(k => text.indexOf(k) !== -1);
+  }
+  async function injectRelatedItems() {
+    if (document.getElementById("tt-related")) return;
+    const slot = document.getElementById("tt-related-slot");
+    const article = document.querySelector("article");
+    if (!slot && !article) return;
+    const items = await fetchBrandItems();
+    if (!items.length) return;
+    const kws = pageKeywords();
+    const scored = items.map(it => { let s = 0; const t = it.title || ""; for (const k of kws) if (t.indexOf(k) !== -1) s++; return { it, s }; });
+    const seen = new Set(); const out = [];
+    scored.filter(x => x.s > 0).sort((a, b) => b.s - a.s).forEach(x => { if (out.length < 6 && !seen.has(x.it.asin)) { seen.add(x.it.asin); out.push(x.it); } });
+    if (out.length < 4) { for (const it of items) { if (out.length >= 6) break; if (!it.image || seen.has(it.asin)) continue; seen.add(it.asin); out.push(it); } }
+    if (!out.length) return;
+
+    const yen = (n) => (n == null ? "" : "¥" + Number(n).toLocaleString("ja-JP"));
+    const cards = out.map(p => {
+      const url = (p.url && /tag=/.test(p.url)) ? p.url : buildSearchUrl(p.title);
+      const img = p.image
+        ? `<div style="height:110px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${escapeHtml(p.image)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain;"></div>`
+        : `<div style="height:110px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:26px;">🛠</div>`;
+      const price = p.price != null ? `<div style="font-size:13px;font-weight:800;color:#b91c1c;margin-top:4px;">${escapeHtml(yen(p.price))}<span style="font-size:9px;color:#9ca3af;font-weight:400;"> 税込・変動あり</span></div>` : `<div style="font-size:10px;color:#9ca3af;margin-top:4px;">価格はAmazonで確認</div>`;
+      return `<a href="${escapeHtml(url)}" target="_blank" rel="nofollow sponsored noopener" style="display:block;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;text-decoration:none;color:#111827;background:#fff;">
+        ${img}
+        <div style="padding:8px 10px 10px;">
+          <div style="font-size:12px;line-height:1.4;font-weight:700;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(p.title)}</div>
+          ${price}
+          <div style="margin-top:6px;font-size:11px;font-weight:700;color:#fff;background:#111;border-radius:6px;text-align:center;padding:5px 0;">Amazonで見る →</div>
+        </div>
+      </a>`;
+    }).join("");
+
+    const box = document.createElement("section");
+    box.id = "tt-related";
+    box.style.cssText = "max-width:820px;margin:40px auto 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',Meiryo,sans-serif;";
+    box.innerHTML = `
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 12px;">
+        <h2 style="font-size:17px;font-weight:800;margin:0;padding-left:10px;border-left:4px solid #f59e0b;">関連アイテム<span style="font-size:11px;color:#9ca3af;font-weight:600;margin-left:6px;">PR</span></h2>
+        <a href="/gears.html" target="_blank" rel="noopener" style="font-size:12px;color:#15803d;text-decoration:none;font-weight:600;white-space:nowrap;">定番アイテム →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">${cards}</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:10px;line-height:1.6;">※ Amazonアソシエイトのリンクを含みます。価格・在庫はAmazonの最新情報をご確認ください。</div>`;
+    if (slot) slot.appendChild(box);
+    else article.insertAdjacentElement("afterend", box);
+  }
+
   // 初回実行
   async function init() {
     await loadAll();
     apply();
+    injectRelatedItems();
   }
 
   if (document.readyState === "loading") {
