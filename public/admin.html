@@ -804,8 +804,8 @@
     <!-- TAB: ブランド特集 並び替え -->
     <div class="tab-panel" id="tab-brand">
       <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:14px; font-size:12px; color:#1e40af; line-height:1.7;">
-        🏷 <b>ツールブランド特集の並び替え</b>：各ブランド内の商品を ▲▼ で並び替え → 「保存」でGitHubにコミット（約1〜2分で本番反映）。<br>
-        週次の自動更新でもこの並び順は保持されます（新商品は末尾に追加・販売終了品は自動で消えます）。※ <code>GITHUB_TOKEN</code> と <code>TIPS_EDIT_SECRET</code> が必要（TIPS編集と共用）。
+        🏷 <b>ツールブランド特集の並び替え</b>：各ブランド内の商品を <b>ドラッグ＆ドロップ</b>（行をつかんで上下に移動）で並び替え → 「保存」でGitHubにコミット（約1〜2分で本番反映）。<br>
+        週次の自動更新でもこの並び順は保持されます（新商品は末尾に追加・販売終了品は自動で消えます）。スマホ等で掴みにくい時は ▲▼ ボタンでも動かせます。
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
         <button onclick="brandReload()" style="padding:8px 14px; background:#2563eb; color:#fff; border:none; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">↻ 読み込み直す</button>
@@ -813,8 +813,6 @@
       </div>
       <div id="brand-editor"><div style="color:#9ca3af; padding:20px;">「読み込み直す」を押してください。</div></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; position:sticky; bottom:0; background:#fff; padding:10px 0; border-top:1px solid #e5e7eb;">
-        <input id="brand-secret" type="password" placeholder="合言葉（TIPS_EDIT_SECRET）" autocomplete="off"
-          style="padding:8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; min-width:220px;">
         <button onclick="brandSave()" id="brand-save-btn" style="padding:9px 18px; background:#16a34a; color:#fff; border:none; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">💾 保存（GitHubへコミット）</button>
         <span id="brand-status" style="font-size:12px; color:#6b7280; align-self:center;"></span>
       </div>
@@ -898,13 +896,18 @@ function renderBrandEditor() {
   ed.innerHTML = brandData.brands.map((b, bi) => {
     const items = b.items || [];
     const rows = items.map((p, pi) => `
-      <div style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid #f3f4f6;">
+      <div draggable="true"
+        ondragstart="brandDragStart(event,${bi},${pi})" ondragend="brandDragEnd(event)"
+        ondragover="brandDragOver(event,${bi},${pi})" ondragleave="brandDragLeave(event)" ondrop="brandDrop(event,${bi},${pi})"
+        data-bi="${bi}" data-pi="${pi}"
+        style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid #f3f4f6; background:#fff; cursor:grab;">
+        <div style="color:#cbd5e1; font-size:16px; flex:none; cursor:grab; user-select:none;" title="ドラッグで並び替え">⠿</div>
         <div style="display:flex; flex-direction:column; gap:2px;">
           <button onclick="brandMove(${bi},${pi},-1)" ${pi === 0 ? 'disabled' : ''} style="font-size:11px; padding:2px 7px; cursor:pointer;">▲</button>
           <button onclick="brandMove(${bi},${pi},1)" ${pi === items.length - 1 ? 'disabled' : ''} style="font-size:11px; padding:2px 7px; cursor:pointer;">▼</button>
         </div>
         <div style="width:30px; text-align:center; font-size:11px; color:#9ca3af;">${pi + 1}</div>
-        ${p.image ? `<img src="${brandEsc(p.image)}" style="width:40px; height:40px; object-fit:contain; border:1px solid #eee; flex:none;">` : '<div style="width:40px; height:40px; background:#f3f4f6; flex:none;"></div>'}
+        ${p.image ? `<img src="${brandEsc(p.image)}" style="width:40px; height:40px; object-fit:contain; border:1px solid #eee; flex:none; pointer-events:none;">` : '<div style="width:40px; height:40px; background:#f3f4f6; flex:none;"></div>'}
         <div style="flex:1; min-width:0; font-size:12px; line-height:1.4;">${brandEsc(p.title)}</div>
         <div style="font-size:12px; color:#b91c1c; font-weight:700; white-space:nowrap;">${p.price != null ? ('¥' + Number(p.price).toLocaleString('ja-JP')) : ''}</div>
       </div>`).join('');
@@ -914,24 +917,51 @@ function renderBrandEditor() {
     </div>`;
   }).join('');
 }
+function brandMarkUnsaved() { const s = document.getElementById('brand-status'); s.textContent = '並び替えました（未保存）'; s.style.color = '#f59e0b'; }
 function brandMove(bi, pi, dir) {
   const items = brandData.brands[bi].items;
   const ni = pi + dir;
   if (ni < 0 || ni >= items.length) return;
   const t = items[pi]; items[pi] = items[ni]; items[ni] = t;
   renderBrandEditor();
-  const s = document.getElementById('brand-status'); s.textContent = '並び替えました（未保存）'; s.style.color = '#f59e0b';
+  brandMarkUnsaved();
+}
+// ---- ドラッグ＆ドロップ並び替え（同一ブランド内のみ）----
+let brandDrag = { bi: null, pi: null };
+function brandDragStart(ev, bi, pi) {
+  brandDrag = { bi, pi };
+  ev.dataTransfer.effectAllowed = 'move';
+  try { ev.dataTransfer.setData('text/plain', String(pi)); } catch (e) {}
+  if (ev.currentTarget) ev.currentTarget.style.opacity = '0.4';
+}
+function brandDragEnd(ev) { if (ev.currentTarget) ev.currentTarget.style.opacity = ''; }
+function brandDragOver(ev, bi, pi) {
+  if (brandDrag.bi !== bi) return; // 別ブランドへは移動不可
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'move';
+  if (ev.currentTarget) ev.currentTarget.style.borderTop = '2px solid #2563eb';
+}
+function brandDragLeave(ev) { if (ev.currentTarget) ev.currentTarget.style.borderTop = '2px solid transparent'; }
+function brandDrop(ev, bi, pi) {
+  if (brandDrag.bi !== bi) return;
+  ev.preventDefault();
+  const from = brandDrag.pi, to = pi;
+  brandDrag = { bi: null, pi: null };
+  if (from == null || from === to) { renderBrandEditor(); return; }
+  const items = brandData.brands[bi].items;
+  const [x] = items.splice(from, 1);
+  items.splice(to, 0, x);
+  renderBrandEditor();
+  brandMarkUnsaved();
 }
 async function brandSave() {
   if (!brandData) { alert('先に「読み込み直す」を押してください'); return; }
-  const secret = document.getElementById('brand-secret').value.trim();
-  if (!secret) { alert('合言葉（TIPS_EDIT_SECRET）を入力してください'); return; }
   const btn = document.getElementById('brand-save-btn'); const st = document.getElementById('brand-status');
   btn.disabled = true; st.textContent = '保存中…'; st.style.color = '#6b7280';
   try {
     const r = await fetch('/api/brand-tools-save', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: JSON.stringify(brandData, null, 2), secret }),
+      body: JSON.stringify({ content: JSON.stringify(brandData, null, 2) }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));

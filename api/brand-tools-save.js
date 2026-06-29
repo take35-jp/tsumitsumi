@@ -23,18 +23,15 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const TOKEN = process.env.GITHUB_TOKEN;
-  const SECRET = process.env.TIPS_EDIT_SECRET;
   const REPO = process.env.GITHUB_REPO || "take35-jp/tsumitsumi";
   const BRANCH = process.env.GITHUB_BRANCH || "main";
 
-  if (!TOKEN || !SECRET) {
-    return res.status(500).json({ error: "サーバー側に GITHUB_TOKEN / TIPS_EDIT_SECRET が未設定です（Vercelの環境変数を確認してください）" });
+  if (!TOKEN) {
+    return res.status(500).json({ error: "サーバー側に GITHUB_TOKEN が未設定です（Vercelの環境変数を確認してください）" });
   }
 
-  const { content, secret, message } = req.body || {};
-  if (!secret || secret !== SECRET) {
-    return res.status(401).json({ error: "合言葉（シークレット）が違います" });
-  }
+  // 合言葉は廃止（運営者の要望）。書込先は public/brand-tools.json 固定＋JSON妥当性チェックで保護。
+  const { content, message } = req.body || {};
   if (typeof content !== "string") {
     return res.status(400).json({ error: "content（JSON文字列）が必要です" });
   }
