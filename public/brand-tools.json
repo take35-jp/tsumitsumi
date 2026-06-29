@@ -1,6 +1,19 @@
 {
-  "generatedAt": "2026-06-28T15:10:18.546Z",
+  "generatedAt": "2026-06-29T20:25:13.042Z",
   "partnerTag": "tsumitsumi232-22",
+  "excludedAsins": [
+    "B0FDVFNMHY",
+    "B0CPDXSZX6",
+    "B0CV5CW2G8",
+    "B0C39NZHQ3",
+    "B0GHNM354T",
+    "B09T2K1RZY",
+    "B00U6U0WCU",
+    "B0DRPM322Q",
+    "B0FSD11Z7H",
+    "B0GNH78FKC",
+    "B0F4Q6GLQ2"
+  ],
   "brands": [
     {
       "key": "plamo-kojo",
@@ -83,13 +96,6 @@
           "image": "https://m.media-amazon.com/images/I/41PkRAw3vWL._SL500_.jpg",
           "price": 616,
           "url": "https://www.amazon.co.jp/dp/B08984QZ69/?tag=tsumitsumi232-22"
-        },
-        {
-          "asin": "B0BNSVFP1D",
-          "title": "プラモ向上委員会(Plamokojoiinkai) プラモ工具ポーチEVA (ブルー) ホビー用工具 PMKJ009BL",
-          "image": "https://m.media-amazon.com/images/I/511-K9jmcfL._SL500_.jpg",
-          "price": 1300,
-          "url": "https://www.amazon.co.jp/dp/B0BNSVFP1D/?tag=tsumitsumi232-22"
         },
         {
           "asin": "B0CN8WCF7S",
@@ -293,6 +299,20 @@
           "image": "https://m.media-amazon.com/images/I/51x4ZTTRdwL._SL500_.jpg",
           "price": 1359,
           "url": "https://www.amazon.co.jp/dp/B0C5QRF79T/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B077K1B5Z5",
+          "title": "プラモ向上委員会(Plamokojoiinkai) 使い捨て塗料皿セット 24個入り ホビー用工具 PMKJ006",
+          "image": "https://m.media-amazon.com/images/I/21ySO91nPIL._SL500_.jpg",
+          "price": 563,
+          "url": "https://www.amazon.co.jp/dp/B077K1B5Z5/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B077JT9N9N",
+          "title": "プラモ向上委員会(Plamokojoiinkai) 工具箱Special (ブルー) ホビー用工具 PMKJ003BL",
+          "image": "https://m.media-amazon.com/images/I/31sr7UyrgUL._SL500_.jpg",
+          "price": 628,
+          "url": "https://www.amazon.co.jp/dp/B077JT9N9N/?tag=tsumitsumi232-22"
         }
       ]
     },
@@ -333,7 +353,7 @@
           "asin": "B0GTV7G7KF",
           "title": "DSPIAE XSM 水性プレミックス塗料メタリック【日本正規代理店】 (XSM-202 水性プレミックス塗料(ピュアシルバー))",
           "image": "https://m.media-amazon.com/images/I/21Sbjba9I9L._SL500_.jpg",
-          "price": 1395,
+          "price": 1109,
           "url": "https://www.amazon.co.jp/dp/B0GTV7G7KF/?tag=tsumitsumi232-22"
         },
         {
@@ -361,7 +381,7 @@
           "asin": "B0GTV32QBY",
           "title": "DSPIAE XSM 水性プレミックス塗料メタリック【日本正規代理店】 (XSM-101 水性プレミックス塗料(スターダストゴールド))",
           "image": "https://m.media-amazon.com/images/I/21ydKu7o0qL._SL500_.jpg",
-          "price": 1395,
+          "price": 1109,
           "url": "https://www.amazon.co.jp/dp/B0GTV32QBY/?tag=tsumitsumi232-22"
         },
         {
@@ -417,14 +437,14 @@
           "asin": "B0GHMGDCL3",
           "title": "DSPIAE DLCコートステンレスヤスリ【日本正規代理店】 (DLCコートステンレスヤスリ　AT-FX02（＃600/＃1200）)",
           "image": "https://m.media-amazon.com/images/I/31bn559ig6L._SL500_.jpg",
-          "price": 3449,
+          "price": 3450,
           "url": "https://www.amazon.co.jp/dp/B0GHMGDCL3/?tag=tsumitsumi232-22"
         },
         {
           "asin": "B0DQQ97SST",
           "title": "DSPIAE ポータブル電動サンディングペン、ロータリーツール、コードレスシャープニングペン、クラフトやホビー用プロフェッショナルサンダー",
           "image": "https://m.media-amazon.com/images/I/21JBHBr6K-L._SL500_.jpg",
-          "price": 12440,
+          "price": 12327,
           "url": "https://www.amazon.co.jp/dp/B0DQQ97SST/?tag=tsumitsumi232-22"
         },
         {
@@ -529,7 +549,7 @@
           "asin": "B0C2PB34DR",
           "title": "DSPIAE マスキングテープ カッティングマット 両面デザイン モデル 組み立てツール カッティングプレート - 直線",
           "image": "https://m.media-amazon.com/images/I/51O4Fov7YPL._SL500_.jpg",
-          "price": 10374,
+          "price": 10386,
           "url": "https://www.amazon.co.jp/dp/B0C2PB34DR/?tag=tsumitsumi232-22"
         },
         {
@@ -641,7 +661,7 @@
           "asin": "B0CV94255F",
           "title": "DSPIAE AT-PST スジ彫りノギス【日本正規代理店】, ブラック",
           "image": "https://m.media-amazon.com/images/I/31zGSffUNnL._SL500_.jpg",
-          "price": 2836,
+          "price": 2772,
           "url": "https://www.amazon.co.jp/dp/B0CV94255F/?tag=tsumitsumi232-22"
         },
         {
@@ -699,6 +719,27 @@
           "image": "https://m.media-amazon.com/images/I/21La6AINLFL._SL500_.jpg",
           "price": 2008,
           "url": "https://www.amazon.co.jp/dp/B0CQM22VNT/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CQM2W1ZP",
+          "title": "DSPIAE PB-24 2.4mm 超硬タガネ【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/21d1rntjJeL._SL500_.jpg",
+          "price": 1884,
+          "url": "https://www.amazon.co.jp/dp/B0CQM2W1ZP/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CQNN9HGS",
+          "title": "DSPIAE HC-01 0.1mm 超硬フックタガネ【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/21ByFxZ5aUL._SL500_.jpg",
+          "price": 2241,
+          "url": "https://www.amazon.co.jp/dp/B0CQNN9HGS/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CQNMTWB8",
+          "title": "DSPIAE HC-03 0.3mm 超硬フックタガネ【日本正規代理店】",
+          "image": "https://m.media-amazon.com/images/I/21t-NHD3RIL._SL500_.jpg",
+          "price": 2310,
+          "url": "https://www.amazon.co.jp/dp/B0CQNMTWB8/?tag=tsumitsumi232-22"
         }
       ]
     },
@@ -739,14 +780,14 @@
           "asin": "B0CWRXGH25",
           "title": "ゴッドハンド(GodHand) ブレードワンニッパー GH-PN-120 ホビー用工具",
           "image": "https://m.media-amazon.com/images/I/31LSPQeblhL._SL500_.jpg",
-          "price": 4280,
+          "price": null,
           "url": "https://www.amazon.co.jp/dp/B0CWRXGH25/?tag=tsumitsumi232-22"
         },
         {
           "asin": "B0CWRX2NQR",
           "title": "ゴッドハンド(GodHand) ブレードワンニッパーＬ GH-PN-120-L ホビー用工具",
           "image": "https://m.media-amazon.com/images/I/31Q15rCid7L._SL500_.jpg",
-          "price": 5045,
+          "price": 5019,
           "url": "https://www.amazon.co.jp/dp/B0CWRX2NQR/?tag=tsumitsumi232-22"
         },
         {
@@ -767,7 +808,7 @@
           "asin": "B07NWBG938",
           "title": "ゴッドハンド(GodHand) 普通のニッパー プラモデル用工具 プラニッパー GH-PN-125",
           "image": "https://m.media-amazon.com/images/I/31LOlpJd1fL._SL500_.jpg",
-          "price": 1280,
+          "price": 1487,
           "url": "https://www.amazon.co.jp/dp/B07NWBG938/?tag=tsumitsumi232-22"
         },
         {
@@ -876,13 +917,6 @@
           "url": "https://www.amazon.co.jp/dp/B07YGBDFDF/?tag=tsumitsumi232-22"
         },
         {
-          "asin": "B0BGKN7HXT",
-          "title": "ゴッドハンド(GodHand) 神ヤス磨シリーズ 10mm 高番手 4000 模型用ツール GH-KS10-KB4000",
-          "image": "https://m.media-amazon.com/images/I/41u0Cimj2hL._SL500_.jpg",
-          "price": 557,
-          "url": "https://www.amazon.co.jp/dp/B0BGKN7HXT/?tag=tsumitsumi232-22"
-        },
-        {
           "asin": "B09QHNMRRF",
           "title": "ゴッドハンド(GodHand) 神ヤス! カッティングタイプ プラモデル用工具 スポンジ布ヤスリ(粘着剤付き) 2mm厚 #400 ‎イエロー GH-KSC2-P400",
           "image": "https://m.media-amazon.com/images/I/41-QhkgszIL._SL500_.jpg",
@@ -923,13 +957,6 @@
           "image": "https://m.media-amazon.com/images/I/41IzaG1l0OL._SL500_.jpg",
           "price": 2636,
           "url": "https://www.amazon.co.jp/dp/B09KZSB2N4/?tag=tsumitsumi232-22"
-        },
-        {
-          "asin": "B09HYQZDGQ",
-          "title": "ゴッドハンド(GodHand) パワーピンバイス (旧モデル) GH-PB-98ST φ0.1~3.2mm軸対応",
-          "image": "https://m.media-amazon.com/images/I/31xFNcL5YML._SL500_.jpg",
-          "price": 3345,
-          "url": "https://www.amazon.co.jp/dp/B09HYQZDGQ/?tag=tsumitsumi232-22"
         },
         {
           "asin": "B09HZ34QY6",
@@ -1012,7 +1039,7 @@
           "asin": "B0CWRX2FXP",
           "title": "ゴッドハンド(GodHand) スピンモールド45 GH-CSB45-1-3 ホビー用工具",
           "image": "https://m.media-amazon.com/images/I/51KRc6RYCXL._SL500_.jpg",
-          "price": 4976,
+          "price": 4977,
           "url": "https://www.amazon.co.jp/dp/B0CWRX2FXP/?tag=tsumitsumi232-22"
         },
         {
@@ -1077,6 +1104,62 @@
           "image": "https://m.media-amazon.com/images/I/51bHHN0yW9S._SL500_.jpg",
           "price": 1109,
           "url": "https://www.amazon.co.jp/dp/B094V6KSWH/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B09T2V9VWJ",
+          "title": "ゴッドハンド(GodHand) クラフトグリップシリーズ 先細プラスチックニッパー GH-CPN-120-S ホビー用工具 青",
+          "image": "https://m.media-amazon.com/images/I/31pp8gR6N6L._SL500_.jpg",
+          "price": 3374,
+          "url": "https://www.amazon.co.jp/dp/B09T2V9VWJ/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B09Z1S7W6G",
+          "title": "ゴッドハンド(GodHand) 神ヤス! スポンジ布ヤスリ 10mm厚 約35×20mm #120 12枚入り ダークグレー GH-KS10-P120",
+          "image": "https://m.media-amazon.com/images/I/41brzmeRzkL._SL500_.jpg",
+          "price": 527,
+          "url": "https://www.amazon.co.jp/dp/B09Z1S7W6G/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0G5FPKJJW",
+          "title": "ゴッドハンド(GodHand) ボトルスタンド GH-BS-01 ホビー用工具 (× 2)",
+          "image": "https://m.media-amazon.com/images/I/31Cl8JCIU1L._SL500_.jpg",
+          "price": 1698,
+          "url": "https://www.amazon.co.jp/dp/B0G5FPKJJW/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0GSVT53XH",
+          "title": "ゴッドハンド(GodHand) 指先ピンセット GH-PS-FT プラモデル用工具",
+          "image": "https://m.media-amazon.com/images/I/318V+pAbQ9L._SL500_.jpg",
+          "price": null,
+          "url": "https://www.amazon.co.jp/dp/B0GSVT53XH/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0177G0KZE",
+          "title": "ゴッドハンド(GodHand) パワーピンセット 先細 (旧モデル) プラモデル用工具 GH-PS-SB",
+          "image": "https://m.media-amazon.com/images/I/31hNRp5oUDL._SL500_.jpg",
+          "price": null,
+          "url": "https://www.amazon.co.jp/dp/B0177G0KZE/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0CMQGQ7N4",
+          "title": "ゴッドハンド(GodHand) ブレードワンミニ (旧モデル) GH-PN-95-M プラモデル用工具",
+          "image": "https://m.media-amazon.com/images/I/41FTfN-4p6L._SL500_.jpg",
+          "price": null,
+          "url": "https://www.amazon.co.jp/dp/B0CMQGQ7N4/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B09T33T22B",
+          "title": "ゴッドハンド(GodHand) ブレードワンニッパー (旧モデル)GH-PN-120 プラモデル用工具 赤",
+          "image": "https://m.media-amazon.com/images/I/41ZgAvHgZCL._SL500_.jpg",
+          "price": null,
+          "url": "https://www.amazon.co.jp/dp/B09T33T22B/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0BRSNZQVY",
+          "title": "ゴッドハンド(GodHand) 片刃ニッパーST (旧モデル) GH-PNS-135 ホビー用工具 ステンレス鋼",
+          "image": "https://m.media-amazon.com/images/I/31PZHEf7ARL._SL500_.jpg",
+          "price": null,
+          "url": "https://www.amazon.co.jp/dp/B0BRSNZQVY/?tag=tsumitsumi232-22"
         }
       ]
     },
@@ -1124,7 +1207,7 @@
           "asin": "B0GJCX981M",
           "title": "アルゴファイル(Argofile) アルゴ・ジルコニアセラミックフィニッシュ 「ジルフィー」 ZCS0560",
           "image": "https://m.media-amazon.com/images/I/21R5XW0SL5L._SL500_.jpg",
-          "price": 2531,
+          "price": 2484,
           "url": "https://www.amazon.co.jp/dp/B0GJCX981M/?tag=tsumitsumi232-22"
         },
         {
@@ -1415,13 +1498,6 @@
           "url": "https://www.amazon.co.jp/dp/B09KGVXP64/?tag=tsumitsumi232-22"
         },
         {
-          "asin": "B0BFDKRD8C",
-          "title": "アルゴファイル(Argofile) 大判板状電着ダイヤモンドヤスリ DDフォーマービック #300 HDD0300 170×75×厚1mm",
-          "image": "https://m.media-amazon.com/images/I/31oZPWNK-JL._SL500_.jpg",
-          "price": 2237,
-          "url": "https://www.amazon.co.jp/dp/B0BFDKRD8C/?tag=tsumitsumi232-22"
-        },
-        {
           "asin": "B0DJY9GZ9M",
           "title": "アルゴファイル 軸付ゴム砥石＃２２０ Φ８×２０ Φ３．０軸 AR432",
           "image": "https://m.media-amazon.com/images/I/51kyLglV+3L._SL500_.jpg",
@@ -1432,7 +1508,7 @@
           "asin": "B0DJY7PRW4",
           "title": "アルゴファイル 軸付ゴム砥石＃２２０ Φ８×２０ Φ３．０軸 AR334",
           "image": "https://m.media-amazon.com/images/I/51wjJPhUqUL._SL500_.jpg",
-          "price": 553,
+          "price": 512,
           "url": "https://www.amazon.co.jp/dp/B0DJY7PRW4/?tag=tsumitsumi232-22"
         },
         {
@@ -1453,7 +1529,7 @@
           "asin": "B0DJY8SZBD",
           "title": "アルゴファイル 軸付ゴム砥石＃１２００ Φ１４．５×１２ Φ２．３４軸 AR153",
           "image": "https://m.media-amazon.com/images/I/51pgC8Y8iuL._SL500_.jpg",
-          "price": 699,
+          "price": 687,
           "url": "https://www.amazon.co.jp/dp/B0DJY8SZBD/?tag=tsumitsumi232-22"
         },
         {
@@ -1471,25 +1547,11 @@
           "url": "https://www.amazon.co.jp/dp/B0DJY7LZK4/?tag=tsumitsumi232-22"
         },
         {
-          "asin": "B0DJY8MPSM",
-          "title": "アルゴファイル 軸付ゴム砥石＃３２５ Φ１４．５×１２ Φ２．３４軸 AR152",
-          "image": "https://m.media-amazon.com/images/I/51pgC8Y8iuL._SL500_.jpg",
-          "price": 1870,
-          "url": "https://www.amazon.co.jp/dp/B0DJY8MPSM/?tag=tsumitsumi232-22"
-        },
-        {
           "asin": "B01BQ8FENW",
           "title": "アルゴファイルジャパン ジルコナイト コーン ファイン プラモデル工具 ZKC2003",
           "image": "https://m.media-amazon.com/images/I/311YoEZftjL._SL500_.jpg",
           "price": 2273,
           "url": "https://www.amazon.co.jp/dp/B01BQ8FENW/?tag=tsumitsumi232-22"
-        },
-        {
-          "asin": "B06ZYBKT5Q",
-          "title": "アルゴファイル 電着ダイヤモンドビット ピンポイントダイヤ 1.5Φ×10mm 2本入 EGC2001",
-          "image": "https://m.media-amazon.com/images/I/314z4+dVRkL._SL500_.jpg",
-          "price": 2159,
-          "url": "https://www.amazon.co.jp/dp/B06ZYBKT5Q/?tag=tsumitsumi232-22"
         },
         {
           "asin": "B09LLSCC17",
@@ -1504,21 +1566,29 @@
           "image": "https://m.media-amazon.com/images/I/31PtMKVXyJL._SL500_.jpg",
           "price": 365,
           "url": "https://www.amazon.co.jp/dp/B0D1K5TK74/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0C3PRQSZ5",
+          "title": "アルゴファイル(Argofile) ストロークサンダー用テーパー電着ダイヤモンドヤスリ アルティマDTファイル #200 ADT3020",
+          "image": "https://m.media-amazon.com/images/I/11ZuOdT3HmL._SL500_.jpg",
+          "price": 1566,
+          "url": "https://www.amazon.co.jp/dp/B0C3PRQSZ5/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B0DJY7HZ41",
+          "title": "アルゴファイル 軸付ゴム砥石＃１２０ Φ４×１３ Φ３．０軸 AR411",
+          "image": "https://m.media-amazon.com/images/I/51kyLglV+3L._SL500_.jpg",
+          "price": 2420,
+          "url": "https://www.amazon.co.jp/dp/B0DJY7HZ41/?tag=tsumitsumi232-22"
+        },
+        {
+          "asin": "B01M0ILNHB",
+          "title": "アルゴファイル(Argofile) 電着ダイヤモンドビット ミニカッティングディスク 0.5mm厚 (2本入) #150 軸径2.35φ (7.3φ EGC2006)",
+          "image": "https://m.media-amazon.com/images/I/412WjpkhnKL._SL500_.jpg",
+          "price": 1324,
+          "url": "https://www.amazon.co.jp/dp/B01M0ILNHB/?tag=tsumitsumi232-22"
         }
       ]
     }
-  ],
-  "excludedAsins": [
-    "B0FDVFNMHY",
-    "B0CPDXSZX6",
-    "B0CV5CW2G8",
-    "B0C39NZHQ3",
-    "B0GHNM354T",
-    "B09T2K1RZY",
-    "B00U6U0WCU",
-    "B0DRPM322Q",
-    "B0FSD11Z7H",
-    "B0GNH78FKC",
-    "B0F4Q6GLQ2"
   ]
 }
