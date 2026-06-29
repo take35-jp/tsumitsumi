@@ -7395,6 +7395,17 @@ function PaintStock({ onClose, onOpenModeler }) {
         ))}
       </div>
 
+      {/* 左下フロート：モデラーズアルバムと同様に TIPS・定番アイテムへのリンク */}
+      <div style={{ position: "fixed", left: 14, bottom: 22, display: "flex", flexDirection: "column", gap: 6, zIndex: 2 }}>
+        {(() => {
+          const corner = { display: "block", minWidth: 64, textAlign: "center", background: "rgba(255,255,255,0.95)", border: "1px solid #111", color: "#111", padding: "6px 12px", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textDecoration: "none", borderRadius: 0, whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" };
+          return (<>
+            <a href="/tips/" target="_blank" rel="noopener noreferrer" style={corner}>TIPS</a>
+            <a href="/gears.html" target="_blank" rel="noopener noreferrer" style={corner}>定番アイテム</a>
+          </>);
+        })()}
+      </div>
+
       <div style={{ position: "fixed", right: 18, bottom: 22, display: "flex", flexDirection: "column", alignItems: "stretch", gap: 8, zIndex: 2 }}>
         {(() => {
           const fab = { ...ps.fab, position: "static", width: 124, height: 46, padding: 0, fontSize: 13, justifyContent: "center" };
