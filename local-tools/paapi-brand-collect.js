@@ -173,6 +173,13 @@ function loadExistingOrder() {
     return map;
   } catch (e) { return {}; }
 }
+// admin で削除した商品の ASIN（再収集で復活させない）
+function loadExcluded() {
+  try {
+    const prev = JSON.parse(fs.readFileSync(OUT_JSON, "utf8"));
+    return new Set(Array.isArray(prev.excludedAsins) ? prev.excludedAsins : []);
+  } catch (e) { return new Set(); }
+}
 
 (async () => {
   if (!CID || !SEC || !TAG) {
@@ -183,8 +190,9 @@ function loadExistingOrder() {
   console.log("token OK");
 
   let first = true;
-  const out = { generatedAt: new Date().toISOString(), partnerTag: TAG, brands: [] };
   const prevOrder = loadExistingOrder(); // admin保存の手動順を保持するため
+  const excluded = loadExcluded(); // adminで削除した商品は再追加しない
+  const out = { generatedAt: new Date().toISOString(), partnerTag: TAG, excludedAsins: [...excluded], brands: [] };
 
   for (const b of BRANDS) {
     const seen = new Map(); // asin -> item
@@ -194,7 +202,7 @@ function loadExistingOrder() {
       let items = [];
       try { items = await search(tok, q); } catch (e) { console.log(`  検索失敗 "${q}": ${e.message}`); continue; }
       for (const c of items) {
-        if (!c.asin || seen.has(c.asin)) continue;
+        if (!c.asin || seen.has(c.asin) || excluded.has(c.asin)) continue;
         const title = c.itemInfo?.title?.displayValue || "";
         const nt = norm(title);
         if (HARD_BAD.test(title)) continue;

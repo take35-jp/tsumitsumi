@@ -882,8 +882,10 @@ async function brandReload() {
     brandData = await r.json();
     renderBrandEditor();
     const n = (brandData.brands || []).reduce((a, b) => a + (b.items || []).length, 0);
+    const exc = Array.isArray(brandData.excludedAsins) ? brandData.excludedAsins.length : 0;
     document.getElementById('brand-meta').textContent =
       (brandData.brands || []).length + 'ブランド / 合計 ' + n + '商品'
+      + (exc ? ' / 除外 ' + exc + '件' : '')
       + (brandData.generatedAt ? '（最終収集: ' + new Date(brandData.generatedAt).toLocaleString('ja-JP') + '）' : '');
     const s = document.getElementById('brand-status'); s.textContent = ''; s.style.color = '#6b7280';
   } catch (e) {
@@ -910,6 +912,7 @@ function renderBrandEditor() {
         ${p.image ? `<img src="${brandEsc(p.image)}" style="width:40px; height:40px; object-fit:contain; border:1px solid #eee; flex:none; pointer-events:none;">` : '<div style="width:40px; height:40px; background:#f3f4f6; flex:none;"></div>'}
         <div style="flex:1; min-width:0; font-size:12px; line-height:1.4;">${brandEsc(p.title)}</div>
         <div style="font-size:12px; color:#b91c1c; font-weight:700; white-space:nowrap;">${p.price != null ? ('¥' + Number(p.price).toLocaleString('ja-JP')) : ''}</div>
+        <button onclick="brandDelete(${bi},${pi})" draggable="false" title="この商品を特集から削除" style="flex:none; margin-left:6px; width:28px; height:28px; border:1px solid #fecaca; background:#fff5f5; color:#dc2626; border-radius:6px; font-size:14px; cursor:pointer;">✕</button>
       </div>`).join('');
     return `<div style="border:1px solid #e5e7eb; border-radius:8px; margin-bottom:14px; overflow:hidden;">
       <div style="background:#0f172a; color:#fff; padding:8px 12px; font-weight:800;">${brandEsc(b.name)} <span style="font-size:11px; color:#cbd5e1; font-weight:600;">(${items.length})</span></div>
@@ -917,7 +920,18 @@ function renderBrandEditor() {
     </div>`;
   }).join('');
 }
-function brandMarkUnsaved() { const s = document.getElementById('brand-status'); s.textContent = '並び替えました（未保存）'; s.style.color = '#f59e0b'; }
+function brandMarkUnsaved(msg) { const s = document.getElementById('brand-status'); s.textContent = msg || '並び替えました（未保存）'; s.style.color = '#f59e0b'; }
+function brandDelete(bi, pi) {
+  const items = brandData.brands[bi].items;
+  const p = items[pi];
+  if (!p) return;
+  if (!confirm('この商品を特集から削除しますか？\n\n' + (p.title || '') + '\n\n※週次の自動更新でも再追加されないよう除外リストに登録します。')) return;
+  brandData.excludedAsins = Array.isArray(brandData.excludedAsins) ? brandData.excludedAsins : [];
+  if (p.asin && brandData.excludedAsins.indexOf(p.asin) === -1) brandData.excludedAsins.push(p.asin);
+  items.splice(pi, 1);
+  renderBrandEditor();
+  brandMarkUnsaved('削除しました（未保存）');
+}
 function brandMove(bi, pi, dir) {
   const items = brandData.brands[bi].items;
   const ni = pi + dir;
