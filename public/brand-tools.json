@@ -939,13 +939,6 @@
           "url": "https://www.amazon.co.jp/dp/B09HZ34QY6/?tag=tsumitsumi232-22"
         },
         {
-          "asin": "B0F4Q6GLQ2",
-          "title": "ゴッドハンド(GodHand) ショートパワーピンバイス GH-PBS-DC ディープコレットタイプ φ2.5~3.2mm軸対応 プラモデル用工具 青",
-          "image": "https://m.media-amazon.com/images/I/41mX3NgUB5L._SL500_.jpg",
-          "price": 4775,
-          "url": "https://www.amazon.co.jp/dp/B0F4Q6GLQ2/?tag=tsumitsumi232-22"
-        },
-        {
           "asin": "B0CWRY766Q",
           "title": "ゴッドハンド(GodHand) ドリルビット５本組(B) GH-DB-5B ホビー用工具",
           "image": "https://m.media-amazon.com/images/I/51dnbHls0ZL._SL500_.jpg",
@@ -1525,6 +1518,7 @@
     "B00U6U0WCU",
     "B0DRPM322Q",
     "B0FSD11Z7H",
-    "B0GNH78FKC"
+    "B0GNH78FKC",
+    "B0F4Q6GLQ2"
   ]
 }
