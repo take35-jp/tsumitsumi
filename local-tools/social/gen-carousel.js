@@ -85,7 +85,74 @@ function parseArticle(html) {
     const text = firstSentences(box || para || "", 92);
     if (head) sections.push({ head, text });
   }
-  return { title, cat, lead, leadFull, sections: sections.slice(0, MAX) };
+  const bodyText = stripTags(body).slice(0, 6000); // Claude にそのまま渡す本文（HTML除去）
+  return { title, cat, lead, leadFull, bodyText, sections: sections.slice(0, MAX) };
+}
+
+// ---------- Claude で 5W1H のカルーセル本文＆キャプションを執筆 ----------
+// 機械抽出だと断片的で伝わらないため、記事を読み直して「役立つ情報」を明確に書き直す。
+function readEnvKey(name) {
+  if (process.env[name]) return process.env[name];
+  try {
+    const env = fs.readFileSync(path.join(__dirname, "..", ".env"), "utf8");
+    const m = env.match(new RegExp("^" + name + "=(.+)$", "m"));
+    if (m) return m[1].trim();
+  } catch (e) {}
+  return null;
+}
+const AI_MODEL = process.env.WEEKLY_TIPS_MODEL || "claude-opus-4-8";
+const CAROUSEL_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["coverSubtitle", "slides", "caption"],
+  properties: {
+    coverSubtitle: { type: "string", description: "表紙のサブ見出し。誰向けで何が分かるかを1〜2行で明確に。" },
+    slides: {
+      type: "array", minItems: 4, maxItems: 6,
+      items: {
+        type: "object", additionalProperties: false, required: ["head", "body"],
+        properties: {
+          head: { type: "string", description: "そのスライドの結論・要点（短く具体的に。体言止め可）" },
+          body: { type: "string", description: "結論の根拠と具体的なやり方を2〜4文で。固有名詞・数値・手順・理由を入れ、それ単体で意味が通るように。曖昧な断片は禁止。" },
+        },
+      },
+    },
+    caption: { type: "string", description: "Instagram本文。1行目に結論フック→何の話か→誰に役立つか→要点を箇条書き→保存を促す一言。絵文字は控えめ、誇張せず正確に。ハッシュタグ・アカウント名・アプリ宣伝は書かない（システムが付与）。" },
+  },
+};
+async function authorCarousel(art) {
+  const apiKey = readEnvKey("ANTHROPIC_API_KEY");
+  if (!apiKey) { console.log("  （ANTHROPIC_API_KEY 未設定のためAI執筆をスキップ→従来の抽出で生成）"); return null; }
+  const system = [
+    "あなたはプラモデル初心者向けInstagramカルーセルの編集者です。日本語で執筆します。",
+    "目的：記事の内容を 5W1H（誰が・何を・なぜ・いつ・どこで・どうやって）に沿って、初心者にもハッキリ伝わるように書き直すこと。",
+    "原則：①各スライドは単体で意味が通る完結した『役立つ情報』にする。②抽象的・断片的な表現（例『順番に並べると：』だけ）は禁止。③具体的な手順・数値・道具名・理由を必ず入れる。④誇張や不正確な断定をしない。⑤やさしい言葉で簡潔に。",
+    "記事に書かれていない事実を創作しないこと。",
+  ].join("\n");
+  const user = [
+    `タイトル: ${art.title}`,
+    `カテゴリ: ${art.cat}`,
+    `リード: ${art.leadFull || art.lead || ""}`,
+    "",
+    "本文（HTML除去済み・抜粋）:",
+    art.bodyText || "",
+    "",
+    "上記をもとに、カルーセル用の coverSubtitle / slides(4〜6枚) / caption を作成してください。各 slide.body は2〜4文で具体的に。",
+  ].join("\n");
+  const reqBody = {
+    model: AI_MODEL, max_tokens: 4000, system,
+    messages: [{ role: "user", content: user }],
+    output_config: { effort: "high", format: { type: "json_schema", schema: CAROUSEL_SCHEMA } },
+  };
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify(reqBody),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error("Anthropic API error: " + (data && data.error && data.error.message || r.status));
+  const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+  if (!text) throw new Error("空のレスポンス (stop_reason=" + data.stop_reason + ")");
+  return JSON.parse(text);
 }
 
 // ---------- 描画ヘルパ ----------
@@ -256,6 +323,23 @@ function drawCta(ctx, logo) {
   const file = path.join(TIPS_DIR, SLUG + ".html");
   if (!fs.existsSync(file)) { console.error("記事が見つかりません: " + file); process.exit(1); }
   const art = parseArticle(fs.readFileSync(file, "utf8"));
+
+  // 5W1Hに沿った明確な本文を Claude で執筆（失敗・キー無しは従来の抽出にフォールバック）。--no-ai でスキップ。
+  const NO_AI = ARGV.includes("--no-ai");
+  let authoredCaption = null;
+  if (!NO_AI) {
+    try {
+      const authored = await authorCarousel(art);
+      if (authored && Array.isArray(authored.slides) && authored.slides.length) {
+        art.lead = authored.coverSubtitle || art.lead;
+        art.leadFull = authored.coverSubtitle || art.leadFull;
+        art.sections = authored.slides.map((s) => ({ head: s.head, text: s.body }));
+        authoredCaption = authored.caption || null;
+        console.log("  ✍ Claudeでカルーセル本文を執筆しました（5W1H）");
+      }
+    } catch (e) { console.warn("  ⚠ AI執筆に失敗→従来の抽出で継続: " + (e.message || e)); }
+  }
+
   const logo = fs.existsSync(LOGO) ? await loadImage(LOGO) : null;
 
   const outDir = path.join(OUT_ROOT, SLUG);
@@ -283,17 +367,20 @@ function drawCta(ctx, logo) {
     fs.writeFileSync(path.join(outDir, `slide-${n}.jpg`), buf);
   }
 
-  // キャプション（本文の要点リスト＋CTA＋ハッシュタグで読み応えを出す）
+  // キャプション：AI執筆があればそれを本文に、無ければ従来の要点リストを使う。末尾に共通CTA＋ハッシュタグ。
   const points = art.sections.map((s, i) => `${i + 1}. ${s.head}`).slice(0, 6);
-  const caption = [
-    `【${art.cat}】${art.title}`,
-    "",
+  const captionMain = authoredCaption || [
     art.leadFull || art.lead,
     "",
     "──────────",
     "◤ この投稿でわかること ◢",
     ...points,
     "──────────",
+  ].join("\n");
+  const caption = [
+    `【${art.cat}】${art.title}`,
+    "",
+    captionMain,
     "",
     "保存して、作業中に見返すのがおすすめ。",
     "図解つきの全文・他のTIPSはプロフィールのリンクから読めます。",
