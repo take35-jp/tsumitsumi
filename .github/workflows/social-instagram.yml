@@ -1,0 +1,49 @@
+name: Instagram Auto Post
+
+# 週2回（火・金 06:00 JST）、未投稿のTIPS記事を1本ずつ Instagram に自動投稿する。
+#   生成（Claudeが5W1Hで執筆＋画像）→ 画像をmainへコミット→Vercel公開→投稿→記録。
+# 手動実行（workflow_dispatch）でテスト投稿も可能。まずは手動で1本試すのを推奨。
+#
+# 必要なリポジトリ Secret（Settings → Secrets and variables → Actions）:
+#   ANTHROPIC_API_KEY  … カルーセル本文の執筆（週次TIPSと共用）
+#   IG_USER_ID         … Instagramビジネスアカウントの ig-user-id（数値）
+#   IG_ACCESS_TOKEN    … 長期アクセストークン（約60日・期限切れ前に再発行が必要）
+# 任意 Variable: WEEKLY_TIPS_MODEL（既定 claude-opus-4-8）
+on:
+  schedule:
+    - cron: "0 21 * * 1"   # 火 06:00 JST
+    - cron: "0 21 * * 4"   # 金 06:00 JST
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: social-instagram
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Japanese fonts
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+
+      - name: Install canvas
+        run: npm install @napi-rs/canvas --no-save
+
+      - name: Generate & post next article
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          WEEKLY_TIPS_MODEL: ${{ vars.WEEKLY_TIPS_MODEL }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: node local-tools/social/ci-social-post.mjs

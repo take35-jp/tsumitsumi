@@ -18,7 +18,8 @@ const path = require("path");
 
 const ENV = path.join(__dirname, "..", ".env");
 const env = fs.existsSync(ENV) ? fs.readFileSync(ENV, "utf8") : "";
-const get = (k) => (env.match(new RegExp("^" + k + "=(.+)$", "m")) || [])[1];
+// ローカルは .env 優先、無ければ環境変数（GitHub Actions の Secrets）から取得＝CIでも動く。
+const get = (k) => (env.match(new RegExp("^" + k + "=(.+)$", "m")) || [])[1] || process.env[k];
 const IG_USER_ID = get("IG_USER_ID");
 const TOKEN = get("IG_ACCESS_TOKEN");
 const SITE = (get("SOCIAL_SITE") || "https://tsumitsumi.vercel.app").replace(/\/$/, "");
