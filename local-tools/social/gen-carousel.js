@@ -107,7 +107,7 @@ const CAROUSEL_SCHEMA = {
   properties: {
     coverSubtitle: { type: "string", description: "表紙のサブ見出し。誰向けで何が分かるかを1〜2行で明確に。" },
     slides: {
-      type: "array", minItems: 4, maxItems: 6,
+      type: "array",
       items: {
         type: "object", additionalProperties: false, required: ["head", "body"],
         properties: {
