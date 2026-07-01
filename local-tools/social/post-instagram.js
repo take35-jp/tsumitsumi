@@ -79,7 +79,9 @@ async function waitReady(id, label) {
   if (slides.length < 2) { console.error("カルーセルには2枚以上必要です"); process.exit(1); }
   if (slides.length > 10) { log(`⚠ ${slides.length}枚→先頭10枚に切り詰めます`); slides.length = 10; }
   const caption = fs.existsSync(path.join(dir, "caption.txt")) ? fs.readFileSync(path.join(dir, "caption.txt"), "utf8") : "";
-  const urls = slides.map((s) => `${SITE}/social/${SLUG}/${s}`);
+  // SOCIAL_IMG_VER があれば ?v= を付けて“最新画像”を確実に取得させる（CDNの stale ヒット対策）。
+  const VER = get("SOCIAL_IMG_VER") || "";
+  const urls = slides.map((s) => `${SITE}/social/${SLUG}/${s}${VER ? `?v=${VER}` : ""}`);
 
   log(`▶ 投稿準備: ${SLUG} (${urls.length}枚)`);
   urls.forEach((u) => log(`   - ${u}`));

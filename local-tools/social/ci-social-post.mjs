@@ -66,31 +66,41 @@ if (DRY) {
 }
 
 // 3) 画像をコミット＆push（Vercelで公開）
+// 毎回ユニークなバージョン印(ver.txt)を同梱してコミットする。これで「今回の新しい
+// デプロイが本当に公開されたか」を確実に判定でき、旧キャッシュ画像の誤検知を防ぐ。
+// スライド画像は同名(slide-N.jpg)で上書きされるため、URLに ?v=<ver> を付けて
+// Instagram/Threads に必ず“最新画像”を取得させる（CDNの stale ヒット対策）。
+const ver = String(Date.now());
+fs.writeFileSync(path.join(outDir, "ver.txt"), ver + "\n");
 sh(`git config user.name "github-actions[bot]"`);
 sh(`git config user.email "github-actions[bot]@users.noreply.github.com"`);
 sh(`git add public/social/${next}`);
 shQuiet(`git commit -m "chore(social): カルーセル生成 ${next}"`); // 差分なしでも続行
 sh(`git push`);
 
-// 4) 公開URLが見えるまで待機（Vercelデプロイ）
-const imgUrl = `${SITE}/social/${next}/slide-1.jpg`;
+// 4) 今回の ver.txt が公開URLに反映されるまで待機（＝新デプロイの公開を確認）
+const verUrl = `${SITE}/social/${next}/ver.txt`;
 let ready = false;
 for (let i = 0; i < 24; i++) {
-  try { const r = await fetch(imgUrl, { method: "GET", cache: "no-store" }); if (r.ok) { ready = true; break; } } catch {}
-  console.log(`  公開待ち… ${imgUrl} (${i + 1}/24)`);
+  try {
+    const r = await fetch(`${verUrl}?x=${ver}`, { method: "GET", cache: "no-store" });
+    if (r.ok && (await r.text()).trim() === ver) { ready = true; break; }
+  } catch {}
+  console.log(`  新デプロイの公開待ち… ${verUrl} (${i + 1}/24)`);
   await sleep(15000);
 }
-if (!ready) { console.error("❌ 画像の公開URLを確認できませんでした: " + imgUrl); process.exit(1); }
-console.log("  ✓ 公開を確認:", imgUrl);
+if (!ready) { console.error("❌ 新デプロイの公開を確認できませんでした: " + verUrl); process.exit(1); }
+console.log("  ✓ 新デプロイの公開を確認:", verUrl, "(ver=" + ver + ")");
 
 // 5) Instagram 投稿（失敗時はここで例外→postedに記録されない）
-sh(`node local-tools/social/post-instagram.js ${next}`);
+// SOCIAL_IMG_VER を渡して画像URLに ?v=<ver> を付与＝最新画像を確実に取得させる。
+sh(`SOCIAL_IMG_VER=${ver} node local-tools/social/post-instagram.js ${next}`);
 
 // 5.5) Threads にもクロス投稿（任意・ベストエフォート）。
 // THREADS_ACCESS_TOKEN が設定されている時だけ実行し、失敗しても run は落とさない
 // （Instagram は既に成功しているので、Threads の失敗で再投稿ループにしない）。
 if (process.env.THREADS_USER_ID && process.env.THREADS_ACCESS_TOKEN) {
-  try { sh(`node local-tools/social/post-threads.js ${next}`); }
+  try { sh(`SOCIAL_IMG_VER=${ver} node local-tools/social/post-threads.js ${next}`); }
   catch (e) { console.log("⚠ Threads投稿に失敗しました（Instagramは投稿済み・スキップして続行）:", e.message); }
 } else {
   console.log("ℹ Threads未設定（THREADS_USER_ID / THREADS_ACCESS_TOKEN）→ Threads投稿はスキップ。");
