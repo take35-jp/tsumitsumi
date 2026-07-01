@@ -86,6 +86,16 @@ console.log("  ✓ 公開を確認:", imgUrl);
 // 5) Instagram 投稿（失敗時はここで例外→postedに記録されない）
 sh(`node local-tools/social/post-instagram.js ${next}`);
 
+// 5.5) Threads にもクロス投稿（任意・ベストエフォート）。
+// THREADS_ACCESS_TOKEN が設定されている時だけ実行し、失敗しても run は落とさない
+// （Instagram は既に成功しているので、Threads の失敗で再投稿ループにしない）。
+if (process.env.THREADS_USER_ID && process.env.THREADS_ACCESS_TOKEN) {
+  try { sh(`node local-tools/social/post-threads.js ${next}`); }
+  catch (e) { console.log("⚠ Threads投稿に失敗しました（Instagramは投稿済み・スキップして続行）:", e.message); }
+} else {
+  console.log("ℹ Threads未設定（THREADS_USER_ID / THREADS_ACCESS_TOKEN）→ Threads投稿はスキップ。");
+}
+
 // 6) posted に記録
 q.posted = q.posted || []; q.posted.push(next); saveQueue(q);
 sh(`git add local-tools/social/social-queue.json`);
