@@ -19,6 +19,6 @@ local-tools/*.out
 local-tools/retry-safe.json
 local-tools/*.out
 
-# social 投稿の実行時状態・ログ（PCローカルのみ）
-local-tools/social/social-queue.json
+# social 投稿のログ（PCローカルのみ）。※投稿キュー(social-queue.json)は
+# GitHub Actions が投稿済み状態を管理するためリポジトリ管理する（ignoreしない）。
 local-tools/social/*.log
