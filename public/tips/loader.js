@@ -30,7 +30,16 @@
   // ---- データソース ----
   let gearsMap = null;  // { id -> gears product }
   let asinMap  = null;  // { key -> asin_map row }
+  let tipsMap  = null;  // { data-product-id -> {asin,image,price,title,url} }（PA-API解決・静的JSON）
   let loadPromise = null;
+
+  async function fetchTipsProducts() {
+    try {
+      const r = await fetch("/tips-products.json?ts=" + Date.now(), { cache: "no-store" });
+      if (r.ok) { const d = await r.json(); return d.items || {}; }
+    } catch (e) {}
+    return {};
+  }
 
   async function fetchGears() {
     try {
@@ -69,7 +78,7 @@
   async function loadAll() {
     if (loadPromise) return loadPromise;
     loadPromise = (async () => {
-      const [gearsData, asinData] = await Promise.all([fetchGears(), fetchAsinMap()]);
+      const [gearsData, asinData, tipsData] = await Promise.all([fetchGears(), fetchAsinMap(), fetchTipsProducts()]);
       const gMap = {};
       if (gearsData) {
         (gearsData.sections || []).forEach(s => {
@@ -78,6 +87,7 @@
       }
       gearsMap = gMap;
       asinMap  = asinData || {};
+      tipsMap  = tipsData || {};
     })();
     return loadPromise;
   }
@@ -120,6 +130,12 @@
     if (a && a.asin) {
       const priceStr = (a.price != null) ? Number(a.price).toLocaleString() : null;
       return { asin: a.asin, image: a.image_url || null, price: priceStr, title: a.title || "" };
+    }
+    // TIPS商品カード用（PA-API解決の静的JSON）
+    const t = tipsMap && tipsMap[id];
+    if (t && t.asin) {
+      const priceStr = (t.price != null) ? Number(t.price).toLocaleString() : null;
+      return { asin: t.asin, image: t.image || null, price: priceStr, title: t.title || "" };
     }
     return null;
   }

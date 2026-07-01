@@ -1,0 +1,45 @@
+name: TIPS Product Images Refresh
+
+# TIPS記事内の商品カードの ASIN・商品画像・価格を PA-API で解決し、
+# public/tips-products.json を自動更新（差分があれば main へコミット→Vercel反映）。
+# loader.js が data-product-id 一致で記事カードに画像・価格・直リンクを差し込む。
+# 週1回（水 04:00 JST）＋手動実行。
+#
+# 必要なリポジトリ Secret（brand-tools と共用）:
+#   AMAZON_PAAPI_ACCESS_KEY / AMAZON_PAAPI_SECRET_KEY / AMAZON_PARTNER_TAG
+on:
+  schedule:
+    - cron: "0 19 * * 2"   # 水 04:00 JST
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tips-products
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Resolve product images (PA-API)
+        env:
+          AMAZON_PAAPI_ACCESS_KEY: ${{ secrets.AMAZON_PAAPI_ACCESS_KEY }}
+          AMAZON_PAAPI_SECRET_KEY: ${{ secrets.AMAZON_PAAPI_SECRET_KEY }}
+          AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
+        run: node local-tools/paapi-tips-products.js
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- public/tips-products.json; then
+            echo "変更なし。コミットしません。"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/tips-products.json
+          git commit -m "chore(tips): 記事内商品カードの画像・価格を自動更新"
+          git push
