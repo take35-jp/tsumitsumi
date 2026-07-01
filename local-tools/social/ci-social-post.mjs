@@ -21,6 +21,7 @@ const ROOT = path.resolve(__dirname, "..", "..");
 const TIPS = path.join(ROOT, "public", "tips");
 const QF = path.join(__dirname, "social-queue.json");
 const SITE = (process.env.SOCIAL_SITE || "https://tsumitsumi.vercel.app").replace(/\/$/, "");
+const DRY = process.env.SOCIAL_DRY === "1"; // テスト実行：Secrets検出＋生成まで確認し、投稿はしない
 
 const sh = (cmd) => execSync(cmd, { cwd: ROOT, stdio: "inherit" });
 const shQuiet = (cmd) => { try { execSync(cmd, { cwd: ROOT, stdio: "inherit" }); } catch (e) {} };
@@ -51,6 +52,18 @@ if (!process.env.IG_USER_ID || !process.env.IG_ACCESS_TOKEN) {
 
 // 1)+2) カルーセル生成
 sh(`node local-tools/social/gen-carousel.js ${next}`);
+
+// 生成物を確認
+const outDir = path.join(ROOT, "public", "social", next);
+if (!fs.existsSync(path.join(outDir, "slide-1.jpg")) || !fs.existsSync(path.join(outDir, "caption.txt"))) {
+  console.error("❌ 生成物（画像/キャプション）が見つかりません。"); process.exit(1);
+}
+if (DRY) {
+  console.log(`✅ テスト成功：Secrets検出＋カルーセル生成OK（${next}）。実投稿はスキップしました。`);
+  console.log("   本番投稿は、手動実行で「テスト実行」のチェックを外すか、スケジュール（火・金）で行われます。");
+  console.log("   ※トークンの有効性は実投稿でのみ最終確認されます。");
+  process.exit(0);
+}
 
 // 3) 画像をコミット＆push（Vercelで公開）
 sh(`git config user.name "github-actions[bot]"`);

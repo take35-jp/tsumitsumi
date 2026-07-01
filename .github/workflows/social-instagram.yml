@@ -13,7 +13,12 @@ on:
   schedule:
     - cron: "0 21 * * 1"   # 火 06:00 JST
     - cron: "0 21 * * 4"   # 金 06:00 JST
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "テスト実行（投稿しない・Secretsと生成だけ確認）"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -46,4 +51,5 @@ jobs:
           WEEKLY_TIPS_MODEL: ${{ vars.WEEKLY_TIPS_MODEL }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          SOCIAL_DRY: ${{ inputs.dry == true && '1' || '' }}
         run: node local-tools/social/ci-social-post.mjs
