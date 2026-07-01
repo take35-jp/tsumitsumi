@@ -368,49 +368,47 @@
     </div>
     <p>実際の作業では、ここに<strong>サーフェイサー（下地）</strong>と<strong>トップコート（保護・つや調整）</strong>が加わります。下から順に積み上げるイメージは次の通り。</p>
 
-    <figure style="margin: 24px 0;">
-      <svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="塗装の重ね順 断面図" style="width:100%;height:auto;display:block;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
-        <text x="360" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="800" fill="#111827">塗装の重ね順（下から積み上げる）</text>
+    <figure style="margin:26px 0;">
+      <svg viewBox="0 0 720 408" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="塗装の重ね順。下ほど塗膜が強く、上ほど溶剤が弱い" font-family="-apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif" style="width:100%;height:auto;display:block;background:#ffffff;border:1px solid #eef2f7;border-radius:14px;">
+      <text x="40" y="42" font-size="11" font-weight="700" letter-spacing="3" fill="#22c55e">LAYER ORDER</text>
+      <text x="40" y="72" font-size="22" font-weight="800" fill="#0f172a">塗装の重ね順（下から）</text>
+      <!-- 上向き矢印＋ラベル -->
+      <line x1="80" y1="345" x2="80" y2="112" stroke="#22c55e" stroke-width="3"/>
+      <polygon points="80,104 72,118 88,118" fill="#22c55e"/>
+      <text x="46" y="230" font-size="11.5" font-weight="700" fill="#15803d" transform="rotate(-90 46 230)" text-anchor="middle">上ほど溶剤が弱い</text>
+      <!-- 層バンド -->
+      <g>
+        <rect x="120" y="100" width="560" height="38" rx="8" fill="#f8fafc" stroke="#eef2f7"/>
+        <rect x="120" y="100" width="5" height="38" fill="#22c55e"/>
+        <text x="140" y="124" font-size="13" font-weight="800" fill="#0f172a">⑤ トップコート</text>
+        <text x="670" y="124" text-anchor="end" font-size="11.5" fill="#64748b">保護・つや調整</text>
 
-        <!-- layers -->
-        <g font-family="-apple-system, sans-serif">
-          <!-- 6 top coat -->
-          <rect x="160" y="60" width="400" height="34" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.2" rx="4" />
-          <text x="360" y="82" text-anchor="middle" font-size="12" font-weight="700" fill="#075985">⑤ トップコート（つや消し／光沢）</text>
+        <rect x="120" y="143" width="560" height="38" rx="8" fill="#f8fafc" stroke="#eef2f7"/>
+        <rect x="120" y="143" width="5" height="38" fill="#22c55e"/>
+        <text x="140" y="167" font-size="13" font-weight="800" fill="#0f172a">④ スミ入れ</text>
+        <text x="670" y="167" text-anchor="end" font-size="11.5" fill="#64748b">エナメル</text>
 
-          <!-- 5 enamel sumiire -->
-          <rect x="160" y="100" width="400" height="34" fill="#fae8ff" stroke="#e879f9" stroke-width="1.2" rx="4" />
-          <text x="360" y="122" text-anchor="middle" font-size="12" font-weight="700" fill="#86198f">④ スミ入れ（エナメル）</text>
+        <rect x="120" y="186" width="560" height="38" rx="8" fill="#f8fafc" stroke="#eef2f7"/>
+        <rect x="120" y="186" width="5" height="38" fill="#22c55e"/>
+        <text x="140" y="210" font-size="13" font-weight="800" fill="#0f172a">③ 部分塗装・ディテール</text>
+        <text x="670" y="210" text-anchor="end" font-size="11.5" fill="#64748b">水性／ラッカー</text>
 
-          <!-- 4 detail water -->
-          <rect x="160" y="140" width="400" height="34" fill="#dcfce7" stroke="#4ade80" stroke-width="1.2" rx="4" />
-          <text x="360" y="162" text-anchor="middle" font-size="12" font-weight="700" fill="#166534">③ 部分塗装・ディテール（水性／ラッカー）</text>
+        <rect x="120" y="229" width="560" height="38" rx="8" fill="#f8fafc" stroke="#eef2f7"/>
+        <rect x="120" y="229" width="5" height="38" fill="#22c55e"/>
+        <text x="140" y="253" font-size="13" font-weight="800" fill="#0f172a">② 基本塗装</text>
+        <text x="670" y="253" text-anchor="end" font-size="11.5" fill="#64748b">ラッカー（塗膜が強い）</text>
 
-          <!-- 3 base color lacquer -->
-          <rect x="160" y="180" width="400" height="34" fill="#fee2e2" stroke="#f87171" stroke-width="1.2" rx="4" />
-          <text x="360" y="202" text-anchor="middle" font-size="12" font-weight="700" fill="#991b1b">② 基本塗装（ラッカー）</text>
+        <rect x="120" y="272" width="560" height="38" rx="8" fill="#f8fafc" stroke="#eef2f7"/>
+        <rect x="120" y="272" width="5" height="38" fill="#22c55e"/>
+        <text x="140" y="296" font-size="13" font-weight="800" fill="#0f172a">① サーフェイサー</text>
+        <text x="670" y="296" text-anchor="end" font-size="11.5" fill="#64748b">下地・キズ埋め</text>
 
-          <!-- 2 surfacer -->
-          <rect x="160" y="220" width="400" height="34" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.2" rx="4" />
-          <text x="360" y="242" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">① サーフェイサー（下地・キズ埋め）</text>
-
-          <!-- 1 plastic -->
-          <rect x="160" y="260" width="400" height="40" fill="#cbd5e1" stroke="#64748b" stroke-width="1.2" rx="4" />
-          <text x="360" y="284" text-anchor="middle" font-size="12" font-weight="800" fill="#1e293b">プラスチック素材</text>
-        </g>
-
-        <!-- arrow up -->
-        <g transform="translate(95, 60)">
-          <line x1="20" y1="240" x2="20" y2="10" stroke="#22c55e" stroke-width="3" />
-          <polygon points="20,2 12,16 28,16" fill="#22c55e" />
-          <text x="44" y="135" font-family="-apple-system, sans-serif" font-size="11" font-weight="700" fill="#15803d" transform="rotate(90 44,135)" text-anchor="middle">上ほど溶剤が弱い</text>
-        </g>
-
-        <!-- side note -->
-        <rect x="160" y="320" width="400" height="40" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" rx="6" />
-        <text x="360" y="338" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#166534">下の層ほど塗膜が強い → 上の弱い溶剤で溶けない</text>
-        <text x="360" y="353" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10.5" fill="#4b5563">各層の間はしっかり乾燥させるのがコツ</text>
-      </svg>
+        <rect x="120" y="315" width="560" height="38" rx="8" fill="#e2e8f0"/>
+        <text x="140" y="339" font-size="13" font-weight="800" fill="#334155">プラスチック素材</text>
+        <text x="670" y="339" text-anchor="end" font-size="11.5" fill="#64748b">土台</text>
+      </g>
+      <text x="120" y="386" font-size="11.5" fill="#94a3b8">各層はしっかり乾燥。逆順（弱い下地に強い溶剤）は下が溶けてNG。</text>
+    </svg>
     </figure>
 
     <h2>タイプ別の使いどころと、揃えておきたいうすめ液</h2>
