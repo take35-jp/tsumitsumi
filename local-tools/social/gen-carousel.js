@@ -318,11 +318,65 @@ function drawCta(ctx, logo) {
   ctx.globalAlpha = 1; ctx.textAlign = "left";
 }
 
+// ---------- 記事の関連商品（tips-products.json）----------
+async function fetchImageBuffer(url, ms = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) return null;
+    return Buffer.from(await r.arrayBuffer());
+  } catch (e) { return null; } finally { clearTimeout(t); }
+}
+async function loadArticleProducts(html) {
+  let items = {};
+  try { items = (JSON.parse(fs.readFileSync(path.join(ROOT, "public", "tips-products.json"), "utf8")).items) || {}; } catch (e) { return []; }
+  const out = [], seen = new Set();
+  const re = /data-product-id="([^"]+)"[\s\S]*?product-name">\s*([^<]+?)\s*</g;
+  let m;
+  while ((m = re.exec(html)) && out.length < 4) {
+    const id = m[1]; if (seen.has(id)) continue; seen.add(id);
+    const it = items[id];
+    if (it && it.image) out.push({ name: m[2].replace(/\([^)]*\)/g, "").replace(/（[^）]*）/g, "").trim(), price: it.price, image: it.image });
+  }
+  // 画像はタイムアウト付きで取得（ハング防止）。取れたものだけ表示。
+  for (const p of out) { const buf = await fetchImageBuffer(p.image); if (buf) { try { p.img = await loadImage(buf); } catch (e) { p.img = null; } } }
+  return out.filter((p) => p.img);
+}
+function drawContain(ctx, img, x, y, w, h) {
+  const r = Math.min(w / img.width, h / img.height);
+  const dw = img.width * r, dh = img.height * r;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+function drawProducts(ctx, products, logo) {
+  ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = grad(ctx); ctx.fillRect(0, 0, W, 14);
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = C.accent; ctx.font = `800 28px ${FONT}`; ctx.fillText("PICKS", 80, 150);
+  ctx.fillStyle = C.ink; ctx.font = `800 46px ${FONT}`; ctx.fillText("この記事のおすすめ", 80, 214);
+  const M = 56, GAP = 28, cols = 2, cellW = (W - 2 * M - GAP) / 2, imgH = 300, cellH = 430, top = 262;
+  products.slice(0, 4).forEach((p, i) => {
+    const cx = M + (i % cols) * (cellW + GAP);
+    const cy = top + Math.floor(i / cols) * (cellH + GAP);
+    ctx.fillStyle = "#f5f9fd"; roundRect(ctx, cx, cy, cellW, imgH, 18); ctx.fill();
+    ctx.save(); roundRect(ctx, cx, cy, cellW, imgH, 18); ctx.clip();
+    if (p.img) drawContain(ctx, p.img, cx + 18, cy + 18, cellW - 36, imgH - 36);
+    ctx.restore();
+    ctx.fillStyle = C.ink; ctx.font = `700 24px ${FONT}`;
+    const nm = wrap(ctx, p.name, cellW).slice(0, 2);
+    const ty = cy + imgH + 40; drawLines(ctx, nm, cx, ty, 30);
+    if (p.price != null) { ctx.fillStyle = "#b91c1c"; ctx.font = `800 26px ${FONT}`; ctx.fillText("¥" + Number(p.price).toLocaleString("ja-JP"), cx, ty + nm.length * 30 + 10); }
+  });
+  ctx.fillStyle = C.soft; ctx.font = `600 24px ${FONT}`; ctx.textAlign = "center";
+  ctx.fillText("詳しくは プロフィールのリンク から", W / 2, H - 66); ctx.textAlign = "left";
+}
+
 // ---------- メイン ----------
 (async () => {
   const file = path.join(TIPS_DIR, SLUG + ".html");
   if (!fs.existsSync(file)) { console.error("記事が見つかりません: " + file); process.exit(1); }
-  const art = parseArticle(fs.readFileSync(file, "utf8"));
+  const html = fs.readFileSync(file, "utf8");
+  const art = parseArticle(html);
 
   // 5W1Hに沿った明確な本文を Claude で執筆（失敗・キー無しは従来の抽出にフォールバック）。--no-ai でスキップ。
   const NO_AI = ARGV.includes("--no-ai");
@@ -345,9 +399,14 @@ function drawCta(ctx, logo) {
   const outDir = path.join(OUT_ROOT, SLUG);
   fs.mkdirSync(outDir, { recursive: true });
 
-  // Instagram カルーセルは最大10枚。cover+agenda+cta=3枚を確保し、本文は最大7枚に制限。
-  art.sections = art.sections.slice(0, 7);
-  const total = art.sections.length + 3; // cover + agenda + content + cta
+  // この記事に関連する商品（tips-products.json）＝商品写真を最大4点。画像を実際にロード。
+  const products = await loadArticleProducts(html);
+  if (products.length) console.log(`  ✓ 関連商品スライド: ${products.length}点の商品写真を追加`);
+
+  // Instagram カルーセルは最大10枚。cover+agenda+cta=3枚固定＋商品スライド(0/1)。本文はその残り。
+  const hasProducts = products.length > 0;
+  art.sections = art.sections.slice(0, hasProducts ? 6 : 7);
+  const total = art.sections.length + 3 + (hasProducts ? 1 : 0);
   const slides = [];
   // cover
   let cv = createCanvas(W, H); drawCover(cv.getContext("2d"), art, logo, total); slides.push(cv);
@@ -357,6 +416,8 @@ function drawCta(ctx, logo) {
   art.sections.forEach((sec, i) => {
     const c = createCanvas(W, H); drawContent(c.getContext("2d"), sec, i + 1, art.sections.length); slides.push(c);
   });
+  // 商品スライド（記事に関連する実際の商品写真）
+  if (hasProducts) { let pc = createCanvas(W, H); drawProducts(pc.getContext("2d"), products, logo); slides.push(pc); }
   // cta
   let cc = createCanvas(W, H); drawCta(cc.getContext("2d"), logo); slides.push(cc);
 
