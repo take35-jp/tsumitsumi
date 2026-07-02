@@ -2,7 +2,8 @@
   "paused": false,
   "posted": [
     "assembly-basics",
-    "beginner-tools"
+    "beginner-tools",
+    "gate-whitening"
   ],
   "order": [
     "beginner-tools",
