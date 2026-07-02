@@ -247,7 +247,29 @@ function drawAgenda(ctx, art) {
   ctx.fillText(IG_HANDLE, 80, H - 70);
   ctx.textAlign = "right"; ctx.fillText("INDEX", W - 80, H - 70); ctx.textAlign = "left";
 }
-function drawContent(ctx, sec, idx, total) {
+function drawProductStrip(ctx, product) {
+  // このスライドの内容に一致する実商品を1点だけ、下部に写真＋商品名＋価格で表示。
+  const sx = 80, sw = W - 160, sh = 250, sy = H - 70 - 40 - sh;
+  ctx.fillStyle = C.card; roundRect(ctx, sx, sy, sw, sh, 28); ctx.fill();
+  ctx.fillStyle = C.green; roundRect(ctx, sx, sy, 12, sh, 6); ctx.fill();
+  // 商品画像（白地の枠に contain）
+  const ib = 210, ix = sx + 40, iy = sy + (sh - ib) / 2;
+  ctx.fillStyle = C.white; roundRect(ctx, ix, iy, ib, ib, 16); ctx.fill();
+  ctx.save(); roundRect(ctx, ix, iy, ib, ib, 16); ctx.clip();
+  drawContain(ctx, product.img, ix + 12, iy + 12, ib - 24, ib - 24); ctx.restore();
+  // テキスト
+  const tx = ix + ib + 34, tw = sx + sw - tx - 36;
+  ctx.fillStyle = C.accent; ctx.font = `800 24px ${FONT}`; ctx.fillText("おすすめアイテム", tx, sy + 58);
+  ctx.fillStyle = C.ink; ctx.font = `700 34px ${FONT}`;
+  const nm = wrap(ctx, product.name, tw).slice(0, 2);
+  const ny = drawLines(ctx, nm, tx, sy + 108, 42);
+  if (product.price != null) {
+    ctx.fillStyle = "#b91c1c"; ctx.font = `800 36px ${FONT}`;
+    ctx.fillText("¥" + Number(product.price).toLocaleString("ja-JP"), tx, ny + 26);
+  }
+}
+function drawContent(ctx, sec, idx, total, product) {
+  const hasProd = !!(product && product.img);
   ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
   // 上部アクセントバー
   ctx.fillStyle = grad(ctx); ctx.fillRect(0, 0, W, 14);
@@ -265,17 +287,19 @@ function drawContent(ctx, sec, idx, total) {
   // 区切り線
   y += 22; ctx.strokeStyle = C.line; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(W - 80, y); ctx.stroke();
-  // 本文カード（可読性のため淡い背景＋左アクセント）
+  // 本文カード（可読性のため淡い背景＋左アクセント）。商品を載せる時は行数を絞って重ならないように。
   y += 44;
   ctx.font = `600 40px ${FONT}`;
   const lh = 62;
-  const bl = wrap(ctx, sec.text, W - 240).slice(0, 9);
+  const bl = wrap(ctx, sec.text, W - 240).slice(0, hasProd ? 5 : 9);
   const cardPadX = 40, cardPadY = 46;
   const cardH = (bl.length - 1) * lh + 40 + cardPadY * 2;
   ctx.fillStyle = C.card; roundRect(ctx, 80, y, W - 160, cardH, 28); ctx.fill();
   ctx.fillStyle = C.green; roundRect(ctx, 80, y, 12, cardH, 6); ctx.fill();
   ctx.fillStyle = "#1f2937"; ctx.font = `600 40px ${FONT}`;
   drawLines(ctx, bl, 80 + cardPadX + 18, y + cardPadY + 34, lh);
+  // 関連商品（内容に一致する実商品を1点）
+  if (hasProd) drawProductStrip(ctx, product);
   // フッター
   ctx.fillStyle = C.soft; ctx.font = `600 26px ${FONT}`;
   ctx.fillText(IG_HANDLE, 80, H - 70);
@@ -332,12 +356,14 @@ async function loadArticleProducts(html) {
   let items = {};
   try { items = (JSON.parse(fs.readFileSync(path.join(ROOT, "public", "tips-products.json"), "utf8")).items) || {}; } catch (e) { return []; }
   const out = [], seen = new Set();
-  const re = /data-product-id="([^"]+)"[\s\S]*?product-name">\s*([^<]+?)\s*</g;
+  // id / 商品名 / 検索キーワード(k=) を拾う（キーワードはセクションとの突合に使う）
+  const re = /data-product-id="([^"]+)"[\s\S]*?product-name">\s*([^<]+?)\s*<[\s\S]*?href="[^"]*?[?&]k=([^&"]+)/g;
   let m;
-  while ((m = re.exec(html)) && out.length < 4) {
+  while ((m = re.exec(html)) && out.length < 8) {
     const id = m[1]; if (seen.has(id)) continue; seen.add(id);
     const it = items[id];
-    if (it && it.image) out.push({ name: m[2].replace(/\([^)]*\)/g, "").replace(/（[^）]*）/g, "").trim(), price: it.price, image: it.image });
+    let kw = ""; try { kw = decodeURIComponent(m[3]).replace(/\+/g, " "); } catch (e) { kw = m[3]; }
+    if (it && it.image) out.push({ name: m[2].replace(/\([^)]*\)/g, "").replace(/（[^）]*）/g, "").trim(), price: it.price, image: it.image, kw });
   }
   // 画像はタイムアウト付きで取得（ハング防止）。取れたものだけ表示。
   for (const p of out) { const buf = await fetchImageBuffer(p.image); if (buf) { try { p.img = await loadImage(buf); } catch (e) { p.img = null; } } }
@@ -348,27 +374,30 @@ function drawContain(ctx, img, x, y, w, h) {
   const dw = img.width * r, dh = img.height * r;
   ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
 }
-function drawProducts(ctx, products, logo) {
-  ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = grad(ctx); ctx.fillRect(0, 0, W, 14);
-  ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = C.accent; ctx.font = `800 28px ${FONT}`; ctx.fillText("PICKS", 80, 150);
-  ctx.fillStyle = C.ink; ctx.font = `800 46px ${FONT}`; ctx.fillText("この記事のおすすめ", 80, 214);
-  const M = 56, GAP = 28, cols = 2, cellW = (W - 2 * M - GAP) / 2, imgH = 300, cellH = 430, top = 262;
-  products.slice(0, 4).forEach((p, i) => {
-    const cx = M + (i % cols) * (cellW + GAP);
-    const cy = top + Math.floor(i / cols) * (cellH + GAP);
-    ctx.fillStyle = "#f5f9fd"; roundRect(ctx, cx, cy, cellW, imgH, 18); ctx.fill();
-    ctx.save(); roundRect(ctx, cx, cy, cellW, imgH, 18); ctx.clip();
-    if (p.img) drawContain(ctx, p.img, cx + 18, cy + 18, cellW - 36, imgH - 36);
-    ctx.restore();
-    ctx.fillStyle = C.ink; ctx.font = `700 24px ${FONT}`;
-    const nm = wrap(ctx, p.name, cellW).slice(0, 2);
-    const ty = cy + imgH + 40; drawLines(ctx, nm, cx, ty, 30);
-    if (p.price != null) { ctx.fillStyle = "#b91c1c"; ctx.font = `800 26px ${FONT}`; ctx.fillText("¥" + Number(p.price).toLocaleString("ja-JP"), cx, ty + nm.length * 30 + 10); }
+// ---------- セクション⇄商品のマッチング ----------
+// 記号や空白を除いた日本語比較用の正規化。
+function normJP(s) { return String(s || "").toLowerCase().replace(/[\s　・()（）「」【】［］\[\].,、。\/\-]/g, ""); }
+// 商品名・キーワードから比較用トークン（カタカナ/漢字の連なり2文字以上）を抽出。
+function prodTokens(p) {
+  const src = (p.name || "") + " " + (p.kw || "");
+  const toks = src.match(/[ァ-ヶー]{2,}|[一-龠]{2,}/g) || [];
+  return [...new Set(toks.map((t) => normJP(t)).filter((t) => t.length >= 2))];
+}
+// 各セクション（見出し＋本文）に最も一致する商品を1点割り当てる。同じ商品は使い回さない。
+function assignProducts(sections, products) {
+  const used = new Set();
+  return sections.map((sec) => {
+    const hay = normJP((sec.head || "") + " " + (sec.text || ""));
+    let best = -1, bs = 0;
+    products.forEach((p, i) => {
+      if (used.has(i)) return;
+      let s = 0;
+      for (const t of prodTokens(p)) if (hay.includes(t)) s += t.length >= 3 ? 2 : 1;
+      if (s > bs) { bs = s; best = i; }
+    });
+    if (best >= 0 && bs > 0) { used.add(best); return products[best]; }
+    return null;
   });
-  ctx.fillStyle = C.soft; ctx.font = `600 24px ${FONT}`; ctx.textAlign = "center";
-  ctx.fillText("詳しくは プロフィールのリンク から", W / 2, H - 66); ctx.textAlign = "left";
 }
 
 // ---------- メイン ----------
@@ -399,25 +428,25 @@ function drawProducts(ctx, products, logo) {
   const outDir = path.join(OUT_ROOT, SLUG);
   fs.mkdirSync(outDir, { recursive: true });
 
-  // この記事に関連する商品（tips-products.json）＝商品写真を最大4点。画像を実際にロード。
+  // この記事に関連する実商品（tips-products.json）を最大8点ロード。
   const products = await loadArticleProducts(html);
-  if (products.length) console.log(`  ✓ 関連商品スライド: ${products.length}点の商品写真を追加`);
 
-  // Instagram カルーセルは最大10枚。cover+agenda+cta=3枚固定＋商品スライド(0/1)。本文はその残り。
-  const hasProducts = products.length > 0;
-  art.sections = art.sections.slice(0, hasProducts ? 6 : 7);
-  const total = art.sections.length + 3 + (hasProducts ? 1 : 0);
+  // Instagram カルーセルは最大10枚。cover+agenda+cta=3枚固定＝本文は最大7枚。
+  art.sections = art.sections.slice(0, 7);
+  // 各解説スライドに、その内容に一致する商品を1点ずつ割り当てる（同じ商品は使い回さない）。
+  const secProducts = assignProducts(art.sections, products);
+  const matched = secProducts.filter(Boolean).length;
+  if (matched) console.log(`  ✓ 各スライドに関連商品を配置: ${matched}/${art.sections.length}枚（候補${products.length}点）`);
+  const total = art.sections.length + 3;
   const slides = [];
   // cover
   let cv = createCanvas(W, H); drawCover(cv.getContext("2d"), art, logo, total); slides.push(cv);
   // agenda（この記事でわかること）
   let ag = createCanvas(W, H); drawAgenda(ag.getContext("2d"), art); slides.push(ag);
-  // content
+  // content（内容に一致する商品写真つき）
   art.sections.forEach((sec, i) => {
-    const c = createCanvas(W, H); drawContent(c.getContext("2d"), sec, i + 1, art.sections.length); slides.push(c);
+    const c = createCanvas(W, H); drawContent(c.getContext("2d"), sec, i + 1, art.sections.length, secProducts[i]); slides.push(c);
   });
-  // 商品スライド（記事に関連する実際の商品写真）
-  if (hasProducts) { let pc = createCanvas(W, H); drawProducts(pc.getContext("2d"), products, logo); slides.push(pc); }
   // cta
   let cc = createCanvas(W, H); drawCta(cc.getContext("2d"), logo); slides.push(cc);
 
