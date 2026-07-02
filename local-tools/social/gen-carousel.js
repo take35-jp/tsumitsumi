@@ -383,21 +383,35 @@ function prodTokens(p) {
   const toks = src.match(/[ァ-ヶー]{2,}|[一-龠]{2,}/g) || [];
   return [...new Set(toks.map((t) => normJP(t)).filter((t) => t.length >= 2))];
 }
-// 各セクション（見出し＋本文）に最も一致する商品を1点割り当てる。同じ商品は使い回さない。
+// 各解説スライドに、その内容に最も一致する商品を1点ずつ割り当てる。
+// 「強い一致のペアから先に確定」させる全体最適の貪欲法。これにより、複数の道具を
+// 羅列する要約スライドが特定商品を横取りせず、各道具の商品がその専用スライドに載る。
 function assignProducts(sections, products) {
-  const used = new Set();
-  return sections.map((sec) => {
-    const hay = normJP((sec.head || "") + " " + (sec.text || ""));
-    let best = -1, bs = 0;
-    products.forEach((p, i) => {
-      if (used.has(i)) return;
+  const result = new Array(sections.length).fill(null);
+  if (!products.length) return result;
+  // 見出しの一致を本文より強く評価する。専用スライドは道具名を見出しに持つため、
+  // 複数の道具を羅列する要約スライド（本文のみ一致）に横取りされない。
+  const heads = sections.map((sec) => normJP(sec.head || ""));
+  const bodies = sections.map((sec) => normJP(sec.text || ""));
+  const pairs = [];
+  products.forEach((p, pi) => {
+    const toks = prodTokens(p);
+    sections.forEach((_, si) => {
       let s = 0;
-      for (const t of prodTokens(p)) if (hay.includes(t)) s += t.length >= 3 ? 2 : 1;
-      if (s > bs) { bs = s; best = i; }
+      for (const t of toks) {
+        if (heads[si].includes(t)) s += 3;
+        else if (bodies[si].includes(t)) s += 1;
+      }
+      if (s > 0) pairs.push({ pi, si, s });
     });
-    if (best >= 0 && bs > 0) { used.add(best); return products[best]; }
-    return null;
   });
+  pairs.sort((a, b) => b.s - a.s);
+  const usedP = new Set(), usedS = new Set();
+  for (const c of pairs) {
+    if (usedP.has(c.pi) || usedS.has(c.si)) continue;
+    result[c.si] = products[c.pi]; usedP.add(c.pi); usedS.add(c.si);
+  }
+  return result;
 }
 
 // ---------- メイン ----------
